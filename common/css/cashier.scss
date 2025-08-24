@@ -1,0 +1,509 @@
+.card-body-empty {
+	flex: 1;
+}
+.vertical-tab{
+ width: 70px;	
+}
+.vertical-tab2{
+	width: 50px;	
+	height: 300px;
+	background-color: white;
+	margin-top: 5px;
+	margin-left: 5px;
+	border-radius: 2rpx;;
+}
+.sidebar {
+	width: 60px;
+}
+.container {
+	background-color: grey;
+  display: flex; /* 使用 flexbox 布局 */
+  overflow: hidden;
+}
+.container2 {
+	background-color: gray;
+  height: calc(100vh - 50px);
+  display: flex; /* 使用 flexbox 布局 */
+  overflow: hidden;
+  // width: 400px;
+}
+.content {
+  flex: 1; /* 使内容区域占据剩余空间 */
+  padding: 20px; /* 内边距 */
+}
+        .table-container {
+            border: 1px solid #ccc; /* 边框 */
+            border-radius: 5px; /* 圆角 */
+            overflow: hidden; /* 防止内容溢出 */
+            width: 80%; /* 容器宽度 */
+            margin: 20px auto; /* 居中 */
+        }
+        .table-header {
+            background-color: #f2f2f2; /* 表头背景色 */
+            display: flex; /* 使用 Flexbox 布局 */
+            padding: 10px; /* 内边距 */
+            font-size: 18px; /* 字体大小 */
+            font-weight: bold; /* 字体加粗 */
+            text-align: left; /* 文本居中 */
+        }
+        .column {
+            flex: 1; /* 默认均分空间 */
+        }
+        .wide-column {
+            flex: 2; /* 宽列占用更多空间 */
+        }
+		.mini-column {
+		    flex: 0.5; /* 宽列占用更多空间 */
+		}
+        .table-body {
+            padding: 0px; /* 内边距 */
+			background-color: white;
+			font-size: 18px; /* 字体大小 */
+        }
+        .table-row {
+            display: flex; /* 使用 Flexbox 布局 */
+            padding: 5px; /* 内边距 */
+            border-bottom: 1px solid #ccc; /* 底部边框 */
+        }
+        .table-row:last-child {
+            border-bottom: none; /* 最后一行不显示底部边框 */
+        }
+
+.group-container{
+	width: 300rpx;
+}
+
+.input-container {
+  display: flex; /* 使用 Flexbox 布局 */
+  align-items: center; /* 垂直居中对齐 */
+}
+.grid-container {
+  display: flex; /* 使用 Flexbox 布局 */
+	background-color: transparent;
+    flex: 2; /* 右侧部分占据 2 份 */
+    flex-wrap: wrap; /* 允许换行 */
+    justify-content: space-between; /* 均分格子 */
+	align-items: flex-start;
+    padding: 10px; /* 内边距 */
+}
+
+// .grid-item {
+// 	margin-top: 10px;
+//     flex: 0 0 20%; /* 每个格子占据 30% 的宽度 */
+//     height: 100px;
+// 	// margin: 10px 0; /* 上下间距 */
+//     padding: 20px; /* 内边距 */
+// 	color: #000;
+//     background-color: #ffffff; /* 背景颜色 */
+//     text-align: center; /* 文字居中 */
+//     border-radius: 10px; /* 圆角 */
+//     cursor: pointer; /* 鼠标悬停时显示为手型 */
+//     // transition: background-color 0.3s; /* 背景颜色过渡效果 */
+// 	box-shadow:
+// 	 0 2px 5px rgba(0, 0, 0, 0.1), /* 下方阴影 */
+// 	  0 -2px 5px rgba(0, 0, 0, 0.1), /* 上方阴影 */
+// 	  2px 0 5px rgba(0, 0, 0, 0.1), /* 右侧阴影 */
+// 	  -2px 0 5px rgba(0, 0, 0, 0.1); /* 左侧阴影 */ /* 阴影效果 */
+// }
+.grid-item {
+    width: 100%; /* 设置固定宽度 */
+    box-sizing: border-box; /* 包括内边距和边框在内的总宽度 */
+    padding: 10px; /* 可选：设置内边距 */
+    border: 1px solid #ccc; /* 可选：设置边框 */
+    margin: 5px; /* 可选：设置外边距 */
+    background-color: #f9f9f9; /* 可选：设置背景颜色 */
+    cursor: pointer; /* 鼠标悬停时显示为手型 */
+			position: relative;
+	    text-align: center; /* 文字居中 */
+	    border-radius: 5px; /* 圆角 */
+	    cursor: pointer; /* 鼠标悬停时显示为手型 */
+}
+
+	.grid-item-active {
+	    border: 1px solid dodgerblue;
+	    box-shadow: 0 0 0 3px dodgerblue; /* 向外扩展3px的边框效果 */
+	}
+
+.pay-amount {
+    display: flex;
+    justify-content: center; /* 水平居中 */
+    align-items: center; /* 垂直居中 */
+}
+
+.form-row {
+    display: flex;
+    width: 100%; /* 使其占满父容器的宽度 */
+	 margin-left: 20px; 
+}
+
+.left-part {
+    flex: 1; /* 左侧部分占据剩余空间 */
+}
+
+.right-part {
+    display: flex;
+    align-items: center; /* 垂直居中 */
+}
+.payment-methods {
+	margin-top: 20rpx;
+    display: flex;
+    flex-direction: column; /* 垂直排列每个支付方式 */
+}
+
+.payment-item {
+	padding: 5rpx;
+	padding-bottom:10rpx;
+	text-align: center;
+	padding-right: 5rpx;
+	border: 1rpx solid grey;
+	font-weight: bold;
+    display: flex; /* 水平排列图标和文字 */
+    align-items: center; /* 垂直居中对齐 */
+}
+
+
+.payment-text {
+    margin-left: 8px; /* 图标和文字之间的间距 */
+	margin-top: 20px;
+}
+.payment-text2 {
+  padding: 5rpx;
+  padding-bottom:10rpx;
+  text-align: center;
+  padding-right: 5rpx;
+  border: 1rpx solid grey;
+  font-weight: bold;
+  display: flex; /* 水平排列图标和文字 */
+  align-items: center; /* 垂直居中对齐 */
+}
+
+.cashier-row {
+	align-items: flex-start !important;
+	height: calc(100% - 80px);
+	background-color: #f3f4f6;
+	border-radius: 4px;
+    display: grid;
+	grid-template-columns: 7fr 3fr;
+	   /* 两列，每列占一半宽
+	width: 100%; /* 容器宽度 */
+
+		.cashier-card {
+			border-left: 1px solid $m-border-color;
+			border-right: 1px solid $m-border-color;
+		}
+		
+		.cashier-goods {
+		}
+
+	.cashier-col {
+		display: flex;
+		flex-direction: column;
+		height: calc(100vh 
+		- 50px);
+				
+		.card-title {
+			height: 40px;
+			display: flex;
+			flex-flow: row;
+			justify-content: space-between;
+			align-items: center;
+			background-color: $m-primary-light;
+			padding: 0 0px;
+		}
+
+		.card-body {
+			text-align: left;
+			flex: 1;
+			// border: solid 1px $m-border-color;
+			overflow-y: auto;
+			display: flex;
+			flex-flow: column;
+			background: $m-white-color;
+
+	     }
+		 
+		 
+
+		.card-sumarry {
+			background: $m-white-color;
+			height: 40rpx;
+			.detail-list {
+				margin: 0 5rpx;
+				display: flex;
+				flex-flow: column;
+				justify-content: space-evenly;
+				height: 100%;
+				
+			}
+
+			.detail-item {
+				display: flex;
+				flex-flow: row;
+				justify-content: space-between;
+				align-items: center;
+				font-weight: 200;
+			}
+
+			.preferential {
+				.amount span {
+					color: $m-error;
+				}
+			}
+
+			.payable {
+				.amount span {
+					font-size: 22px;
+				}
+			}
+		}
+
+		.card-footer {
+			height: 50px;
+			bottom: 1%;
+			display: flex;
+			flex-flow: row;
+			flex-wrap: wrap;
+			justify-content: space-between;
+			align-items: center;
+			background-color: $m-white-color;
+			z-index: 1;
+			border-top: 1px solid $m-border-color;
+
+			.footer-item {
+				display: flex;
+				flex-flow: row;
+				align-items: center;
+
+				.btn-submit {
+					padding: 12px 24px;
+				}
+			}
+		}
+	}
+}
+
+.popup-hang-list {
+	width: 500px;
+	overflow: auto;
+
+	.popup-hang-title {
+		padding: 20px;
+		color: $m-main-color;
+		font-weight: 500;
+	}
+
+	.popup-hang-content {
+		.hang-item-title {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.hang-item-content {
+			display: flex;
+			flex-flow: column;
+
+			.header {
+				display: flex;
+				flex-flow: column;
+				padding: 8px;
+
+				.total {
+					display: flex;
+					flex-flow: row;
+					align-items: center;
+					justify-content: space-between;
+					padding: 0 16px;
+
+					.expand-total-text {
+						line-height: 26px;
+					}
+
+					.expand-total-btn {
+					}
+				}
+
+				.remark {
+				}
+			}
+
+			.content {
+				padding: 8px;
+
+				// /deep/ .u-cell:last-child .u-line {
+				// 	display: none;
+				// }
+
+				.cell-item {
+					display: flex;
+					flex-flow: column;
+					padding: 0 20px;
+				}
+
+				.cell-item-spu,
+				.cell-item-price {
+					display: flex;
+					flex-flow: row;
+					justify-content: space-between;
+				}
+			}
+		}
+	}
+}
+
+.u-popup__content {
+	max-height: 80%;
+}
+
+.u-modal,
+.u-modal__content {
+	flex: 1;
+	overflow: hidden;
+}
+
+.slot-content {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+
+	.footer.btn {
+		display: flex;
+		flex-flow: row;
+		align-items: center;
+		justify-content: space-around;
+	}
+}
+
+.slot-modal {
+	.header {
+		display: flex;
+		justify-content: center;
+	}
+
+	.footer {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+}
+
+// .payment {
+// 	/deep/ .u-fade-enter-active,
+// 	/deep/ .u-fade-zoom-enter-active {
+// 		z-index: 1 !important;
+// 	}
+// }
+
+.form-container {
+	margin-left: 20rpx;
+    display: flex;
+    flex-direction: column; /* 垂直排列每个表单项 */
+}
+
+.form-item {
+    margin-bottom: 16px; /* 每个表单项之间的间距 */
+}
+
+.pay-type {
+	.body {
+		margin: 16px 0;
+
+		.pay-list {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			padding: 8px;
+		}
+
+		.pay-item {
+			cursor: pointer;
+			width: 100%;
+			height: 100%;
+			border: 1px solid $m-border-color;
+			border-radius: 4px;
+			background: $m-white-color;
+			display: flex;
+			flex-flow: column;
+			justify-content: center;
+			align-items: center;
+			transition: transform 0.2s cubic-bezier(0.32, 0.08, 0.24, 1);
+			box-shadow: 0 1px 3px $m-shadow-color;
+		}
+
+		.pay-item:hover {
+			backdrop-filter: blur(15px) saturate(0.9) brightness(1.4);
+		}
+		.pay-item.active {
+			color: $m-primary;
+			border: 1px solid $m-primary;
+			backdrop-filter: blur(15px) saturate(0.9) brightness(1.4);
+		}
+
+		.scan-pay {
+			display: flex;
+			flex-flow: column;
+			align-items: center;
+			justify-content: center;
+
+			.text {
+				color: $m-main-color;
+				padding-top: 32px;
+			}
+		}
+	}
+}
+
+.grid-body {
+	overflow-y: auto;
+
+	.grid-item {
+		width: 50%;
+		height: 100%;
+		border: 1.5px solid $m-border-color;
+		border-radius: 4px;
+		text-align: left;
+		.item-text {
+			display: flex;
+			flex-flow: column;
+			justify-content: space-around;
+			overflow: hidden;
+		}
+	}
+}
+
+.member-info {
+	margin: 8px;
+
+	.item {
+		display: flex;
+		flex-flow: row;
+		align-items: center;
+	}
+}
+
+
+.select-time-card-body {
+	.grid-time-card-item.active {
+		background: #f3f4f6;
+		border: 1px solid $m-error;
+	}
+}
+
+
+.slide-up {
+  position: absolute;
+  bottom: 0; /* 从底部开始 */
+  left: 0;
+  right: 0;
+  transition: transform 0.3s ease; /* 动画效果 */
+  transform: translateY(100%); /* 初始位置在下方 */
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.3s ease; /* 动画效果 */
+}
+
+.slide-up-enter, .slide-up-leave-to {
+  transform: translateY(0); /* 进入时从下方滑入，离开时滑出 */
+}

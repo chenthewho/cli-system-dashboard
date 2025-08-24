@@ -1,0 +1,205 @@
+{
+	// "condition": { //模式配置，仅开发期间生效
+	// 	"current": 0, //当前激活的模式(list 的索引项)
+	// 	"list": [{
+	// 		"name": "test", //模式名称
+	// 		"path": "pages/componentsA/test/test", //启动页面，必选
+	// 		"query": "" //启动参数，在页面的onLoad函数里面得到
+	// 	}]
+	// },
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path": "pages/cashier/cashier",
+			"style": {
+				"navigationBarTitleText": "收银",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/cashier/tuigeCashier",
+			"style": {
+				"navigationBarTitleText": "退单",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/cashier/timeCardCashier",
+			"style": {
+				"navigationBarTitleText": "计次核销",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/index/index",
+			"style": {
+				"navigationBarTitleText": "首页",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/auth/login",
+			"style": {
+				"navigationBarTitleText": "登录",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/setting/commonSetting",
+			"style": {
+				"navigationBarTitleText": "基本设置",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/setting/operatorSetting",
+			"style": {
+				"navigationBarTitleText": "操作设置",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/good/batchGoodManger",
+			"style": {
+				"navigationBarTitleText": "库存操作",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/good/correction/employCorrection",
+			"style": {
+				"navigationBarTitleText": "自营盘点",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/good/lossModel",
+			"style": {
+				"navigationBarTitleText": "报损操作",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/good/lossAssistModel",
+			"style": {
+				"navigationBarTitleText": "代销报损操作",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/good/goodPurchaseEmploy",
+			"style": {
+				"navigationBarTitleText": "自营货品添加",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/good/purchaseOrder",
+			"style": {
+				"navigationBarTitleText": "入库单管理",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/setting/operaRecord",
+			"style": {
+				"navigationBarTitleText": "操作记录",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/settlement/settlementIndex",
+			"style": {
+				"navigationBarTitleText": "结算中心",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/rotating/rotatingIndex",
+			"style": {
+				"navigationBarTitleText": "轮值",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/order/CustomerMangerPage1",
+			"style": {
+				"navigationBarTitleText": "用户订单",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/auth/companySelection",
+			"style": {
+				"navigationBarTitleText": "选择商家",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/static/static",
+			"style": {
+				"navigationBarTitleText": "报表",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/table/employProfitTable",
+			"style": {
+				"navigationBarTitleText": "自营利润统计表",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/table/assistProfitTable",
+			"style": {
+				"navigationBarTitleText": "代销利润统计表",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/table/saleStaticTable",
+			"style": {
+				"navigationBarTitleText": "进销存统计表",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/table/businessStaticTable",
+			"style": {
+				"navigationBarTitleText": "营业统计表",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/auth/register",
+			"style": {
+				"navigationBarTitleText": "注册",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/auth/forget",
+			"style": {
+				"navigationBarTitleText": "找回密码",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/table/saleStaticTable",
+			"style": {
+				"navigationBarTitleText": "销售统计表",
+				"enablePullDownRefresh": false
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uView",
+		"navigationStyle": "custom",
+		"navigationBarBackgroundColor": "#FFFFFF",
+		"backgroundColor": "#FFFFFF",
+		"pageOrientation": "landscape",
+		"rpxCalcMaxDeviceWidth":2160,
+		"rpxCalcBaseDeviceWidth": 375,
+		"rpxCalcIncludeWidth": 750
+	}
+}
