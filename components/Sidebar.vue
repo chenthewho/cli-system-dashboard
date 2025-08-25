@@ -1,6 +1,13 @@
 <template>
 	<div class="sidebar">
-		<ul style="margin-top: 50rpx;">
+			<div class="logo-container" @click="onLogoClick">
+				<image 
+					class="logo-image" 
+					src="/static/img/logo-transparent.png" 
+					mode="aspectFill"
+				></image>
+			</div>
+		<ul style="margin-top: 60rpx;">
 			<li v-for="item in menuItems" :key="item.id">
 				<div @click="changeContent(item.id)" :class="{'active': activeItem === item.id}" class="menu-item" v-if="item.isShow">
 					<uni-icons custom-prefix="iconfont" :type="item.icon" size="30" color="#ffffff"></uni-icons>
@@ -175,6 +182,18 @@
 				this.activeItem = content; // 更新当前选中的菜单项
 				this.$emit('update-content', content); // 触发事件并传递内容
 			},
+			onLogoClick() {
+				this.playSystemKeyClickSound();
+				// 点击logo返回收银页面
+				this.activeItem = 'one';
+				this.$emit('update-content', 'one');
+				// 可以添加一个提示
+				uni.showToast({
+					title: '智农佳收银系统',
+					icon: 'none',
+					duration: 1500
+				});
+			}
 		}
 	};
 </script>
@@ -256,6 +275,34 @@
 	.bar-text.active{
 		color:white;
 	}
-	
+
+
+	.logo-container {
+		width: 50px;
+		height: 50px;
+		border-radius: 10px;
+		overflow: hidden;
+		background-color: transparent;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		transition: all 0.3s ease;
+		cursor: pointer;
+		position: fixed;
+		left:5px;
+		top: 5px;
+	}
+
+	.logo-container:hover {
+		transform: scale(1.05);
+		box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.2);
+	}
+
+	.logo-image {
+		width: 100%;
+		height: 100%;
+		border-radius: 50%;
+		object-fit: cover;
+	}
 			
 </style>

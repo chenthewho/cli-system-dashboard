@@ -59,7 +59,7 @@
 																	散</div>
 															</div>
 
-															<div style="margin-top: 5px;display: flex;color: #888888;"
+															<div style="margin-top: 5px;display: flex;"
 															:style="!item.outPutPurchaseInventories || item.outPutPurchaseInventories.length===0 ?{ color:'#aa0000' }:{}"
 															>
 																余: <div v-for="item2 in item.outPutPurchaseInventories"
@@ -113,12 +113,7 @@
 									</div>
 								</div>
 								<div style="display: flex;">
-									<div style="display: flex;font-weight: bold;margin-right: 20rpx;">
-										<uni-icons custom-prefix="iconfont" type="icon-ehl_sanlunche" size="30"
-											color="#00aaff"
-											style="margin-right: 5rpx;margin-left: 5rpx;margin-top: 3px;"></uni-icons>
-										<div style="margin-top: 5rpx;color:#00aaff ;">运费</div>
-									</div>
+									
 									<!-- <div class="btn" @click="memberChange('ShouKuang')"
 										style="margin-right: 10rpx;  height:20rpx; bolder; color: white;border: 1px solid dodgerblue;background: dodgerblue; box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);">
 										<uni-icons custom-prefix="iconfont" type="icon-basket" size="15" color="#ffffff"
@@ -222,10 +217,16 @@
 								</div>
 							</div>
 							<div class="card-footer">
-								<div class="footer-item footer-left">
+								<!-- <div class="footer-item footer-left">
 									<div class="btn" @click="resetAction()"
 										style="font-weight: bold;  box-shadow: 0 0 5rpx rgba(0, 0, 0,0.3);">清空</div>
-								</div>
+								</div> -->
+								<div style="display: flex;font-weight: bold;margin-right: 20rpx;margin-left: 20rpx;cursor: pointer;" @click="showShippingModal">
+										<uni-icons custom-prefix="iconfont" type="icon-ehl_sanlunche" size="30"
+											color="#00aaff"
+											style="margin-right: 5rpx;margin-left: 5rpx;margin-top: 3px;"></uni-icons>
+										<div style="margin-top: 5rpx;color:#00aaff ;">运费{{shippingFee > 0 ? '：' + shippingFee + '元' : ''}}</div>
+									</div>
 								<div class="footer-item footer-right">
 									<div class="btn btn-primary-plain btn-submit"
 										style=" font-weight: bold;  box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);"
@@ -967,6 +968,47 @@
       @close="showRepaymentModal = false">
 		</RepayModal>
 
+		<!--运费弹窗-->
+		<u-modal title="添加运费" :show="shippingModalVisible" @close="shippingModalVisible = false" :closeOnClickOverlay="true"
+			:showConfirmButton="false" :width="500">
+			<div style="padding: 20px;">
+				<div style="margin-bottom: 20px;">
+					<div style="font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #333;">运费金额</div>
+					<u-input 
+						type="number" 
+						v-model="tempShippingFee" 
+						placeholder="请输入运费金额"
+						:customStyle="{
+							width: '400px',
+							padding: '12px',
+							border: '1px solid #ddd',
+							borderRadius: '8px',
+							fontSize: '16px',
+							background: '#fff'
+						}"
+						:clearable="true"
+						@input="validateShippingFee"
+						@focus="onInputFocus"
+					></u-input>
+				</div>
+				<div style="display: flex; gap: 10px; margin-top: 20px;width: 400px;">
+					<button 
+						@click="cancelShipping"
+						style="flex: 1; padding: 12px; background: #f5f5f5; color: #666; border: none;  font-size: 16px; font-weight: bold;"
+					>
+						取消
+					</button>
+					<button 
+						@click="confirmShipping"
+						style="flex: 1; padding: 12px; background: #00aaff; color: white; border: none; font-size: 16px; font-weight: bold;"
+						:style="tempShippingFee <= 0 ? 'background: #ccc;' : ''"
+					>
+						确定
+					</button>
+				</div>
+			</div>
+		</u-modal>
+
 	</div>
 
 </template>
@@ -1190,7 +1232,11 @@
 				currentCompanyId: "",
 				extraModel: [],
 				editCardExtralModel: [],
-				goodSelect: []
+				goodSelect: [],
+				// 运费相关数据
+				shippingFee: 0,
+				shippingModalVisible: false,
+				tempShippingFee: 0
 			}
 		},
 		onShow() {
@@ -1207,6 +1253,37 @@
 			this.getallextralgood();
 		},
 		methods: {
+			// 运费相关方法
+			showShippingModal() {
+				this.tempShippingFee = this.shippingFee;
+				this.shippingModalVisible = true;
+			},
+			cancelShipping() {
+				this.shippingModalVisible = false;
+				this.tempShippingFee = 0;
+			},
+			confirmShipping() {
+				if (this.tempShippingFee >= 0) {
+					this.shippingFee = parseFloat(this.tempShippingFee);
+					this.shippingModalVisible = false;
+					this.tempShippingFee = 0;
+					this.reCountGoodSelect(); // 重新计算总金额
+					uni.showToast({
+						title: '运费设置成功',
+						icon: 'success'
+					});
+				}
+			},
+			validateShippingFee() {
+				// 确保输入的是有效数字
+				if (this.tempShippingFee < 0) {
+					this.tempShippingFee = 0;
+				}
+			},
+			onInputFocus() {
+				// 输入框获得焦点时的处理
+				console.log('运费输入框获得焦点');
+			},
 			editCardExtraModelSelct(e) {
 				this.editingCard.extralModel = JSON.parse(JSON.stringify(this.editCardExtralModel[e]));
                 							//押筐数量处理
@@ -2231,6 +2308,8 @@
 					}
 					x.money2 = parseFloat(x.money) + parseFloat(x.extralModelMoney);
 				})
+				// 添加运费到总金额
+				this.payAmount.total += parseFloat(this.shippingFee || 0);
 				this.payAmount.total = parseFloat(this.payAmount.total).toFixed(0);
 			},
 			//计算方法2---改变箩筐值计算
@@ -2866,6 +2945,8 @@
 				};
 				that.goodSelect = [];
 				that.currentMember = {};
+				// 重置运费
+				that.shippingFee = 0;
 				that.getlastOrder();
 				that.getCategoryList();
 				that.extraModel.forEach(x => {

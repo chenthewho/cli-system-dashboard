@@ -19,7 +19,7 @@
 	    v-for="tab in categoryList_employ"
 	    :key="tab.name"
 	    class="tab"
-	    :class="{ active2: activeTabId === tab.id }"
+	    :class="{ active: activeTabId === tab.id }"
 	    @click="selectTab2(tab)"
 	  >
 	  <div>

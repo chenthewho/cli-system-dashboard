@@ -3,7 +3,7 @@
 		<div class="header-theme" :class="theme">
 			<div class="header-container">
 				<div class="menu-item" style="display: flex;align-items: center;">
-					<span @click="turnToCommonSetting">商家：{{currentCompanyName}}</span>
+					<span @click="turnToCommonSetting" style="color:black;font-size:20px;font-weight:bold;" >{{currentCompanyName}}</span>
 					<u-icon name="arrow-down" size="16" color="#666" style="margin-left: 8rpx; cursor: pointer;" @click="showCompanySwitcher"></u-icon>
 				</div>
 				<div class="menu-item" v-if="lastOrder" style="margin-right: 5rpx;margin-left: auto;display: flex; align-items: center;justify-content: flex-end;" @click="showLastModel">
@@ -34,7 +34,7 @@
 					@click="switchCompany(company)"
 				>
 					<div class="company-info">
-						<u-icon name="shop" size="18" color="#409EFF" style="margin-right: 10rpx;"></u-icon>
+						<u-icon name="home" size="25" color="#409EFF" style="margin-right: 10rpx;"></u-icon>
 						<span>{{ company.name }}</span>
 					</div>
 					<u-icon 

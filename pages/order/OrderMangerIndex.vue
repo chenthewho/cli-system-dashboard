@@ -255,6 +255,8 @@
 				tabs1Current: 0,
 				payTypeDialogVisible: false,
 				moduleList: [],
+				originalModuleList: [], // 保存原始订单列表
+				currentFilterType: 'all', // 当前筛选类型
 				repayMount: 0,
 				memberDialogVisible: false,
 				CompanyId: "",
@@ -317,11 +319,16 @@
 		},
 		methods: {
 			refresh(){
+				// 重置统计数据
+				this.allDebt = 0;
+				this.totalMoney = 0;
+				this.actualMoney = 0;
+				
 				const currentDate = this.getcurrentTime();
 				this.single = currentDate;
 				cashierOrder.GetAccountByCompanyIdandDateRange(this.CompanyId, this.beginTime, this.endTime).then(res => {
-					this.moduleList = res.data;
-					this.moduleList.forEach(item => {
+					this.originalModuleList = res.data;
+					this.originalModuleList.forEach(item => {
 
 						item.modulestr = "";
 						if(item.status!=2){
@@ -346,9 +353,12 @@
 				
 						})
 					})
-					this.moduleList.sort((a, b) => {
+					this.originalModuleList.sort((a, b) => {
 						return new Date(b.createTime) - new Date(a.createTime); // 升序排序
 					});
+					
+					// 应用当前筛选
+					this.applyFilter();
 				})
 			},
 			getTodayDateRange() {
@@ -488,6 +498,55 @@
 				this.beginTime = beginTime;
 				this.endTime = endTime;
 				this.refresh();
+			},
+			// 筛选功能相关方法
+			filterChange(filterType) {
+				this.currentFilterType = filterType;
+				this.applyFilter();
+			},
+			applyFilter() {
+				if (!this.originalModuleList) {
+					return;
+				}
+				
+				let filteredList = [...this.originalModuleList];
+				
+				switch (this.currentFilterType) {
+					case 'debt':
+						// 筛选有欠款的订单（下欠金额大于0）
+						filteredList = filteredList.filter(item => item.debt > 0);
+						break;
+					case 'sent':
+						// 筛选已发单的订单（shareNum > 0）
+						filteredList = filteredList.filter(item => item.shareNum > 0);
+						break;
+					case 'unsent':
+						// 筛选未发单的订单（shareNum === 0 或者 undefined）
+						filteredList = filteredList.filter(item => !item.shareNum || item.shareNum === 0);
+						break;
+					case 'all':
+					default:
+						// 显示全部订单
+						break;
+				}
+				
+				this.moduleList = filteredList;
+				
+				// 重新计算统计数据（只计算当前筛选结果）
+				this.recalculateStats();
+			},
+			recalculateStats() {
+				this.allDebt = 0;
+				this.totalMoney = 0;
+				this.actualMoney = 0;
+				
+				this.moduleList.forEach(item => {
+					if(item.status != 2) { // 排除退单
+						this.allDebt += item.debt;
+						this.totalMoney += item.payableAmount;
+						this.actualMoney += item.actualMoney;
+					}
+				});
 			},
 			checkboxChange(e) {
 				this.checkboxValue = [e]

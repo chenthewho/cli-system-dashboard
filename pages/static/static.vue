@@ -30,7 +30,7 @@
             </view>
             <view class="module-info">
               <text class="module-title">营业统计</text>
-              <text class="module-count">1 个报表</text>
+              <text class="module-count">2 个报表</text>
             </view>
           </view>
           
@@ -47,6 +47,18 @@
                 <uni-icons type="right" size="12" color="#ccc"></uni-icons>
               </view>
             </view>
+			<view class="report-card" @click="">
+			  <view class="report-icon">
+			    <uni-icons type="shop" size="18" color="#00aaff"></uni-icons>
+			  </view>
+			  <view class="report-info">
+			    <text class="report-title">班次统计表</text>
+			    <text class="report-desc">所有班次产生数据</text>
+			  </view>
+			  <view class="report-arrow">
+			    <uni-icons type="right" size="12" color="#ccc"></uni-icons>
+			  </view>
+			</view>
           </view>
         </view>
 
@@ -118,6 +130,34 @@
             </view>
           </view>
         </view>
+
+		<!-- 其他统计卡片 -->
+		<view class="stat-module other-module">
+		  <view class="module-header">
+		    <view class="module-icon inventory">
+		      <uni-icons type="list" size="20" color="#fff"></uni-icons>
+		    </view>
+		    <view class="module-info">
+		      <text class="module-title">其他统计</text>
+		      <text class="module-count">1 个报表</text>
+		    </view>
+		  </view>
+		  
+		  <view class="reports-list">
+		    <view class="report-card" @click="">
+		      <view class="report-icon">
+		        <uni-icons type="loop" size="18" color="#607d8b"></uni-icons>
+		      </view>
+		      <view class="report-info">
+		        <text class="report-title">欠条统计表</text>
+		        <text class="report-desc">用户欠条记录数据</text>
+		      </view>
+		      <view class="report-arrow">
+		        <uni-icons type="right" size="12" color="#ccc"></uni-icons>
+		      </view>
+		    </view>
+		  </view>
+		</view>
 
       </view>
     </view>
@@ -239,14 +279,23 @@
 /* 横屏统计页面样式 */
 .statistics-page-landscape {
   height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
+
 
 /* 主内容区域 */
 .main-content {
   height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 /* 内容头部 */
@@ -328,11 +377,13 @@
 .statistics-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 30px;
-  padding: 40px;
+  padding: 20px;
   overflow-y: auto;
   align-items: start;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* 统计模块 */
@@ -360,6 +411,9 @@
 
   &.inventory-module {
     border-top: 3px solid #607d8b;
+  }
+  &.other-module {
+    border-top: 3px solid #00aaff;
   }
 }
 
@@ -495,70 +549,9 @@
   opacity: 0.5;
 }
 
-/* 响应式设计 */
-@media (max-width: 1400px) {
-  .statistics-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-    padding: 30px;
-  }
-}
-
-// @media (max-width: 900px) {
-//   .content-header {
-//     padding: 20px 24px;
-//     flex-direction: column;
-//     align-items: flex-start;
-//     gap: 16px;
-//   }
-
-//   .page-title {
-//     font-size: 24px;
-//     color: #2c3e50;
-//   }
-
-//   .page-desc {
-//     font-size: 14px;
-//     color: #7f8c8d;
-//   }
-
-//   .header-actions {
-//     align-self: flex-end;
-//   }
-
-//   .statistics-grid {
-//     grid-template-columns: 1fr;
-//     gap: 20px;
-//     padding: 24px;
-//   }
-// }
-
-// @media (max-width: 600px) {
-//   .content-header {
-//     padding: 16px 20px;
-//   }
-
-//   .page-title {
-//     font-size: 20px;
-//     color: #2c3e50;
-//   }
-
-//   .statistics-grid {
-//     padding: 20px;
-//     gap: 16px;
-//   }
-
-//   .stat-module {
-//     border-radius: 12px;
-//   }
-
-//   .module-header {
-//     padding: 16px 20px;
-//   }
-
-//   .reports-list {
-//     padding: 12px 20px 20px;
-//   }
+// /* 响应式设计 */
+// @media (max-width: 1000px) {
+ 
 // }
 
 /* 动画效果 */
