@@ -238,7 +238,7 @@
 					value: 1
 				},
 				{
-					text: "入库",
+					text: "修改",
 					value: 2
 				}]
 			}

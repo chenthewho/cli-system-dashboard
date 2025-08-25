@@ -15,5 +15,8 @@ export default {
 	},
 	getDutyRepayOrder(dutyId){
 		return http.get(`/schedule/getDutyRepayOrder?dutyId=${dutyId}`)
+	},
+	GetExpenseAccoutByDutyandType(dutyId,type){
+		return http.get(`/Static/GetExpenseAccoutByDutyandType?dutyId=${dutyId}&type=${type}`)
 	}
 }

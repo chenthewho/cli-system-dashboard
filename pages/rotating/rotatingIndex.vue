@@ -39,7 +39,7 @@
 							</view>
 							<view class="card1-content" v-if="currentData">
 								<view class="revenue-column">
-									<view class="yye-grid">
+									<view class="yye-grid" @click="handleTotalMoneyShow">
 										<text class="yye-grid-text">已售货款：</text>
 										<text class="yye-grid-value">{{ currentData.totalMoney }}</text>
 									</view>
@@ -47,13 +47,13 @@
 										<text class="yye-grid-text">下欠金额：</text>
 										<text class="yye-grid-value">{{ currentData.debtMoney }}</text>
 									</view>
-									<view class="yye-grid">
+									<view class="yye-grid"  @click="handleTotalMoneyShow">
 										<text class="yye-grid-text">总单量：</text>
 										<text class="yye-grid-value">{{ currentData.orderNum }}</text>
 									</view>
 								</view>
 								<view class="revenue-column revenue-column-right">
-									<view class="yye-grid">
+									<view class="yye-grid" @click="handleReceiveMoneyShow">
 										<text class="yye-grid-text">收入金额：</text>
 										<text class="yye-grid-value">{{ currentData.receiveMoeny }}</text>
 									</view>
@@ -107,19 +107,37 @@
 									</view>
 								</view>
 
-								<!-- 其他费用卡片 -->
-								<view class="grid card3"
-									:style="{ height: (windowHeight - 280 - 150 - 30 - 70) + 'px' }">
-									<view class="card3-header">
-										<view class="card-header-title">
-											<uni-icons custom-prefix="iconfont" type="icon-qitashourudan" size="20"
-												color="#dddd00"></uni-icons>
-											<text class="title-text">其他费用</text>
+								<!-- 其他费用卡片容器 -->
+								<view class="other-expenses-container" :style="{ height: (windowHeight - 280 - 150 - 30 - 70) + 'px' }">
+									<!-- 费用支出卡片 -->
+									<view class="grid card3 expense-card">
+										<view class="card3-header">
+											<view class="card-header-title">
+												<uni-icons custom-prefix="iconfont" type="icon-qitashourudan" size="20"
+													color="#e74c3c"></uni-icons>
+												<text class="title-text">费用支出</text>
+											</view>
+										</view>
+										<view class="card3-content">
+											<view class="empty-content">
+												<text class="empty-text">暂无支出记录</text>
+											</view>
 										</view>
 									</view>
-									<view class="card3-content">
-										<view class="empty-content">
-											<text class="empty-text">暂无其他费用</text>
+									
+									<!-- 备用金卡片 -->
+									<view class="grid card3 reserve-card">
+										<view class="card3-header">
+											<view class="card-header-title">
+												<uni-icons custom-prefix="iconfont" type="icon-qian" size="20"
+													color="#f39c12"></uni-icons>
+												<text class="title-text">备用金</text>
+											</view>
+										</view>
+										<view class="card3-content">
+											<view class="empty-content">
+												<text class="empty-text">暂无备用金记录</text>
+											</view>
 										</view>
 									</view>
 								</view>
@@ -138,7 +156,7 @@
 						<!-- 第一行：微信 + 支付宝 -->
 						<view class="payment-row">
 							<!-- 微信支付 -->
-							<view class="payment-item wechat-pay">
+							<view class="payment-item wechat-pay" @click="showExpenseAccout(1)">
 								<view class="payment-header">
 									<view class="payment-icon-wrapper">
 										<u-icon class="payment-icon" :size="32" name="weixin-fill"
@@ -151,7 +169,7 @@
 								</view>
 							</view>
 							<!-- 支付宝 -->
-							<view class="payment-item alipay-pay">
+							<view class="payment-item alipay-pay" @click="showExpenseAccout(2)">
 								<view class="payment-header">
 									<view class="payment-icon-wrapper">
 										<u-icon class="payment-icon" :size="32" name="zhifubao" color="white"></u-icon>
@@ -166,7 +184,7 @@
 						<!-- 第二行：现金 + 其他 -->
 						<view class="payment-row">
 							<!-- 现金支付 -->
-							<view class="payment-item cash-pay">
+							<view class="payment-item cash-pay" @click="showExpenseAccout(3)">
 								<view class="payment-header">
 									<view class="payment-icon-wrapper">
 										<u-icon class="payment-icon" :size="32" name="red-packet-fill"
@@ -179,7 +197,7 @@
 								</view>
 							</view>
 							<!-- 其他支付 -->
-							<view class="payment-item other-pay">
+							<view class="payment-item other-pay" @click="showExpenseAccout(4)">
 								<view class="payment-header">
 									<view class="payment-icon-wrapper">
 										<u-icon class="payment-icon" :size="32" name="coupon-fill"
@@ -378,7 +396,171 @@
 						</scroll-view>
 					</div>
 
-					<!--支付方式抽屉-->
+					<!--已售货款订单列表抽屉-->
+					<div class="total-money-order-container" v-if="drawerType === 'totalMoneyOrderList'">
+						<!-- 抽屉头部 -->
+						<div class="total-money-header">
+							<div class="total-money-title">
+								<view class="total-money-title-icon">
+									<uni-icons custom-prefix="iconfont" type="icon-yingshouguanli-tongjibaobiao-yingshouduizhang" size="20" color="#55aaff"></uni-icons>
+								</view>
+								<text class="total-money-title-text">已售货款订单列表</text>
+							</div>
+							<div class="total-money-summary" v-if="currentData">
+								<text class="total-money-summary-text">共 {{ currentData.orderList.length }} 个订单，总金额 ¥{{ currentData.totalMoney }}</text>
+							</div>
+						</div>
+
+						<!-- 已售货款订单列表 -->
+						<scroll-view class="total-money-scroll" :style="{ height: (windowHeight - 200) + 'px' }" scroll-y="true">
+							<div class="total-money-order-list">
+								<div class="total-money-order-item" v-for="(order, index) in currentData.orderList" :key="index" @click="openOrderDetail(order)">
+									<div class="total-money-order-header">
+										<div class="total-money-order-info">
+											<text class="total-money-customer-name">{{ order.customName || "散客" }}</text>
+											<text class="total-money-order-time">{{ order.createTime ? order.createTime.replace("T", " ") : "" }}</text>
+										</div>
+										<div class="total-money-order-amounts">
+											<text class="total-money-total-amount">总计: ¥{{ order.payableAmount || 0 }}</text>
+											<text class="total-money-actual-amount">实付: ¥{{ order.actualMoney || 0 }}</text>
+											<text v-if="order.debt > 0" class="total-money-debt-amount">下欠: ¥{{ order.debt }}</text>
+										</div>
+									</div>
+									<div class="total-money-order-detail">
+										<div class="total-money-order-code">
+											<text class="total-money-code-label">订单号:</text>
+											<text class="total-money-code-value">{{ order.accountCode || "-" }}</text>
+										</div>
+										<div class="total-money-order-status">
+											<view class="total-money-status-tag" :class="{ 'debt-status': order.debt > 0, 'paid-status': order.debt <= 0 }">
+												<text class="total-money-status-text">{{ order.debt > 0 ? '部分付款' : '已付款' }}</text>
+											</view>
+										</div>
+									</div>
+								</div>
+								<!-- 空状态 -->
+								<div class="total-money-empty" v-if="!currentData.orderList || currentData.orderList.length === 0">
+									<view class="total-money-empty-icon">
+										<uni-icons type="list" size="40" color="#bdc3c7"></uni-icons>
+									</view>
+									<text class="total-money-empty-text">暂无订单记录</text>
+								</div>
+							</div>
+						</scroll-view>
+					</div>
+
+					<!--收入金额订单列表抽屉-->
+					<div class="receive-money-order-container" v-if="drawerType === 'receiveMoneyOrderList'">
+						<!-- 抽屉头部 -->
+						<div class="receive-money-header">
+							<div class="receive-money-title">
+								<view class="receive-money-title-icon">
+									<uni-icons custom-prefix="iconfont" type="icon-yingshouguanli-tongjibaobiao-yingshouduizhang" size="20" color="#27ae60"></uni-icons>
+								</view>
+								<text class="receive-money-title-text">收入金额订单列表</text>
+							</div>
+							<div class="receive-money-summary" v-if="currentData">
+								<text class="receive-money-summary-text">共 {{ currentData.orderList.filter(order => order.actualMoney > 0).length }} 个有收入订单，总收入 ¥{{ currentData.receiveMoeny }}</text>
+							</div>
+						</div>
+
+						<!-- 收入金额订单列表 -->
+						<scroll-view class="receive-money-scroll" :style="{ height: (windowHeight - 200) + 'px' }" scroll-y="true">
+							<div class="receive-money-order-list">
+								<div class="receive-money-order-item" v-for="(order, index) in currentData.orderList.filter(order => order.actualMoney > 0)" :key="index" @click="openOrderDetail(order)">
+									<div class="receive-money-order-header">
+										<div class="receive-money-order-info">
+											<text class="receive-money-customer-name">{{ order.customName || "散客" }}</text>
+											<text class="receive-money-order-time">{{ order.createTime ? order.createTime.replace("T", " ") : "" }}</text>
+										</div>
+										<div class="receive-money-order-amounts">
+											<text class="receive-money-total-amount">总计: ¥{{ order.payableAmount || 0 }}</text>
+											<text class="receive-money-actual-amount">实收: ¥{{ order.actualMoney || 0 }}</text>
+											<text v-if="order.debt > 0" class="receive-money-debt-amount">下欠: ¥{{ order.debt }}</text>
+										</div>
+									</div>
+									<div class="receive-money-order-detail">
+										<div class="receive-money-order-code">
+											<text class="receive-money-code-label">订单号:</text>
+											<text class="receive-money-code-value">{{ order.accountCode || "-" }}</text>
+										</div>
+										<div class="receive-money-order-status">
+											<view class="receive-money-status-tag" :class="{ 'partial-paid': order.debt > 0, 'full-paid': order.debt <= 0 }">
+												<text class="receive-money-status-text">{{ order.debt > 0 ? '部分收款' : '全额收款' }}</text>
+											</view>
+										</div>
+									</div>
+								</div>
+								<!-- 空状态 -->
+								<div class="receive-money-empty" v-if="!currentData.orderList || currentData.orderList.filter(order => order.actualMoney > 0).length === 0">
+									<view class="receive-money-empty-icon">
+										<uni-icons type="wallet" size="40" color="#bdc3c7"></uni-icons>
+									</view>
+									<text class="receive-money-empty-text">暂无收入记录</text>
+								</div>
+							</div>
+						</scroll-view>
+					</div>
+
+					<!--支付方式收入项抽屉-->
+					<div class="expense-accout-container" v-if="drawerType === 'expenseAccoutList'">
+						<!-- 抽屉头部 -->
+						<div class="expense-accout-header">
+							<div class="expense-accout-title">
+								<view class="expense-accout-title-icon">
+									<uni-icons :type="getPaymentIcon(showExpenseAccoutType)" size="20" :color="getPaymentColor(showExpenseAccoutType)"></uni-icons>
+								</view>
+								<text class="expense-accout-title-text" :style="{ color: getPaymentColor(showExpenseAccoutType) }">{{ getPaymentTypeName(showExpenseAccoutType) }}收入明细</text>
+							</div>
+							<div class="expense-accout-summary" :style="{ backgroundColor: getPaymentBgColor(showExpenseAccoutType), borderColor: getPaymentBorderColor(showExpenseAccoutType) }">
+								<text class="expense-accout-summary-text" :style="{ color: getPaymentColor(showExpenseAccoutType) }">共 {{ expenseAccoutList.length }} 条记录</text>
+							</div>
+						</div>
+
+						<!-- 收入项列表 -->
+						<scroll-view class="expense-accout-scroll" :style="{ height: (windowHeight - 200) + 'px' }" scroll-y="true">
+							<div class="expense-accout-list">
+								<div class="expense-accout-item" 
+									 v-for="(item, index) in expenseAccoutList" 
+									 :key="index"
+									 :class="{ 'clickable': item.accountExpenseType === 1 }"
+									 @click="handleExpenseItemClick(item)">
+									<div class="expense-accout-item-header">
+										<div class="expense-accout-item-info">
+											<text class="expense-accout-item-type">{{ getAccountExpenseTypeText(item.accountExpenseType) }}</text>
+											<text class="expense-accout-create-time">{{ item.createTime ? item.createTime.replace("T", " ") : "" }}</text>
+										</div>
+										<div class="expense-accout-item-amounts">
+											<text class="expense-accout-amount" :class="{ 'income': item.expenseType === 2, 'expense': item.expenseType === 1 }">
+												{{ item.expenseType === 2 ? '+' : '-' }}¥{{ item.expenseNum || 0 }}
+											</text>
+										</div>
+									</div>
+									<div class="expense-accout-item-detail">
+										<div class="expense-accout-direction">
+											<view class="expense-accout-direction-tag" :class="{ 'income-tag': item.expenseType === 2, 'expense-tag': item.expenseType === 1 }">
+												<text class="expense-accout-direction-text">{{ item.expenseType === 2 ? '收入' : '支出' }}</text>
+											</view>
+										</div>
+										<div class="expense-accout-action" v-if="item.accountExpenseType === 1">
+											<view class="expense-accout-action-icon">
+												<uni-icons type="right" size="12" color="#007AFF"></uni-icons>
+											</view>
+											<text class="expense-accout-action-text">查看订单</text>
+										</div>
+									</div>
+								</div>
+								<!-- 空状态 -->
+								<div class="expense-accout-empty" v-if="!expenseAccoutList || expenseAccoutList.length === 0">
+									<view class="expense-accout-empty-icon">
+										<uni-icons type="wallet" size="40" color="#bdc3c7"></uni-icons>
+									</view>
+									<text class="expense-accout-empty-text">暂无收入记录</text>
+								</div>
+							</div>
+						</scroll-view>
+					</div>
+
 					<!--营业额订单抽屉-->
 					<!--还筐、押筐抽屉-->
 				</slot> <!-- 抽屉内容插槽 -->
@@ -419,7 +601,9 @@ export default {
 			currentOrder: {},
 			debtOrderList:[],
 			repayOrderList:[],
-			baskerShowType:1
+			baskerShowType:1,
+			showExpenseAccoutType:1,
+			expenseAccoutList:[]
 		}
 	},
 	beforeMount() {
@@ -448,6 +632,25 @@ export default {
 		clearInterval(this.timer)
 	},
 	methods: {
+		showExpenseAccout(ExpenseAccoutType){
+			this.showExpenseAccoutType = ExpenseAccoutType;
+			duty.GetExpenseAccoutByDutyandType(this.currentDutyId,ExpenseAccoutType).then(res => {
+				console.log("res",res);
+				this.expenseAccoutList = res.data;
+				this.drawerType = 'expenseAccoutList';
+				this.showDrawer = true;
+			})
+		},
+		handleTotalMoneyShow(){
+			// 显示已售货款订单列表，使用currentData.orderList
+			this.drawerType = 'totalMoneyOrderList';
+			this.showDrawer = true;
+		},
+		handleReceiveMoneyShow(){
+			// 显示收入金额订单列表，筛选actualMoney大于0的订单
+			this.drawerType = 'receiveMoneyOrderList';
+			this.showDrawer = true;
+		},
 		handleDebtShow(){
 			duty.getDutyDebtOrder(this.currentDutyId).then(res => {
 				this.debtOrderList = res.data;
@@ -543,6 +746,126 @@ export default {
 			const itemCount = this.filteredItems.length
 			const baseHeight = itemCount > 3 ? 300 : 200
 			return `${baseHeight}rpx`
+		},
+		
+		// 获取账户支出类型文本
+		getAccountExpenseTypeText(type) {
+			switch(type) {
+				case 1:
+					return '下单项';
+				case 2:
+					return '还筐项';
+				case 3:
+					return '还款项';
+				default:
+					return '未知类型';
+			}
+		},
+		
+		// 处理收入项点击事件
+		handleExpenseItemClick(item) {
+			// 只有下单项才可以点击查看订单
+			if (item.accountExpenseType === 1) {
+				// 通过accountId查找对应的订单
+				const order = this.currentData.orderList.find(o => o.id === item.accountId);
+				if (order) {
+					this.openOrderDetail(order);
+				} else {
+					// 如果在当前订单列表中找不到，可以通过API获取
+					cashierOrder.GetOrderByAccountId(item.accountId).then(res => {
+						this.currentOrder = res.data;
+						this.currentOrder.module = JSON.parse(res.data.module);
+						this.currentOrder.module = this.currentOrder.module.filter(item => item.type !== 4).sort((a, b) => a.type - b.type);
+						this.drawerType = 'orderDetail';
+						this.showDrawer = true;
+					}).catch(err => {
+						uni.showToast({
+							title: '订单信息获取失败',
+							icon: 'none'
+						});
+					});
+				}
+			}
+		},
+		
+		// 获取支付方式名称
+		getPaymentTypeName(type) {
+			switch(type) {
+				case 1:
+					return '微信支付';
+				case 2:
+					return '支付宝';
+				case 3:
+					return '现金支付';
+				case 4:
+					return '其他支付';
+				default:
+					return '支付方式';
+			}
+		},
+		
+		// 获取支付方式图标
+		getPaymentIcon(type) {
+			switch(type) {
+				case 1:
+					return 'weixin-fill';
+				case 2:
+					return 'zhifubao';
+				case 3:
+					return 'red-packet-fill';
+				case 4:
+					return 'coupon-fill';
+				default:
+					return 'wallet-filled';
+			}
+		},
+		
+		// 获取支付方式颜色
+		getPaymentColor(type) {
+			switch(type) {
+				case 1:
+					return '#07c160'; // 微信绿
+				case 2:
+					return '#1677ff'; // 支付宝蓝
+				case 3:
+					return '#ff6b35'; // 现金橙
+				case 4:
+					return '#f57c00'; // 其他橙色
+				default:
+					return '#007AFF';
+			}
+		},
+		
+		// 获取支付方式背景色
+		getPaymentBgColor(type) {
+			switch(type) {
+				case 1:
+					return '#f0fff4'; // 微信浅绿背景
+				case 2:
+					return '#f0f8ff'; // 支付宝浅蓝背景
+				case 3:
+					return '#fff8f0'; // 现金浅橙背景
+				case 4:
+					return '#fff8e1'; // 其他浅黄背景
+				default:
+					return '#f8f9fa';
+			}
+		},
+		
+		// 获取支付方式边框色
+		getPaymentBorderColor(type) {
+			switch(type) {
+				case 1:
+					return '#b3ffcc'; // 微信绿边框
+				case 2:
+					return '#b3d9ff'; // 支付宝蓝边框
+				case 3:
+					return '#ffcc99'; // 现金橙边框
+				case 4:
+					return '#ffcc80'; // 其他黄边框
+				default:
+					return '#e9ecef';
+			}
 		}
 	}
 }
@@ -861,10 +1184,18 @@ export default {
 	font-weight: 600;
 }
 
-// 其他费用卡片
-.card3 {
+// 其他费用卡片容器
+.other-expenses-container {
 	width: 100%;
 	margin-top: 3px;
+	display: flex;
+	gap: 6rpx;
+}
+
+// 其他费用卡片
+.card3 {
+	flex: 1;
+	height: 100%;
 }
 
 .card3-header {
@@ -885,8 +1216,26 @@ export default {
 }
 
 .empty-text {
-	font-size: 24rpx;
+	font-size: 20px;
 	color: #bdc3c7;
+}
+
+// 费用支出卡片特殊样式
+.expense-card .card3-header {
+	
+}
+
+.expense-card .empty-text {
+	color: #e74c3c;
+}
+
+// 备用金卡片特殊样式
+.reserve-card .card3-header {
+	
+}
+
+.reserve-card .empty-text {
+	color: #f39c12;
 }
 
 // 右侧面板
@@ -1053,8 +1402,8 @@ export default {
 	pointer-events: none;
 	/* 初始不允许交互 */
 	z-index: 999;
-	margin-top: 40rpx;
-	height: calc(100% - 40rpx);
+	margin-top: 50rpx;
+	height: calc(100% - 50rpx);
 }
 
 /* 遮罩层 */
@@ -1182,7 +1531,6 @@ export default {
 .order-detail-container {
 	padding: 20rpx;
 	background-color: #fff;
-	border-radius: 12rpx;
 	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
 }
 
@@ -1261,7 +1609,6 @@ export default {
 .debt-order-container {
 	padding: 20rpx;
 	background-color: #fff;
-	border-radius: 12rpx;
 	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
 	height: 100%;
 	display: flex;
@@ -1439,7 +1786,6 @@ export default {
 .repay-order-container {
 	padding: 20rpx;
 	background-color: #fff;
-	border-radius: 12rpx;
 	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
 	height: 100%;
 	display: flex;
@@ -1558,6 +1904,603 @@ export default {
 }
 
 .repay-empty-text {
+	font-size: 14rpx;
+	color: #bdc3c7;
+	text-align: center;
+}
+
+/* 已售货款订单抽屉样式 */
+.total-money-order-container {
+	padding: 20rpx;
+	background-color: #fff;
+	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.total-money-header {
+	padding-bottom: 20rpx;
+	border-bottom: 1rpx solid #eee;
+	margin-bottom: 20rpx;
+}
+
+.total-money-title {
+	display: flex;
+	align-items: center;
+	gap: 10rpx;
+	margin-bottom: 10rpx;
+}
+
+.total-money-title-icon {
+	display: flex;
+	align-items: center;
+}
+
+.total-money-title-text {
+	font-size: 18rpx;
+	font-weight: bold;
+	color: #2c3e50;
+}
+
+.total-money-summary {
+	padding: 8rpx 12rpx;
+	background-color: #f0f8ff;
+	border-radius: 6rpx;
+	border: 1rpx solid #b3d9ff;
+}
+
+.total-money-summary-text {
+	font-size: 12rpx;
+	color: #0066cc;
+	font-weight: 500;
+}
+
+.total-money-scroll {
+	flex: 1;
+}
+
+.total-money-order-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12rpx;
+}
+
+.total-money-order-item {
+	background-color: #f8f9fa;
+	border: 1rpx solid #e9ecef;
+	border-radius: 8rpx;
+	padding: 16rpx;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.total-money-order-item:hover {
+	background-color: #f1f3f5;
+	border-color: #55aaff;
+	box-shadow: 0 2rpx 8rpx rgba(85, 170, 255, 0.1);
+}
+
+.total-money-order-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 12rpx;
+}
+
+.total-money-order-info {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 4rpx;
+}
+
+.total-money-customer-name {
+	font-size: 14rpx;
+	font-weight: bold;
+	color: #2c3e50;
+}
+
+.total-money-order-time {
+	font-size: 10rpx;
+	color: #7f8c8d;
+}
+
+.total-money-order-amounts {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 4rpx;
+}
+
+.total-money-total-amount {
+	font-size: 11rpx;
+	color: #6c757d;
+}
+
+.total-money-actual-amount {
+	font-size: 14rpx;
+	font-weight: bold;
+	color: #27ae60;
+}
+
+.total-money-debt-amount {
+	font-size: 12rpx;
+	font-weight: bold;
+	color: #e74c3c;
+}
+
+.total-money-order-detail {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.total-money-order-code {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+}
+
+.total-money-code-label {
+	font-size: 10rpx;
+	color: #6c757d;
+}
+
+.total-money-code-value {
+	font-size: 10rpx;
+	color: #2c3e50;
+	font-family: 'Courier New', monospace;
+}
+
+.total-money-order-status {
+	display: flex;
+	align-items: center;
+}
+
+.total-money-status-tag {
+	border-radius: 4rpx;
+	padding: 2rpx 8rpx;
+}
+
+.total-money-status-tag.paid-status {
+	background-color: #f0fff4;
+	border: 1rpx solid #b3ffcc;
+}
+
+.total-money-status-tag.debt-status {
+	background-color: #fef2f2;
+	border: 1rpx solid #fecaca;
+}
+
+.total-money-status-text {
+	font-size: 10rpx;
+	font-weight: 500;
+}
+
+.paid-status .total-money-status-text {
+	color: #16a34a;
+}
+
+.debt-status .total-money-status-text {
+	color: #dc2626;
+}
+
+.total-money-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60rpx 20rpx;
+	gap: 16rpx;
+}
+
+.total-money-empty-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.total-money-empty-text {
+	font-size: 14rpx;
+	color: #bdc3c7;
+	text-align: center;
+}
+
+/* 收入金额订单抽屉样式 */
+.receive-money-order-container {
+	padding: 20rpx;
+	background-color: #fff;
+	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.receive-money-header {
+	padding-bottom: 20rpx;
+	border-bottom: 1rpx solid #eee;
+	margin-bottom: 20rpx;
+}
+
+.receive-money-title {
+	display: flex;
+	align-items: center;
+	gap: 10rpx;
+	margin-bottom: 10rpx;
+}
+
+.receive-money-title-icon {
+	display: flex;
+	align-items: center;
+}
+
+.receive-money-title-text {
+	font-size: 18rpx;
+	font-weight: bold;
+	color: #2c3e50;
+}
+
+.receive-money-summary {
+	padding: 8rpx 12rpx;
+	background-color: #f0fff4;
+	border-radius: 6rpx;
+	border: 1rpx solid #b3ffcc;
+}
+
+.receive-money-summary-text {
+	font-size: 12rpx;
+	color: #16a34a;
+	font-weight: 500;
+}
+
+.receive-money-scroll {
+	flex: 1;
+}
+
+.receive-money-order-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12rpx;
+}
+
+.receive-money-order-item {
+	background-color: #f8f9fa;
+	border: 1rpx solid #e9ecef;
+	border-radius: 8rpx;
+	padding: 16rpx;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.receive-money-order-item:hover {
+	background-color: #f1f3f5;
+	border-color: #27ae60;
+	box-shadow: 0 2rpx 8rpx rgba(39, 174, 96, 0.1);
+}
+
+.receive-money-order-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 12rpx;
+}
+
+.receive-money-order-info {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 4rpx;
+}
+
+.receive-money-customer-name {
+	font-size: 14rpx;
+	font-weight: bold;
+	color: #2c3e50;
+}
+
+.receive-money-order-time {
+	font-size: 10rpx;
+	color: #7f8c8d;
+}
+
+.receive-money-order-amounts {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 4rpx;
+}
+
+.receive-money-total-amount {
+	font-size: 11rpx;
+	color: #6c757d;
+}
+
+.receive-money-actual-amount {
+	font-size: 14rpx;
+	font-weight: bold;
+	color: #16a34a;
+}
+
+.receive-money-debt-amount {
+	font-size: 12rpx;
+	font-weight: bold;
+	color: #e74c3c;
+}
+
+.receive-money-order-detail {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.receive-money-order-code {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+}
+
+.receive-money-code-label {
+	font-size: 10rpx;
+	color: #6c757d;
+}
+
+.receive-money-code-value {
+	font-size: 10rpx;
+	color: #2c3e50;
+	font-family: 'Courier New', monospace;
+}
+
+.receive-money-order-status {
+	display: flex;
+	align-items: center;
+}
+
+.receive-money-status-tag {
+	border-radius: 4rpx;
+	padding: 2rpx 8rpx;
+}
+
+.receive-money-status-tag.full-paid {
+	background-color: #f0fff4;
+	border: 1rpx solid #b3ffcc;
+}
+
+.receive-money-status-tag.partial-paid {
+	background-color: #fff8e1;
+	border: 1rpx solid #ffcc80;
+}
+
+.receive-money-status-text {
+	font-size: 10rpx;
+	font-weight: 500;
+}
+
+.full-paid .receive-money-status-text {
+	color: #16a34a;
+}
+
+.partial-paid .receive-money-status-text {
+	color: #f57c00;
+}
+
+.receive-money-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60rpx 20rpx;
+	gap: 16rpx;
+}
+
+.receive-money-empty-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.receive-money-empty-text {
+	font-size: 14rpx;
+	color: #bdc3c7;
+	text-align: center;
+}
+
+/* 支付方式收入项抽屉样式 */
+.expense-accout-container {
+	padding: 20rpx;
+	background-color: #fff;
+	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.expense-accout-header {
+	padding-bottom: 20rpx;
+	border-bottom: 1rpx solid #eee;
+	margin-bottom: 20rpx;
+}
+
+.expense-accout-title {
+	display: flex;
+	align-items: center;
+	gap: 10rpx;
+	margin-bottom: 10rpx;
+}
+
+.expense-accout-title-icon {
+	display: flex;
+	align-items: center;
+}
+
+.expense-accout-title-text {
+	font-size: 18rpx;
+	font-weight: bold;
+	color: #2c3e50;
+}
+
+.expense-accout-summary {
+	padding: 8rpx 12rpx;
+	background-color: #f8f9fa;
+	border-radius: 6rpx;
+	border: 1rpx solid #e9ecef;
+}
+
+.expense-accout-summary-text {
+	font-size: 12rpx;
+	color: #6c757d;
+	font-weight: 500;
+}
+
+.expense-accout-scroll {
+	flex: 1;
+}
+
+.expense-accout-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12rpx;
+}
+
+.expense-accout-item {
+	background-color: #f8f9fa;
+	border: 1rpx solid #e9ecef;
+	border-radius: 8rpx;
+	padding: 16rpx;
+	transition: all 0.2s ease;
+}
+
+.expense-accout-item.clickable {
+	cursor: pointer;
+}
+
+.expense-accout-item.clickable:hover {
+	background-color: #f1f3f5;
+	border-color: #007AFF;
+	box-shadow: 0 2rpx 8rpx rgba(0, 122, 255, 0.1);
+	transform: translateY(-1rpx);
+}
+
+.expense-accout-item.clickable:active {
+	transform: translateY(0);
+	box-shadow: 0 1rpx 4rpx rgba(0, 122, 255, 0.1);
+}
+
+.expense-accout-item-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 12rpx;
+}
+
+.expense-accout-item-info {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 4rpx;
+}
+
+.expense-accout-item-type {
+	font-size: 14rpx;
+	font-weight: 600;
+	color: #2c3e50;
+}
+
+.expense-accout-create-time {
+	font-size: 10rpx;
+	color: #7f8c8d;
+}
+
+.expense-accout-item-amounts {
+	display: flex;
+	align-items: center;
+}
+
+.expense-accout-amount {
+	font-size: 16rpx;
+	font-weight: bold;
+}
+
+.expense-accout-amount.income {
+	color: #16a34a;
+}
+
+.expense-accout-amount.expense {
+	color: #dc2626;
+}
+
+.expense-accout-item-detail {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.expense-accout-action {
+	display: flex;
+	align-items: center;
+	gap: 4rpx;
+}
+
+.expense-accout-action-icon {
+	display: flex;
+	align-items: center;
+}
+
+.expense-accout-action-text {
+	font-size: 10rpx;
+	color: #007AFF;
+	font-weight: 500;
+}
+
+.expense-accout-direction {
+	display: flex;
+	align-items: center;
+}
+
+.expense-accout-direction-tag {
+	border-radius: 4rpx;
+	padding: 2rpx 8rpx;
+}
+
+.expense-accout-direction-tag.income-tag {
+	background-color: #f0fff4;
+	border: 1rpx solid #b3ffcc;
+}
+
+.expense-accout-direction-tag.expense-tag {
+	background-color: #fef2f2;
+	border: 1rpx solid #fecaca;
+}
+
+.expense-accout-direction-text {
+	font-size: 10rpx;
+	font-weight: 500;
+}
+
+.income-tag .expense-accout-direction-text {
+	color: #16a34a;
+}
+
+.expense-tag .expense-accout-direction-text {
+	color: #dc2626;
+}
+
+.expense-accout-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60rpx 20rpx;
+	gap: 16rpx;
+}
+
+.expense-accout-empty-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.expense-accout-empty-text {
 	font-size: 14rpx;
 	color: #bdc3c7;
 	text-align: center;
