@@ -14,11 +14,11 @@
 			<view style="flex: 1;">
 				<view style="display: flex;">
 					<view class="time-select-show">
-						<uni-datetime-picker v-model="dataSelectBeiginTime" type="date"
+						<uni-datetime-picker v-model="dataSelectBeiginTime" type="date" @change="changeTimeTab(1)"
 							style="font-weight: bold;margin-right: 40rpx;"><uni-icons custom-prefix="iconfont"
 								type="icon-rili1" size="20" color="#000000"
 								style="font-weight: bold; margin-left: 5rpx;margin-right: 5rpx;"></uni-icons>{{dataSelectBeiginTime}}</uni-datetime-picker>
-						<uni-datetime-picker v-model="dateSelectEndTime" type="date" v-if="time_select_type===1"
+						<uni-datetime-picker v-model="dateSelectEndTime" type="date" v-if="time_select_type===1" @change="changeTimeTab(1)"
 							style="font-weight: bold;margin-right: 60rpx;"> <text
 								style="color: black;margin-right: 10rpx;">至</text>
 							{{dateSelectEndTime}}</uni-datetime-picker>
@@ -52,9 +52,9 @@
 						</view>
 					</view>
 					<view class="card-body">
-						<view class="card-grid"><text class="left">销售数量</text><text class="right">0</text></view>
+						<view class="card-grid"><text class="left">销售数量</text><text class="right">{{tableStatic.orderNum}}</text></view>
 						<view class="card-grid"><text class="left">销售重量</text><text class="right">0</text></view>
-						<view class="card-grid"><text class="left">优惠</text><text class="right">0</text></view>
+						<view class="card-grid"><text class="left">优惠</text><text class="right">{{ tableStatic.discountAmount }}</text></view>
 					</view>
 				</view>
 				<!-- 卡片2-->
@@ -97,8 +97,8 @@
 						</view>
 					</view>
 					<view class="card-body">
-						<view class="grid" style="background-color: #dddddd; color: darkred;" ><view>待付款</view><view >0</view></view>
-						<view class="grid" style="background-color: #dddddd;color: green;"  ><view>还款</view><view>0</view></view>
+						<view class="grid" style="color: darkred;" ><view>待付款</view><view >0</view></view>
+						<view class="grid" style="color: green;"  ><view>还款</view><view>0</view></view>
 					</view>
 				</view>
 			</view>
@@ -112,7 +112,7 @@
 					</view>
 
 					<view class="content">
-						<view v-if="currentTableTab===1||currentTableTab===3">
+						<view v-if="currentTableTab===1">
 							<view class="step1-table-header">
 								<view style="flex: 2;">
 									车次/创建时间
@@ -163,6 +163,39 @@
 								</scroll-view>
 							</view>
 						</view>
+						<view v-if="currentTableTab===3||currentTableTab===2">
+							<view class="step1-table-header">
+								<view style="flex: 2;">
+									货品名称
+								</view>
+								<view style="flex: 1;text-align: center;">
+									已售重量
+								</view>
+								<view style="flex: 1;text-align: center;">
+									货款
+								</view>
+							</view>
+							<view class="step1-table-content">
+								<scroll-view class="step1-table-scrollArea" scroll-y="true"
+									:style="{ height: tableScrollHeight + 'px' }">
+									<view class="step1-table-content-item" v-for="item in batchProfitSimpleList">
+										<view style="flex: 2; display: flex;align-items: center">
+											<view>
+												{{item.name}}
+											</view>
+										</view>
+										<view
+											style="flex: 1;display: flex; justify-content: center;align-items: center;font-size: 18rpx;">
+											{{item.weightSold}}
+										</view>
+										<view
+											style="flex: 1;display: flex; justify-content: center;align-items: center;font-size: 18rpx;">
+											{{item.amountSale}}
+										</view>
+									</view>
+								</scroll-view>
+							</view>
+						</view>
 					</view>
 				</view>
 			</view>
@@ -177,8 +210,8 @@
 			<view class="drawer-content" :class="{ 'show': showDrawer }">
 				<slot>
 					<view class="drawer-content-header">
-						<view>
-							<uni-icons custom-prefix="iconfont" type="icon-guanbi" size="25" color="#ca0000"
+						<view >
+							<uni-icons custom-prefix="iconfont" type="icon-guanbi" size="25" color="#ca0000" @click="closeDrawer"
 								style="font-weight: bold;margin-left: 10rpx;margin-right: 10rpx; "></uni-icons>
 							<text>车次明细</text>
 						</view>
@@ -275,7 +308,7 @@
 					name: "代销货品",
 					value: 2,
 				}, {
-					name: "自营车次",
+					name: "自营货品",
 					value: 3,
 				}],
 				vesionType: 1, // 获取版本类型，默认为1
@@ -291,7 +324,7 @@
 					name: "代销货品",
 					value: 2,
 				}, {
-					name: "自营车次",
+					name: "自营货品",
 					value: 3,
 				}];
 			}
@@ -306,18 +339,20 @@
 			}
 			else if(this.vesionType == 3){
 				this.tabValue = [{
-					name: "自营车次",
+					name: "自营货品",
 					value: 1,
 				}];
 			}
 		},
 		mounted() {
 			this.currentCompanyId = uni.getStorageSync('companyId');
-			//获取批次利润简略列表
-			this.getAssistProfitSimpleList();
 
 			//获取今日数据
 			this.getTodayStatic()
+
+			//获取批次利润简略列表
+			this.getAssistProfitSimpleList();
+
 
 			this.tableScrollHeight = uni.getWindowInfo().windowHeight - 220;
 		},
@@ -332,11 +367,14 @@
 			//切换时间选择
 			changeTimeTab(item) {
 				this.time_select_type = item;
-				if (this.time_select_type === 1) {} else if (this.time_select_type === 2) {
+				if (this.time_select_type === 1) {
+
+				} else if (this.time_select_type === 2) {
 					this.getMoneyStatic()
 				} else if (this.time_select_type === 3) {
 					this.getTodayStatic()
 				}
+				this.refreshBatchStatic()
 			},
 			// 获取本月数据
 			getMoneyStatic() {
@@ -393,18 +431,24 @@
 				})
 			},
 			tabChange(e) {
-				console.log("e", e)
 				this.currentTableTab = e.value
+				this.refreshBatchStatic()
+			},
+			//右边货品刷新
+			refreshBatchStatic(){
 				if (this.currentTableTab === 1) {
 					this.getAssistProfitSimpleList()
 				} else if (this.currentTableTab === 3) {
-					this.getPurComProfitByComIdPage()
+					this.GetEmployCommodityStatic()
+				}else if(this.currentTableTab === 2){
+					this.getAssistCommodityStatic()
 				}
 			},
 			//获取批次利润简略列表
 			getAssistProfitSimpleList() {
-				tableApi.getBatchProfitSimpleByCompanyId(this.currentCompanyId).then(res => {
-					console.log("res", res)
+				const beginTime = `${this.dataSelectBeiginTime} 00:00:00`;
+				const endTime = `${this.dateSelectEndTime} 23:59:59`;
+				tableApi.getBatchProfitSimpleByCompanyId(this.currentCompanyId,beginTime,endTime).then(res => {
 					this.batchProfitSimpleList = res.data
 
 					this.batchProfitSimpleList = this.batchProfitSimpleList.sort((a, b) => {
@@ -412,10 +456,23 @@
 					});
 				})
 			},
-			//获取自营商品入库简略列表
-			getPurComProfitByComIdPage() {
-				tableApi.getPurchaseEmployOrderProfitSimple(this.currentCompanyId).then(res => {
-					console.log("res", res)
+			//获取自营商品简略列表
+			GetEmployCommodityStatic() {
+				const beginTime = `${this.dataSelectBeiginTime} 00:00:00`;
+				const endTime = `${this.dateSelectEndTime} 23:59:59`;
+				tableApi.GetEmployCommodityStatic(this.currentCompanyId,beginTime,endTime).then(res => {
+					console.log("GetEmployCommodityStatic.res", res)
+					this.batchProfitSimpleList = res.data
+					// this.employProfitList.push()
+				})
+			},
+			//获取代销商品简略列表
+			getAssistCommodityStatic() {
+				console.log("getAssistCommodityStatic")
+				const beginTime = `${this.dataSelectBeiginTime} 00:00:00`;
+				const endTime = `${this.dateSelectEndTime} 23:59:59`;
+				tableApi.getAssistCommodityStatic(this.currentCompanyId,beginTime,endTime).then(res => {
+					console.log("getAssistCommodityStatic.res", res)
 					this.batchProfitSimpleList = res.data
 					// this.employProfitList.push()
 				})
@@ -541,8 +598,8 @@
 			font-size: 10rpx;
 			margin-top: auto;
 			flex: 1;
-			background-color: lightgrey;
-			border-radius: 10rpx;
+			background-color: rgb(223, 223, 223);
+			border-radius: 5px;
 			margin: 10rpx;
 			padding: 10rpx;
 			padding-left: 5rpx;
@@ -648,8 +705,9 @@
 			flex: 1;
 			display: flex;
 			justify-content: space-between;
+			background-color: rgb(223, 223, 223);
 			margin: 10rpx;
-			border-radius: 10rpx;
+			border-radius: 5px;
 			padding: 15rpx;
 			font-weight: bold;
 			font-size: 13rpx;
@@ -850,10 +908,11 @@
 	.drawer-content-table-header-grid {
 		padding: 8px; 
 		text-align: center;
+		font-weight: bold;
 	}
 	.drawer-content-table-grid {
 		padding: 8px;
 		text-align: center;
-		font-weight: 100;
+		font-weight: 800;
 	}
 </style>

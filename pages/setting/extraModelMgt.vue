@@ -3,15 +3,13 @@
 		<div class="list-container">
 			<ul>
 				<li v-for="(item, index) in items" :key="index" class="list-item">
-					<div class="item-container"> <!-- 项目名称和小字 -->
-						<span>{{ item.name }}</span>
-						<span class="small-text">绑定:{{item.typeName}}</span> <!-- 下方的小字 -->
+					<div class="item-container"> <!-- 项目名称和重量 -->
+						<div class="item-name">{{ item.name }}</div>
+						<text class="item-weight" >重量: {{item.weight}}</text>
 					</div>
-					<div class="amount">金额：{{item.amount}}</div> <!-- 中间的金额 -->
+					<div class="amount">单价：{{item.amount}}</div> <!-- 中间的金额 -->
 					<div class="button-group"> <!-- 按钮组 -->
-						<u-button v-if="item.status==0" type="error" text="删除" @click="deleteItem(item)"></u-button>
-						<u-button v-if="item.status==0" type="primary" text="启动" @click="activeModel(item)"></u-button>
-						<u-button v-if="item.status==1" type="error" text="关闭" @click="DeactiveModel(item)"></u-button>
+						<u-button type="error" text="删除" @click="deleteItem(item)"></u-button>
 					</div>
 				</li>
 			</ul>
@@ -30,14 +28,17 @@
 					<u-form-item label="金额" prop="amount" borderBottom ref="item2">
 						<u--input v-model="addedModel.amount" border="none"></u--input>
 					</u-form-item>
-					<u-form-item label="类型" prop="type" borderBottom ref="item1">
+					<u-form-item label="重量" prop="weight" borderBottom ref="item3">
+						<u--input v-model="addedModel.weight" border="none" placeholder="可选，输入重量"></u--input>
+					</u-form-item>
+					<!-- <u-form-item label="类型" prop="type" borderBottom ref="item4">
 						<u-radio-group v-model="addedModel.type" placement="row">
 							<u-radio shape="square" label="数量" name="1"></u-radio>
 							<u-radio shape="square" label="总重" name="2"></u-radio>
 							<u-radio shape="square" label="净重" name="3"></u-radio>
 						</u-radio-group>
 
-					</u-form-item>
+					</u-form-item> -->
 
 				</u--form>
 				<div class="button-group" style="margin-top: 30rpx;">
@@ -67,7 +68,8 @@
 				editItem: [], // 编辑中的项目内容
 				isAddVisible: false,
 				addedModel: {
-					type: "1"
+					type: "1",
+					weight: ""
 				},
 				rules: {
 					'name': {
@@ -83,30 +85,13 @@
 			this.refreshItems();
 		},
 		methods: {
-			activeModel(item){
-				let that = this;
-				category.activeExtralgood(this.conpanyId,item.id).then(res => {
-					that.refreshItems();
-				})
-			},
-			DeactiveModel(item){
-				let that = this;
-				category.DeactiveModel(this.conpanyId,item.id).then(res => {
-					that.refreshItems();
-				})
-			},
 			refreshItems() {
 				let that = this;
 				category.getallextralgood(this.conpanyId).then(res => {
 					that.items = res.data;
-					that.items.forEach((x) => {
-						if (x.type == 1) {
-							x.typeName = "数量"
-						}
-
-					})
+					// 按名称排序
 					that.items.sort((a, b) => {
-						return b.status - a.status; // 降序排序
+						return a.name.localeCompare(b.name);
 					});
 				})
 			},
@@ -127,7 +112,8 @@
 			},
 			closeAdded() {
 				this.addedModel = {
-					type: "1"
+					type: "1",
+					weight: ""
 				};
 				this.isAddVisible = false;
 			},
@@ -139,6 +125,12 @@
 				var modelParam  = JSON.parse(JSON.stringify(this.addedModel))
 				modelParam.type = parseFloat(modelParam.type);
 				modelParam.amount = parseFloat(modelParam.amount);
+				// 处理重量字段，如果为空则不传递
+				if (modelParam.weight && modelParam.weight.trim() !== "") {
+					modelParam.weight = parseFloat(modelParam.weight);
+				} else {
+					delete modelParam.weight;
+				}
 				category.updateExtralgood(modelParam).then(res => {
 					if(res.code===200){
 						uni.showToast({
@@ -146,7 +138,7 @@
 								icon: 'none',
 								duration: 2000})
 								that.refreshItems();
-								that.isAddVisible = false;
+								that.closeAdded();
 					}else{
 						uni.showToast({
 							title: res.msg,
@@ -162,11 +154,11 @@
 
 <style scoped>
 	.list-container {
-		padding: 20px;
-		background-color: #f9f9f9;
-		border: 1px solid #ddd;
-		border-radius: 5px;
-		max-height: 300px;
+		padding: 16px;
+		background-color: #f8f9fa;
+		border: none;
+		border-radius: 12px;
+		max-height: 350px;
 		/* 设置最大高度 */
 		overflow-y: auto;
 		/* 允许垂直滚动 */
@@ -178,14 +170,28 @@
 	}
 
 	.list-item {
-		padding: 10px;
-		border-bottom: 1px solid #ddd;
+		padding: 16px;
+		border-bottom: 1px solid #f0f2f5;
 		display: flex;
 		/* 使用 Flexbox 布局 */
 		align-items: center;
 		/* 垂直居中对齐 */
 		justify-content: space-between;
 		/* 在主轴上均匀分配空间 */
+		background: #fff;
+		margin-bottom: 8px;
+		border-radius: 8px;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+		transition: all 0.3s ease;
+	}
+
+	.list-item:hover {
+		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+		transform: translateY(-1px);
+	}
+
+	.list-item:last-child {
+		margin-bottom: 0;
 	}
 
 	.item-container {
@@ -194,25 +200,39 @@
 		/* 垂直排列 */
 		flex: 1;
 		/* 使 item-container 占据剩余空间 */
+		justify-content: center;
 	}
 
-	.small-text {
-		font-size: 12px;
-		/* 设置小字的字体大小 */
-		color: #888;
-		/* 设置小字的颜色 */
-		margin-top: 5px;
-		/* 设置小字与上方文本的间距 */
+	.item-name {
+		font-size: 16px;
+		font-weight: 600;
+		color: #333;
+		margin-bottom: 4px;
+	}
+
+	.item-weight {
+		font-size: 15px;
+		color: #2979ff;
+		padding: 4px;
+		border-radius: 5px;
+		width: 100px;
+		display: inline-block;
+		font-weight: 500;
 	}
 
 	.amount {
-		margin-right: 100rpx;
-		font-size: 14px;
+		margin-right: 60rpx;
+		font-size: 15px;
 		/* 设置金额的字体大小 */
-		color: #333;
+		color: #e91e63;
 		/* 设置金额的颜色 */
+		font-weight: 600;
 		flex: 0 1 auto;
 		/* 使金额在中间 */
+		background: #fce4ec;
+		padding: 6px 12px;
+		border-radius: 16px;
+		border: 1px solid #f8bbd9;
 	}
 
 	.button-group {
@@ -225,9 +245,11 @@
 	.add-button-container {
 		display: flex;
 		/* 使用 Flexbox 布局 */
-		margin-top: 20px;
+		justify-content: center;
+		margin-top: 16px;
 		/* 设置与列表的间距 */
-		margin-left: 100rpx;
+		padding-top: 16px;
+		border-top: 1px solid #e9ecef;
 	}
 
 	input {

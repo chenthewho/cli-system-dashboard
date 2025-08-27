@@ -225,7 +225,7 @@
 										<uni-icons custom-prefix="iconfont" type="icon-ehl_sanlunche" size="30"
 											color="#00aaff"
 											style="margin-right: 5rpx;margin-left: 5rpx;margin-top: 3px;"></uni-icons>
-										<div style="margin-top: 5rpx;color:#00aaff ;">运费{{shippingFee > 0 ? '：' + shippingFee + '元' : ''}}</div>
+										<div style="margin-top: 5rpx;color:#00aaff ;">运费{{cashier.shippingFee > 0 ? '：' + cashier.shippingFee + '元' : ''}}</div>
 									</div>
 								<div class="footer-item footer-right">
 									<div class="btn btn-primary-plain btn-submit"
@@ -1143,6 +1143,7 @@
 					collectAmount: 0, // 优惠后金额
 					adjustAmount: 0, // 调整金额
 					payableAmount: 0, // 应收
+					shippingFee:0, //运费
 					remark: '',
 					memberId: '',
 					member: {},
@@ -1233,8 +1234,6 @@
 				extraModel: [],
 				editCardExtralModel: [],
 				goodSelect: [],
-				// 运费相关数据
-				shippingFee: 0,
 				shippingModalVisible: false,
 				tempShippingFee: 0
 			}
@@ -1255,7 +1254,7 @@
 		methods: {
 			// 运费相关方法
 			showShippingModal() {
-				this.tempShippingFee = this.shippingFee;
+				this.tempShippingFee = this.cashier.shippingFee;
 				this.shippingModalVisible = true;
 			},
 			cancelShipping() {
@@ -1264,7 +1263,7 @@
 			},
 			confirmShipping() {
 				if (this.tempShippingFee >= 0) {
-					this.shippingFee = parseFloat(this.tempShippingFee);
+					this.cashier.shippingFee = parseFloat(this.tempShippingFee);
 					this.shippingModalVisible = false;
 					this.tempShippingFee = 0;
 					this.reCountGoodSelect(); // 重新计算总金额
@@ -1285,10 +1284,15 @@
 				console.log('运费输入框获得焦点');
 			},
 			editCardExtraModelSelct(e) {
+
 				this.editingCard.extralModel = JSON.parse(JSON.stringify(this.editCardExtralModel[e]));
+				console.log("this.editingCard.extralModel",this.editingCard.extralModel)
                 							//押筐数量处理
 							if (this.editingCard.extralModel) {
 								this.editingCard.extralModel.quantity = this.editingCard.quantity;
+								if(this.editingCard.extralModel.weight){	
+									this.editingCard.carweight = this.editingCard.extralModel.quantity*this.editingCard.extralModel.weight;
+								}
 							}
 			},
 			onLoadMethod() {
@@ -1599,7 +1603,7 @@
 				var txt = myvalue == null || (myvalueStr === '0' && val != ".") || myvalue == undefined ? '' : myvalue;
 
 				if (val === "+" || val === "-") {
-					txt = eval(txt);
+					txt = eval(txt);	
 				}
 				myvalue = txt + val.toString();
 				switch (this.custominputFocusIndex) {
@@ -1616,6 +1620,9 @@
 							//押筐数量处理
 							if (this.editingCard.extralModel) {
 								this.editingCard.extralModel.quantity = this.editingCard.quantity;
+								if(this.editingCard.extralModel.weight){
+									this.editingCard.carweight =parseFloat(this.editingCard.carweight)+parseFloat(this.editingCard.extralModel.quantity)*parseFloat(this.editingCard.extralModel.weight);
+								}
 							}
 							console.log("this.editingCard.initWeight",this.editingCard);
 							//固定重量处理
@@ -1692,6 +1699,9 @@
 							//押筐数量处理
 							if (this.editingCard.extralModel) {
 								this.editingCard.extralModel.quantity = this.editingCard.quantity;
+								if(this.editingCard.extralModel.weight){
+									this.editingCard.carweight =parseFloat(this.editingCard.carweight)+parseFloat(this.editingCard.extralModel.quantity)*parseFloat(this.editingCard.extralModel.weight);
+								}
 							}
 						}
 						break;
@@ -1997,6 +2007,9 @@
 				this.editingCard = e;
 				if (this.editingCard.extralModel) {
 					this.editingCard.extralModel.quantity = this.editingCard.quantity;
+					if(this.editingCard.extralModel.weight){
+						this.editingCard.carweight = this.editingCard.extralModel.quantity*this.editingCard.extralModel.weight;
+					}
 				} else {
 					this.editingCard.extralModel = {
 						name: "空",
@@ -2113,6 +2126,15 @@
 						console.log(res.data)
 
 						for (let i = 0; i < res.data.length; i++) {
+
+							if ((res.data[i].saleWay === 1 || res.data[i].saleWay === 2) && res.data[i].commoditySpecs != null && res.data[i].commoditySpecs.length > 0) {
+								res.data[i].commoditySpec = res.data[i].commoditySpecs[0];
+							}
+							if (res.data[i].saleWay === 3) {
+								res.data[i].commoditySpecs = res.data[i].commoditySpecs;
+							}
+
+
 							this.commidityList.push({
 								id: res.data[i].id,
 								key: i,
@@ -2126,16 +2148,10 @@
 								outPutPurchaseInventories: res.data[i].outPutPurchaseInventories,
 								unit: res.data[i].unit,
 								initWeight: res.data[i].initWeight,
-								commoditySpecs: res.data[i].commoditySpecs
+								commoditySpecs: res.data[i].commoditySpecs,
+								commoditySpec: res.data[i].commoditySpec
 							})
 
-							if ((res.data[i].saleWay === 1 || res.data[i].saleWay === 2) && res.data[i]
-								.commoditySpecs != null && res.data[i].commoditySpecs.length > 0) {
-								res.data[i].commoditySpec = res.data[i].commoditySpecs[0];
-							}
-							if (res.data[i].saleWay === 3) {
-								res.data[i].commoditySpecs = res.data[i].commoditySpecs;
-							}
 						}
 						for (let i = 0; i < this.commidityList.length; i += 2) {
 							this.rows.push(this.commidityList.slice(i, i + 2));
@@ -2309,7 +2325,7 @@
 					x.money2 = parseFloat(x.money) + parseFloat(x.extralModelMoney);
 				})
 				// 添加运费到总金额
-				this.payAmount.total += parseFloat(this.shippingFee || 0);
+				this.payAmount.total += parseFloat(this.cashier.shippingFee || 0);
 				this.payAmount.total = parseFloat(this.payAmount.total).toFixed(0);
 			},
 			//计算方法2---改变箩筐值计算
@@ -2391,7 +2407,7 @@
 					left: "0px",
 					width: "100%",
 					height: "100%",
-					backgroundColor: "rgba(0,0,0,0.01)" // 接近透明
+					backgroundColor: "rgba(0,0,0,0.1)" // 接近透明
 
 				});
 				this.maskView.addEventListener("click", () => {
@@ -2421,8 +2437,8 @@
 				for (var i = 0; i < specList.length; i++) {
 					this.actionView.drawRect({
 						color: "#000000", // 边框颜色
-						width: "1px", // 边框宽度
-						radius: "10px" // 圆角半径（关键！）
+						width: "2px", // 边框宽度
+						radius: "5px" // 圆角半径（关键！）
 					}, {
 						top: i * 100 + "px",
 						left: "0px",
@@ -2431,13 +2447,13 @@
 					});
 					this.actionView.drawRect({
 						color: "#ffffff", // 边框颜色
-						width: "1px", // 边框宽度
-						radius: "10px" // 圆角半径（关键！）
+						width: "2px", // 边框宽度
+						radius: "5px" // 圆角半径（关键！）
 					}, {
-						top: i * 100 + 1 + "px",
-						left: "1px",
-						width: "149px",
-						height: "99px"
+						top: i * 100 + 2 + "px",
+						left: "2px",
+						width: "146px",
+						height: "96px"
 					});
 
 
@@ -2524,6 +2540,7 @@
 				// }
 				// this.reCountGoodSelect();
 				// }
+				console.log("this.goodSelect",this.goodSelect)
 			},
 
 			commodityClickSaleWay3(e, spec) {
@@ -2838,6 +2855,21 @@
 					}
 				}
 
+				//处理运费
+					if (parseFloat(this.cashier.shippingFee) > 0) {
+						goodModelList.push({
+							Id: "00000000-0000-0000-0000-000000000000",
+							commodityId: "00000000-0000-0000-0000-000000000000",
+							name: "运费",
+							mount: 1,
+							totalWeight: 0,
+							tareWeight: 0,
+							referenceAmount: parseFloat(this.cashier.shippingFee),
+							subtotal: parseFloat(this.cashier.shippingFee),
+							type: 5
+						})
+					}				
+
 				console.log("goodModelList",goodModelList)
 
 				//请求主体
@@ -2946,7 +2978,7 @@
 				that.goodSelect = [];
 				that.currentMember = {};
 				// 重置运费
-				that.shippingFee = 0;
+				that.cashier.shippingFee = 0;
 				that.getlastOrder();
 				that.getCategoryList();
 				that.extraModel.forEach(x => {
