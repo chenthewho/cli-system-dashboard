@@ -163,7 +163,36 @@
 					</div>
 				</div>
 			</div>
-		</u-modal>
+
+		   </u-modal>
+		   <u-modal title="单据详情" :show="billDetailModalShow" @close="billDetailModalShow = false" :closeOnClickOverlay="true" :showConfirmButton="false" width="600px">
+			   <div v-if="currentBillDetail" class="bill-detail-modal">
+				   <div class="bill-detail-header">
+					   <span class="bill-detail-title">单号：{{ currentBillDetail.accountCode }}</span>
+					   <span class="bill-detail-customer">客户：{{ currentBillDetail.customName || '无' }}</span>
+				   </div>
+				   <div class="bill-detail-row">
+					   <span>应收：<b>{{ currentBillDetail.payableAmount }}</b></span>
+					   <span style="margin-left:20px;">实收：<b>{{ currentBillDetail.actualMoney }}</b></span>
+					   <span style="margin-left:20px;">利润：<b style="color:#00b96b;">{{ formatProfit(currentBillDetail.totalProfit) }}</b></span>
+				   </div>
+				   <div class="bill-detail-row" style="margin-top:10px;">
+					   <span>创建时间：{{ currentBillDetail.createTime }}</span>
+					   <span style="margin-left:20px;">支付方式：{{ billPaywayText(currentBillDetail.payway) }}</span>
+				   </div>
+				   <div class="bill-detail-section" v-if="currentBillDetail.allGoodModels && currentBillDetail.allGoodModels.length">
+					   <div class="bill-detail-goods-title">关联商品：</div>
+					   <ul class="bill-detail-goods-list">
+						   <li v-for="good in currentBillDetail.allGoodModels" :key="good.id">
+							   <span>{{ good.name }}</span>
+							   <span style="margin-left:10px;">数量：{{ good.mount }}</span>
+							   <span style="margin-left:10px;">小计：{{ good.subtotal }}</span>
+							   <span style="margin-left:10px;">利润：<b style="color:#00b96b;">{{ formatProfit(good.totalProfit) }}</b></span>
+						   </li>
+					   </ul>
+				   </div>
+			   </div>
+		   </u-modal>
 		<u-modal title="新增货主" :show="ShipperAddshow" @close="ShipperAddshow = false" :closeOnClickOverlay="false"
 			:showConfirmButton="false" width="200rpx">
 			<view class="addShipper-content">
@@ -180,62 +209,108 @@
 				</div>
 			</view>
 		</u-modal>
-		<u-modal title="货品详情" :show="goodsDetailModalShow" @close="goodsDetailModalShow = false;" :closeOnClickOverlay="true" :showConfirmButton="false" width="600px">
-			<div v-if="currentGoodsDetail" class="goods-detail-modal">
-				<div class="goods-header">
-					<div class="goods-title">{{ currentGoodsDetail.name }}
-						<span v-if="currentGoodsDetail.saleWay === 1" class="tag tag-blue">非定装</span>
-						<span v-else-if="currentGoodsDetail.saleWay === 2" class="tag tag-green">定装</span>
-						<span v-else-if="currentGoodsDetail.saleWay === 3" class="tag tag-purple">定装拆包</span>
-						<span v-else-if="currentGoodsDetail.saleWay === 4" class="tag tag-cyan">散装</span>
-						<span v-if="currentGoodsDetail.extralModel" class="tag tag-orange">{{ currentGoodsDetail.extralModel.name }}</span>
-					</div>
-					<div class="goods-subtitle">分类：{{ currentGoodsDetail.classifyName || '未分类' }}</div>
-				</div>
-				<div class="goods-info-row">
-					<div class="goods-info-card">
-						<div class="info-label">库存</div>
-						<div class="info-value info-highlight">{{ currentGoodsDetail.inventory }}</div>
-					</div>
-					<div class="goods-info-card">
-						<div class="info-label">单位</div>
-						<div class="info-value">{{ currentGoodsDetail.unit }}</div>
-					</div>
-					<div class="goods-info-card">
-						<div class="info-label">初始重量</div>
-						<div class="info-value">{{ currentGoodsDetail.initWeight }}</div>
-					</div>
-					<div class="goods-info-card">
-						<div class="info-label">价格</div>
-						<div class="info-value">{{ currentGoodsDetail.price }}</div>
-					</div>
-				</div>
-				<div class="goods-info-row">
-					<div class="goods-info-card">
-						<div class="info-label">售卖方式</div>
-						<div class="info-value">{{ saleTypeText(currentGoodsDetail.saleWay) }}</div>
-					</div>
-					<div class="goods-info-card" style="flex:2;">
-						<div class="info-label">规格</div>
-						<div class="info-value">
-							<span v-if="currentGoodsDetail.outPutPurchaseInventories && currentGoodsDetail.outPutPurchaseInventories.length">
-								<span v-for="(inv, idx) in currentGoodsDetail.outPutPurchaseInventories" :key="idx" class="spec-chip">{{ inv.specName }}<span v-if="inv.mount !== undefined">({{ inv.mount }})</span></span>
-							</span>
-							<span v-else>无</span>
+		   <u-modal title="货品详情" :show="goodsDetailModalShow" @close="goodsDetailModalShow = false;" :closeOnClickOverlay="true" :showConfirmButton="false" width="720px">
+			   <div v-if="currentGoodsDetail" class="goods-detail-modal beauty-modal">
+				   <div class="goods-header beauty-header">
+					   <div class="goods-title beauty-title">{{ currentGoodsDetail.name }}
+						   <span v-if="currentGoodsDetail.saleWay === 1" class="tag tag-blue">非定装</span>
+						   <span v-else-if="currentGoodsDetail.saleWay === 2" class="tag tag-green">定装</span>
+						   <span v-else-if="currentGoodsDetail.saleWay === 3" class="tag tag-purple">定装拆包</span>
+						   <span v-else-if="currentGoodsDetail.saleWay === 4" class="tag tag-cyan">散装</span>
+					   </div>
+					   <div class="goods-subtitle beauty-subtitle">分类：{{ currentGoodsDetail.classifyName || '未分类' }}</div>
+				   </div>
+				   <div class="beauty-section">
+					   <div class="beauty-row">
+						   <div class="beauty-card">
+							   <div class="beauty-label">价格</div>
+							   <div class="beauty-value">{{ currentGoodsDetail.price }}</div>
+						   </div>
+						   <div class="beauty-card">
+							   <div class="beauty-label">初始重量</div>
+							   <div class="beauty-value">{{ currentGoodsDetail.initWeight }}</div>
+						   </div>
+						   <div class="beauty-card">
+							   <div class="beauty-label">单位</div>
+							   <div class="beauty-value">{{ currentGoodsDetail.unit }}</div>
+						   </div>
+						   <div class="beauty-card">
+							   <div class="beauty-label">总利润</div>
+							   <div class="beauty-value beauty-profit">{{ formatProfit(currentGoodsDetail.totalProfit) }}</div>
+						   </div>
+					   </div>
+					   <div class="beauty-row">
+						   <div class="beauty-card" style="flex:2;">
+							   <div class="beauty-label">规格</div>
+							   <div class="beauty-value">
+								   <span v-if="currentGoodsDetail.specList && currentGoodsDetail.specList.length">
+									   <span v-for="(spec, idx) in currentGoodsDetail.specList" :key="idx" class="beauty-chip">{{ spec.specName }}</span>
+								   </span>
+								   <span v-else>无</span>
+							   </div>
+						   </div>
+					   </div>
+					   <div class="beauty-row">
+						<div class="beauty-card beauty-bill-card">
+							<div class="beauty-label">绑定单据</div>
+							<div class="beauty-value beauty-bill-list">
+								<template v-if="currentGoodsDetail.allPrintModules && currentGoodsDetail.allPrintModules.length">
+									<scroll-view scroll-y class="bill-list-scroll-vertical" style="max-height:180px;overflow-y:auto;">
+										<div v-for="(mod, idx) in currentGoodsDetail.allPrintModules" :key="mod.id" class="beauty-bill-item improved-bill-item bill-list-scroll-item-vertical" @click="showBillDetail(mod)" style="margin-bottom:10px;">
+											<div class="bill-row-main">
+												<span class="beauty-bill-customer">{{ mod.customName || '无' }}</span>
+											</div>
+											<div class="bill-row-info">
+												<span class="beauty-bill-money">应收：<b>{{ mod.payableAmount }}</b></span>
+												<span class="beauty-bill-money">实收：<b>{{ mod.actualMoney }}</b></span>
+												<span class="beauty-bill-profit">利润：<b>{{ formatProfit(mod.totalProfit) }}</b></span>
+											</div>
+											<div class="bill-row-footer">
+												<span class="bill-date">{{ mod.createTime.replace("T"," ") }}</span>
+												<span class="bill-payway">{{ billPaywayText(mod.payway) }}</span>
+											</div>
+										</div>
+									</scroll-view>
+								</template>
+								<span v-else>无</span>
+							</div>
 						</div>
-					</div>
-				</div>
-				<!-- <div class="goods-modal-actions">
-					<button class="danger-btn">删除</button>
-					<button class="warn-btn">停用</button>
-					<button class="copy-btn">复制</button>
-					<button class="primary-btn">修改</button>
-				</div> -->
-			</div>
-		</u-modal>
+					   </div>
+				   </div>
+			   </div>
+		   </u-modal>
 
-	</view>
-</template>
+		   <!-- 单据详情弹窗 -->
+		   <u-modal title="单据详情" :show="billDetailModalShow" @close="billDetailModalShow = false" :closeOnClickOverlay="true" :showConfirmButton="false" width="600px">
+			   <div v-if="currentBillDetail" class="bill-detail-modal">
+				   <div class="bill-detail-header">
+					   <span class="bill-detail-title">单号：{{ currentBillDetail.accountCode }}</span>
+					   <span class="bill-detail-customer">客户：{{ currentBillDetail.customName || '无' }}</span>
+				   </div>
+				   <div class="bill-detail-row">
+					   <span>应收：<b>{{ currentBillDetail.payableAmount }}</b></span>
+					   <span style="margin-left:20px;">实收：<b>{{ currentBillDetail.actualMoney }}</b></span>
+					   <span style="margin-left:20px;">利润：<b style="color:#00b96b;">{{ formatProfit(currentBillDetail.totalProfit) }}</b></span>
+				   </div>
+				   <div class="bill-detail-row" style="margin-top:10px;">
+					<span>创建时间：{{ currentBillDetail.createTime.replace("T", " ")  }}</span>
+					   <span style="margin-left:20px;">支付方式：{{ billPaywayText(currentBillDetail.payway) }}</span>
+				   </div>
+				   <div class="bill-detail-section" v-if="currentBillDetail.allGoodModels && currentBillDetail.allGoodModels.length">
+					   <div class="bill-detail-goods-title">关联商品：</div>
+					   <ul class="bill-detail-goods-list">
+						   <li v-for="good in currentBillDetail.allGoodModels" :key="good.id">
+							   <span>{{ good.name }}</span>
+							   <span style="margin-left:10px;">数量：{{ good.mount }}</span>
+							   <span style="margin-left:10px;">小计：{{ good.subtotal }}</span>
+							   <span style="margin-left:10px;">利润：<b style="color:#00b96b;">{{ formatProfit(good.totalProfit) }}</b></span>
+						   </li>
+					   </ul>
+				   </div>
+			   </div>
+		   </u-modal>
+		</view>
+	</template>
 
 <script>
 import category from '../../api/goods/category'
@@ -277,7 +352,9 @@ export default {
 				value: 2
 			}],
 			goodsDetailModalShow: false,
-			currentGoodsDetail: null
+			currentGoodsDetail: null,
+			billDetailModalShow: false,
+			currentBillDetail: null
 		}
 	},
 	mounted() {
@@ -291,10 +368,28 @@ export default {
 		// this.getAllBatch();
 	},
 	methods: {
+		formatProfit(val) {
+			if (val === null || val === undefined || isNaN(val)) return '0.00';
+			return Number(val).toFixed(2);
+		},
+		showBillDetail(bill) {
+			this.currentBillDetail = bill;
+			this.billDetailModalShow = true;
+		},
+		billPaywayText(val) {
+			if(val===1) return '现金';
+			if(val===2) return '微信';
+			if(val===3) return '支付宝';
+			if(val===4) return '银行卡';
+			return '其他';
+		},
 		showGoodsDetail(item) {
-			console.log(item)
-			this.currentGoodsDetail = item;
-			this.goodsDetailModalShow = true;
+			console.log(item);
+			purchase.getPurchaseCommodityProfit(item.id).then(res => {
+				this.currentGoodsDetail = res.data;
+				console.log(this.currentGoodsDetail);
+				this.goodsDetailModalShow = true;
+			})
 		},
 		operabtnChange(e) {
 			if (e.value === 1) {
@@ -859,89 +954,245 @@ h2.selected {
 	font-weight: bold;
 	cursor: pointer;
 }
-/* 货品详情弹窗美化 */
-.goods-detail-modal {
-	padding: 24px 18px 16px 18px;
-	background: #fff;
-	border-radius: 12px;
-	min-width: 500px;
-	box-shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
+.improved-bill-item {
+	background: linear-gradient(90deg, #fafdff 60%, #e6f7ff 100%);
+	border-radius: 10px;
+	box-shadow: 0 2px 8px 0 rgba(24,144,255,0.06);
+	border: 1.5px solid #e6f0fa;
+	margin-bottom: 8px;
+	padding: 12px 18px 10px 18px;
+	transition: box-shadow 0.2s, border 0.2s, background 0.2s;
+	cursor: pointer;
+	position: relative;
 }
-.goods-header {
-	margin-bottom: 10px;
+.improved-bill-item:hover {
+	box-shadow: 0 4px 16px 0 rgba(24,144,255,0.13);
+	border-color: #1890ff;
+	background: linear-gradient(90deg, #e6f7ff 60%, #fafdff 100%);
 }
-.goods-title {
-	font-size: 22px;
-	font-weight: bold;
+.bill-row-main {
 	display: flex;
 	align-items: center;
-	gap: 8px;
+	gap: 16px;
+	font-size: 16px;
+	font-weight: 600;
+	margin-bottom: 4px;
 }
-.goods-subtitle {
-	color: #888;
+.bill-row-info {
+	display: flex;
+	gap: 18px;
 	font-size: 14px;
-	margin-top: 2px;
+	color: #444;
+	margin-bottom: 4px;
+}
+.bill-row-footer {
+	display: flex;
+	gap: 18px;
+	font-size: 12px;
+	color: #888;
+	margin-bottom: 2px;
+}
+.bill-detail-btn {
+	position: absolute;
+	right: 18px;
+	top: 16px;
+	background: #00b96b;
+	color: #fff;
+	border-radius: 6px;
+	padding: 2px 12px;
+	font-size: 12px;
+	font-weight: bold;
+	opacity: 0.85;
+	transition: opacity 0.2s;
+	pointer-events: none;
+}
+.improved-bill-item:hover .bill-detail-btn {
+	opacity: 1;
+}
+/* 货品详情弹窗美化升级 */
+.beauty-modal {
+	padding: 32px 28px 20px 28px;
+	background: linear-gradient(135deg, #fafdff 0%, #f3f7fa 100%);
+	border-radius: 16px;
+	min-width: 540px;
+	box-shadow: 0 4px 32px 0 rgba(0,0,0,0.10);
+	border: 1px solid #e6f0fa;
+}
+.beauty-header {
+	margin-bottom: 18px;
+	border-bottom: 1.5px solid #e6f0fa;
+	padding-bottom: 8px;
+}
+.beauty-title {
+	font-size: 26px;
+	font-weight: 700;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	color: #222;
+}
+.beauty-subtitle {
+	color: #7a8ca4;
+	font-size: 15px;
+	margin-top: 4px;
 }
 .tag {
 	display: inline-block;
-	padding: 2px 8px;
-	border-radius: 8px;
-	font-size: 12px;
-	margin-left: 6px;
+	padding: 2px 10px;
+	border-radius: 10px;
+	font-size: 13px;
+	margin-left: 8px;
 	font-weight: 500;
+	box-shadow: 0 1px 4px 0 rgba(24,144,255,0.06);
 }
 .tag-blue { background: #e6f7ff; color: #1890ff; }
 .tag-green { background: #e6fffb; color: #52c41a; }
 .tag-purple { background: #f9f0ff; color: #722ed1; }
 .tag-cyan { background: #e6fffb; color: #13c2c2; }
 .tag-orange { background: #fff7e6; color: #fa8c16; }
-.goods-info-row {
-	display: flex;
-	gap: 16px;
-	margin-bottom: 12px;
+.beauty-section {
+	margin-top: 10px;
 }
-.goods-info-card {
-	background: #f7f8fa;
-	border-radius: 8px;
-	padding: 12px 18px;
+.beauty-row {
+	display: flex;
+	gap: 18px;
+	margin-bottom: 16px;
+}
+.beauty-card {
+	background: #fff;
+	border-radius: 10px;
+	padding: 16px 20px 12px 20px;
 	flex: 1;
-	min-width: 90px;
+	min-width: 110px;
 	display: flex;
 	flex-direction: column;
 	align-items: flex-start;
 	box-sizing: border-box;
+	box-shadow: 0 2px 8px 0 rgba(24,144,255,0.04);
+	border: 1px solid #f0f4fa;
 }
-.info-label {
-	color: #888;
-	font-size: 13px;
-	margin-bottom: 2px;
-}
-.info-value {
-	font-size: 16px;
-	color: #222;
+.beauty-label {
+	color: #7a8ca4;
+	font-size: 14px;
+	margin-bottom: 4px;
 	font-weight: 500;
 }
-.info-highlight {
+.beauty-value {
+	font-size: 18px;
+	color: #222;
+	font-weight: 600;
+	word-break: break-all;
+}
+.beauty-profit {
 	color: #00b96b;
-	font-size: 20px;
+	font-size: 22px;
 	font-weight: bold;
 }
-.spec-chip {
+.beauty-chip {
 	display: inline-block;
 	background: #e6f7ff;
 	color: #1890ff;
-	border-radius: 6px;
-	padding: 2px 8px;
-	margin-right: 6px;
-	font-size: 13px;
+	border-radius: 8px;
+	padding: 3px 12px;
+	margin-right: 8px;
+	font-size: 14px;
 	margin-bottom: 2px;
+	font-weight: 500;
 }
-.goods-modal-actions {
+.beauty-bill-list {
+	width: 100%;
 	display: flex;
-	justify-content: flex-end;
+	flex-direction: column;
+	gap: 6px;
+}
+.beauty-bill-item {
+	background: #f7fafd;
+	border-radius: 7px;
+	padding: 7px 12px 7px 12px;
+	margin-bottom: 2px;
+	display: flex;
+	align-items: center;
 	gap: 12px;
-	margin-top: 24px;
-	border-top: 1px solid #f0f0f0;
-	padding-top: 16px;
+	font-size: 14px;
+	color: #444;
+	border: 1px solid #e6f0fa;
+	box-shadow: 0 1px 4px 0 rgba(24,144,255,0.03);
+}
+.beauty-bill-code {
+	font-weight: bold;
+	color: #1890ff;
+	font-size: 15px;
+}
+.beauty-bill-customer {
+	color: #888;
+	margin-left: 2px;
+}
+.beauty-bill-money {
+	color: #222;
+	margin-left: 2px;
+}
+.beauty-bill-profit {
+	color: #00b96b;
+	margin-left: 2px;
+	font-weight: bold;
+}
+/* 单据详情弹窗样式 */
+.bill-detail-modal {
+	padding: 24px 18px 16px 18px;
+	background: #fff;
+	border-radius: 12px;
+	min-width: 400px;
+	box-shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
+}
+.bill-detail-header {
+	font-size: 18px;
+	font-weight: bold;
+	margin-bottom: 10px;
+	color: #222;
+}
+.bill-detail-title {
+	color: #1890ff;
+	margin-right: 18px;
+}
+.bill-detail-customer {
+	color: #888;
+}
+.bill-detail-row {
+	font-size: 15px;
+	color: #444;
+	margin-bottom: 4px;
+}
+.bill-detail-section {
+	margin-top: 12px;
+	background: #f7fafd;
+	border-radius: 8px;
+	padding: 10px 12px;
+}
+.bill-detail-goods-title {
+	font-weight: bold;
+	color: #222;
+	margin-bottom: 6px;
+}
+.bill-detail-goods-list {
+	padding-left: 18px;
+	margin: 0;
+}
+.bill-detail-goods-list li {
+	margin-bottom: 4px;
+	font-size: 14px;
+	color: #444;
+}
+/* 纵向滑动单据列表样式 */
+.bill-list-scroll-vertical {
+	width: 100%;
+	max-height: 180px;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+.bill-list-scroll-item-vertical {
+	min-width: 0;
+	max-width: 100%;
+	display: block;
+	vertical-align: top;
 }
 </style>

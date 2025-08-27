@@ -15,6 +15,9 @@ export default {
 	},
 	GetEmployCommidityByClassId(classId) {
 		return http.get(`/Commodity/GetEmployCommidityByClassId?classId=${classId}`)
-	}
+	},
+	getPurchaseCommodityProfit(commodityId){
+		return http.get(`/PurchaseOrder/getPurchaseCommodityProfit?commodityId=${commodityId}`)
+	},
 	
 }
