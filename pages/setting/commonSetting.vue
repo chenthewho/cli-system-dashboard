@@ -82,12 +82,7 @@
 				});
 			},
 			logout() {
-				uni.removeStorageSync("userInfo");
-				uni.removeStorageSync("companyId");
-				uni.removeStorageSync("companyName");
-				uni.reLaunch({
-					url: '/pages/auth/login'
-				});
+				getApp().logout();
 			},
 			getStoreInfo() {
 				cashierOrder.getStoreInfo(this.currentCompanyId).then(res => {

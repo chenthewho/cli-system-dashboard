@@ -146,6 +146,21 @@
 				}
 				global.setModalWidth(modalWidth)
 			},
+			//退出登录
+			logout() {
+				console.log("logout");
+				uni.removeStorageSync("userInfo");
+				uni.removeStorageSync("companyId");
+				uni.removeStorageSync("companyName");
+				uni.removeStorageSync("address");
+				uni.removeStorageSync("contact");
+				uni.removeStorageSync("role");
+				uni.removeStorageSync("vesionType");
+				uni.removeStorageSync("currentDutyId");
+				uni.reLaunch({
+					url: '/pages/auth/login'
+				});
+			},
 			//打印发送
 			senBleLabel(order) {
 				var buleTeethInfo = uni.getStorageSync("lastbluetooth");

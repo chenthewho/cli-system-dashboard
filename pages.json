@@ -63,6 +63,12 @@
 				"navigationBarTitleText": "库存操作",
 				"enablePullDownRefresh": false
 			}
+		},{
+			"path": "pages/good/batchGoodEdit",
+			"style": {
+				"navigationBarTitleText": "库存修改",
+				"enablePullDownRefresh": false
+			}
 		},
 		{
 			"path": "pages/good/correction/employCorrection",
@@ -187,6 +193,13 @@
 			"path": "pages/table/saleStaticTable",
 			"style": {
 				"navigationBarTitleText": "销售统计表",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/table/dutyStaticTable",
+			"style": {
+				"navigationBarTitleText": "轮值数据统计表",
 				"enablePullDownRefresh": false
 			}
 		}

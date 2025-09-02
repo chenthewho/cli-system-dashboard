@@ -102,7 +102,7 @@
 
 					<scroll-view class="scrollArea" scroll-y="true" :style="{height:scrollHeight2}"
 						:scroll-into-view="targetId">
-						<div style="display: flex; height: 25rpx;" v-for="(item, index) in BatchCommodityList"
+						<div style="display: flex; height: 25rpx;" v-for="(item, index) in BatchCommodityList" v-if="item.operaType !== 2"
 							:id="'id-' + index + '-view'" :key="index"
 							:style="{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#f0f0f0' }">
 							<div
@@ -310,18 +310,10 @@
 			}
 		},
 		onLoad(options) {
-			this.editType = options.edit;
-			if (this.editType === "common") {
-				this.BatchInfo = JSON.parse(options.Batch);
-			} else {
-				console.log("复制上一批", options)
-				var batchSimple = JSON.parse(options.Batch);
-				batch.getBatchInfoById(batchSimple.id).then(res => {
+				batch.getBatchInfoById(options.batchId).then(res => {
 					this.BatchInfo = res.data;
-					this.getLastBatchCommodityList(this.BatchInfo.companyId, this.BatchInfo.shipperId)
-				})
-			}
-
+					this.GetReposityAssistBybatchId()
+				})	
 		},
 		mounted() {
 			// 在组件挂载后设置 scrollHeight
@@ -329,9 +321,6 @@
 			this.windowHeight = uni.getWindowInfo().windowHeight;
 			this.companyId = uni.getStorageSync('companyId');
 			this.getAllcommodity();
-			if (this.editType === "common") {
-				this.getBatchCommodityList();
-			}
 			this.initSystem();
 		},
 		methods: {
@@ -422,6 +411,10 @@
 			},
 			//键盘数字输入处理
 			NumberCk(val) {
+                //修改状态
+                if(this.BatchCommodityList[this.editingIndex].operaType === 0){
+                    this.BatchCommodityList[this.editingIndex].operaType = 1;
+                }
 				let myvalue = "";
 				switch (this.valueType) {
 					case 1:
@@ -484,6 +477,10 @@
 			},
 			//键盘删除处理
 			Tuige() {
+                //修改状态
+                if(this.BatchCommodityList[this.editingIndex].operaType === 0){
+                    this.BatchCommodityList[this.editingIndex].operaType = 1;
+                }
 				let myvalue = "";
 				switch (this.valueType) {
 					case 1:
@@ -557,14 +554,15 @@
 				this.scrollHeight2 = this.windowHeight - 150 + 'px';
 				this.showKeyBoard1 = false;
 			},
-			getLastBatchCommodityList(companyId, shipperId) {
-				batch.GetLastBatchCommodity(companyId, shipperId).then(res => {
+			GetReposityAssistBybatchId() {
+				batch.GetReposityAssistBybatchId(this.BatchInfo.id).then(res => {
 					console.log("res", res)
 					// this.BatchCommodityList = res.data;
 					for (var i = 0; i < res.data.length; i++) {
 						var commodity = res.data[i];
 						var commodityAdded = {
 						id: "",
+                        historyId:commodity.id,
 						name: commodity.commodityName,
 						initMount: commodity.initMount,
 						initWeight: commodity.initWeight,
@@ -573,7 +571,8 @@
 						calcType: 1,
 						saleWay: commodity.saleWay,
 						incomingPrice: 0,
-						inboundAmount: 0
+						inboundAmount: commodity.inboundAmount,
+                        operaType:0
 					}
 					if (commodity.specList.length > 0) {
 						commodityAdded.spec = commodity.specList[0]
@@ -592,9 +591,11 @@
 				var CommodityList = [];
 				console.log("that.BatchCommodityList", that.BatchCommodityList)
 				that.BatchCommodityList.forEach(item => {
+					if (item.operaType !== 0) {
 						CommodityList.push({
 							"BatchId": that.BatchInfo.id,
 							"commodityId": item.commodityId,
+                            "historyId": item.historyId,
 							"calcType": item.calcType,
 							"initMount": 0,
 							"initWeight": parseFloat(item.initWeight),
@@ -605,9 +606,10 @@
 								"mount": parseFloat(item.initMount)
 							}]
 						})
+					}
 				})
 				if (that.BatchCommodityList.length > 0) {
-					category.BulkInsertPurchaseAssist(JSON.stringify(CommodityList)).then(res => {
+					batch.BulkModifyPurchaseAssist(JSON.stringify(CommodityList)).then(res => {
 						if (res.code == 200) {
 								uni.showToast({
 									title: '保存成功',
@@ -637,8 +639,13 @@
 					content: '您确定要删除该项吗？',
 					success: (res) => {
 						if (res.confirm) {
-							// 用户点击了确认
-							this.BatchCommodityList.splice(index, 1)
+
+							//修改状态
+                            if(this.BatchCommodityList[index].operaType === 0||this.BatchCommodityList[index].operaType === 1){
+                                this.BatchCommodityList[index].operaType = 2;
+                            }else{
+                                this.BatchCommodityList.splice(index, 1);
+                            }
 						} else if (res.cancel) {
 							// 用户点击了取消
 						}
@@ -709,13 +716,16 @@
 						calcType: 1,
 						saleWay: e.saleWay,
 						incomingPrice: e.incomingPrice ? e.incomingPrice : 0,
-						inboundAmount: 0
+						inboundAmount: 0,
+                        operaType:3 //0-未修改 1-编辑 2-删除 3-添加
 					}
 					if (e.commoditySpecs.length > 0) {
 						commodityAdded.spec = e.commoditySpecs[0]
 					}
+                    console.log("commodityAdded", commodityAdded)
 					this.BatchCommodityList.push(commodityAdded)
 				}
+                console.log("this.BatchCommodityList", this.BatchCommodityList)
 			}
 		}
 

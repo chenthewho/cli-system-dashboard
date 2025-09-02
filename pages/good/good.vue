@@ -167,7 +167,7 @@
 								<view class="znj-add-good-btn-group">
 									<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 1}" @click="changSaleType(1)">按重量</button>
 									<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 2}" @click="changSaleType(2)">按件数</button>
-									<!-- <button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 3}" @click="changSaleType(3)">按件拆包</button> -->
+									<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 3}" @click="changSaleType(3)">按件拆包</button>
 									<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 4}" @click="changSaleType(4)">散装</button>
 								</view>
 							</view>
@@ -175,8 +175,8 @@
 							<view class="znj-add-good-row">
 								<text class="znj-add-good-label">单位：</text>
 								<div v-if="newGoodInfo.saleWay != 3">
-									<select-lay :zindex="1212" :value="newGoodInfo.unit" name="name" placeholder=" "
-										:options="unit" @selectitem="editCardSpecSelct"></select-lay>
+									<selectLayUnit :zindex="1212" :value="newGoodInfo.unit" :name="newGoodInfo.unit" placeholder=" "
+										:options="unit" @selectitem="editCardSpecSelct"></selectLayUnit>
 								</div>
 								<div v-else>
 									<select-lay :zindex="1212" :value="newGoodInfo.specList[0].specName" name="name" placeholder=" "
@@ -303,7 +303,11 @@
 
 <script>
 	import category from '../../api/goods/category'
+	import selectLayUnit from './component/selectLayUnit'
 	export default {
+		components: {
+			selectLayUnit
+		},
 		data() {
 			return {
 				companyId: "",
@@ -353,7 +357,8 @@
 		},
 		methods: {
 			editCardSpecSelct(e){
-				this.newGoodInfo.unit = this.unit[e].label;
+				console.log(this.unit[e]);
+				this.newGoodInfo.unit = this.unit[e].value;
 			},
 			editCardSpecSelct1(e){
 				this.newGoodInfo.specList[0].specName = this.unit[e].label;

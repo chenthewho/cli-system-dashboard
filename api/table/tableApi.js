@@ -33,4 +33,7 @@ export default {
 	getAssistCommodityStatic(companyId,beiginTime,endTime){
 		return http.get(`/Table/GetAssistCommodityStatic?companyId=${companyId}&beginTime=${beiginTime}&endTime=${endTime}`)
 	},
+	getDutyStaticByTimeRang(companyId,startTime,endTime){
+		return http.get(`/Table/GetDutyStaticByTimeRang?companyId=${companyId}&beginTime=${startTime}&endTime=${endTime}`)
+	}
 }

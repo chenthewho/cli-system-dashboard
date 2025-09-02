@@ -47,7 +47,7 @@
                 <uni-icons type="right" size="12" color="#ccc"></uni-icons>
               </view>
             </view>
-			<view class="report-card" @click="">
+			<view class="report-card" @click="enterToDutyStaticTable">
 			  <view class="report-icon">
 			    <uni-icons type="shop" size="18" color="#00aaff"></uni-icons>
 			  </view>
@@ -203,6 +203,12 @@
 			enterTobusinessStaticTable(){
 				uni.navigateTo({
 					url: `/pages/table/businessStaticTable`
+				})
+			},
+			//进入轮值数据统计表
+			enterToDutyStaticTable(){
+				uni.navigateTo({
+					url: `/pages/table/dutyStaticTable`
 				})
 			},
 			//进入自营统计表

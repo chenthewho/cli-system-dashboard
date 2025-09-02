@@ -18,5 +18,8 @@ export default {
 	},
 	GetExpenseAccoutByDutyandType(dutyId,type){
 		return http.get(`/Static/GetExpenseAccoutByDutyandType?dutyId=${dutyId}&type=${type}`)
+	},
+	changeDuty(companyId,operatorId){
+		return http.get(`/schedule/changeDuty?companyId=${companyId}&operatorId=${operatorId}`)
 	}
 }

@@ -674,13 +674,21 @@ export default {
 				content: '确定要进行交账操作吗？',
 				success: (res) => {
 					if (res.confirm) {
-						uni.showToast({
-							title: '交账成功',
-							icon: 'success'
-						});
+						this.finishDutyAction();
 					}
 				}
 			});
+		},
+		finishDutyAction(){
+			var userInfo = uni.getStorageSync("userInfo");
+			duty.changeDuty(this.CompanyId,userInfo.id).then(res => {
+				console.log("res",res);
+				uni.showToast({
+					title: '交账成功',
+					icon: 'success'
+				});
+				getApp().logout();
+			})
 		},
 		formatTime(ms) {
 			// 计算小时、分钟、秒

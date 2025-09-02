@@ -233,13 +233,16 @@
 				batchList: [],
 				BatchCommodityList: [],
 				WindowHeight: 0,
-				operatorBtnoptions: [{
-					text: "报损",
-					value: 1
-				},
+				operatorBtnoptions: [
 				{
 					text: "修改",
 					value: 2
+				},{
+					text: "报损",
+					value: 1
+				},{
+					text: "记录",
+					value: 1
 				}]
 			}
 		},
@@ -262,6 +265,11 @@
 			operabtnChange(e) {
 				if (e.value === 1) {
 					this.enterTolossModel();
+				}
+				if(e.value === 2) {
+					uni.navigateTo({
+						url: `/pages/good/batchGoodEdit?batchId=${this.selectBatch.id}`
+					})
 				}
 			},
 			enterTolossModel() {
