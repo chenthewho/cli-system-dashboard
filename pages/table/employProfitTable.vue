@@ -72,7 +72,7 @@
     <view class="main-content">
       <view class="table-container">
         <view class="table-header-info">
-          <text class="table-title">销售明细</text>
+          <text class="table-title">货品明细</text>
           <text class="table-subtitle">共 {{ goodsList.length }} 条记录</text>
         </view>
         
@@ -97,7 +97,7 @@
                 >
                   <view class="product-cell">
                     <text class="product-name">{{ item.name }}</text>
-                    <text class="product-no">编号: {{ String(index + 1).padStart(3, '0') }}</text>
+                    <text class="product-no"></text>
                   </view>
                 </view>
                 
@@ -118,9 +118,11 @@
               <!-- 滑动列头 -->
               <scroll-view class="scroll-header" scroll-x>
                 <view class="scroll-header-content">
-                  <view class="scroll-header-cell">单价(元)</view>
-                  <view class="scroll-header-cell">销量(件)</view>
-                  <view class="scroll-header-cell">销售额(元)</view>
+                  <view class="scroll-header-cell">销售数量</view>
+                  <view class="scroll-header-cell">销售重量</view>
+                  <view class="scroll-header-cell">均价(元)</view>
+                  <view class="scroll-header-cell">均重(件)</view>
+                  <view class="scroll-header-cell">毛利(元)</view>
                 </view>
               </scroll-view>
               
@@ -133,14 +135,20 @@
                     :key="item.id"
                     @click="handleRowClick(item)"
                   >
+                  <view class="scroll-cell price-cell">
+                      <text class="price-value">{{  }}</text>
+                    </view>
                     <view class="scroll-cell price-cell">
-                      <text class="price-value">{{ formatNumber(item.price) }}</text>
+                      <text class="price-value">{{ }}</text>
+                    </view>
+                    <view class="scroll-cell price-cell">
+                      <text class="price-value">{{ }}</text>
                     </view>
                     <view class="scroll-cell sales-cell">
-                      <text class="sales-value">{{ item.sales }}</text>
+                      <text class="sales-value">{{ }}</text>
                     </view>
                     <view class="scroll-cell total-cell">
-                      <text class="total-value">{{ formatNumber(item.total) }}</text>
+                      <text class="total-value">{{ }}</text>
                     </view>
                   </view>
                   
@@ -156,13 +164,19 @@
               <!-- 滑动列底部 -->
               <scroll-view class="scroll-footer" scroll-x>
                 <view class="scroll-footer-content">
-                  <view class="scroll-footer-cell">-</view>
+                  <view class="scroll-footer-cell">{{ totalSales }}</view>
                   <view class="scroll-footer-cell">
-                    <text class="summary-number">{{ totalSales }}</text>
+                    <text class="summary-number">{{ formatNumber(totalAmount) }}</text>
                   </view>
                   <view class="scroll-footer-cell">
-                    <text class="summary-amount">{{ formatNumber(totalAmount) }}</text>
+                    <text class="summary-amount">-</text>
                   </view>
+                  <view class="scroll-footer-cell">
+                    <text class="summary-amount">-</text>
+                  </view>
+                  <view class="scroll-footer-cell">
+                    <text class="summary-amount">-</text>
+                  </view> 
                 </view>
               </scroll-view>
             </view>
@@ -194,43 +208,7 @@ export default {
       tableHeight: 400,
       currentCompanyId:"",
       batchProfitSimpleList:[],
-      goodsList: [
-        {
-          id: 1,
-          name: '苹果 iPhone 13',
-          price: 5999,
-          sales: 120,
-          total: 719880
-        },
-        {
-          id: 2,
-          name: '小米 12 Pro',
-          price: 4699,
-          sales: 85,
-          total: 399415
-        },
-        {
-          id: 3,
-          name: '华为 Mate 40',
-          price: 4999,
-          sales: 63,
-          total: 314937
-        },
-        {
-          id: 4,
-          name: '华为 P50 Pro',
-          price: 5988,
-          sales: 45,
-          total: 269460
-        },
-        {
-          id: 5,
-          name: 'OPPO Find X5',
-          price: 3999,
-          sales: 38,
-          total: 151962
-        }
-      ]
+      goodsList: []
     }
   },
   computed: {
@@ -243,20 +221,17 @@ export default {
   },
   mounted() {
     this.currentCompanyId = uni.getStorageSync('companyId');
-    this.loadData();
     this.initDates()
+    this.loadData();
     this.$nextTick(() => {
       this.calculateTableHeight()
     })
   },
   methods: {
     loadData() {
-				tableApi.getBatchProfitSimpleByCompanyId(this.currentCompanyId).then(res => {
+				tableApi.GetEmployCommodityTable(this.currentCompanyId,this.startDate,this.endDate).then(res => {
 					console.log("res", res)
-					this.batchProfitSimpleList = res.data
-					this.batchProfitSimpleList = this.batchProfitSimpleList.sort((a, b) => {
-						return new Date(b.createTime) - new Date(a.createTime);
-					});
+					this.goodsList = res.data
 				})
 			},
     // 工具方法
@@ -338,7 +313,7 @@ export default {
       this.loading = true
       try {
         // 模拟API调用
-        await new Promise(resolve => setTimeout(resolve, 800))
+        this.loadData();
         
         // 这里可以根据时间范围请求真实数据
         console.log('查询时间范围:', this.startDate, '至', this.endDate)

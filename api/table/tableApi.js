@@ -25,9 +25,13 @@ export default {
 	GetShipperBatchDTOById(batchId){
 		return http.get(`/ShipperClient/GetShipperBatchDTOById?batchId=${batchId}`)
 	},
-	 // 获取自营货品统计数据
+	 // 获取自营货品统计数据(用于经营统计表)
 	GetEmployCommodityStatic(companyId,beiginTime,endTime){
 		return http.get(`/Table/GetEmployCommodityStatic?companyId=${companyId}&beginTime=${beiginTime}&endTime=${endTime}`)
+	},
+	 // 获取自营货品统计数据(用于自营商品利润统计表)
+	GetEmployCommodityTable(companyId,beiginTime,endTime){
+		return http.get(`/Table/GetEmployCommodityTable?companyId=${companyId}&beginTime=${beiginTime}&endTime=${endTime}`)
 	},
 	//获取代销商品统计数据
 	getAssistCommodityStatic(companyId,beiginTime,endTime){
@@ -35,5 +39,13 @@ export default {
 	},
 	getDutyStaticByTimeRang(companyId,startTime,endTime){
 		return http.get(`/Table/GetDutyStaticByTimeRang?companyId=${companyId}&beginTime=${startTime}&endTime=${endTime}`)
+	},
+	//获取自营货品相关订单货品
+	getEmployGoodsByCommodityIdAndTime(companyId,commodityId,beginTime,endTime){
+		return http.get(`/Table/getEmployGoodsByCommodityIdAndTime?companyId=${companyId}&commodityId=${commodityId}&beginTime=${beginTime}&endTime=${endTime}`)
+	},
+	//获取代销货品相关订单货品
+	getAssistGoodsByCommodityIdAndTime(companyId,commodityId,beginTime,endTime){
+		return http.get(`/Table/getAssistGoodsByCommodityIdAndTime?companyId=${companyId}&commodityId=${commodityId}&beginTime=${beginTime}&endTime=${endTime}`)
 	}
 }

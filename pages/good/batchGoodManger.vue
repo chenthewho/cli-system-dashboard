@@ -45,7 +45,7 @@
 								style="display: flex; flex-direction: column; gap: 5rpx;background-color: #ddd;height: 100%;">
 								<div style="margin-top: 2rpx;"></div>
 								<div style="display: flex; flex-wrap: wrap; ">
-									<div :class="['clickCard',getCommdityActive(item.id)?'activeCard':'' ]"
+									<div :id="'grid-item-'+item.id" :class="['clickCard',getCommdityActive(item.id)?'activeCard':'' ]"
 										@click="addCommodity(item)" v-for="item in commodityShowList">
 										<div>
 											<text style="font-size: 15rpx;font-weight: bold;">
@@ -220,51 +220,177 @@
 		</div>
 
 
-		<u-modal title="添加新货品" class="payment" :show="showAddNewGood" :closeOnClickOverlay="true"
-			:showConfirmButton="false" :width="400" @close="showAddNewGood = false">
-			<div class="slot-content" style="overflow-y: auto;">
-				<uni-section title="表单校验" type="line">
-					<view class="example">
-						<!-- 基础表单校验 -->
-						<view class="input-container" style="margin-top: 10px;">
-							<text class="label" style="width: 100px;">新货品名称：</text>
-							<input class="input-field" type="text" placeholder=" "
-								style="height: 40px;width: 300px;border-radius: 5rpx;background-color: lightgray;padding-left: 10px;"
+	<!-- 添加新货品弹窗 -->
+	<view v-if="showAddNewGood" class="znj-add-good-modal-mask" @click="showAddNewGood = false">
+		<view class="znj-add-good-modal-wrapper" @click.stop>
+			<view class="znj-add-good-modal-container">
+				<!-- 标题栏 -->
+				<view class="znj-add-good-modal-header">
+					<text class="znj-add-good-modal-title">添加新货品</text>
+					<view class="znj-add-good-modal-close" @click="showAddNewGood = false; newGoodInfoReset();">
+						<uni-icons type="closeempty" size="24" color="#fff"></uni-icons>
+					</view>
+				</view>
+				
+				<!-- 内容区域 -->
+				<scroll-view scroll-y="true" class="znj-add-good-modal-body" :style="{ maxHeight: '70vh' }">
+					<view class="znj-add-good-form">
+						<!-- 货品名称 -->
+						<view class="znj-add-good-row">
+							<text class="znj-add-good-label">货品名称：</text>
+							<input class="znj-add-good-input" type="text" placeholder="请输入货品名称"
 								v-model="newGoodInfo.name" />
 						</view>
-						<view class="input-container" style="margin-top: 10px;">
-							<text class="label" style="width: 100px;">选择货品类型：</text>
-							<scroll-view class="scroll-view2" scroll-x
-								style="height:60px;width: 300px;margin-top: 10px;">
+						<!-- 计算方式 -->
+						<view class="znj-add-good-row">
+							<text class="znj-add-good-label">计算方式：</text>
+							<view class="znj-add-good-btn-group">
+								<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 1}" @click="changSaleType(1)">按重量</button>
+								<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 2}" @click="changSaleType(2)">按件数</button>
+								<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 3}" @click="changSaleType(3)">按件拆包</button>
+								<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 4}" @click="changSaleType(4)">散装</button>
+							</view>
+						</view>
+						<!-- 单位 -->
+						<view class="znj-add-good-row">
+					<text class="znj-add-good-label">单位：</text>
+					<view class="znj-add-good-unit-group" v-if="newGoodInfo.saleWay != 3">
+						<button v-for="unit in unitList.slice(0, 4)" :key="unit.id" 
+							class="znj-add-good-unit-btn" 
+							:class="{active: newGoodInfo.unit === unit.unitName}" 
+							@click="selectUnit(unit.unitName)">{{ unit.unitName }}</button>
+						</view>
+						<view v-else>
+							<select class="znj-add-good-unit-select" v-model="newGoodInfo.specList[0].specName" @change="updateMainUnit">
+								<option v-for="unit in unitList" :key="unit.id" :value="unit.unitName">{{ unit.unitName }}</option>
+							</select>
+						</view>
+						</view>
+						
+						<!-- 规格相关 -->
+						<div v-if="newGoodInfo.saleWay != 1">
+							<!-- 按件数规格 -->
+							<view class="znj-add-good-row" v-if="newGoodInfo.saleWay == 2">
+								<text class="znj-add-good-label">规格：</text>
+								<div class="znj-add-good-spec-box">
+									<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.unit }} =</span>
+									<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.price" placeholder="" />
+									<span class="znj-add-good-spec-suffix">元</span>
+								</div>
+							</view>
+							<!-- 按件拆包规格 -->
+							<view class="znj-add-good-row" v-if="newGoodInfo.saleWay == 3">
+								<text class="znj-add-good-label">规格一：</text>
+								<div class="znj-add-good-spec-box">
+									<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[0].specName }} =</span>
+									<input class="znj-add-good-spec-input" type="number" v-model="newGoodInfo.specList[0].fixprice" placeholder="" />
+									<span class="znj-add-good-spec-suffix">元</span>
+								</div>
+							</view>
+							<!-- 规格二 -->
+							<view class="znj-add-good-row" v-if="newGoodInfo.specList.length > 1">
+								<text class="znj-add-good-label">规格二：</text>
+								<div class="znj-add-good-spec-box">
+									<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[0].specName }} =</span>
+									<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.specList[1].fixcount" placeholder="" />
+							</div>
+							<select class="znj-add-good-unit-select" v-model="newGoodInfo.specList[1].specName">
+								<option v-for="unit in unitList" :key="unit.id" :value="unit.unitName">{{ unit.unitName }}</option>
+							</select>
+							<div class="znj-add-good-spec-box">
+									<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[1].specName }} =</span>
+									<input class="znj-add-good-spec-input" type="number" v-model="newGoodInfo.specList[1].fixprice" placeholder="" />
+									<span class="znj-add-good-spec-suffix">元</span>
+								</div>
+							</view>
+							<!-- 规格三 -->
+							<view class="znj-add-good-row" v-if="newGoodInfo.specList.length > 2">
+								<text class="znj-add-good-label">规格三：</text>
+								<div class="znj-add-good-spec-box">
+									<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[1].specName }} =</span>
+									<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.specList[2].fixcount" placeholder="" />
+							</div>
+							<select class="znj-add-good-unit-select" v-model="newGoodInfo.specList[2].specName">
+								<option v-for="unit in unitList" :key="unit.id" :value="unit.unitName">{{ unit.unitName }}</option>
+							</select>
+							<div class="znj-add-good-spec-box">
+									<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[2].specName }} =</span>
+									<input class="znj-add-good-spec-input" type="number" v-model="newGoodInfo.specList[2].fixprice" placeholder="" />
+									<span class="znj-add-good-spec-suffix">元</span>
+								</div>
+							</view>
+							<!-- 散装规格 -->
+							<view class="znj-add-good-row" v-if="newGoodInfo.saleWay == 4">
+								<text class="znj-add-good-label">规格：</text>
+								<div class="znj-add-good-spec-box">
+									<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.unit }} =</span>
+									<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.price" placeholder="" />
+									<span class="znj-add-good-spec-suffix">元</span>
+								</div>
+							</view>
+							<!-- 添加规格按钮 -->
+							<div v-if="newGoodInfo.saleWay === 3">
+								<view class="znj-add-good-row" v-if="newGoodInfo.specList.length < 3" style="margin-top: 10rpx;">
+									<text class="znj-add-good-label"></text>
+									<button class="znj-add-good-btn add" @click="addSpec">添加规格</button>
+								</view>
+							</div>
+						</div>
+						
+						<!-- 分割线 -->
+						<view class="znj-add-good-divider"></view>
+						
+						<!-- 单位重量 -->
+						<view class="znj-add-good-row" v-if="newGoodInfo.saleWay === 2">
+							<text class="znj-add-good-label">单位重量：</text>
+							<input class="znj-add-good-input" type="text" v-model="newGoodInfo.initWeight" placeholder="" />
+						</view>
+						
+						<!-- 单位皮重 -->
+						<view class="znj-add-good-row">
+							<text class="znj-add-good-label">单位皮重：</text>
+							<input class="znj-add-good-input" type="text" v-model="newGoodInfo.fixTare" placeholder="" />
+						</view>
+						
+						<!-- 是否显示 -->
+						<view class="znj-add-good-row">
+							<text class="znj-add-good-label">是否显示：</text>
+							<div class="znj-add-good-switch-group">
+								<button class="znj-add-good-switch-btn" :class="{active: newGoodInfo.showToSale === 1}" @click="newGoodInfo.showToSale = 1">是</button>
+								<button class="znj-add-good-switch-btn" :class="{active: newGoodInfo.showToSale === 0}" @click="newGoodInfo.showToSale = 0">否</button>
+							</div>
+						</view>
+						
+						<!-- 选择货品分类 -->
+						<view class="znj-add-good-row">
+							<text class="znj-add-good-label">货品分类：</text>
+							<scroll-view class="scroll-view2" scroll-x style="height:60px;width: 500px;">
 								<div style="margin-top: 5rpx;margin-left: 20rpx;">
-									<view
-										:class="{'coach_wrap': true,'coach_wrap_active': newGoodInfo.classifyId == item.value}"
+									<view :class="{'coach_wrap': true,'coach_wrap_active': newGoodInfo.classifyId == item.value}"
 										v-for="(item, index) in tabListOrigin" :key="index"
-										@click="newGoodInfo.classifyId=item.value">
+										@click="selectCategory(item.value)">
 										{{item.name}}
 									</view>
-
 								</div>
 							</scroll-view>
 						</view>
-
-						<view style="display: flex;">
-							<button type="primary" @click="showAddNewGood = false"
-								style="width: 30%;margin-top: 20px;background-color: darkgray;">返回</button>
-							<button type="primary" @click="addNewGood" style="width: 30%;margin-top: 20px;">添加</button>
-						</view>
+					<!-- 操作按钮 -->
+					<view class="znj-add-good-btns">
+						<button class="znj-add-good-btn cancel" @click="showAddNewGood = false;newGoodInfoReset();">返回</button>
+						<button class="znj-add-good-btn confirm" @click="addNewGood">添加</button>
 					</view>
-				</uni-section>
-			</div>
-		</u-modal>
-	</div>
-
+				</view>
+				</scroll-view>
+			</view>
+		</view>
+	</view>
 	</div>
 </template>
 
 <script>
 	import category from '../../api/goods/category'
 	import batch from '../../api/batch/batch'
+	import labelApi from '../../api/label/labelApi';
 	export default {
 		data() {
 			return {
@@ -284,15 +410,25 @@
 				windowWidth: 0,
 				windowHeight: 0,
 				scrollHeight2: '0px',
-				editingIndex: 0,
-				selectedProductType: "",
-				showKeyBoard1: false,
-				editType: "common",
-				BatchCommodityList: [],
-				targetId: "id-0-view",
+			editingIndex: 0,
+			selectedProductType: "",
+			showKeyBoard1: false,
+			actionView: null,
+			maskView: null,
+			editType: "common",
+			BatchCommodityList: [],
+			unitList: [],
+			targetId: "id-0-view",
 				newGoodInfo: {
 					name: "",
-					classifyId: ""
+					classifyId: "",
+					saleWay: 1, // 默认按重量
+					unit: "件", // 默认单位
+					price: "", // 价格
+					initWeight: "", // 单位重量
+					fixTare: "", // 单位皮重
+					showToSale: 1, // 是否显示，默认显示
+					specList: [] // 规格列表
 				},
 				batchList: [{
 						batchName: '批次名称1',
@@ -333,12 +469,17 @@
 				this.getBatchCommodityList();
 			}
 			this.initSystem();
+			this.getCompanyUnit();
 		},
 		methods: {
+			getCompanyUnit(){
+				let that = this;
+				labelApi.GetCompanyUnit(this.companyId).then(res => {
+					that.unitList = res.data;
+				})
+			},
 			//切换计算方式
 			SwitchCalcType(e, element) {
-				console.log("e", e);
-				console.log("element", element)
 				if (e) {
 					element.calcType = 1;
 				} else {
@@ -367,12 +508,12 @@
 				return total.toFixed(1);
 			},
 			addNewGood() {
-				if (this.newGoodInfo.name === "") {
+				if (this.newGoodInfo.name === null || this.newGoodInfo.name === "") {
 					uni.showToast({
-						title: '请输入货品名称',
 						icon: 'none',
-						duration: 1500
-					})
+						title: '物品名称不能为空',
+						duration: 1200,
+					});
 					return;
 				}
 				if (this.newGoodInfo.classifyId === "") {
@@ -383,28 +524,152 @@
 					})
 					return;
 				}
-				var goodInfo = {
-					Id: "",
-					name: this.newGoodInfo.name,
-					price: 0,
-					no: 0,
-					classifyId: this.newGoodInfo.classifyId,
-					inventory: 0,
-					userId: ""
+				
+				let that = this;
+				
+				// 需要转换成double,不然发送失败500
+				for (var i = 0; i < that.newGoodInfo.specList.length; i++) {
+					that.newGoodInfo.specList[i].fixcount = parseFloat(that.newGoodInfo.specList[i].fixcount || 0);
+					that.newGoodInfo.specList[i].fixprice = parseFloat(that.newGoodInfo.specList[i].fixprice || 0);
 				}
-				console.log("goodInfo", goodInfo)
-				category.CommoditySave2(JSON.stringify(goodInfo)).then(res => {
-					if (res.code == 200) {
-						uni.showToast({
-							title: '添加成功',
-							icon: 'none',
-							duration: 1500
-						})
-						this.newGoodInfo.name = "";
-						this.getAllcommodity();
-						this.showAddNewGood = false;
-					}
-				})
+				
+				// 如果售卖方式等于1-2-4的话需要处理unit
+				if (that.newGoodInfo.saleWay === 1) {
+					that.newGoodInfo.specList.push({
+						id: that.generateUUID(),
+						specName: that.newGoodInfo.unit,
+						fixcount: 1,
+						fixprice: 0,
+						parentId: "",
+						price: 0
+					});
+				}
+				if (that.newGoodInfo.saleWay === 2) {
+					that.newGoodInfo.specList.push({
+						id: that.generateUUID(),
+						specName: that.newGoodInfo.unit,
+						fixcount: 1,
+						fixprice: parseFloat(that.newGoodInfo.price || 0),
+						parentId: "",
+						price: 0
+					});
+				}
+				if (that.newGoodInfo.saleWay === 4) {
+					that.newGoodInfo.specList.push({
+						id: that.generateUUID(),
+						specName: that.newGoodInfo.unit,
+						fixcount: 1,
+						fixprice: parseFloat(that.newGoodInfo.price || 0),
+						parentId: "",
+						price: 0
+					});
+				}
+				
+				// 需要转换成double,不然发送失败500
+				that.newGoodInfo.price = parseFloat(that.newGoodInfo.price || 0);
+				that.newGoodInfo.fixTare = parseFloat(that.newGoodInfo.fixTare || 0);
+				that.newGoodInfo.initWeight = parseFloat(that.newGoodInfo.initWeight || 0);
+				
+				console.log("完整的newGoodInfo", that.newGoodInfo);
+				
+				category.CommoditySave3(JSON.stringify(that.newGoodInfo)).then(res => {
+					uni.showToast({
+						icon: 'none',
+						title: '添加成功',
+						duration: 1200,
+					});
+					that.showAddNewGood = false;
+					that.newGoodInfoReset();
+					that.getAllcommodity();
+				}).catch(error => {
+					console.error('添加商品失败:', error);
+					uni.showToast({
+						icon: 'none',
+						title: '添加失败',
+						duration: 1200,
+					});
+				});
+			},
+			// 重置新货品信息
+			newGoodInfoReset() {
+				this.newGoodInfo = {
+					name: "",
+					classifyId: "",
+					saleWay: 1,
+					unit: "件",
+					price: "",
+					initWeight: "",
+					fixTare: "",
+					showToSale: 1,
+					specList: []
+				};
+			},
+			// 改变销售方式
+			changSaleType(type) {
+				this.newGoodInfo.saleWay = type;
+				this.newGoodInfo.specList = [];
+				if (type == 3) {
+					var guid1 = this.generateUUID();
+					this.newGoodInfo.specList.push({
+						id: guid1,
+						specName: this.newGoodInfo.unit,
+						fixprice: 0
+					});
+					this.newGoodInfo.specList.push({
+						id: this.generateUUID(),
+						specName: this.newGoodInfo.unit,
+						fixprice: 0,
+						parentId: guid1
+					});
+				}
+			},
+			// 生成UUID
+			generateUUID() {
+				return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+					const r = Math.random() * 16 | 0;
+					const v = c === 'x' ? r : (r & 0x3 | 0x8);
+					return v.toString(16);
+				});
+			},
+			// 添加规格
+			addSpec() {
+				if (this.newGoodInfo.specList.length < 3) {
+					this.newGoodInfo.specList.push({
+						id: this.generateUUID(),
+						specName: this.newGoodInfo.unit,
+						fixprice: 0,
+						parentId: this.newGoodInfo.specList[this.newGoodInfo.specList.length - 1].id,
+						price: 0
+					});
+				}
+			},
+			// 按createTime排序方法
+			sortByCreateTime(data) {
+				return data.sort((a, b) => {
+					const dateA = new Date(a.createTime);
+					const dateB = new Date(b.createTime);
+					return dateB - dateA; // 降序排序，最新的在前面
+				});
+			},
+			// 选择单位
+			selectUnit(unit) {
+				this.newGoodInfo.unit = unit;
+				// 如果是按件拆包类型，也要更新specList中的单位
+				if (this.newGoodInfo.saleWay === 3 && this.newGoodInfo.specList.length > 0) {
+					this.newGoodInfo.specList[0].specName = unit;
+				}
+			},
+			// 更新主单位（按件拆包时）
+			updateMainUnit() {
+				// 当按件拆包的主单位改变时，同步到newGoodInfo.unit
+				if (this.newGoodInfo.specList.length > 0) {
+					this.newGoodInfo.unit = this.newGoodInfo.specList[0].specName;
+				}
+			},
+			// 选择商品分类（确保只能选择一个）
+			selectCategory(classifyId) {
+				console.log("this.tabListOrigin", this.tabListOrigin)
+				this.newGoodInfo.classifyId = classifyId;
 			},
 			getCommdityActive(id) {
 				if (this.BatchCommodityList.some(x => x.commodityId === id)) {
@@ -417,7 +682,9 @@
 				if (type == "全部") {
 					this.commodityShowList = this.commodityList
 				} else {
-					this.commodityShowList = this.commodityList.filter(x => x.className == type)
+					// 过滤后也保持按createTime排序
+					const filteredData = this.commodityList.filter(x => x.className == type);
+					this.commodityShowList = this.sortByCreateTime(filteredData);
 				}
 			},
 			//键盘数字输入处理
@@ -649,8 +916,10 @@
 			getAllcommodity() {
 				category.GetAllCommidityByCompanyId2(this.companyId).then(res => {
 					console.log("res", res)
-					this.commodityList = res.data;
-					this.commodityShowList = res.data;
+					// 按createTime降序排序（最新的在前面）
+					const sortedData = this.sortByCreateTime(res.data);
+					this.commodityList = sortedData;
+					this.commodityShowList = sortedData;
 					this.tabList = [{
 						name: "全部",
 						value: 0
@@ -660,13 +929,13 @@
 						if (!this.tabList.some(tab => tab.name === item.className)) {
 							this.tabList.push({
 								name: item.className,
-								value: index
+								value: item.classId
 							});
 						};
 						if (!this.tabListOrigin.some(tab => tab.name === item.className)) {
 							this.tabListOrigin.push({
 								name: item.className,
-								value: item.classifyId
+								value: item.classId
 							});
 						};
 						if (this.tabListOrigin.length > 0) {
@@ -696,27 +965,150 @@
 					commodityAdded.incomingPrice = (commodityAdded.inboundAmount / commodityAdded.initMount).toFixed(2)
 				}
 			},
-			addCommodity(e) {
-				if (this.getCommdityActive(e.id)) return;
-				if (e.saleWay === 1 || e.saleWay === 2 || e.saleWay === 4) {
-					var commodityAdded = {
-						id: "",
-						name: e.commodityName,
-						initMount: 0,
-						initWeight: 0,
-						fixWeight:e.initWeight,//单位重量（目前仅用于定装）
-						commodityId: e.id,
-						calcType: 1,
-						saleWay: e.saleWay,
-						incomingPrice: e.incomingPrice ? e.incomingPrice : 0,
-						inboundAmount: 0
-					}
-					if (e.commoditySpecs.length > 0) {
-						commodityAdded.spec = e.commoditySpecs[0]
-					}
-					this.BatchCommodityList.push(commodityAdded)
+		addCommodity(e) {
+			if (this.getCommdityActive(e.id)) return;
+			if (e.saleWay === 1 || e.saleWay === 2 || e.saleWay === 4) {
+				var commodityAdded = {
+					id: "",
+					name: e.commodityName,
+					initMount: 0,
+					initWeight: 0,
+					fixWeight:e.initWeight,//单位重量（目前仅用于定装）
+					commodityId: e.id,
+					calcType: 1,
+					saleWay: e.saleWay,
+					incomingPrice: e.incomingPrice ? e.incomingPrice : 0,
+					inboundAmount: 0
 				}
+				if (e.commoditySpecs.length > 0) {
+					commodityAdded.spec = e.commoditySpecs[0]
+				}
+				this.BatchCommodityList.push(commodityAdded)
 			}
+			
+			// 处理定装拆包
+			if(e.saleWay === 3){
+				uni.createSelectorQuery().selectAll(`#grid-item-${e.id}`).boundingClientRect(data => {
+					console.log("data", data)
+					this.createNativeView(data[0].left + data[0].width / 2, data[0].top, e, e.commoditySpecs)
+				}).exec()
+			}
+		},
+		
+		// 用于添加拆包商品
+		addCommodity2(e, spec) {
+			var commodityAdded = {
+				id: "",
+				name: e.commodityName,
+				initMount: 0,
+				initWeight: 0,
+				fixWeight:e.initWeight,//单位重量（目前仅用于定装）
+				commodityId: e.id,
+				calcType: 1,
+				saleWay: e.saleWay,
+				incomingPrice: e.incomingPrice ? e.incomingPrice : 0,
+				inboundAmount: 0
+			}
+			commodityAdded.spec = spec
+			this.BatchCommodityList.push(commodityAdded)
+		},
+		
+		// 创建原生视图用于选择规格
+		createNativeView(left, top, commodity, specList) {
+			console.log(specList)
+			if (this.actionView || !specList || specList.length < 0) return;
+			let that = this;
+			this.maskView = new plus.nativeObj.View("maskView", {
+				top: "0px",
+				left: "0px",
+				width: "100%",
+				height: "100%",
+				backgroundColor: "rgba(0,0,0,0.1)" // 接近透明
+			});
+			this.maskView.addEventListener("click", () => {
+				that.actionView.close();
+				that.actionView = null;
+				that.maskView.close();
+				that.maskView = null;
+			});
+			this.maskView.show();
+
+			var zoneHeight = specList.length * 100;
+			var zoneTop = top - 100 < 0 ? 0 : top - 100;
+			zoneTop = zoneTop + zoneHeight > plus.screen.resolutionHeight ? plus.screen.resolutionHeight - zoneHeight : zoneTop;
+			this.actionView = new plus.nativeObj.View("actionView", {
+				backgroundColor: "rgba(255, 255, 255, 0.1)",
+				border: "5px solid #FF0000",
+				borderRadius: "10px",
+				left: left,
+				top: zoneTop,
+				width: "150px",
+				height: zoneHeight + "px"
+			});
+
+			for (var i = 0; i < specList.length; i++) {
+				this.actionView.drawRect({
+					color: "#000000", // 边框颜色
+					width: "2px", // 边框宽度
+					radius: "5px" // 圆角半径（关键！）
+				}, {
+					top: i * 100 + "px",
+					left: "0px",
+					width: "150px",
+					height: "100px"
+				});
+				this.actionView.drawRect({
+					color: "#ffffff", // 边框颜色
+					width: "2px", // 边框宽度
+					radius: "5px" // 圆角半径（关键！）
+				}, {
+					top: i * 100 + 2 + "px",
+					left: "2px",
+					width: "146px",
+					height: "96px"
+				});
+
+				this.actionView.draw([{
+					tag: 'font',
+					id: 'font' + i,
+					text: specList[i].specName,
+					textStyles: {
+						size: '50px'
+					},
+					// 添加边框样式
+					border: {
+						width: '2px', // 边框宽度
+						style: 'solid', // 边框样式（solid, dashed, dotted）
+						color: '#000000' // 边框颜色（黑色）
+					},
+					position: {
+						top: i * 100 + 25 + 'px',
+						left: '0px',
+						width: '100%',
+						height: '60px'
+					}
+				}]);
+			}
+
+			// 添加点击事件
+			this.actionView.addEventListener("click", (e) => {
+				const x = e.clientX;
+				const y = e.clientY;
+				// 判断点击位置
+				for (var i = 0; i < specList.length; i++) {
+					if (x > 0 && x < 150 && y > i * 100 && y < (i + 1) * 100) {
+						that.addCommodity2(commodity, specList[i])
+					}
+				}
+
+				that.actionView.close();
+				that.actionView = null;
+				that.maskView.close();
+				that.maskView = null;
+			});
+
+			this.actionView.show();
+		}
 		}
 
 	}
@@ -735,11 +1127,14 @@
 		margin-right: 15rpx;
 		display: inline-block;
 		border-radius: 10rpx;
+		cursor: pointer;
+		transition: all 0.3s ease;
 	}
 
 	.coach_wrap_active {
-		color: white;
-		background-color: dodgerblue;
+		color: white !important;
+		background-color: dodgerblue !important;
+		border-color: dodgerblue !important;
 	}
 
 	.input1 {
@@ -820,5 +1215,277 @@
 		text-align: left;
 		font-weight: bold;
 		line-height: 20rpx;
+	}
+
+	/* 添加新货品弹窗美化样式 */
+	.znj-add-good-modal-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 9998;
+	}
+	
+	.znj-add-good-modal-wrapper {
+		width: 90%;
+		max-width: 900px;
+		max-height: 90vh;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.znj-add-good-modal-container {
+		background: #ffffff;
+		border-radius: 16px;
+		overflow: hidden;
+		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+		display: flex;
+		flex-direction: column;
+		max-height: 90vh;
+	}
+	
+	.znj-add-good-modal-header {
+		background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+		padding: 20px 24px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-shrink: 0;
+	}
+	
+	.znj-add-good-modal-title {
+		font-size: 24px;
+		font-weight: bold;
+		color: #ffffff;
+	}
+	
+	.znj-add-good-modal-close {
+		width: 36px;
+		height: 36px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		border-radius: 50%;
+		transition: background 0.2s;
+	}
+	
+	.znj-add-good-modal-close:hover {
+		background: rgba(255, 255, 255, 0.2);
+	}
+	
+	.znj-add-good-modal-body {
+		flex: 1;
+		overflow-y: auto;
+		padding: 20px;
+	}
+	.znj-add-good-form {
+		display: flex;
+		flex-direction: column;
+		gap: 20rpx;
+	}
+	.znj-add-good-row {
+		display: flex;
+		align-items: center;
+		gap: 5rpx;
+		margin-bottom: 0rpx;
+		min-height: 25rpx;
+	}
+	.znj-add-good-label {
+		width: 120rpx;
+		font-size: 15rpx;
+		color: #333;
+		text-align: right;
+		font-weight: 500;
+		flex-shrink: 0;
+	}
+	.znj-add-good-input {
+		flex: 1;
+		height: 32rpx;
+		border-radius: 8rpx;
+		border: 1px solid #e0e0e0;
+		background: #fafbfc;
+		padding: 0 16rpx;
+		font-size: 15rpx;
+		transition: border-color 0.2s;
+	}
+	.znj-add-good-input:focus {
+		border-color: #1976d2;
+		outline: none;
+	}
+	.znj-add-good-btn-group {
+		display: flex;
+		gap: 12rpx;
+		flex-wrap: wrap;
+	}
+	.znj-add-good-type-btn {
+		background: #f5f5f5;
+		color: #333;
+		border: 1px solid #e0e0e0;
+		border-radius: 8rpx;
+		padding: 0 15rpx;
+		height: 35rpx;
+		line-height: 35rpx;
+		font-size: 20rpx;
+		cursor: pointer;
+		transition: all 0.2s;
+		font-weight: 500;
+	}
+	.znj-add-good-type-btn.active, .znj-add-good-type-btn:hover {
+		background: #1976d2;
+		color: #fff;
+		border-color: #1976d2;
+	}
+	.znj-add-good-btns {
+		display: flex;
+		justify-content: flex-end;
+		gap: 24rpx;
+		margin-top: 5rpx;
+		padding-top: 5rpx;
+		border-top: 1px solid #f0f0f0;
+	}
+	.znj-add-good-btn {
+		min-width: 150rpx;
+		height: 32rpx;
+		line-height: 32rpx;
+		padding: 0 10rpx;
+		border: none;
+		border-radius: 8rpx;
+		font-size: 25rpx;
+		font-weight: bold;
+		cursor: pointer;
+		transition: all 0.2s;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+	}
+	.znj-add-good-btn.cancel {
+		background: #bdbdbd;
+		color: #fff;
+	}
+	.znj-add-good-btn.cancel:hover {
+		background: #a0a0a0;
+		transform: translateY(-1px);
+	}
+	.znj-add-good-btn.confirm {
+		background: linear-gradient(135deg, #1976d2, #1565c0);
+		color: #fff;
+	}
+	.znj-add-good-btn.confirm:hover {
+		background: linear-gradient(135deg, #1565c0, #0d47a1);
+		transform: translateY(-1px);
+		box-shadow: 0 4px 8px rgba(25,118,210,0.3);
+	}
+	
+	/* 单位选择按钮组 */
+	.znj-add-good-unit-group {
+		display: flex;
+		gap: 8rpx;
+		flex-wrap: wrap;
+	}
+	.znj-add-good-unit-btn {
+		background: #f5f5f5;
+		color: #333;
+		border: 1px solid #e0e0e0;
+		border-radius: 6rpx;
+		padding: 0 12rpx;
+		height: 28rpx;
+		line-height: 28rpx;
+		font-size: 18rpx;
+		cursor: pointer;
+		transition: all 0.2s;
+		font-weight: 500;
+	}
+	.znj-add-good-unit-btn.active, .znj-add-good-unit-btn:hover {
+		background: #07c160;
+		color: #fff;
+		border-color: #07c160;
+	}
+
+	.znj-add-good-unit-select {
+		padding: 8rpx 12rpx;
+		border: 1px solid #e0e0e0;
+		border-radius: 6rpx;
+		background: #fff;
+		font-size: 28rpx;
+		color: #333;
+		min-width: 100rpx;
+		outline: none;
+	}
+
+	.znj-add-good-unit-select:focus {
+		border-color: #07c160;
+	}
+	
+	/* 规格输入框样式 */
+	.znj-add-good-spec-box {
+		display: flex;
+		align-items: center;
+		border: 1px solid #ddd;
+		border-radius: 8rpx;
+		overflow: hidden;
+		height: 32rpx;
+		margin-left: 10rpx;
+		background: #fafbfc;
+		box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+	}
+	.znj-add-good-spec-prefix, .znj-add-good-spec-suffix {
+		background: #1976d2;
+		color: #fff;
+		font-size: 20rpx;
+		padding: 0 12rpx;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		font-weight: 500;
+	}
+	.znj-add-good-spec-suffix {
+		background: #07c160;
+	}
+	.znj-add-good-spec-input {
+		width: 80rpx;
+		flex: 1;
+		padding: 0 12rpx;
+		border: none;
+		outline: none;
+		font-size: 22rpx;
+		background: transparent;
+		text-align: center;
+	}
+	
+	/* 分割线 */
+	.znj-add-good-divider {
+		height: 1px;
+		background: linear-gradient(to right, transparent, #e0e0e0, transparent);
+		margin: 5rpx 0;
+	}
+	
+	/* 开关按钮组 */
+	.znj-add-good-switch-group {
+		display: flex;
+		width: 120rpx;
+		height: 30rpx;
+		border-radius: 8rpx;
+		overflow: hidden;
+		border: 1px solid #ddd;
+		box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+	}
+	.znj-add-good-switch-btn {
+		flex: 1;
+		border: none;
+		background: transparent;
+		color: #333;
+		font-size: 15rpx;
+		line-height: 30rpx;
+		cursor: pointer;
+		transition: all 0.2s;
+		font-weight: 500;
+	}
+	.znj-add-good-switch-btn.active {
+		background: #07c160;
+		color: #fff;
 	}
 </style>

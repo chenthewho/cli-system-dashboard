@@ -92,6 +92,14 @@
 			}
 		},
 		{
+			"path": "pages/good/batchModifyRecord",
+			"style": {
+				"navigationBarTitleText": "批次修改记录",
+				"enablePullDownRefresh": false
+			}
+		},
+		
+		{
 			"path": "pages/good/goodPurchaseEmploy",
 			"style": {
 				"navigationBarTitleText": "自营货品添加",
@@ -165,6 +173,13 @@
 			"path": "pages/table/saleStaticTable",
 			"style": {
 				"navigationBarTitleText": "进销存统计表",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/table/lousStaticTable",
+			"style": {
+				"navigationBarTitleText": "欠条统计表",
 				"enablePullDownRefresh": false
 			}
 		},

@@ -144,7 +144,7 @@
 		  </view>
 		  
 		  <view class="reports-list">
-		    <view class="report-card" @click="">
+		    <view class="report-card" @click="enterTolousStaticTable">
 		      <view class="report-icon">
 		        <uni-icons type="loop" size="18" color="#607d8b"></uni-icons>
 		      </view>
@@ -227,6 +227,11 @@
 					url: `/pages/table/assistProfitTable`
 				})
 			},
+			enterTolousStaticTable(){
+				uni.navigateTo({
+					url: `/pages/table/lousStaticTable`
+				})
+			},	
 			//进入进销存统计表
 			enterToSaleStaticTable(){
         uni.showToast({

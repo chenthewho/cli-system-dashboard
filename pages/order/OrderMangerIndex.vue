@@ -99,9 +99,8 @@
 					<div style="flex: 1; min-width: 200rpx;color: darkred;" v-if="currentOrder.debt>0">下欠:
 						{{currentOrder.debt}}
 					</div>
-					<div style="flex: 1; min-width: 200rpx;display: flex;" >订单状态:
-						<text style="color:#67C23A;font-weight: 500;margin-left: 10rpx;font-size: 13rpx;" v-if="currentOrder.status==1">正常</text>
-						<text style="color: #31BDEC;font-weight: 500;margin-left: 10rpx;font-size: 13rpx;" v-if="currentOrder.status==5">已修改<text style="background-color: #31BDEC;color: white;padding: 5rpx;border-radius: 5rpx;margin-left: 10rpx;" @click="showHistoryOrder">查看历史订单</text></text>
+					<div style="flex: 1; min-width: 200rpx;display: flex;" v-if="currentOrder.status !=1" >状态:
+						<text style="color: #31BDEC;font-weight: 500;margin-left: 10rpx;font-size: 13rpx;" v-if="currentOrder.status==5">已修改<text style="background-color: #31BDEC;color: white;padding: 5rpx;border-radius: 5rpx;margin-left: 10rpx;" @click="showHistoryOrder(currentOrder)">查看历史订单</text></text>
 						<text style="color:#F56C6C;font-weight: 500;margin-left: 10rpx;font-size: 13rpx;" v-if="currentOrder.status==2">退单</text>
 					</div>
 				</div>
@@ -129,18 +128,38 @@
 					
 				</div>
 				</scroll-view>
-				<view
-					style="display: flex; justify-content: space-between; align-items: center; width: 100%;padding-top: 5rpx;">
-					<view style="text-align: right;padding-right: 5rpx;font-weight: bold;display: flex;"><u-button v-if="currentOrder.status!=2" type="primary" style="background-color: gray;border-color: gray; color: white;font-weight: bold;"
-							@click="TurnToTuigeCashier" text="改单"></u-button><u-button v-if="currentOrder.status!=2" type="primary" style="background-color: gray;border-color: gray; color: #ccc;font-weight: bold;margin-left: 20rpx;"
-							@click="TuigeOrder" text="退单" ></u-button></view>
-					<view v-if="currentOrder.debt>0" style="text-align: right;padding-right: 5rpx;"><u-button
-							type="primary" text="整单还款" @click="openPayTypeDialogVisible"
-							style="background-color: darkred;color: white;border-color: darkred;font-weight: bold;"></u-button>
+				<view class="order-action-buttons">
+					<view class="button-group left-buttons">
+						<u-button v-if="currentOrder.status!=2" 
+							class="action-btn modify-btn"
+							type="primary" 
+							@click="TurnToTuigeCashier" 
+							text="改单">
+						</u-button>
+						<u-button v-if="currentOrder.status!=2" 
+							class="action-btn refund-btn"
+							type="primary" 
+							@click="TuigeOrder" 
+							text="退单">
+						</u-button>
+					</view>
+					
+					<view class="button-group center-buttons" v-if="currentOrder.debt>0">
+						<u-button 
+							class="action-btn repay-btn"
+							type="primary" 
+							text="整单还款" 
+							@click="openPayTypeDialogVisible">
+						</u-button>
 					</view>
 				
-					<view style="text-align: right;padding-right: 5rpx;font-weight: bold;"><u-button type="primary"
-							text="打印" @click="printerModel(currentOrder)"></u-button>
+					<view class="button-group right-buttons">
+						<u-button 
+							class="action-btn print-btn"
+							type="primary"
+							text="打印" 
+							@click="printerModel(currentOrder)">
+						</u-button>
 					</view>
 				</view>
 				<u-button
@@ -237,6 +256,166 @@
 			</div>
 		</u-modal>
 
+		<!-- 历史订单抽屉 -->
+		<view class="drawer-container">
+			<!-- 遮罩层 -->
+			<view class="drawer-mask" :class="{ 'show': showHistoryDrawer }" @tap="closeHistoryDrawer"></view>
+
+			<!-- 抽屉内容 -->
+			<view class="drawer-content" :class="{ 'show': showHistoryDrawer }">
+				<!-- 历史订单抽屉 -->
+				<div class="history-order-container" v-if="showHistoryDrawer">
+					<!-- 抽屉头部 -->
+					<div class="history-header">
+						<div class="history-title">
+							<view class="history-title-icon">
+								<uni-icons custom-prefix="iconfont" type="icon-lishijilu" size="16" color="#3498db"></uni-icons>
+							</view>
+							<text class="history-title-text">历史订单列表</text>
+						</div>
+						<div class="history-summary" v-if="historyOrderList.length > 0">
+							<text class="history-summary-text">共 {{ historyOrderList.length }} 个版本</text>
+						</div>
+					</div>
+
+					<!-- 历史订单列表 -->
+					<scroll-view class="history-scroll" :style="{ height: (scrollHeight - 100) + 'px' }" scroll-y="true">
+						<div class="history-order-list">
+							<div class="history-order-item" v-for="(order, index) in historyOrderList" :key="index" @click="showOrderDetail(order)">
+								<div class="history-order-header">
+									<div class="history-order-info">
+										<text class="history-customer-name">{{ order.customName || "散客" }}</text>
+										<text class="history-order-time">{{ order.updateTime ? order.updateTime.replace("T", " ") : "" }}</text>
+									</div>
+									<div class="history-order-amounts">
+										<text class="history-total-amount">实收: ¥{{ order.actualMoney || 0 }}</text>
+										<text class="history-debt-amount" v-if="order.debt > 0">欠款: ¥{{ order.debt || 0 }}</text>
+									</div>
+								</div>
+								<div class="history-order-detail">
+									<div class="history-order-code">
+										<text class="history-code-label">订单号:</text>
+										<text class="history-code-value">{{ order.accountCode || "-" }}</text>
+									</div>
+									<div class="history-order-status" v-if="order.status !== 1">
+										<view class="history-status-tag" :class="getOrderStatusClass(order.status)">
+											<text class="history-status-text">{{ getOrderStatusText(order.status) }}</text>
+										</view>
+									</div>
+								</div>
+								<div class="history-order-items" v-if="order.modulestr">
+									<text class="history-items-text">{{ order.modulestr }}</text>
+								</div>
+							</div>
+							<!-- 空状态 -->
+							<div class="history-empty" v-if="!historyOrderList || historyOrderList.length === 0">
+								<view class="history-empty-icon">
+									<uni-icons type="info-filled" size="32" color="#bdc3c7"></uni-icons>
+								</view>
+								<text class="history-empty-text">暂无历史订单</text>
+							</div>
+						</div>
+					</scroll-view>
+				</div>
+			</view>
+		</view>
+
+		<!-- 订单详情抽屉 -->
+		<view class="drawer-container" v-if="showOrderDetailDrawer">
+			<!-- 遮罩层 -->
+			<view class="drawer-mask" :class="{ 'show': showOrderDetailDrawer }" @tap="closeOrderDetailDrawer"></view>
+
+			<!-- 抽屉内容 -->
+			<view class="drawer-content" :class="{ 'show': showOrderDetailDrawer }">
+				<!-- 订单详情抽屉 -->
+				<div class="order-detail-container" v-if="showOrderDetailDrawer && orderDetailData">
+					<!-- 抽屉头部 -->
+					<div class="order-detail-header">
+						<div class="detail-title">
+							<view class="detail-title-icon">
+								<uni-icons custom-prefix="iconfont" type="icon-dingdan" size="20" color="#666"></uni-icons>
+							</view>
+							<text class="detail-title-text">订单详情</text>
+						</div>
+						<view class="close-btn" @tap="closeOrderDetailDrawer">
+							<uni-icons type="close" size="35" color="#666"></uni-icons>
+						</view>
+					</div>
+
+					<!-- 订单概览信息 -->
+					<div class="order-overview">
+						<div class="info-item">
+							<span class="info-label">创建时间:</span>
+							<span class="info-value">{{ orderDetailData.createTime ? orderDetailData.createTime.replace("T", " ") : "" }}</span>
+						</div>
+						<div class="info-item" v-if="orderDetailData.updateTime">
+							<span class="info-label">修改时间:</span>
+							<span class="info-value">{{ orderDetailData.updateTime ? orderDetailData.updateTime.replace("T", " ") : "" }}</span>
+						</div>
+						<div class="info-item">
+							<span class="info-label">订单号:</span>
+							<span class="info-value">{{ orderDetailData.accountCode || "-" }}</span>
+						</div>
+						<div class="info-item">
+							<span class="info-label">顾客:</span>
+							<span class="info-value">{{ orderDetailData.customName || "散客" }}</span>
+						</div>
+						<div class="info-item highlight">
+							<span class="info-label">总计金额:</span>
+							<span class="info-value">¥{{ orderDetailData.payableAmount || 0 }}</span>
+						</div>
+						<div class="info-item" v-if="orderDetailData.basketOffsetAmount">
+							<span class="info-label">押筐抵扣:</span>
+							<span class="info-value">¥{{ orderDetailData.basketOffsetAmount || 0 }}</span>
+						</div>
+						<div class="info-item highlight">
+							<span class="info-label">实付金额:</span>
+							<span class="info-value">¥{{ orderDetailData.actualMoney || 0 }}</span>
+						</div>
+					<div class="info-item debt" v-if="orderDetailData.debt > 0">
+						<span class="info-label">下欠:</span>
+						<span class="info-value">¥{{ orderDetailData.debt }}</span>
+					</div>
+					<div class="info-item" v-if="orderDetailData.status !== 1">
+						<span class="info-label">订单状态:</span>
+						<span class="info-value" :class="getOrderStatusClass(orderDetailData.status)">{{ getOrderStatusText(orderDetailData.status) }}</span>
+					</div>
+					</div>
+
+					<!-- 商品列表 -->
+					<scroll-view class="product-scroll" :style="{ maxHeight: (scrollHeight - 200) + 'px' }" scroll-y="true" v-if="orderDetailData.module && orderDetailData.module.length > 0">
+						<div class="product-table">
+							<div class="table-header">
+								<div class="header-cell">货品</div>
+								<div class="header-cell">数量</div>
+								<div class="header-cell">总重</div>
+								<div class="header-cell">皮重</div>
+								<div class="header-cell">单价</div>
+								<div class="header-cell">小计</div>
+							</div>
+
+							<div class="table-row" v-for="(item, index) in orderDetailData.module" :key="index">
+								<div class="table-cell">{{ item.name }}</div>
+								<div class="table-cell">{{ item.mount }}</div>
+								<div class="table-cell">{{ item.totalWeight }}</div>
+								<div class="table-cell">{{ item.tareWeight }}</div>
+								<div class="table-cell">¥{{ item.referenceAmount }}</div>
+								<div class="table-cell">¥{{ item.subtotal }}</div>
+							</div>
+						</div>
+					</scroll-view>
+
+					<!-- 无商品数据提示 -->
+					<div v-else class="no-products">
+						<view class="no-products-icon">
+							<uni-icons type="info-filled" size="24" color="#bdc3c7"></uni-icons>
+						</view>
+						<text class="no-products-text">暂无商品信息</text>
+					</div>
+				</div>
+			</view>
+		</view>
+
 	</view>
 
 </template>
@@ -276,6 +455,11 @@
 				currentPayWay: 1,
 				beginTime:"",
 				endTime:"",
+				showHistoryDrawer: false, // 历史订单抽屉显示状态
+				historyOrderList: [], // 历史订单列表
+				currentOriginOrderId: "", // 当前原始订单ID
+				showOrderDetailDrawer: false, // 订单详情抽屉显示状态
+				orderDetailData: null, // 订单详情数据
 				payWay: [{
 						label: "微信支付",
 						coin: "weixin-fill",
@@ -326,6 +510,8 @@
 				
 				const currentDate = this.getcurrentTime();
 				this.single = currentDate;
+				console.log("this.beginTime",this.beginTime);
+				console.log("this.endTime",this.endTime);
 				cashierOrder.GetAccountByCompanyIdandDateRange(this.CompanyId, this.beginTime, this.endTime).then(res => {
 					this.originalModuleList = res.data;
 					this.originalModuleList.forEach(item => {
@@ -362,31 +548,31 @@
 				})
 			},
 			getTodayDateRange() {
-    // 获取当前时间（UTC+8 北京时间）
+    // 获取当前本地时间
     const now = new Date();
-    const beijingOffset = 8 * 60 * 60 * 1000; // 北京时区偏移（毫秒）
-    const beijingTime = new Date(now.getTime() + beijingOffset);
 
-    // 设置当天的 00:00:00 和 23:59:59（北京时间）
-    const todayStart = new Date(beijingTime);
-    todayStart.setHours(0, 0, 0, 0);
+    // 设置当天的 00:00:01 和 23:59:59（本地时间）
+    const todayStart = new Date(now);
+    todayStart.setHours(0, 0, 1, 0); // 设置为 00:00:01
 
-    const todayEnd = new Date(beijingTime);
-    todayEnd.setHours(23, 59, 59, 999);
+    const todayEnd = new Date(now);
+    todayEnd.setHours(23, 59, 59, 999); // 设置为 23:59:59
 
-    // 格式化成 "YYYY-MM-DD HH:mm:ss"
+    // 格式化成 "YYYY-MM-DD HH:mm:ss"（使用本地时间）
     const formatDateTime = (date) => {
-        const year = date.getUTCFullYear();
-        const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-        const day = String(date.getUTCDate()).padStart(2, '0');
-        const hours = String(date.getUTCHours()).padStart(2, '0');
-        const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-        const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
         return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
     };
 
-    this.beginTime = formatDateTime(todayStart); // 例如 "2023-11-16 00:00:00"
-    this.endTime = formatDateTime(todayEnd);    // 例如 "2023-11-16 23:59:59"
+    this.beginTime = formatDateTime(todayStart); // 例如 "2025-09-26 00:00:01"
+    this.endTime = formatDateTime(todayEnd);    // 例如 "2025-09-26 23:59:59"
+	console.log("this.beginTime",this.beginTime);
+	console.log("this.endTime",this.endTime);
 },
 			openPayTypeDialogVisible() {
 				this.payTypeDialogVisible = true;
@@ -550,6 +736,140 @@
 			},
 			checkboxChange(e) {
 				this.checkboxValue = [e]
+			},
+			showHistoryOrder(item){
+				this.showDetail = false;
+				// 设置当前原始订单ID和订单ID
+				this.currentOriginOrderId = item.originOrderId || item.id;
+				console.log('显示历史订单，原始订单ID:', this.currentOriginOrderId, '当前订单ID:', item.id);
+				
+				// 调用API获取历史订单
+				this.loadHistoryOrders(this.currentOriginOrderId, item.id);
+				
+				// 显示抽屉
+				this.showHistoryDrawer = true;
+			},
+			
+			// 加载历史订单数据
+			loadHistoryOrders(originOrderId, orderId) {
+				console.log('加载历史订单:', originOrderId, orderId);
+				
+				cashierOrder.GetOriginOrderId(originOrderId, orderId).then(res => {
+					console.log('历史订单API响应:', res);
+					if (res.code === 200) {
+						let historyData = res.data || [];
+						// 按照updateTime降序排序
+						historyData.sort((a, b) => {
+							const timeA = a.updateTime || a.createTime || '';
+							const timeB = b.updateTime || b.createTime || '';
+							return new Date(timeB) - new Date(timeA);
+						});
+						this.historyOrderList = historyData;
+						console.log('历史订单列表(已排序):', this.historyOrderList);
+					} else {
+						console.error('获取历史订单失败:', res.message);
+						this.historyOrderList = [];
+						uni.showToast({
+							title: '获取历史订单失败',
+							icon: 'none'
+						});
+					}
+				}).catch(error => {
+					console.error('获取历史订单异常:', error);
+					this.historyOrderList = [];
+					uni.showToast({
+						title: '网络异常',
+						icon: 'none'
+					});
+				});
+			},
+			
+			// 关闭历史订单抽屉
+			closeHistoryDrawer() {
+				this.showHistoryDrawer = false;
+				this.historyOrderList = [];
+				this.currentOriginOrderId = "";
+			},
+			
+			// 格式化订单时间
+			formatOrderTime(timeStr) {
+				if (!timeStr) return '';
+				return timeStr.replace('T', ' ').substring(0, 16);
+			},
+			
+			// 获取订单状态文本
+			getOrderStatusText(status) {
+				switch(status) {
+					case 1: return '正常';
+					case 2: return '退单';
+					case 5: return '已修改';
+					default: return '未知';
+				}
+			},
+			
+			// 获取订单状态样式类
+			getOrderStatusClass(status) {
+				switch(status) {
+					case 1: return 'status-normal';
+					case 2: return 'status-refund';
+					case 5: return 'status-modified';
+					default: return 'status-unknown';
+				}
+			},
+			
+			// 显示订单详情
+			showOrderDetail(order) {
+				console.log('显示订单详情:', order);
+				// 获取订单详细信息
+				this.loadOrderDetail(order.id);
+			},
+			
+			// 加载订单详情数据
+			loadOrderDetail(orderId) {
+				console.log('加载订单详情:', orderId);
+				
+				cashierOrder.GetOrderByAccountId(orderId).then(res => {
+					console.log('订单详情API响应:', res);
+					if (res.code === 200 || res.data) {
+						this.orderDetailData = res.data;
+						// 解析商品数据
+						if (this.orderDetailData.module && typeof this.orderDetailData.module === 'string') {
+							try {
+								this.orderDetailData.module = JSON.parse(this.orderDetailData.module);
+							} catch (error) {
+								console.error('解析商品数据失败:', error);
+								this.orderDetailData.module = [];
+							}
+						}
+						// 过滤掉type为4的项目，并按type排序
+						if (this.orderDetailData.module && Array.isArray(this.orderDetailData.module)) {
+							this.orderDetailData.module = this.orderDetailData.module
+								.filter(item => item.type !== 4)
+								.sort((a, b) => a.type - b.type);
+						}
+						
+						console.log('订单详情数据:', this.orderDetailData);
+						this.showOrderDetailDrawer = true;
+					} else {
+						console.error('获取订单详情失败:', res.message);
+						uni.showToast({
+							title: '获取订单详情失败',
+							icon: 'none'
+						});
+					}
+				}).catch(error => {
+					console.error('获取订单详情异常:', error);
+					uni.showToast({
+						title: '网络异常',
+						icon: 'none'
+					});
+				});
+			},
+			
+			// 关闭订单详情抽屉
+			closeOrderDetailDrawer() {
+				this.showOrderDetailDrawer = false;
+				this.orderDetailData = null;
 			},
 			deleteHandle() {
 				if (!this.isEdting || this.checkboxValue.length == 0) {
@@ -739,7 +1059,506 @@
 <style lang="scss">
 	.scrollArea {
 		background-color: darkgrey;
+	}
+
+	/* 抽屉容器 */
+	.drawer-container {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		pointer-events: none;
+		z-index: 999;
+		margin-top: 50rpx;
+		height: calc(100% - 50rpx);
+	}
+
+	/* 遮罩层 */
+	.drawer-mask {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 50%;
+		height: 100%;
+		background: rgba(0, 0, 0, 0.5);
+		opacity: 0;
+		transition: opacity 0.3s ease;
+		pointer-events: none;
+	}
+
+	.drawer-mask.show {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	/* 抽屉内容 */
+	.drawer-content {
+		position: absolute;
+		top: 0;
+		right: -50%;
+		width: 50%;
+		height: 100%;
+		background: #cacaca;
+		box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+		transition: transform 0.3s ease;
+		pointer-events: auto;
+	}
+
+	.drawer-content.show {
+		transform: translateX(-100%);
+	}
+
+	/* 历史订单抽屉样式 */
+	.history-order-container {
+		padding: 20rpx;
+		background-color: #fff;
+		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+		height: 100%;
+	}
+
+	.history-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 15rpx;
+		background: linear-gradient(135deg, #3498db, #2980b9);
+		color: white;
+		border-radius: 8rpx;
+		margin-bottom: 15rpx;
+	}
+
+	.history-title {
+		display: flex;
+		align-items: center;
+		gap: 10rpx;
+	}
+
+	.history-title-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 30rpx;
+		height: 30rpx;
+		background: rgba(255, 255, 255, 0.2);
+		border-radius: 50%;
+	}
+
+	.history-title-text {
+		font-size: 24rpx;
+		font-weight: bold;
+		color: white;
+	}
+
+	.history-summary {
+		display: flex;
+		align-items: center;
+	}
+
+	.history-summary-text {
+		font-size: 20rpx;
+		color: rgba(255, 255, 255, 0.9);
+	}
+
+	.history-scroll {
+		height: 100%;
+	}
+
+	.history-order-list {
+		padding-bottom: 20rpx;
+	}
+
+	.history-order-item {
+		background: white;
+		border-radius: 8rpx;
+		margin-bottom: 15rpx;
+		padding: 15rpx;
+		box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.08);
+		border-left: 3rpx solid #3498db;
+		transition: all 0.3s ease;
+	}
+
+	.history-order-item:hover {
+		box-shadow: 0 3rpx 10rpx rgba(0, 0, 0, 0.12);
+		transform: translateY(-1rpx);
+		cursor: pointer;
+	}
+
+	.history-order-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-start;
+		margin-bottom: 12rpx;
+	}
+
+	.history-order-info {
+		display: flex;
+		flex-direction: column;
+		gap: 6rpx;
+	}
+
+	.history-customer-name {
+		font-size: 24rpx;
+		font-weight: bold;
+		color: #333;
+	}
+
+	.history-order-time {
+		font-size: 20rpx;
+		color: #666;
+	}
+
+	.history-order-amounts {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		gap: 4rpx;
+	}
+
+	.history-total-amount {
+		font-size: 22rpx;
+		color: #333;
+		font-weight: bold;
+	}
+
+	.history-debt-amount {
+		font-size: 20rpx;
+		color: #e74c3c;
+		font-weight: bold;
+	}
+
+	.history-order-detail {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 12rpx;
+		padding-top: 12rpx;
+		border-top: 1rpx solid #f0f0f0;
+	}
+
+	.history-order-code {
+		display: flex;
+		align-items: center;
+		gap: 8rpx;
+	}
+
+	.history-code-label {
+		font-size: 20rpx;
+		color: #666;
+	}
+
+	.history-code-value {
+		font-size: 20rpx;
+		color: #333;
+		font-family: monospace;
+	}
+
+	.history-order-status {
+		display: flex;
+		align-items: center;
+	}
+
+	.history-status-tag {
+		padding: 3rpx 8rpx;
+		border-radius: 10rpx;
+		font-size: 18rpx;
+		font-weight: 500;
+		color: white;
+	}
+
+	.history-status-tag.status-normal {
+		background-color: #67C23A;
+	}
+
+	.history-status-tag.status-refund {
+		background-color: #F56C6C;
+	}
+
+	.history-status-tag.status-modified {
+		background-color: #31BDEC;
+	}
+
+	.history-status-tag.status-unknown {
+		background-color: #909399;
+	}
+
+	.history-status-text {
+		font-size: 18rpx;
+	}
+
+	.history-order-items {
+		padding-top: 8rpx;
+		border-top: 1rpx solid #f8f9fa;
+	}
+
+	.history-items-text {
+		font-size: 20rpx;
+		color: #666;
+		line-height: 1.3;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	/* 空状态样式 */
+	.history-empty {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 60rpx 30rpx;
+		text-align: center;
+	}
+
+	.history-empty-icon {
+		margin-bottom: 15rpx;
+	}
+
+	.history-empty-text {
+		font-size: 24rpx;
+		color: #95a5a6;
+		font-weight: 500;
+	}
+
+	/* 订单详情抽屉样式 */
+	.order-detail-container {
+		padding: 12rpx;
+		background-color: #fff;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.order-detail-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 10rpx;
+		background: linear-gradient(135deg, #e74c3c, #c0392b);
+		color: white;
+		border-radius: 6rpx;
+		margin-bottom: 10rpx;
+	}
+
+	.detail-title {
+		display: flex;
+		align-items: center;
+		gap: 6rpx;
+	}
+
+	.detail-title-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 24rpx;
+		height: 24rpx;
+		background: rgba(255, 255, 255, 0.2);
+		border-radius: 50%;
+	}
+
+	.detail-title-text {
+		font-size: 20rpx;
+		font-weight: bold;
+		color: white;
+	}
+
+	.order-overview {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8rpx 12rpx;
+		padding-bottom: 10rpx;
+		border-bottom: 1rpx solid #eee;
+		margin-bottom: 10rpx;
+	}
+
+	.info-item {
+		flex: 1;
+		min-width: 45%;
+		display: flex;
+		font-size: 16rpx;
+		line-height: 1.3;
+	}
+
+	.info-label {
+		color: #666;
+		min-width: 4.5em;
+		margin-right: 6rpx;
+		font-size: 16rpx;
+	}
+
+	.info-value {
+		color: #333;
+		font-weight: normal;
+		font-size: 16rpx;
+	}
+
+	.highlight .info-value {
+		color: #e4393c;
+		font-weight: bold;
+	}
+
+	.debt .info-value {
+		color: darkred;
+		font-weight: bold;
+	}
+
+	.product-scroll {
+		flex: 1;
+		margin-top: 6rpx;
+	}
+
+	.product-table {
+		display: table;
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	.table-header,
+	.table-row {
+		display: table-row;
+	}
+
+	.header-cell,
+	.table-cell {
+		display: table-cell;
+		padding: 6rpx 4rpx;
+		text-align: center;
+		border: 1rpx solid #eee;
+		font-size: 14rpx;
+		line-height: 1.2;
+		vertical-align: middle;
+	}
+
+	.header-cell {
+		background-color: #f5f5f5;
+		font-weight: bold;
+		color: #333;
+		font-size: 15rpx;
+	}
+
+	.table-cell {
+		background-color: #fff;
+		color: #666;
+	}
+
+	.table-row:nth-child(even) .table-cell {
+		background-color: #fafafa;
+	}
+
+	.no-products {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 30rpx;
+		text-align: center;
+	}
+
+	.no-products-icon {
+		margin-bottom: 8rpx;
+	}
+
+	.no-products-text {
+		font-size: 16rpx;
+		color: #95a5a6;
 		height: calc(100vh - 60rpx);
+	}
+
+	/* 订单操作按钮样式 */
+	.order-action-buttons {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+		padding: 5rpx 5rpx;
+	}
+
+	.button-group {
+		display: flex;
+		align-items: center;
+		gap: 35rpx;
+	}
+
+	.left-buttons {
+		flex: 1;
+		justify-content: flex-start;
+		padding-right: 10rpx;
+	}
+
+	.center-buttons {
+		padding-left: 10rpx;
+		padding-right: 10rpx;
+		flex: 1;
+		justify-content: center;
+	}
+
+	.right-buttons {
+		flex: 1;
+		justify-content: flex-end;
+		padding-left: 10rpx;
+	}
+
+	/* 按钮基础样式 */
+	.action-btn {
+		min-width: 65rpx !important;
+		height: 35rpx !important;
+		font-size: 16rpx !important;
+		font-weight: bold !important;
+		border-radius: 3rpx !important;
+		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.1) !important;
+		transition: all 0.3s ease !important;
+	}
+
+	.action-btn:hover {
+		transform: translateY(-1rpx);
+		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15) !important;
+	}
+
+	/* 改单按钮 */
+	.modify-btn {
+		background: linear-gradient(135deg, #3498db, #2980b9) !important;
+		border-color: #3498db !important;
+		color: white !important;
+	}
+
+	.modify-btn:hover {
+		background: linear-gradient(135deg, #2980b9, #1f5f8b) !important;
+	}
+
+	/* 退单按钮 */
+	.refund-btn {
+		background: linear-gradient(135deg, #95a5a6, #7f8c8d) !important;
+		border-color: #95a5a6 !important;
+		color: white !important;
+	}
+
+	.refund-btn:hover {
+		background: linear-gradient(135deg, #7f8c8d, #6c7b7d) !important;
+	}
+
+	/* 整单还款按钮 */
+	.repay-btn {
+		background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+		border-color: #e74c3c !important;
+		color: white !important;
+		min-width: 85rpx !important;
+	}
+
+	.repay-btn:hover {
+		background: linear-gradient(135deg, #c0392b, #a93226) !important;
+	}
+
+	/* 打印按钮 */
+	.print-btn {
+		background: linear-gradient(135deg, #27ae60, #229954) !important;
+		border-color: #27ae60 !important;
+		color: white !important;
+	}
+
+	.print-btn:hover {
+		background: linear-gradient(135deg, #229954, #1e8449) !important;
 	}
 
 	.table {

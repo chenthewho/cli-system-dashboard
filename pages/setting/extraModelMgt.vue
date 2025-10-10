@@ -5,7 +5,7 @@
 				<li v-for="(item, index) in items" :key="index" class="list-item">
 					<div class="item-container"> <!-- 项目名称和重量 -->
 						<div class="item-name">{{ item.name }}</div>
-						<text class="item-weight" >重量: {{item.weight}}</text>
+						<div class="item-weight" >重量: {{item.weight}}</div>
 					</div>
 					<div class="amount">单价：{{item.amount}}</div> <!-- 中间的金额 -->
 					<div class="button-group"> <!-- 按钮组 -->
@@ -17,37 +17,33 @@
 				<u-button type="primary" text="添加" style="width: 60%;" @click="isAddVisible = true"></u-button>
 			</div>
 		</div>
-		<u-modal title="添加" :show="isAddVisible" :closeOnClickOverlay="true" @close="closeAdded"
-			:showConfirmButton="false" :width="'400px'">
-			<view>
-				<!-- 注意，如果需要兼容微信小程序，最好通过setRules方法设置rules规则 -->
-				<u--form labelPosition="left" :model="addedModel" :rules="rules" ref="uForm">
-					<u-form-item label="名称" prop="name" borderBottom ref="item1">
-						<u--input v-model="addedModel.name" border="none"></u--input>
-					</u-form-item>
-					<u-form-item label="金额" prop="amount" borderBottom ref="item2">
-						<u--input v-model="addedModel.amount" border="none"></u--input>
-					</u-form-item>
-					<u-form-item label="重量" prop="weight" borderBottom ref="item3">
-						<u--input v-model="addedModel.weight" border="none" placeholder="可选，输入重量"></u--input>
-					</u-form-item>
-					<!-- <u-form-item label="类型" prop="type" borderBottom ref="item4">
-						<u-radio-group v-model="addedModel.type" placement="row">
-							<u-radio shape="square" label="数量" name="1"></u-radio>
-							<u-radio shape="square" label="总重" name="2"></u-radio>
-							<u-radio shape="square" label="净重" name="3"></u-radio>
-						</u-radio-group>
-
-					</u-form-item> -->
-
-				</u--form>
-				<div class="button-group" style="margin-top: 30rpx;">
-					<u-button type="primary" :plain="true" text="取消" @click="closeAdded"></u-button>
-					<u-button type="primary" text="保存" @click="addAction"></u-button>
+		<!-- 添加物品弹窗 -->
+		<div class="znj-modal-overlay" v-if="isAddVisible" @click="closeAdded">
+			<div class="znj-add-modal" @click.stop>
+				<div class="znj-add-modal-header">
+					<span>添加物品</span>
+					<uni-icons custom-prefix="iconfont" type="icon-icon-cross-squre" size="28"
+						@click="closeAdded" color="#ffffff" class="znj-modal-close"></uni-icons>
 				</div>
-			</view>
-
-		</u-modal>
+				<div class="znj-add-modal-body">
+					<u--form labelPosition="left" :model="addedModel" :rules="rules" ref="uForm" labelWidth="60">
+						<u-form-item label="名称" prop="name" borderBottom ref="item1">
+							<u--input v-model="addedModel.name" border="none" fontSize="13rpx" placeholder="请输入名称"></u--input>
+						</u-form-item>
+						<u-form-item label="金额" prop="amount" borderBottom ref="item2">
+							<u--input v-model="addedModel.amount" border="none" fontSize="13rpx" placeholder="请输入金额"></u--input>
+						</u-form-item>
+						<u-form-item label="重量" prop="weight" borderBottom ref="item3">
+							<u--input v-model="addedModel.weight" border="none" fontSize="13rpx" placeholder="可选，输入重量"></u--input>
+						</u-form-item>
+					</u--form>
+					<div class="modal-button-group">
+						<button class="modal-btn cancel-btn" @click="closeAdded">取消</button>
+						<button class="modal-btn save-btn" @click="addAction">保存</button>
+					</div>
+				</div>
+			</div>
+		</div>
 
 	</div>
 </template>
@@ -154,40 +150,37 @@
 
 <style scoped>
 	.list-container {
-		padding: 16px;
-		background-color: #f8f9fa;
+		padding: 15rpx;
+		background-color: #fafbfc;
 		border: none;
-		border-radius: 12px;
-		max-height: 350px;
-		/* 设置最大高度 */
+		border-radius: 0;
+		max-height: 420rpx;
 		overflow-y: auto;
-		/* 允许垂直滚动 */
 	}
 
 	ul {
 		list-style-type: none;
 		padding: 0;
+		margin: 0;
 	}
 
 	.list-item {
-		padding: 16px;
-		border-bottom: 1px solid #f0f2f5;
+		padding: 10rpx 12rpx;
 		display: flex;
-		/* 使用 Flexbox 布局 */
 		align-items: center;
-		/* 垂直居中对齐 */
 		justify-content: space-between;
-		/* 在主轴上均匀分配空间 */
 		background: #fff;
-		margin-bottom: 8px;
-		border-radius: 8px;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-		transition: all 0.3s ease;
+		margin-bottom: 8rpx;
+		border-radius: 6rpx;
+		border: 1px solid #eee;
+		box-shadow: none;
+		transition: all 0.2s ease;
 	}
 
 	.list-item:hover {
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-		transform: translateY(-1px);
+		background: #e3f2fd;
+		border-color: #1976d2;
+		transform: none;
 	}
 
 	.list-item:last-child {
@@ -197,67 +190,135 @@
 	.item-container {
 		display: flex;
 		flex-direction: column;
-		/* 垂直排列 */
 		flex: 1;
-		/* 使 item-container 占据剩余空间 */
 		justify-content: center;
 	}
 
 	.item-name {
-		font-size: 16px;
+		font-size: 14rpx;
 		font-weight: 600;
 		color: #333;
-		margin-bottom: 4px;
+		margin-bottom: 3rpx;
 	}
 
 	.item-weight {
-		font-size: 15px;
-		color: #2979ff;
-		padding: 4px;
-		border-radius: 5px;
-		width: 100px;
+		margin-top: 5rpx;
+		font-size: 12rpx;
+		color: #1976d2;
+		padding: 5rpx 6rpx;
+		border-radius: 3rpx;
+		width: 20%;
 		display: inline-block;
 		font-weight: 500;
+		background: #e3f2fd;
 	}
 
 	.amount {
-		margin-right: 60rpx;
-		font-size: 15px;
-		/* 设置金额的字体大小 */
+		margin-right: 10rpx;
+		font-size: 13rpx;
 		color: #e91e63;
-		/* 设置金额的颜色 */
 		font-weight: 600;
 		flex: 0 1 auto;
-		/* 使金额在中间 */
 		background: #fce4ec;
-		padding: 6px 12px;
-		border-radius: 16px;
+		padding: 4rpx 10rpx;
+		border-radius: 5rpx;
 		border: 1px solid #f8bbd9;
 	}
 
 	.button-group {
 		display: flex;
-		/* 使用 Flexbox 布局 */
 		margin-left: auto;
-		/* 将按钮组推到最右边 */
 	}
 
 	.add-button-container {
 		display: flex;
-		/* 使用 Flexbox 布局 */
 		justify-content: center;
-		margin-top: 16px;
-		/* 设置与列表的间距 */
-		padding-top: 16px;
-		border-top: 1px solid #e9ecef;
+		padding: 15rpx 0 10rpx 0;
+		border-top: 1px solid #f0f2f5;
 	}
 
-	input {
-		margin-right: 10px;
-		padding: 5px;
+	/* 遮罩层样式 */
+	.znj-modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
 	}
 
-	button {
-		margin-left: 5px;
+	/* 添加物品弹窗样式 */
+	.znj-add-modal {
+		background: #fff;
+		border-radius: 12px;
+		box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+		width: 350rpx;
+		box-sizing: border-box;
+		position: relative;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.znj-add-modal-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+		font-size: 14rpx;
+		font-weight: bold;
+		padding: 12rpx 15rpx;
+		color: #ffffff;
+		border-radius: 12px 12px 0 0;
+	}
+
+	.znj-modal-close {
+		cursor: pointer;
+	}
+
+	.znj-add-modal-body {
+		padding: 20rpx;
+	}
+
+	.modal-button-group {
+		display: flex;
+		gap: 15rpx;
+		margin-top: 25rpx;
+		justify-content: center;
+	}
+
+	.modal-btn {
+		flex: 1;
+		height: 40rpx;
+		border: none;
+		border-radius: 5rpx;
+		font-size: 14rpx;
+		font-weight: bold;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.cancel-btn {
+		background: #bdbdbd;
+		color: #fff;
+	}
+
+	.cancel-btn:hover {
+		background: #9e9e9e;
+	}
+
+	.save-btn {
+		background: linear-gradient(90deg, #4caf50, #43a047);
+		color: #fff;
+	}
+
+	.save-btn:hover {
+		background: linear-gradient(90deg, #43a047, #388e3c);
 	}
 </style>

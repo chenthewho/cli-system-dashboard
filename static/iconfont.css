@@ -8,6 +8,13 @@
   font-size: 16px;
 }
 
+.icon-cheng:before {
+  content: "\e75a";
+}
+
+.icon-danwei:before {
+  content: "\e649";
+}
 
 .icon-weixinzhifu:before {
   content: "\e650";

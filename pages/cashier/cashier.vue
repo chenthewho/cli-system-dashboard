@@ -7,12 +7,56 @@
 				<div class="cashier-row">
 					<div class="cashier-col cashier-goods">
 						<div class="card-body">
+
+							
 							<div class="container2" style="position: relative;">
 								<div class="vertical-tab">
 									<VerticalTab @update:activeTab="updateActiveTab" :categoryList="categoryList"
 										:activeTabId="currentTabId" />
 								</div>
 								<div style="flex-wrap: wrap;padding-top: 0;">
+
+							<!-- 商品搜索框 -->
+							<!-- <div class="goods-search-container">
+								<div class="search-input-wrapper">
+									
+								</div>
+							</div> -->
+
+
+																		
+				<view style="display: flex; align-items: center; gap: 20rpx;" >
+					<view class="search-container">
+						<view class="search-input-wrapper">
+							<uni-icons type="search" size="18" color="#999" class="search-icon"></uni-icons>
+							<input 
+								class="search-input" 
+								type="text" 
+								v-model="goodsSearchKeyword"
+								placeholder="商品搜索..."
+								@input="onGoodsSearch"
+								@confirm="onGoodsSearchConfirm"
+							/>
+							<view 
+								class="clear-btn" 
+								v-if="goodsSearchKeyword" 
+								@click="clearGoodsSearch"
+							>
+								<uni-icons type="clear" size="16" color="#ccc"></uni-icons>
+							</view>
+						</view>
+					</view>
+				</view>
+
+							<!-- <input 
+
+										class="goods-search-input" 
+										placeholder="搜索商品名称..." 
+										v-model="goodsSearchKeyword"
+										@input="searchGoods"
+										type="text"										
+									/> -->
+
 									<scroll-view class="scrollArea" scroll-y="true"
 										:style="{ height: windowHeight-70 + 'px'}">
 
@@ -90,28 +134,115 @@
 					<div v-if="step1">
 						<div class="cashier-col cashier-card">
 							<div class="card-title">
-								<div style="display: flex; flex-flow: row; align-items: center; padding: 2px 6px;">
-									<div @click="memberChange('XiaDan')" :style="{
-										                borderRadius: '5px',
-														fontSize:'20px',
-										                boxShadow: '0 0 5rpx rgba(0, 0, 0, 0.3)',
-										                color:  'white',
-										                backgroundColor: currentMember.debts > 0 ? 'darkred' : 'green',
-										                height: '100%',
-										                marginLeft: '-4rpx',
-										                paddingLeft: '20rpx',
-										                paddingRight: '20rpx',
-										                paddingTop: '10rpx',
-														fontWeight:'bold',
-														letterSpacing: '2rpx',
-										                paddingBottom: '10rpx',
-														display:'flex'
-										            }">
-										{{currentMember.customName?currentMember.customName : '散客'}} <text
-											v-if="currentMember.debts > 0"
-											style="font-size: 12px;margin-left: 10rpx; display: flex;">|欠:{{currentMember.debts}}</text>
-									</div>
-								</div>
+								<!-- 可滑动的客户管理区域 -->
+								<scroll-view 
+									scroll-x="true" 
+									:show-scrollbar="false"
+									:scroll-left="scrollLeft"
+									style="white-space: nowrap; padding: 2px 6px; width: 500px; min-width: 500px; max-width: 500px; overflow: hidden;"
+									class="customer-scroll-view"
+								>
+									<view style="display: inline-flex; align-items: center; gap: 10rpx;">
+										<!-- 主客户按钮（散客/当前客户） -->
+										<div class="customerbtn" @click="memberChange('XiaDan')" :style="{
+											                borderRadius: '5px',
+															fontSize:'20px',
+											                boxShadow: '0 0 5rpx rgba(0, 0, 0, 0.3)',
+											                color:  'white',
+											                backgroundColor: currentMember.debts > 0 ? 'darkred' : 'green',
+											                height: '100%',
+											                paddingLeft: '20rpx',
+											                paddingRight: '20rpx',
+											                paddingTop: '10rpx',
+															fontWeight:'bold',
+															letterSpacing: '2rpx',
+											                paddingBottom: '10rpx',
+															display:'inline-flex',
+															flexShrink: 0
+											            }">
+											{{currentMember.customName?currentMember.customName : '散客'}} <text
+												v-if="currentMember.debts > 0"
+												style="font-size: 12px;margin-left: 10rpx; display: flex;">|欠:{{currentMember.debts}}</text>
+										</div>
+										
+										<!-- 动态添加的客户按钮列表 -->
+										<div 
+											v-for="(customerBtn, index) in customerButtons" 
+											:key="`customer_btn_${customerBtn.id}`"
+											class="customerbtn" 
+											@click="switchToCustomerByIndex(index)" 
+											:style="{
+												borderRadius: '5px',
+												fontSize:'20px',
+												boxShadow: '0 0 5rpx rgba(0, 0, 0, 0.3)',
+												color:  'white',
+												backgroundColor: customerBtn.isActive ? 'green' : '#722ed1',
+												height: '100%',
+												paddingLeft: '5rpx',
+												paddingRight: '5rpx',
+												paddingTop: '10rpx',
+												fontWeight:'bold',
+												letterSpacing: '2rpx',
+												paddingBottom: '10rpx',
+												display:'inline-flex',
+												flexShrink: 0
+											}"
+										>
+											{{customerBtn.name}}
+											<text v-if="customerBtn.goodsCount > 0" style="font-size: 12px;margin-left: 10rpx; display: flex;">|{{customerBtn.goodsCount}}件</text>
+										</div>
+										
+											<!-- 添加客户按钮 -->
+											<div @click="addNewCustomerButton" :style="{
+											                borderRadius: '5px',
+															fontSize:'16px',
+											                boxShadow: '0 0 5rpx rgba(0, 0, 0, 0.3)',
+											                color:  'white',
+											                backgroundColor: '#1890ff',
+											                height: '100%',
+											                paddingLeft: '5rpx',
+											                paddingRight: '5rpx',
+											                paddingTop: '10rpx',
+															fontWeight:'bold',
+											                paddingBottom: '10rpx',
+															display:'inline-flex',
+															alignItems: 'center',
+															cursor: 'pointer',
+															flexShrink: 0
+											            }" title="添加客户">
+											<uni-icons type="plus" size="30" color="#ffffff" style="margin-right: 0rpx;"></uni-icons>
+										</div>
+
+									</view>
+								</scroll-view>
+																	
+							<!-- 删除主客户按钮 (只有动态客户时显示) - 固定在右侧 -->
+							<div 
+								v-if="customerButtons.length > 0"
+								@click="deleteMainCustomer" 
+								:style="{
+									position: 'fixed',
+									right: '10px',
+									top: '50%',
+									transform: 'translateY(-50%)',
+									borderRadius: '8px',
+									fontSize:'12px',
+									boxShadow: '0 2px 12px rgba(255, 77, 79, 0.4)',
+									color: 'white',
+									backgroundColor: '#ff4d4f',
+									padding: '15rpx 10rpx',
+									display:'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									cursor: 'pointer',
+									zIndex: 999,
+									transition: 'all 0.3s ease'
+								}" 
+								title="删除当前主客户"
+							>
+								<uni-icons type="trash" size="30" color="#ffffff"></uni-icons>
+							</div>
+																	
 								<div style="display: flex;">
 									
 									<!-- <div class="btn" @click="memberChange('ShouKuang')"
@@ -290,7 +421,7 @@
 								            word-break: break-all; /* 或者使用 break-word */
 								            white-space: normal; /* 允许换行 */
 								            ">
-									总重：{{ this.editingCard.allweightSrt }}
+									总重：{{ editingCard.allweightSrt }}
 								</div>
 								<div
 									style="padding: 10rpx;display: flex; justify-content: space-between; align-items: center;">
@@ -328,7 +459,7 @@
 							</div>
 							<!--定装输入-->
 							<div class="card-body"
-								v-if="editingCard.saleWay===2||editingCard.saleWay===3||editingCard.saleWay===4">
+								v-if="editingCard.saleWay===2||editingCard.saleWay===3">
 								<div
 									style="padding: 10rpx;display: flex; justify-content: space-between; align-items: center;">
 
@@ -355,6 +486,36 @@
 
 								</div>
 							</div>
+							<!--散装输入-->
+							<div class="card-body"
+								v-if="editingCard.saleWay===4">
+								<div
+									style="padding: 10rpx;display: flex; justify-content: space-between; align-items: center;">
+
+									<div :class="{'custom-input': true, 'input-focused': custominputFocused3}"
+										@click="custominputFocusedMethod(3)">
+										总重
+										<div style="display: flex;">
+											<input class="step1-input" ref="myInput1" inputmode="none"
+												v-model="editingCard.allweightSrt"></input>
+											<span
+												class="currency-label"></span>
+										</div>
+									</div>
+
+									<div :class="{'custom-input': true, 'input-focused': custominputFocused2}"
+										@click="custominputFocusedMethod(2)">
+										单价
+										<div style="display: flex;">
+											<input class="step1-input" v-model="editingCard.referenceAmount"
+												inputmode="none"></input>
+											<span class="currency-label">元</span>
+										</div>
+									</div>
+
+								</div>
+							</div>
+							<!-- 键盘1-->
 							<view class="mybrankmask"
 								:style="{ width: '340rpx', height: '200rpx', backgroundColor: '#ffffff', zIndex: 999, left: 0, bottom: 0 }">
 								<view style="padding: 5rpx;">
@@ -625,6 +786,7 @@
 												<button class="discount-btn" :class="{'active': !accountDiscount}" @click="setOverchargeAmount">多收</button>
 											</div>
 											<input v-model="discountAmount" inputmode="none" class="amount-input">
+											<button v-if="shouldShowSmartRoundButton" class="smart-round-btn" @click="smartRound">{{ smartRoundButtonText }}</button>
 										</div>
 										
 										<div class="input-row" :class="{'active': selectInput_pay === 4}" @click="editingPaymentClick(4)">
@@ -969,41 +1131,169 @@
 		</RepayModal>
 
 		<!--运费弹窗-->
-		<u-modal title="添加运费" :show="shippingModalVisible" @close="shippingModalVisible = false" :closeOnClickOverlay="true"
-			:showConfirmButton="false" :width="500">
-			<div style="padding: 20px;">
-				<div style="margin-bottom: 20px;">
-					<div style="font-size: 16px; font-weight: bold; margin-bottom: 10px; color: #333;">运费金额</div>
-					<u-input 
-						type="number" 
-						v-model="tempShippingFee" 
-						placeholder="请输入运费金额"
-						:customStyle="{
-							width: '400px',
-							padding: '12px',
-							border: '1px solid #ddd',
-							borderRadius: '8px',
-							fontSize: '16px',
-							background: '#fff'
-						}"
-						:clearable="true"
-						@input="validateShippingFee"
-						@focus="onInputFocus"
-					></u-input>
-				</div>
-				<div style="display: flex; gap: 10px; margin-top: 20px;width: 400px;">
+		<view v-if="shippingModalVisible" class="shipping-modal-mask" @click="cancelShipping">
+			<view class="shipping-modal-wrapper" @click.stop>
+				<view class="shipping-modal-container">
+					<!-- 标题区域 -->
+					<view class="shipping-modal-header">
+						<text class="header-title">设置运费</text>
+						<text class="header-subtitle">请输入本单的运费金额</text>
+					</view>
+					
+					<!-- 内容区域 -->
+					<view class="shipping-modal-content">
+						
+						<!-- 输入框 -->
+						<view class="input-wrapper">
+							<view class="input-label">
+								<text class="label-text">运费金额</text>
+								<text class="label-required">*</text>
+							</view>
+							<view class="input-container">
+								<text class="input-prefix">¥</text>
+								<input 
+									type="digit"
+									v-model="tempShippingFee" 
+									placeholder="0.00"
+									class="shipping-input"
+									@input="validateShippingFee"
+								/>
+								<button 
+									v-if="tempShippingFee && tempShippingFee > 0" 
+									@click="tempShippingFee = 0"
+									class="clear-shipping-btn"
+								>
+									清空
+								</button>
+							</view>
+							<text class="input-hint">运费将计入订单总金额</text>
+						</view>
+						
+						<!-- 快捷金额选择 -->
+						<view class="quick-amount-section">
+							<text class="section-label">快捷选择</text>
+							<view class="quick-amount-buttons">
+								<view 
+									v-for="amount in [5, 10, 20, 30]" 
+									:key="amount"
+									@click="tempShippingFee = amount"
+									class="quick-amount-btn"
+									:class="{ active: tempShippingFee == amount }"
+								>
+									¥{{ amount }}
+								</view>
+							</view>
+						</view>
+					</view>
+					
+					<!-- 底部按钮 -->
+					<view class="shipping-modal-footer">
+						<button class="btn-cancel" @click="cancelShipping">
+							取消
+						</button>
 					<button 
-						@click="cancelShipping"
-						style="flex: 1; padding: 12px; background: #f5f5f5; color: #666; border: none;  font-size: 16px; font-weight: bold;"
+						class="btn-confirm" 
+						@click="confirmShipping"
+						:class="{ disabled: tempShippingFee == null || tempShippingFee === '' || tempShippingFee < 0 }"
+						:disabled="tempShippingFee == null || tempShippingFee === '' || tempShippingFee < 0"
 					>
-						取消
+							<uni-icons type="checkmarkempty" size="26" color="#fff" style="margin-right: 6px;"></uni-icons>
+							确认设置
+						</button>
+					</view>
+				</view>
+			</view>
+		</view>
+
+		<!-- 多客户管理弹窗 -->
+		<u-modal 
+			title="多客户管理" 
+			class="multi-customer-modal" 
+			:show="multiCustomerModalVisible" 
+			:closeOnClickOverlay="true"
+			:showConfirmButton="false" 
+			:width="600" 
+			@close="multiCustomerModalVisible = false"
+		>
+			<div style="max-height: 400px; overflow-y: auto;">
+				<!-- 客户列表 -->
+				<div v-if="customerCacheList.length > 0">
+					<div 
+						v-for="(customerCache, index) in customerCacheList" 
+						:key="customerCache.key"
+						:style="{
+							display: 'flex',
+							alignItems: 'center',
+							padding: '15rpx',
+							margin: '10rpx 0',
+							backgroundColor: customerCache.customerId === getCurrentMemberId() ? '#e6f7ff' : '#f9f9f9',
+							borderRadius: '8rpx',
+							border: customerCache.customerId === getCurrentMemberId() ? '2px solid #1890ff' : '1px solid #e8e8e8'
+						}"
+					>
+						<!-- 客户信息 -->
+						<div style="flex: 1;">
+							<div style="font-size: 18px; font-weight: bold; color: #333;">
+								{{customerCache.customerName}}
+								<span v-if="customerCache.customerId === getCurrentMemberId()" style="color: #1890ff; font-size: 14px;">[当前]</span>
+							</div>
+							<div style="font-size: 14px; color: #666; margin-top: 5rpx;">
+								购物车商品: {{customerCache.goodSelectCount}} 件
+								<span v-if="customerCache.shippingFee > 0" style="margin-left: 10px; color: #00aaff;">
+									| 运费: ¥{{customerCache.shippingFee}}
+								</span>
+							</div>
+							<div style="font-size: 12px; color: #999; margin-top: 5rpx;">
+								最后使用: {{formatTimestamp(customerCache.timestamp)}}
+							</div>
+						</div>
+						
+						<!-- 操作按钮 -->
+						<div style="display: flex; gap: 10rpx;">
+							<button 
+								v-if="customerCache.customerId !== getCurrentMemberId()"
+								@click="switchToCustomer(customerCache)"
+								style="padding: 8rpx 16rpx; background: #1890ff; color: white; border: none; border-radius: 4rpx; font-size: 14px;"
+							>
+								切换
+							</button>
+							<button 
+								@click="removeCustomerCache(customerCache)"
+								style="padding: 8rpx 16rpx; background: #ff4d4f; color: white; border: none; border-radius: 4rpx; font-size: 14px;"
+							>
+								删除
+							</button>
+						</div>
+					</div>
+				</div>
+				
+				<!-- 无客户数据提示 -->
+				<div v-else style="text-align: center; padding: 40rpx; color: #999;">
+					<uni-icons type="person" size="50" color="#ccc" style="margin-bottom: 20rpx;"></uni-icons>
+					<div>暂无客户数据</div>
+				</div>
+				
+				<!-- 操作按钮 -->
+				<div style="display: flex; gap: 15rpx; margin-top: 30rpx; padding-top: 20rpx; border-top: 1px solid #f0f0f0;">
+					<button 
+						@click="addCustomerFromManager"
+						style="flex: 1; padding: 12rpx; background: #52c41a; color: white; border: none; border-radius: 6rpx; font-size: 16px; font-weight: bold;"
+					>
+						<uni-icons type="person-add" size="16" color="#ffffff" style="margin-right: 8rpx;"></uni-icons>
+						添加客户
 					</button>
 					<button 
-						@click="confirmShipping"
-						style="flex: 1; padding: 12px; background: #00aaff; color: white; border: none; font-size: 16px; font-weight: bold;"
-						:style="tempShippingFee <= 0 ? 'background: #ccc;' : ''"
+						@click="clearAllCustomerCaches"
+						style="flex: 1; padding: 12rpx; background: #ff7875; color: white; border: none; border-radius: 6rpx; font-size: 16px; font-weight: bold;"
 					>
-						确定
+						<uni-icons type="trash" size="16" color="#ffffff" style="margin-right: 8rpx;"></uni-icons>
+						清空所有
+					</button>
+					<button 
+						@click="multiCustomerModalVisible = false"
+						style="flex: 1; padding: 12rpx; background: #d9d9d9; color: #666; border: none; border-radius: 6rpx; font-size: 16px; font-weight: bold;"
+					>
+						关闭
 					</button>
 				</div>
 			</div>
@@ -1165,6 +1455,7 @@
 				memberDialogVisible: false,
 				hangListVisible: false,
 				memberSearchKeyword: '',
+				goodsSearchKeyword: '', // 商品搜索关键词
 				memberOptions: [],
 				memberSearchOptions: [],
 				hangleList: [],
@@ -1235,7 +1526,95 @@
 				editCardExtralModel: [],
 				goodSelect: [],
 				shippingModalVisible: false,
-				tempShippingFee: 0
+				tempShippingFee: 0,
+				// 多客户管理相关
+				multiCustomerModalVisible: false,
+				customerCacheList: [],
+				newCustomerFormVisible: false,
+				newCustomerForm: {
+					customName: '',
+					phone: '',
+					address: ''
+				},
+				// 快速客户切换相关
+				showCustomerButtons: false,
+				customerButtons: [], // 动态添加的客户按钮列表
+				scrollLeft: 0 // 滚动位置
+			}
+		},
+		computed: {
+			smartRoundButtonText() {
+				// 强制依赖这些响应式数据，确保更新
+				const total = parseFloat(String(this.payAmount.total)) || 0;
+				const debt = parseFloat(String(this.payAmount.debt)) || 0;
+				const goodSelectLength = this.goodSelect.length; // 添加依赖确保商品变化时更新
+				const shippingFee = parseFloat(String(this.cashier.shippingFee)) || 0; // 添加运费依赖
+				
+				const baseAmount = total - debt;
+				
+				if (baseAmount <= 0) {
+					return '取零';
+				}
+				
+				// 获取个位数
+				const lastDigit = Math.floor(baseAmount) % 10;
+				const integerPart = Math.floor(baseAmount);
+				const decimal = baseAmount - integerPart;
+				
+				let targetAmount;
+				let adjustment;
+				let isDiscount;
+				
+				// 规整到0或5结尾
+				if (lastDigit === 0 || lastDigit === 5) {
+					// 已经是0或5结尾，不需要调整
+					adjustment = 0;
+					isDiscount = true;
+				} else if (lastDigit <= 2) {
+					// 1,2 -> 向下规整到0
+					targetAmount = integerPart - lastDigit;
+					adjustment = baseAmount - targetAmount;
+					isDiscount = true;
+				} else if (lastDigit <= 4) {
+					// 3,4 -> 向下规整到0
+					targetAmount = integerPart - lastDigit;
+					adjustment = baseAmount - targetAmount;
+					isDiscount = true;
+				} else if (lastDigit <= 7) {
+					// 6,7 -> 向下规整到5
+					targetAmount = integerPart - lastDigit + 5;
+					adjustment = baseAmount - targetAmount;
+					isDiscount = true;
+				} else {
+					// 8,9 -> 向上规整到下一个0
+					targetAmount = integerPart - lastDigit + 10;
+					adjustment = targetAmount - baseAmount;
+					isDiscount = false;
+				}
+				
+				// 如果调整金额为0，显示"已取零"
+				if (Math.abs(adjustment) < 0.01) {
+					return '已取零';
+				}
+				
+				// 显示操作类型和金额
+				const adjustmentStr = Math.abs(adjustment).toFixed(2);
+				return isDiscount ? `优惠${adjustmentStr}` : `多收${adjustmentStr}`;
+			},
+			shouldShowSmartRoundButton() {
+				const total = parseFloat(String(this.payAmount.total)) || 0;
+				const debt = parseFloat(String(this.payAmount.debt)) || 0;
+				const baseAmount = total - debt;
+				
+				if (baseAmount <= 0) {
+					return false;
+				}
+				
+				// 获取个位数
+				const lastDigit = Math.floor(baseAmount) % 10;
+				
+				// 如果已经是0或5结尾，不显示按钮
+				return !(lastDigit === 0 || lastDigit === 5);
 			}
 		},
 		onShow() {
@@ -1250,8 +1629,627 @@
 			this.onLoadMethod();
 			this.getlastOrder();
 			this.getallextralgood();
+			// 从缓存恢复客户和 goodSelect 数据
+			this.loadLastCustomerAndGoodSelect();
 		},
 		methods: {
+			// 缓存相关方法
+			getCustomerCacheKey(customerId) {
+				// 为每个客户生成唯一的缓存key，散客使用 'guest' 作为标识
+				const customerKey = customerId || 'guest';
+				return `cashier_customer_${customerKey}_cache`;
+			},
+			saveCustomerDataToCache() {
+				try {
+					const customerId = (this.currentMember && this.currentMember.id) || '';
+					const cacheKey = this.getCustomerCacheKey(customerId);
+					const customerData = {
+						member: this.currentMember,
+						goodSelect: this.goodSelect,
+						shippingFee: this.cashier.shippingFee || 0,
+						timestamp: Date.now()
+					};
+					uni.setStorageSync(cacheKey, JSON.stringify(customerData));
+					// 同时保存最后使用的客户ID
+					this.saveLastCustomerId();
+					console.log(`保存客户数据到缓存 [${cacheKey}]:`, customerData);
+				} catch (e) {
+					console.error('保存客户数据缓存失败:', e);
+				}
+			},
+			// 保存所有客户按钮到缓存
+			saveCustomerButtonsToCache() {
+				try {
+					// 保存客户按钮列表
+					uni.setStorageSync('cashier_customer_buttons', JSON.stringify(this.customerButtons));
+					console.log('已保存客户按钮列表到缓存:', this.customerButtons);
+					
+					// 为每个客户按钮保存其对应的数据到单独的缓存
+					this.customerButtons.forEach(btn => {
+						if (btn.member && btn.member.id) {
+							const cacheKey = this.getCustomerCacheKey(btn.member.id);
+							const customerData = {
+								member: btn.member,
+								goodSelect: btn.goodSelect || [],
+								shippingFee: btn.shippingFee || 0,
+								timestamp: Date.now()
+							};
+							uni.setStorageSync(cacheKey, JSON.stringify(customerData));
+							console.log(`保存客户按钮数据 [${cacheKey}]:`, customerData);
+						}
+					});
+				} catch (e) {
+					console.error('保存客户按钮列表缓存失败:', e);
+				}
+			},
+			// 从缓存恢复所有客户按钮
+			loadCustomerButtonsFromCache() {
+				try {
+					const cachedButtons = uni.getStorageSync('cashier_customer_buttons');
+					if (cachedButtons) {
+						const buttons = JSON.parse(cachedButtons);
+						console.log('从缓存恢复客户按钮列表:', buttons);
+						
+						// 为每个按钮加载其对应的数据
+						this.customerButtons = buttons.map(btn => {
+							if (btn.member && btn.member.id) {
+								const customerData = this.loadCustomerDataFromCache(btn.member.id);
+								if (customerData) {
+									return {
+										...btn,
+										member: customerData.member || btn.member,
+										goodSelect: customerData.goodSelect || [],
+										shippingFee: customerData.shippingFee || 0,
+										goodsCount: (customerData.goodSelect || []).length
+									};
+								}
+							}
+							return btn;
+						});
+						
+						console.log('已恢复客户按钮数据:', this.customerButtons);
+					}
+				} catch (e) {
+					console.error('加载客户按钮列表缓存失败:', e);
+				}
+			},
+			loadCustomerDataFromCache(customerId) {
+				try {
+					const cacheKey = this.getCustomerCacheKey(customerId);
+					const cachedData = uni.getStorageSync(cacheKey);
+					if (cachedData) {
+						const customerData = JSON.parse(cachedData);
+						console.log(`从缓存恢复客户数据 [${cacheKey}]:`, customerData);
+						return customerData;
+					}
+					return null;
+				} catch (e) {
+					console.error('加载客户数据缓存失败:', e);
+					return null;
+				}
+			},
+			clearCustomerCache(customerId) {
+				try {
+					const cacheKey = this.getCustomerCacheKey(customerId);
+					uni.removeStorageSync(cacheKey);
+					console.log(`已清空客户缓存 [${cacheKey}]`);
+				} catch (e) {
+					console.error('清空客户缓存失败:', e);
+				}
+			},
+			clearAllCustomerCaches() {
+				uni.showModal({
+					title: '确认清空',
+					content: '确定要清空所有客户的购物车数据吗？此操作不可恢复！',
+					success: (res) => {
+						if (res.confirm) {
+							try {
+								// 获取所有存储的key，清除客户相关的缓存
+								const allKeys = uni.getStorageInfoSync().keys || [];
+								const customerCacheKeys = allKeys.filter(key => key.startsWith('cashier_customer_'));
+								customerCacheKeys.forEach(key => {
+									uni.removeStorageSync(key);
+									console.log(`已清空缓存 [${key}]`);
+								});
+								
+								// 清除最后使用的客户ID
+								uni.removeStorageSync('cashier_last_customer_id');
+								
+								// 清除客户按钮列表
+								uni.removeStorageSync('cashier_customer_buttons');
+								this.customerButtons = [];
+								
+								// 刷新列表
+								this.customerCacheList = [];
+								
+								// 重置当前状态
+								this.currentMember = {
+									customName: "散客",
+									id: ""
+								};
+								this.goodSelect = [];
+								
+								uni.showToast({
+									title: '已清空所有客户数据',
+									icon: 'success'
+								});
+								
+								this.multiCustomerModalVisible = false;
+							} catch (e) {
+								console.error('清空所有客户缓存失败:', e);
+								uni.showToast({
+									title: '清空失败',
+									icon: 'error'
+								});
+							}
+						}
+					}
+				});
+			},
+			// 兼容旧版本的方法名
+			saveGoodSelectToCache() {
+				this.saveCustomerDataToCache();
+				// 同时更新当前激活的客户按钮
+				this.updateCurrentCustomerButton();
+				// 保存客户按钮列表
+				this.saveCustomerButtonsToCache();
+			},
+			loadGoodSelectFromCache() {
+				const customerId = (this.currentMember && this.currentMember.id) || '';
+				const customerData = this.loadCustomerDataFromCache(customerId);
+				if (customerData) {
+					this.goodSelect = customerData.goodSelect || [];
+					this.cashier.shippingFee = customerData.shippingFee || 0;
+					// 如果缓存中有客户信息，也恢复客户信息
+					if (customerData.member) {
+						this.currentMember = customerData.member;
+					}
+				}
+			},
+			clearGoodSelectCache() {
+				const customerId = (this.currentMember && this.currentMember.id) || '';
+				this.clearCustomerCache(customerId);
+			},
+			saveCurrentCustomerDataBeforeSwitch() {
+				// 保存当前客户的 goodSelect 和运费数据到缓存
+				if (this.goodSelect.length > 0 || this.cashier.shippingFee > 0) {
+					this.saveCustomerDataToCache();
+					console.log('客户切换前已保存当前数据');
+				}
+			},
+			loadNewCustomerData(newCustomerId) {
+				// 加载新客户的 goodSelect 数据
+				const customerData = this.loadCustomerDataFromCache(newCustomerId);
+				if (customerData && customerData.goodSelect) {
+					this.goodSelect = customerData.goodSelect;
+					this.cashier.shippingFee = customerData.shippingFee || 0;
+					console.log('已加载新客户的购物车数据:', this.goodSelect);
+					console.log('已加载新客户的运费:', this.cashier.shippingFee);
+					// 重新计算金额
+					this.reCountGoodSelect();
+				} else {
+					// 如果没有缓存数据，清空购物车
+					this.goodSelect = [];
+					this.cashier.shippingFee = 0;
+					console.log('新客户无缓存数据，已清空购物车');
+				}
+			},
+			loadLastCustomerAndGoodSelect() {
+				try {
+					// 先恢复客户按钮列表
+					this.loadCustomerButtonsFromCache();
+					
+					// 尝试恢复最后使用的客户信息
+					const lastCustomerId = uni.getStorageSync('cashier_last_customer_id') || '';
+					console.log('尝试恢复最后使用的客户ID:', lastCustomerId);
+					
+					const customerData = this.loadCustomerDataFromCache(lastCustomerId);
+					if (customerData) {
+						// 恢复客户信息和购物车数据
+						if (customerData.member) {
+							this.currentMember = customerData.member;
+							console.log('已恢复客户信息:', this.currentMember);
+						}
+						if (customerData.goodSelect && customerData.goodSelect.length > 0) {
+							this.goodSelect = customerData.goodSelect;
+							console.log('已恢复购物车数据:', this.goodSelect);
+							// 重新计算金额
+							this.$nextTick(() => {
+								this.reCountGoodSelect();
+							});
+						}
+						// 恢复运费
+						this.cashier.shippingFee = customerData.shippingFee || 0;
+						console.log('已恢复运费:', this.cashier.shippingFee);
+					} else {
+						// 没有缓存数据，使用默认的散客
+						console.log('无缓存数据，使用默认散客状态');
+					}
+				} catch (e) {
+					console.error('加载最后客户数据失败:', e);
+				}
+			},
+			saveLastCustomerId() {
+				try {
+					const customerId = (this.currentMember && this.currentMember.id) || '';
+					uni.setStorageSync('cashier_last_customer_id', customerId);
+					console.log('已保存最后使用的客户ID:', customerId);
+				} catch (e) {
+					console.error('保存最后客户ID失败:', e);
+				}
+			},
+			// 管理功能：获取所有客户缓存列表
+			getAllCustomerCaches() {
+				try {
+					const allKeys = uni.getStorageInfoSync().keys || [];
+					const customerCacheKeys = allKeys.filter(key => key.startsWith('cashier_customer_'));
+					const caches = [];
+					
+					customerCacheKeys.forEach(key => {
+						try {
+							const data = uni.getStorageSync(key);
+							if (data) {
+								const customerData = JSON.parse(data);
+								caches.push({
+									key,
+									customerId: customerData.member?.id || '',
+									customerName: customerData.member?.customName || '散客',
+									goodSelectCount: customerData.goodSelect?.length || 0,
+									shippingFee: customerData.shippingFee || 0,
+									timestamp: customerData.timestamp || 0,
+									member: customerData.member
+								});
+							}
+						} catch (e) {
+							console.error(`解析缓存失败 [${key}]:`, e);
+						}
+					});
+					
+					return caches.sort((a, b) => b.timestamp - a.timestamp);
+				} catch (e) {
+					console.error('获取客户缓存列表失败:', e);
+					return [];
+				}
+			},
+			getAllCustomerCachesCount() {
+				return this.getAllCustomerCaches().length;
+			},
+			showMultiCustomerManager() {
+				this.customerCacheList = this.getAllCustomerCaches();
+				this.multiCustomerModalVisible = true;
+				console.log('多客户缓存列表:', this.customerCacheList);
+			},
+			switchToCustomer(customerCache) {
+				console.log('切换到客户:', customerCache);
+				
+				// 保存当前客户数据
+				this.saveCurrentCustomerDataBeforeSwitch();
+				
+				// 切换到选中的客户
+				if (customerCache.member) {
+					this.currentMember = customerCache.member;
+				} else {
+					this.currentMember = {
+						customName: "散客",
+						id: ""
+					};
+				}
+				
+				// 保存最后使用的客户ID
+				this.saveLastCustomerId();
+				
+				// 加载客户数据
+				this.loadNewCustomerData(customerCache.customerId);
+				
+				// 关闭弹窗
+				this.multiCustomerModalVisible = false;
+				
+				uni.showToast({
+					title: `已切换到: ${customerCache.customerName}`,
+					icon: 'success',
+					duration: 2000
+				});
+			},
+			removeCustomerCache(customerCache) {
+				uni.showModal({
+					title: '确认删除',
+					content: `确定要删除客户"${customerCache.customerName}"的购物车数据吗？`,
+					success: (res) => {
+						if (res.confirm) {
+							this.clearCustomerCache(customerCache.customerId);
+							// 刷新列表
+							this.customerCacheList = this.getAllCustomerCaches();
+							uni.showToast({
+								title: '已删除客户数据',
+								icon: 'success'
+							});
+						}
+					}
+				});
+			},
+			addCustomerFromManager() {
+				// 关闭多客户管理弹窗
+				this.multiCustomerModalVisible = false;
+				// 打开客户选择界面
+				this.memberChange('XiaDan');
+			},
+			formatTimestamp(timestamp) {
+				if (!timestamp) return '未知';
+				try {
+					return new Date(timestamp).toLocaleString();
+				} catch (e) {
+					return '时间格式错误';
+				}
+			},
+			getCurrentMemberId() {
+				return (this.currentMember && this.currentMember.id) || '';
+			},
+			addNewCustomerButton() {
+				// 检查是否已达到最大客户数量限制
+				if (this.customerButtons.length >= 5) {
+					uni.showToast({
+						title: '最多只能添加5个客户',
+						icon: 'error',
+						duration: 2000
+					});
+					return;
+				}
+				
+				// 创建一个新的客户按钮
+				const customerNumber = this.customerButtons.length + 1;
+				const customerName = customerNumber === 1 ? '散客' : `散客${customerNumber}`;
+				
+				const newCustomerBtn = {
+					id: `customer_${Date.now()}`,
+					name: customerName,
+					member: {
+						customName: customerName,
+						id: `temp_${Date.now()}`
+					},
+					goodSelect: [],
+					shippingFee: 0,
+					goodsCount: 0,
+					isActive: false
+				};
+				
+				// 添加到客户按钮列表
+				this.customerButtons.push(newCustomerBtn);
+				
+				// 保存客户按钮列表到缓存
+				this.saveCustomerButtonsToCache();
+				
+				uni.showToast({
+					title: `已添加${newCustomerBtn.name}`,
+					icon: 'success',
+					duration: 1500
+				});
+			},
+			switchToCustomerByIndex(index) {
+				if (index < 0 || index >= this.customerButtons.length) return;
+				
+				const targetCustomerBtn = this.customerButtons[index];
+				
+				// 如果点击的是当前激活的客户，不需要切换
+				if (targetCustomerBtn.isActive) {
+					uni.showToast({
+						title: '当前已是该客户',
+						icon: 'none',
+						duration: 1500
+					});
+					return;
+				}
+				
+				// 实现客户位置交换逻辑
+				this.swapCustomerPositions(index);
+				
+				uni.showToast({
+					title: `已切换到: ${targetCustomerBtn.name}`,
+					icon: 'success',
+					duration: 1500
+				});
+			},
+			saveCurrentCustomerToButton() {
+				// 找到当前激活的客户按钮并保存数据
+				const activeIndex = this.customerButtons.findIndex(btn => btn.isActive);
+				if (activeIndex !== -1) {
+					this.customerButtons[activeIndex].member = { ...this.currentMember };
+					this.customerButtons[activeIndex].goodSelect = [...this.goodSelect];
+					this.customerButtons[activeIndex].shippingFee = this.cashier.shippingFee || 0;
+					this.customerButtons[activeIndex].goodsCount = this.goodSelect.length;
+				}
+			},
+			updateCustomerButtonsFromCache() {
+				// 从缓存更新客户按钮状态
+				this.customerButtons.forEach(btn => {
+					const customerData = this.loadCustomerDataFromCache(btn.member.id);
+					if (customerData) {
+						btn.goodSelect = customerData.goodSelect || [];
+						btn.shippingFee = customerData.shippingFee || 0;
+						btn.goodsCount = btn.goodSelect.length;
+						if (customerData.member) {
+							btn.member = customerData.member;
+							btn.name = customerData.member.customName;
+						}
+					}
+				});
+			},
+			updateCurrentCustomerButton() {
+				// 更新当前激活的客户按钮的商品数量
+				const activeIndex = this.customerButtons.findIndex(btn => btn.isActive);
+				if (activeIndex !== -1) {
+					this.customerButtons[activeIndex].goodsCount = this.goodSelect.length;
+				}
+			},
+			scrollToFront() {
+				// 滚动到最前面，显示激活的客户
+				this.scrollLeft = 0;
+			},
+			swapCustomerPositions(targetIndex) {
+				// 保存当前主客户的数据到缓存
+				this.saveCustomerDataToCache();
+				
+				// 保存当前主客户的数据到临时变量
+				const currentMainCustomer = {
+					member: { ...this.currentMember },
+					goodSelect: [...this.goodSelect],
+					shippingFee: this.cashier.shippingFee || 0,
+					goodsCount: this.goodSelect.length
+				};
+				
+				// 获取目标客户的数据
+				const targetCustomer = this.customerButtons[targetIndex];
+				
+				// 将目标客户的数据设置为主客户，如果是散客类型则去掉索引
+				const newMainCustomer = { ...targetCustomer.member };
+				if (newMainCustomer.customName && newMainCustomer.customName.startsWith('散客')) {
+					newMainCustomer.customName = '散客';
+				}
+				
+				this.currentMember = newMainCustomer;
+				this.goodSelect = targetCustomer.goodSelect || [];
+				this.cashier.shippingFee = targetCustomer.shippingFee || 0;
+				
+				// 创建新的客户按钮来代替原来的主客户位置
+				const newCustomerBtn = {
+					id: `main_customer_${Date.now()}`,
+					name: currentMainCustomer.member.customName || '散客',
+					member: currentMainCustomer.member,
+					goodSelect: currentMainCustomer.goodSelect,
+					shippingFee: currentMainCustomer.shippingFee,
+					goodsCount: currentMainCustomer.goodsCount,
+					isActive: false
+				};
+				
+				// 将原主客户数据放到目标位置
+				this.customerButtons.splice(targetIndex, 1, newCustomerBtn);
+				
+				// 设置所有按钮为非激活状态
+				this.customerButtons.forEach(btn => {
+					btn.isActive = false;
+				});
+				
+				// 保存最后使用的客户ID
+				this.saveLastCustomerId();
+				
+				// 保存客户按钮列表到缓存
+				this.saveCustomerButtonsToCache();
+				
+				// 重新计算金额
+				this.$nextTick(() => {
+					this.reCountGoodSelect();
+				});
+				
+				// 滚动到最前面
+				this.scrollToFront();
+			},
+			deleteMainCustomer() {
+				// 检查是否有动态客户可以提升
+				if (this.customerButtons.length === 0) {
+					uni.showToast({
+						title: '没有其他客户可以切换',
+						icon: 'error',
+						duration: 2000
+					});
+					return;
+				}
+				
+				// 确认删除
+				uni.showModal({
+					title: '确认删除',
+					content: `确定要删除当前主客户"${this.currentMember.customName || '散客'}"吗？第一个客户"${this.customerButtons[0].name}"将成为新的主客户。`,
+					confirmText: '删除',
+					cancelText: '取消',
+					confirmColor: '#ff4d4f',
+					success: (res) => {
+						if (res.confirm) {
+							this.performDeleteMainCustomer();
+						}
+					}
+				});
+			},
+			performDeleteMainCustomer() {
+				// 清除当前主客户的缓存
+				const currentCustomerId = this.getCurrentMemberId();
+				if (currentCustomerId) {
+					this.clearCustomerCache(currentCustomerId);
+				}
+				
+				// 获取第一个动态客户
+				const firstCustomer = this.customerButtons[0];
+				
+				// 将第一个动态客户提升为主客户，如果是散客类型则去掉索引
+				const newMainCustomer = { ...firstCustomer.member };
+				if (newMainCustomer.customName && newMainCustomer.customName.startsWith('散客')) {
+					newMainCustomer.customName = '散客';
+				}
+				
+				this.currentMember = newMainCustomer;
+				this.goodSelect = firstCustomer.goodSelect || [];
+				this.cashier.shippingFee = firstCustomer.shippingFee || 0;
+				
+				// 从动态客户列表中移除第一个客户
+				this.customerButtons.splice(0, 1);
+				
+				// 保存客户按钮列表到缓存
+				this.saveCustomerButtonsToCache();
+				
+				// 重新计算金额
+				this.$nextTick(() => {
+					this.reCountGoodSelect();
+				});
+				
+				// 保存最后使用的客户ID
+				this.saveLastCustomerId();
+				
+				uni.showToast({
+					title: `已删除原主客户，${firstCustomer.name}成为新主客户`,
+					icon: 'success',
+					duration: 2000
+				});
+			},
+			switchToNextCustomerAfterOrder() {
+				// 订单完成后，如果有动态客户列表，将第一个客户提升为主客户
+				if (this.customerButtons.length === 0) {
+					// 没有动态客户，保持当前主客户（已重置为散客）
+					console.log('订单完成，无动态客户，保持当前状态');
+					return;
+				}
+				
+				// 清除当前主客户的缓存（因为已经resetOrder清空了）
+				const currentCustomerId = this.getCurrentMemberId();
+				if (currentCustomerId) {
+					this.clearCustomerCache(currentCustomerId);
+				}
+				
+				// 获取第一个动态客户
+				const firstCustomer = this.customerButtons[0];
+				
+				// 将第一个动态客户提升为主客户，如果是散客类型则去掉索引
+				const newMainCustomer = { ...firstCustomer.member };
+				if (newMainCustomer.customName && newMainCustomer.customName.startsWith('散客')) {
+					newMainCustomer.customName = '散客';
+				}
+				
+				this.currentMember = newMainCustomer;
+				this.goodSelect = firstCustomer.goodSelect || [];
+				this.cashier.shippingFee = firstCustomer.shippingFee || 0;
+				
+				// 从动态客户列表中移除第一个客户
+				this.customerButtons.splice(0, 1);
+				
+				// 保存客户按钮列表到缓存
+				this.saveCustomerButtonsToCache();
+				
+				// 重新计算金额
+				this.$nextTick(() => {
+					this.reCountGoodSelect();
+				});
+				
+				// 保存最后使用的客户ID
+				this.saveLastCustomerId();
+				
+				console.log(`订单完成，${firstCustomer.name}成为新主客户`);
+			},
 			// 运费相关方法
 			showShippingModal() {
 				this.tempShippingFee = this.cashier.shippingFee;
@@ -1266,6 +2264,8 @@
 					this.cashier.shippingFee = parseFloat(this.tempShippingFee);
 					this.shippingModalVisible = false;
 					this.tempShippingFee = 0;
+					// 保存运费到客户缓存
+					this.saveCustomerDataToCache();
 					this.reCountGoodSelect(); // 重新计算总金额
 					uni.showToast({
 						title: '运费设置成功',
@@ -1322,6 +2322,9 @@
 			},
 			clickKeyWord(key) {
 				this.currentKeyWord = key;
+				// 清空文本搜索框，避免冲突
+				this.goodsSearchKeyword = '';
+				
 				if (key === "全") {
 					this.rows = [];
 					this.commidityList.sort((a, b) => b.inventory - a.inventory);
@@ -1339,12 +2342,71 @@
 			},
 			setDicountAmount() {
 				this.accountDiscount = true;
-				this.payAmount.actual = eval(this.payAmount.total) - eval(this.discountAmount) - eval(this.payAmount.debt);
+				// 安全的数字转换
+				const total = parseFloat(this.payAmount.total) || 0;
+				const discount = parseFloat(this.discountAmount) || 0;
+				const debt = parseFloat(this.payAmount.debt) || 0;
+				this.payAmount.actual = Math.floor(total - discount - debt);
 				this.setAccountExpense(this.payAmount.actual);
 			},
 			setOverchargeAmount() {
 				this.accountDiscount = false;
-				this.payAmount.actual = eval(this.payAmount.total) + eval(this.discountAmount) - eval(this.payAmount.debt);
+				// 安全的数字转换
+				const total = parseFloat(this.payAmount.total) || 0;
+				const discount = parseFloat(this.discountAmount) || 0;
+				const debt = parseFloat(this.payAmount.debt) || 0;
+				this.payAmount.actual = Math.floor(total + discount - debt);
+				this.setAccountExpense(this.payAmount.actual);
+			},
+			smartRound() {
+				const total = parseFloat(this.payAmount.total) || 0;
+				const debt = parseFloat(this.payAmount.debt) || 0;
+				const baseAmount = total - debt;
+				
+				// 获取个位数
+				const lastDigit = Math.floor(baseAmount) % 10;
+				const integerPart = Math.floor(baseAmount);
+				const decimal = baseAmount - integerPart;
+				
+				let targetAmount;
+				let adjustment;
+				
+				// 规整到0或5结尾
+				if (lastDigit === 0 || lastDigit === 5) {
+					// 已经是0或5结尾，不需要调整
+					adjustment = 0;
+					this.accountDiscount = true;
+				} else if (lastDigit <= 2) {
+					// 1,2 -> 向下规整到0
+					targetAmount = integerPart - lastDigit;
+					adjustment = baseAmount - targetAmount;
+					this.accountDiscount = true; // 优惠模式
+				} else if (lastDigit <= 4) {
+					// 3,4 -> 向下规整到0
+					targetAmount = integerPart - lastDigit;
+					adjustment = baseAmount - targetAmount;
+					this.accountDiscount = true; // 优惠模式
+				} else if (lastDigit <= 7) {
+					// 6,7 -> 向下规整到5
+					targetAmount = integerPart - lastDigit + 5;
+					adjustment = baseAmount - targetAmount;
+					this.accountDiscount = true; // 优惠模式
+				} else {
+					// 8,9 -> 向上规整到下一个0
+					targetAmount = integerPart - lastDigit + 10;
+					adjustment = targetAmount - baseAmount;
+					this.accountDiscount = false; // 多收模式
+				}
+				
+				// 设置优惠/多收金额（显示为整数）
+				this.discountAmount = Math.floor(Math.abs(adjustment));
+				
+				// 重新计算实付金额
+				if (this.accountDiscount) {
+					this.payAmount.actual = eval(this.payAmount.total) - eval(this.discountAmount) - eval(this.payAmount.debt);
+				} else {
+					this.payAmount.actual = eval(this.payAmount.total) + eval(this.discountAmount) - eval(this.payAmount.debt);
+				}
 				this.setAccountExpense(this.payAmount.actual);
 			},
 			setAccountExpense(val) {
@@ -1377,8 +2439,7 @@
 					this.payAmount.BasketOffsetAmount += parseFloat(this.repayBasketList[i].quantity) * parseFloat(this
 						.repayBasketList[i].amount);
 				}
-				this.payAmount.actual = parseFloat((this.payAmount.actual - this.payAmount.BasketOffsetAmount).toFixed(
-					1));
+				this.payAmount.actual = Math.floor(parseFloat(this.payAmount.actual) - parseFloat(this.payAmount.BasketOffsetAmount));
 				this.inputModelVisible = false;
 			},
 			collectBasketoffestMoney() {
@@ -1444,7 +2505,17 @@
 				console.log("this.currentSelctCustomerType", this.currentSelctCustomerType)
 				this.memberDialogVisible = false
 				if (this.currentSelctCustomerType === 1) {
+					// 在切换客户前，先保存当前客户的数据
+					this.saveCurrentCustomerDataBeforeSwitch();
+					
+					// 切换到新客户
 					this.currentMember = e;
+					
+					// 保存最后使用的客户ID
+					this.saveLastCustomerId();
+					
+					// 加载新客户的数据
+					this.loadNewCustomerData(e?.id);
 				} else if (this.currentSelctCustomerType === 2) {
 
 					this.$refs.repayBasketModelRef.openRepayBasket(e);
@@ -1530,6 +2601,8 @@
                         }
                     }
                 }
+				// 保存到缓存
+				this.saveGoodSelectToCache();
 
 				this.currentOrderInfo.Id = e.id;
 				this.currentOrderInfo.accountCode = e.accountCode;
@@ -1717,6 +2790,8 @@
 						break;
 				}
 				this.goodSelect[this.editingIndex] = this.editingCard;
+				// 保存到缓存
+				this.saveGoodSelectToCache();
 			},
 			Tuige2() {
 				this.playSystemKeyClickSound();
@@ -1795,13 +2870,16 @@
 					case 9:
 						this.$nextTick(() => {
 							this.discountAmount = myvalue === '' ? '0' : myvalue;
+							// 安全的数字转换
+							const total = parseFloat(this.payAmount.total) || 0;
+							const discount = parseFloat(this.discountAmount) || 0;
+							const debt = parseFloat(this.payAmount.debt) || 0;
+							
 							if (this.accountDiscount) {
-								this.payAmount.actual = eval(this.payAmount.total) - eval(this.discountAmount) -
-									eval(this.payAmount.debt);
+								this.payAmount.actual = Math.floor(total - discount - debt);
 								this.setAccountExpense(this.payAmount.actual);
 							} else {
-								this.payAmount.actual = eval(this.payAmount.total) + eval(this.discountAmount) -
-									eval(this.payAmount.debt);
+								this.payAmount.actual = Math.floor(total + discount - debt);
 								this.setAccountExpense(this.payAmount.actual);
 							}
 						})
@@ -1851,6 +2929,8 @@
 
 				// 更新 goodSelect 数组
 				this.goodSelect[this.editingIndex] = this.editingCard;
+				// 保存到缓存
+				this.saveGoodSelectToCache();
 				this.reCountGoodSelect();
 			},
 			Clear2() {
@@ -1870,6 +2950,8 @@
 
 				// 更新 goodSelect 数组
 				this.goodSelect[this.editingIndex] = this.editingCard;
+				// 保存到缓存
+				this.saveGoodSelectToCache();
 			},
 			Clear3() {
 				// 根据 custominputFocusIndex 清空对应的值
@@ -1905,6 +2987,10 @@
 						break;
 				}
 				if (val == '.') {
+					// 对于优惠多收金额(case 9)，不允许输入小数点
+					if (this.editingPaymentIndex === 9) {
+						return;
+					}
 					if (myvalue.toString().indexOf('.') >= 0) {
 						return;
 					}
@@ -1953,13 +3039,15 @@
 					case 9:
 						this.$nextTick(() => {
 							this.discountAmount = myvalue;
+							// 安全的数字转换
+							const total = parseFloat(this.payAmount.total) || 0;
+							const discount = parseFloat(this.discountAmount) || 0;
+							const debt = parseFloat(this.payAmount.debt) || 0;
 							if (this.accountDiscount) {
-								this.payAmount.actual = eval(this.payAmount.total) - eval(this.discountAmount) -
-									eval(this.payAmount.debt);
+								this.payAmount.actual = Math.floor(total - discount - debt);
 								this.setAccountExpense(this.payAmount.actual);
 							} else {
-								this.payAmount.actual = eval(this.payAmount.total) + eval(this.discountAmount) -
-									eval(this.payAmount.debt);
+								this.payAmount.actual = Math.floor(total + discount - debt);
 								this.setAccountExpense(this.payAmount.actual);
 							}
 						})
@@ -2021,7 +3109,7 @@
 				}
 				this.editingIndex = index;
 				this.step1 = false;
-				if (this.editingCard.saleWay === 1) {
+				if (this.editingCard.saleWay === 1||this.editingCard.saleWay === 4) {
 					this.custominputFocusedMethod(3);
 				} else {
 					this.custominputFocusedMethod(1);
@@ -2218,6 +3306,8 @@
 							if (res.confirm) {
 								// 用户点击了确认
 								this.goodSelect.splice(indexToDelete, 1);
+								// 保存到缓存
+								this.saveGoodSelectToCache();
 								this.reCountGoodSelect(); // 更新选择的商品
 							} else if (res.cancel) {
 								// 用户点击了取消
@@ -2309,10 +3399,10 @@
 			reCountGoodSelect() {
 				this.payAmount.total = 0;
 				this.goodSelect.forEach(x => {
-					if (x.saleWay === 1) {
+					if (x.saleWay === 1|| x.saleWay === 4) {
 						x.money = Math.round((parseFloat(x.allweight) - parseFloat(x.carweight)) * parseFloat(x
 							.referenceAmount));
-					} else if (x.saleWay === 2 || x.saleWay === 3 || x.saleWay === 4) {
+					} else if (x.saleWay === 2 || x.saleWay === 3 ) {
 						x.money = Math.round(parseFloat(x.quantity) * parseFloat(x
 							.referenceAmount));
 					}
@@ -2326,7 +3416,10 @@
 				})
 				// 添加运费到总金额
 				this.payAmount.total += parseFloat(this.cashier.shippingFee || 0);
-				this.payAmount.total = parseFloat(this.payAmount.total).toFixed(0);
+				// 确保total是数值类型，保持响应性
+				this.payAmount.total = parseFloat(parseFloat(this.payAmount.total).toFixed(0));
+				// 保存到缓存
+				this.saveGoodSelectToCache();
 			},
 			//计算方法2---改变箩筐值计算
 			reCountGoodSelect2() {
@@ -2350,6 +3443,8 @@
 					this.payAmount.ExtraMoney += this.extraModel[0].money;
 					x.money2+=this.extraModel[0].money;
 				}
+				// 确保total是数值类型，保持响应性
+				this.payAmount.total = parseFloat(this.payAmount.total);
 			},
 			addCard(item) {
 				const index = this.cashier.cards.findIndex(x => x.skuId === item.skuId)
@@ -2527,6 +3622,8 @@
 						money2:0,//包含押筐金额
 						index: this.goodSelect.length + 1
 					});
+					// 保存到缓存
+					this.saveGoodSelectToCache();
 					this.showAllweightStr = false;
 					//显示输入价格界面
 					this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
@@ -2560,6 +3657,8 @@
 					money: 0,
 					index: this.goodSelect.length + 1
 				});
+				// 保存到缓存
+				this.saveGoodSelectToCache();
 				this.showAllweightStr = false;
 				this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
 			},
@@ -2577,6 +3676,8 @@
 					money: 0,
 					index: this.goodSelect.length + 1
 				});
+				// 保存到缓存
+				this.saveGoodSelectToCache();
 				this.showAllweightStr = false;
 				this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
 				this.reCountGoodSelect();
@@ -2614,15 +3715,51 @@
 				this.hangDialogVisible = true
 			},
 			deleteGDorder(item) {
+				console.log("item",item)
 				uni.showModal({
 					title: '删除挂单',
-					content: `您确定要删除吗？`, // 假设 item 有一个 name 属性
+					content: `您确定要删除挂单吗？`,
 					success: (res) => {
 						if (res.confirm) {
-							
+							// 调用删除挂单API
+							this.performDeleteGDorder(item);
 						}
 					}
 				});
+			},
+			async performDeleteGDorder(item) {
+				try {
+					uni.showLoading({
+						title: '删除中...'
+					});
+					
+					// 调用destoryOrder API删除挂单
+					const response = await cashierOrder.destoryOrder(item);
+					
+					uni.hideLoading();
+					
+					if (response.code==200) {
+						uni.showToast({
+							title: '删除成功',
+							icon: 'success'
+						});
+						
+						// 刷新挂单列表
+						this.saleHangList();
+					} else {
+						uni.showToast({
+							title: response.data?.message || '删除失败',
+							icon: 'error'
+						});
+					}
+				} catch (error) {
+					uni.hideLoading();
+					console.error('删除挂单失败:', error);
+					uni.showToast({
+						title: '删除失败，请重试',
+						icon: 'error'
+					});
+				}
 			},
 			submitAddCustomer() {
 				if (this.AddedCustomerFormData.name == undefined || this.AddedCustomerFormData.name == "") {
@@ -2733,6 +3870,58 @@
 			memberSearchClear() {
 				this.memberSearchKeyword = ''
 				this.memberSearchOptions = this.memberOptions;
+			},
+			// 商品搜索相关方法
+			searchGoods() {
+				this.filterGoods();
+			},
+			filterGoods() {
+				this.rows = [];
+				let filteredList = [];
+				
+				// 清除词云选中状态
+				if (this.goodsSearchKeyword.trim() !== '') {
+					this.currentKeyWord = '';
+				}
+				
+				if (this.goodsSearchKeyword.trim() === '') {
+					// 如果搜索关键词为空，显示所有商品
+					filteredList = [...this.commidityList];
+				} else {
+					// 根据关键词筛选商品
+					filteredList = this.commidityList.filter(item =>
+						item.name.toLowerCase().includes(this.goodsSearchKeyword.toLowerCase())
+					);
+				}
+				
+				// 按库存排序
+				filteredList.sort((a, b) => b.inventory - a.inventory);
+				
+				// 重新组织成rows格式（每行2个商品）
+				for (let i = 0; i < filteredList.length; i += 2) {
+					this.rows.push(filteredList.slice(i, i + 2));
+				}
+			},
+			clearSearch() {
+				this.goodsSearchKeyword = '';
+				this.filterGoods();
+			},
+			// 商品搜索相关方法
+			onGoodsSearch() {
+				this.filterGoods();
+			},
+			onGoodsSearchConfirm() {
+				this.filterGoods();
+			},
+			clearGoodsSearch() {
+				this.goodsSearchKeyword = '';
+				this.filterGoods();
+			},
+			onSearchFocus() {
+				// 搜索框获得焦点时的处理
+			},
+			onSearchBlur() {
+				// 搜索框失去焦点时的处理
 			},
 			memberChange(status) {
 				this.playSystemKeyClickSound();
@@ -2912,6 +4101,9 @@
 						//重置新建订单对象	
 						that.resetOrder();
 						that.payTypeDialogVisible = false;
+						
+						// 如果有动态客户列表，将第一个客户提升为主客户
+						that.switchToNextCustomerAfterOrder();
 
 						//获取最新的订单放在上面横幅栏
 						that.getlastOrder_print().then(res2 => {
@@ -2975,8 +4167,14 @@
 					Id: "",
 					accountCode: ""
 				};
+				// 清空当前客户的缓存（订单提交成功后）
+				that.clearGoodSelectCache();
 				that.goodSelect = [];
-				that.currentMember = {};
+				// 重置客户信息为散客
+				that.currentMember = {
+					customName: "散客",
+					id: ""
+				};
 				// 重置运费
 				that.cashier.shippingFee = 0;
 				that.getlastOrder();
@@ -3040,7 +4238,7 @@
 				})
 			},
 			async payBasket_beforePay() {
-				if (this.currentMember?.id == null || this.currentMember?.id == "") return;
+				if (!this.currentMember || this.currentMember.id == null || this.currentMember.id == "") return;
 				var userInfo = uni.getStorageSync("userInfo");
 				var CompanyId = uni.getStorageSync('companyId');
 				let param = {
@@ -3498,10 +4696,24 @@
 							font-size: 14rpx;
 							font-weight: 500;
 							cursor: pointer;
+						}
+
+						.smart-round-btn {
+							background: transparent;
+							color: #10b981;
+							border: 1rpx solid #10b981;
+							border-radius: 3rpx;
+							padding: 0 8rpx;
+							height: 24rpx;
+							line-height: 22rpx;
+							font-size: 14rpx;
+							font-weight: 500;
+							cursor: pointer;
 							transition: all 0.3s ease;
 
 							&:hover {
-								background: #7c3aed;
+								background: #10b981;
+								color: white;
 							}
 						}
 					}
@@ -4029,6 +5241,392 @@
 
 	.search-member-right {
 		flex: 2;
+	}
+
+	/* 客户滚动视图样式 */
+	.customer-scroll-view {
+		width: 500px !important;
+		min-width: 500px !important;
+		max-width: 500px !important;
+		overflow: hidden;
+		box-sizing: border-box;
+		flex-shrink: 0;
+	}
+
+	.customer-scroll-view ::-webkit-scrollbar {
+		display: none;
+	}
+
+	/* 确保父容器也不会超出宽度 */
+	.card-title {
+		width: 100%;
+		max-width: 100%;
+		box-sizing: border-box;
+		overflow: hidden;
+	}
+
+	/* 商品搜索框样式 */
+	.goods-search-container {
+		padding: 10px;
+		background-color: #f8f9fa;
+		border-bottom: 1px solid #e9ecef;
+	}
+
+
+	.search-container {
 		display: flex;
+		align-items: center;
+		gap: 10rpx;
+	}
+	.search-input-wrapper {
+		position: relative;
+		display: flex;
+		width: 245rpx;
+		margin: 0;
+		margin-top: 2rpx;
+		margin-left: 18rpx;
+		margin-bottom: 5rpx;
+		height: 30rpx;
+		padding: 2rpx;
+		align-items: center;
+		background: #fff;
+		border: 2px solid #ddd;
+		border-radius: 5px;
+		transition: all 0.3s ease;
+	}
+
+	.search-input-wrapper:focus-within {
+		border-color: #007bff;
+		box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.25);
+	}
+
+	.goods-search-input {
+		flex: 1;
+		border: 1px solid #ddd;
+		height: 30px;
+		margin-left:20px;
+		font-size: 16px;
+		padding-left: 10px;
+		width: 100%;
+		border-radius: 5px;
+		background: white;
+		
+	}
+
+	.goods-search-input::placeholder {
+		color: #6c757d;
+		font-style: italic;
+	}
+
+	.search-icon {
+		position: absolute;
+		right: 15px;
+		color: #6c757d;
+		font-size: 18px;
+		pointer-events: none;
+	}
+
+	.clear-icon {
+		position: absolute;
+		right: 15px;
+		color: #6c757d;
+		font-size: 16px;
+		cursor: pointer;
+		padding: 5px;
+		border-radius: 50%;
+		transition: all 0.2s ease;
+	}
+
+	.clear-icon:hover {
+		background-color: #f8f9fa;
+		color: #dc3545;
+	}
+	
+	/* 运费弹窗样式 */
+	.shipping-modal-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 9999;
+	}
+
+	.shipping-modal-wrapper {
+		width: 650px;
+		max-width: 90%;
+		max-height: 90vh;
+		overflow: hidden;
+		border-radius: 12px;
+		box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+	}
+
+	.shipping-modal-container {
+		background: white;
+		overflow: hidden;
+	}
+	
+	.shipping-modal-header {
+		background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
+		padding: 20px 24px;
+		text-align: center;
+		color: white;
+		
+		.header-icon-wrapper {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 72px;
+			height: 72px;
+			margin: 0 auto 16px;
+			background: rgba(255, 255, 255, 0.2);
+			border-radius: 50%;
+		}
+		
+		.header-title {
+			display: block;
+			font-size: 30px;
+			font-weight: bold;
+			margin-bottom: 8px;
+		}
+		
+		.header-subtitle {
+			display: block;
+			font-size: 18px;
+			opacity: 0.9;
+		}
+	}
+	
+	.shipping-modal-content {
+		padding: 32px 28px;
+		
+		.current-shipping-info {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 16px 20px;
+			background: #f0f9ff;
+			border-left: 4px solid #00aaff;
+			border-radius: 8px;
+			margin-bottom: 24px;
+			
+			.info-label {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 18px;
+				color: #606266;
+			}
+			
+			.info-value {
+				font-size: 24px;
+				font-weight: bold;
+				color: #00aaff;
+			}
+		}
+		
+		.input-wrapper {
+			margin-bottom: 32px;
+			
+			.input-label {
+				display: flex;
+				align-items: center;
+				margin-bottom: 12px;
+				
+				.label-text {
+					font-size: 20px;
+					font-weight: 600;
+					color: #303133;
+				}
+				
+				.label-required {
+					color: #f56c6c;
+					margin-left: 6px;
+					font-size: 22px;
+				}
+			}
+			
+			.input-container {
+				display: flex;
+				align-items: center;
+				padding: 0 20px;
+				background: #fff;
+				border: 3px solid #dcdfe6;
+				border-radius: 10px;
+				transition: all 0.3s ease;
+				position: relative;
+				
+				&:focus-within {
+					border-color: #00aaff;
+					box-shadow: 0 0 0 4px rgba(0, 170, 255, 0.1);
+				}
+				
+				.input-prefix {
+					font-size: 28px;
+					font-weight: bold;
+					color: #909399;
+					margin-right: 6px;
+				}
+
+				.shipping-input {
+					flex: 1;
+					padding: 0px 0px 0px 10px;
+					border: none;
+					font-size: 20rpx;
+					font-weight: bold;
+					color: #303133;
+					outline: none;
+					background: transparent;
+				}
+				
+				.clear-shipping-btn {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					padding: 4px 8px;
+					margin-left: 12px;
+					background: #f5f7fa;
+					color: #606266;
+					font-size: 18px;
+					font-weight: 600;
+					border: 2px solid #e4e7ed;
+					border-radius: 8px;
+					cursor: pointer;
+					transition: all 0.2s ease;
+					white-space: nowrap;
+					
+					&:hover {
+						background: #ecf5ff;
+						border-color: #b3d8ff;
+						color: #409eff;
+					}
+					
+					&:active {
+						background: #d9ecff;
+						transform: scale(0.96);
+					}
+				}
+			}
+			
+			.input-hint {
+				display: block;
+				margin-top: 10px;
+				font-size: 16px;
+				color: #909399;
+				padding-left: 6px;
+			}
+		}
+		
+		.quick-amount-section {
+			.section-label {
+				display: block;
+				font-size: 18px;
+				font-weight: 600;
+				color: #606266;
+				margin-bottom: 16px;
+			}
+			
+			.quick-amount-buttons {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 14px;
+				
+				.quick-amount-btn {
+					flex: 0 0 calc(25% - 10.5px);
+					padding: 18px 12px;
+					background: #f5f7fa;
+					border: 3px solid #e4e7ed;
+					border-radius: 10px;
+					font-size: 22px;
+					font-weight: bold;
+					color: #606266;
+					cursor: pointer;
+					transition: all 0.2s ease;
+					text-align: center;
+					
+					&:hover {
+						background: #ecf5ff;
+						border-color: #b3d8ff;
+						color: #409eff;
+					}
+					
+					&.active {
+						background: #00aaff;
+						border-color: #00aaff;
+						color: white;
+						transform: scale(1.05);
+					}
+					
+					&:active {
+						transform: scale(0.98);
+					}
+				}
+			}
+		}
+	}
+	
+	.shipping-modal-footer {
+		display: flex;
+		gap: 16px;
+		padding: 20px 28px 28px;
+		background: #f8f9fa;
+		border-top: 1px solid #e9ecef;
+		
+		button {
+			flex: 1;
+			height: 60px;
+			border-radius: 10px;
+			font-size: 20px;
+			font-weight: bold;
+			border: none;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+		
+		.btn-cancel {
+			background: #f5f5f5;
+			color: #606266;
+			
+			&:hover {
+				background: #e9e9e9;
+			}
+			
+			&:active {
+				transform: scale(0.98);
+			}
+		}
+		
+		.btn-confirm {
+			background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
+			color: white;
+			box-shadow: 0 4px 12px rgba(0, 170, 255, 0.3);
+			
+			&:hover {
+				box-shadow: 0 6px 16px rgba(0, 170, 255, 0.4);
+				transform: translateY(-1px);
+			}
+			
+			&:active {
+				transform: translateY(0) scale(0.98);
+			}
+			
+			&.disabled {
+				background: #c0c4cc;
+				box-shadow: none;
+				cursor: not-allowed;
+				opacity: 0.6;
+				
+				&:hover {
+					transform: none;
+				}
+			}
+		}
 	}
 </style>

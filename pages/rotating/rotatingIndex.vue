@@ -4,7 +4,7 @@
 		<view class="header-toolbar">
 			<!-- 左侧用户信息 -->
 			<view class="header-left">
-				<text class="header-username" v-if="currentData">{{ currentData.dutyInfo.userName }}</text>
+				<text class="header-username" v-if="currentData.dutyInfo">{{ currentData.dutyInfo.userName }}</text>
 			</view>
 
 			<!-- 中间当班时间信息 -->
@@ -91,14 +91,14 @@
 										<scroll-view class="card2-scroll-area" scroll-x="false">
 													<view class="basket-container" v-if="baskerShowType == 1">
 														<view class="basket-item-collect" v-for="basket in currentData.collectBasket"
-															:key="basket.basketModelName">
+															:key="basket.basketModelName" @click="showBasketDetail(basket)">
 															<text class="basket-name">{{ basket.basketModelName }}</text>
 															<text class="basket-count">{{ basket.mount }}个</text>
 														</view>
 													</view>
 													<view class="basket-container" v-if="baskerShowType == 2">
 														<view class="basket-item-owe" v-for="basket in currentData.oweBasket"
-															:key="basket.basketModelName">
+															:key="basket.basketModelName" @click="showBasketDetail(basket)">
 															<text class="basket-name">{{ basket.basketModelName }}</text>
 															<text class="basket-count">{{ basket.mount }}个</text>
 														</view>
@@ -129,14 +129,21 @@
 									<view class="grid card3 reserve-card">
 										<view class="card3-header">
 											<view class="card-header-title">
-												<uni-icons custom-prefix="iconfont" type="icon-qian" size="20"
-													color="#f39c12"></uni-icons>
-												<text class="title-text">备用金</text>
+												<view class="header-title-left">
+													<uni-icons custom-prefix="iconfont" type="icon-qian" size="20"
+														color="#f39c12"></uni-icons>
+													<text class="title-text">备用金</text>
+												</view>
+												<view class="header-title-right">
+													<view class="reserve-action-btn" @click="openReserveModal">
+														<uni-icons type="plus-filled" size="30" color="#f39c12"></uni-icons>
+													</view>
+												</view>
 											</view>
 										</view>
-										<view class="card3-content">
+										<view class="card3-content" @click="handleReserveRecordShow">
 											<view class="empty-content">
-												<text class="empty-text">暂无备用金记录</text>
+												<text class="empty-text" >￥{{currentData.reservefund}}</text>
 											</view>
 										</view>
 									</view>
@@ -153,18 +160,19 @@
 						<view class="card4-header">
 							<view class="card-header-title">支付统计</view>
 						</view>
+						<view class="payment-content">
 						<!-- 第一行：微信 + 支付宝 -->
 						<view class="payment-row">
 							<!-- 微信支付 -->
 							<view class="payment-item wechat-pay" @click="showExpenseAccout(1)">
 								<view class="payment-header">
 									<view class="payment-icon-wrapper">
-										<u-icon class="payment-icon" :size="32" name="weixin-fill"
+										<u-icon class="payment-icon" :size="28" name="weixin-fill"
 											color="white"></u-icon>
 										<text class="payment-label">微信</text>
 									</view>
 								</view>
-								<view class="payment-amount" v-if="currentData">
+								<view class="payment-amount" v-if="currentData.accountExpense">
 									{{ currentData.accountExpense.wxpayAmount }}
 								</view>
 							</view>
@@ -172,11 +180,11 @@
 							<view class="payment-item alipay-pay" @click="showExpenseAccout(2)">
 								<view class="payment-header">
 									<view class="payment-icon-wrapper">
-										<u-icon class="payment-icon" :size="32" name="zhifubao" color="white"></u-icon>
+										<u-icon class="payment-icon" :size="28" name="zhifubao" color="white"></u-icon>
 										<text class="payment-label">支付宝</text>
 									</view>
 								</view>
-								<view class="payment-amount" v-if="currentData">
+								<view class="payment-amount" v-if="currentData.accountExpense">
 									{{ currentData.accountExpense.alipayAmount }}
 								</view>
 							</view>
@@ -187,12 +195,12 @@
 							<view class="payment-item cash-pay" @click="showExpenseAccout(3)">
 								<view class="payment-header">
 									<view class="payment-icon-wrapper">
-										<u-icon class="payment-icon" :size="32" name="red-packet-fill"
+										<u-icon class="payment-icon" :size="28" name="red-packet-fill"
 											color="white"></u-icon>
 										<text class="payment-label">现金</text>
 									</view>
 								</view>
-								<view class="payment-amount" v-if="currentData">
+								<view class="payment-amount" v-if="currentData.accountExpense">
 									{{ currentData.accountExpense.cashAmount }}
 								</view>
 							</view>
@@ -200,15 +208,16 @@
 							<view class="payment-item other-pay" @click="showExpenseAccout(4)">
 								<view class="payment-header">
 									<view class="payment-icon-wrapper">
-										<u-icon class="payment-icon" :size="32" name="coupon-fill"
+										<u-icon class="payment-icon" :size="28" name="coupon-fill"
 											color="white"></u-icon>
 										<text class="payment-label">其他</text>
 									</view>
 								</view>
 								<view class="payment-amount" v-if="currentData">
-									{{ currentData.accountExpense.otherAmount }}
+									{{ getOtherPaymentAmount() }}
 								</view>
 							</view>
+						</view>
 						</view>
 					</view>
 
@@ -561,9 +570,162 @@
 						</scroll-view>
 					</div>
 
+					<!--备用金记录抽屉-->
+					<div class="reserve-record-container" v-if="drawerType === 'reserveRecordList'">
+						<!-- 抽屉头部 -->
+						<div class="reserve-record-header">
+							<div class="reserve-record-title">
+								<view class="reserve-record-title-icon">
+									<uni-icons custom-prefix="iconfont" type="icon-qian" size="20" color="#f39c12"></uni-icons>
+								</view>
+								<text class="reserve-record-title-text">备用金操作记录</text>
+							</div>
+							<div class="reserve-record-summary" v-if="currentData">
+								<text class="reserve-record-summary-text" >当前备用金余额：￥{{ currentData.reservefund }}</text>
+							</div>
+						</div>
+
+						<!-- 备用金记录列表 -->
+						<scroll-view class="reserve-record-scroll" :style="{ height: (windowHeight - 200) + 'px' }" scroll-y="true">
+							<div class="reserve-record-list">
+								<div class="reserve-record-item" v-for="(record, index) in reserveRecordList" :key="index">
+									<div class="reserve-record-header">
+										<div class="reserve-record-info">
+											<text class="reserve-record-type" :class="{ 'income': record.reservefundOperatorType === 2, 'expense': record.reservefundOperatorType === 1 }">{{ getReserveOperationType(record.reservefundOperatorType) }}</text>
+											<text class="reserve-record-time">{{ record.createTime ? record.createTime.replace("T", " ") : "" }}</text>
+										</div>
+										<div class="reserve-record-amounts">
+											<text class="reserve-record-amount" :class="{ 'income': record.reservefundOperatorType === 2, 'expense': record.reservefundOperatorType === 1 }">
+												{{ record.reservefundOperatorType === 2 ? '+' : '-' }}¥{{ record.mount || 0 }}
+											</text>
+										</div>
+									</div>
+									<div class="reserve-record-detail" v-if="record.remark">
+										<div class="reserve-record-remark">
+											<text class="reserve-record-remark-label">备注:</text>
+											<text class="reserve-record-remark-value">{{ record.remark }}</text>
+										</div>
+									</div>
+								</div>
+								<!-- 空状态 -->
+								<div class="reserve-record-empty" v-if="!reserveRecordList || reserveRecordList.length === 0">
+									<view class="reserve-record-empty-icon">
+										<uni-icons type="wallet" size="40" color="#bdc3c7"></uni-icons>
+									</view>
+									<text class="reserve-record-empty-text">暂无备用金操作记录</text>
+								</div>
+							</div>
+						</scroll-view>
+					</div>
+
 					<!--营业额订单抽屉-->
 					<!--还筐、押筐抽屉-->
 				</slot> <!-- 抽屉内容插槽 -->
+			</view>
+		</view>
+
+		<!-- 备用金弹窗 -->
+		<view class="reserve-modal-container" v-if="showReserveModal">
+			<!-- 遮罩层 -->
+			<view class="modal-mask" @tap="closeReserveModal"></view>
+			
+			<!-- 弹窗内容 -->
+			<view class="reserve-modal">
+				<view class="modal-header">
+					<text class="modal-title">备用金操作</text>
+					<view class="modal-close" @tap="closeReserveModal">
+						<uni-icons type="closeempty" size="20" color="#666"></uni-icons>
+					</view>
+				</view>
+				
+				<view class="modal-content">
+					<!-- 操作类型选择 -->
+					<view class="operation-type">
+						<view class="type-btn" 
+							  :class="{ 'active': reserveOperationType === 'add' }" 
+							  @click="reserveOperationType = 'add'">
+							<uni-icons type="plus" size="16" color="#27ae60"></uni-icons>
+							<text>增加备用金</text>
+						</view>
+						<view class="type-btn" 
+							  :class="{ 'active': reserveOperationType === 'expense' }" 
+							  @click="reserveOperationType = 'expense'">
+							<uni-icons type="minus" size="16" color="#e74c3c"></uni-icons>
+							<text>支出备用金</text>
+						</view>
+					</view>
+					
+					<!-- 金额输入 -->
+					<view class="amount-input-section">
+						<text class="input-label">金额</text>
+						<input class="amount-input" 
+							   type="number" 
+							   v-model="reserveAmount" 
+							   placeholder="请输入金额" 
+							   :focus="showReserveModal"
+							   />
+					</view>
+					
+					<!-- 备注输入 -->
+					<view class="remark-input-section">
+						<text class="input-label">备注</text>
+						<textarea class="remark-input" 
+								  v-model="reserveRemark" 
+								  placeholder="请输入备注（可选）"
+								  maxlength="100"></textarea>
+					</view>
+				</view>
+				
+				<view class="modal-footer">
+					<view class="btn-cancel" @click="closeReserveModal">取消</view>
+					<view class="btn-confirm" @click="confirmReserveOperation">确认</view>
+				</view>
+			</view>
+		</view>
+
+		<!-- 还筐详情抽屉 -->
+		<view class="basket-detail-drawer-container" v-if="basketDetailVisible" @click="closeBasketDetail">
+			<view class="basket-detail-mask"></view>
+			<view class="basket-detail-content" @click.stop="">
+				<div class="basket-detail-order-container">
+					<!-- 抽屉头部 -->
+					<div class="basket-detail-header">
+						<div class="basket-detail-title">
+							<view class="basket-detail-title-icon">
+								<uni-icons type="basket" size="20" color="#55aaff"></uni-icons>
+							</view>
+							<text class="basket-detail-title-text">{{ baskerShowType === 2 ? '押筐详情' : '还筐详情' }}</text>
+						</div>
+						<div class="basket-detail-summary" v-if="selectedBasket">
+							<text class="basket-detail-summary-text">{{ selectedBasket.basketModelName }} - {{ selectedBasket.mount }}个，共 {{ unifiedRecords.length }} 条记录</text>
+						</div>
+					</div>
+
+					<!-- 相关记录列表 -->
+					<scroll-view class="basket-detail-scroll" :style="{ height: (windowHeight - 200) + 'px' }" scroll-y="true">
+						<div class="basket-detail-record-list">
+							<div class="basket-detail-record-item" v-for="record in unifiedRecords" :key="record.id + record.type">
+								<div class="basket-detail-record-header">
+									<div class="basket-detail-record-info">
+										<text class="basket-detail-record-type" :class="record.type === 'order' ? 'type-order' : 'type-repay'">
+											{{ record.type === 'order' ? (baskerShowType === 2 ? '订单押筐' : '订单抵扣') : (baskerShowType === 2 ? '押筐单' : '还筐单') }}
+										</text>
+										<text class="basket-detail-record-time">{{ formatDate(record.createTime) }}</text>
+									</div>
+									<div class="basket-detail-record-amounts">
+										<text class="basket-detail-customer-name">{{ record.customerName || '' }}</text>
+										<text class="basket-detail-basket-count">{{ record.basketCount }}</text>
+									</div>
+								</div>
+							</div>
+						</div>
+
+						<div class="basket-detail-no-data" v-if="!unifiedRecords || unifiedRecords.length === 0">
+							<uni-icons type="info-filled" size="20" color="#ccc"></uni-icons>
+							<text>暂无相关数据</text>
+						</div>
+					</scroll-view>
+				</div>
 			</view>
 		</view>
 
@@ -572,6 +734,7 @@
 
 <script>
 import cashierOrder from '../../api/cashier/cashierOrder'
+import basketApi from '../../api/basket/basketApi'
 import category from '../../api/goods/category'
 import duty from '../../api/duty/duty'
 export default {
@@ -582,7 +745,7 @@ export default {
 			CompanyId: "",
 			searchVal: '',
 			windowHeight: 0,
-			currentData: null,
+			currentData: {},
 			currentDutyId: "",
 			currentDutyBeginTime: "",
 			dutyTime: null,
@@ -603,7 +766,88 @@ export default {
 			repayOrderList:[],
 			baskerShowType:1,
 			showExpenseAccoutType:1,
-			expenseAccoutList:[]
+			expenseAccoutList:[],
+			// 备用金相关数据
+			showReserveModal: false,
+			reserveOperationType: 'add', // 'add' | 'expense'
+			reserveAmount: '',
+			reserveRemark: '',
+			reserveRecordList: [], // 备用金操作记录列表
+			// 还筐详情相关数据
+			basketDetailVisible: false,
+			selectedBasket: null,
+			relatedOrders: [],
+			repayBasketOrders: []
+		}
+	},
+	computed: {
+		// 统一的记录列表
+		unifiedRecords() {
+			const records = [];
+			console.log("this.repayBasketOrders",this.repayBasketOrders);
+			// 添加订单记录
+			if (this.relatedOrders && this.relatedOrders.length > 0) {
+				this.relatedOrders.forEach(order => {
+					// 计算order的allGoodModel里面commodyId等于selectedBasket.Id的mount之和
+					let basketCountInOrder = 0;
+					if (order.oweBasketModelList && Array.isArray(order.oweBasketModelList) && this.selectedBasket) {
+						// 尝试使用不同的ID字段名称
+						const basketId = this.selectedBasket.Id || this.selectedBasket.id || this.selectedBasket.basketModelId;
+						if (basketId) {
+							// 根据baskerShowType决定筛选条件：押筐(2)对应oweBasketModelType==1，还筐(1)对应oweBasketModelType==2
+							const targetType = this.baskerShowType === 2 ? 1 : 2;
+							basketCountInOrder = order.oweBasketModelList
+								.filter(good => good.extraModelId === basketId && good.oweBasketModelType === targetType)
+								.reduce((sum, good) => sum + (parseFloat(good.mount) || 0), 0);
+							
+							console.log(`订单ID: ${order.id}, selectedBasket ID: ${basketId}, baskerShowType: ${this.baskerShowType}, targetType: ${targetType}, 匹配的商品:`, 
+								order.oweBasketModelList.filter(good => good.extraModelId === basketId && good.oweBasketModelType === targetType), 
+								`总数量: ${basketCountInOrder}`);
+						} else {
+							console.log('selectedBasket中找不到有效的ID字段:', this.selectedBasket);
+						}
+					}
+					
+					records.push({
+						id: order.id,
+						type: 'order',
+						customerName: order.customerName || '',
+						basketCount: `${basketCountInOrder}个`,
+						createTime: order.createTime,
+						sortTime: new Date(order.createTime).getTime() || 0
+					});
+				});
+			}
+
+			// 添加还筐记录
+			if (this.repayBasketOrders && this.repayBasketOrders.length > 0) {
+				this.repayBasketOrders.forEach(repay => {
+					// 计算basketList中Mount的总和
+					let totalBasketCount = 0;
+					if (repay.basketList && Array.isArray(repay.basketList)) {
+						totalBasketCount = repay.basketList.reduce((sum, basket) => {
+							return sum + (basket.mount || 0);
+						}, 0);
+						console.log(`还筐单ID: ${repay.id}, basketList:`, repay.basketList, `总数量: ${totalBasketCount}`);
+					} else {
+						// 如果没有basketList，尝试使用basketCount作为兜底
+						totalBasketCount = repay.basketCount || 0;
+						console.log(`还筐单ID: ${repay.id}, 没有basketList，使用basketCount: ${totalBasketCount}`);
+					}
+					
+					records.push({
+						id: repay.id,
+						type: 'repay',
+						customerName: repay.customerName || '',
+						basketCount: `${totalBasketCount}个`,
+						createTime: repay.createTime,
+						sortTime: new Date(repay.createTime).getTime() || 0
+					});
+				});
+			}
+			
+			// 按时间倒序排列（最新的在前面）
+			return records.sort((a, b) => b.sortTime - a.sortTime);
 		}
 	},
 	beforeMount() {
@@ -691,15 +935,26 @@ export default {
 			})
 		},
 		formatTime(ms) {
-			// 计算小时、分钟、秒
+			// 计算天、小时、分钟、秒
 			const seconds = Math.floor((ms / 1000) % 60);
 			const minutes = Math.floor((ms / (1000 * 60)) % 60);
 			const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+			const days = Math.floor(ms / (1000 * 60 * 60 * 24));
 
 			// 补零显示
 			const pad = (num) => num.toString().padStart(2, '0');
 
-			return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+			// 根据天数决定显示格式
+			if (days > 0) {
+				// 超过1天时显示：X天 HH:MM:SS
+				return `${days}天 ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+			} else if (hours > 0) {
+				// 超过1小时但不足1天时显示：HH:MM:SS
+				return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+			} else {
+				// 不足1小时时显示：MM:SS
+				return `${pad(minutes)}:${pad(seconds)}`;
+			}
 		},
 		getSystemheight() {
 			this.windowHeight = uni.getWindowInfo().windowHeight;
@@ -874,6 +1129,177 @@ export default {
 				default:
 					return '#e9ecef';
 			}
+		},
+		
+		// 备用金相关方法
+		openReserveModal() {
+			this.showReserveModal = true;
+			this.reserveOperationType = 'add';
+			this.reserveAmount = '';
+			this.reserveRemark = '';
+		},
+		
+		closeReserveModal() {
+			this.showReserveModal = false;
+			this.reserveAmount = '';
+			this.reserveRemark = '';
+		},
+		
+		confirmReserveOperation() {
+			// 验证输入
+			if (!this.reserveAmount || this.reserveAmount <= 0) {
+				uni.showToast({
+					title: '请输入有效金额',
+					icon: 'none'
+				});
+				return;
+			}
+			
+			// 这里可以添加API调用来保存备用金记录
+			const operationText = this.reserveOperationType === 'add' ? '增加' : '支出';
+			const amount = parseFloat(this.reserveAmount);
+			var userInfo = uni.getStorageSync("userInfo");
+			const data = {
+				operatorId:userInfo.id,
+				dutyId: this.currentDutyId,
+				mount: amount,
+				remark: this.reserveRemark,
+				dutyId: this.currentDutyId,
+				reservefundOperatorType:this.reserveOperationType=='add'?2:1
+			}
+			
+			duty.addReservefundRecord(data).then(res => {
+				console.log("res",res);
+				uni.showToast({
+					title: '操作成功',
+					icon: 'success'
+				});
+				// 操作成功后关闭弹窗并刷新数据
+				this.closeReserveModal();
+				this.getCurrentData(); // 刷新当前数据
+			})
+		},
+		
+		// 显示备用金记录
+		handleReserveRecordShow() {
+			duty.getReservefundRecordByDutyId(this.currentDutyId).then(res => {
+				console.log("备用金记录", res);
+				this.reserveRecordList = res.data || [];
+				this.drawerType = 'reserveRecordList';
+				this.showDrawer = true;
+			}).catch(err => {
+				console.error("获取备用金记录失败:", err);
+				uni.showToast({
+					title: '获取记录失败',
+					icon: 'none'
+				});
+			});
+		},
+		
+		// 获取备用金操作类型文本
+		getReserveOperationType(type) {
+			switch(type) {
+				case 1:
+					return '支出';
+				case 2:
+					return '收入';
+				default:
+					return '未知操作';
+			}
+		},
+		// 计算其他支付金额（包含备用金）
+		getOtherPaymentAmount() {
+			if (!this.currentData) return 0;
+			const otherAmount = parseFloat(this.currentData.accountExpense?.otherAmount) || 0;
+			const reserveAmount = parseFloat(this.currentData.reservefund) || 0;
+			return (otherAmount + reserveAmount).toFixed(0);
+		},
+
+		// 还筐详情相关方法
+		showBasketDetail(basket) {
+			console.log('点击筐子项目:', basket);
+			this.selectedBasket = basket;
+			this.basketDetailVisible = true;
+			this.loadBasketDetailData(basket);
+		},
+
+		closeBasketDetail() {
+			this.basketDetailVisible = false;
+			this.selectedBasket = null;
+			this.relatedOrders = [];
+			this.repayBasketOrders = [];
+		},
+
+		async loadBasketDetailData(basket) {
+			try {
+				console.log('开始加载筐子详情数据:', basket);
+				
+				uni.showLoading({
+					title: '加载中...'
+				});
+
+				// 并行调用两个API获取相关数据
+				const promises = [];
+
+				// 获取相关订单数据
+				if (basket.relateAccountIdList && basket.relateAccountIdList.length > 0) {
+
+					const orderPromise = cashierOrder.GetOrderByOrderIdList(basket.relateAccountIdList)
+						.then(response => {
+							if (response.code === 200 && response.data) {
+								this.relatedOrders = Array.isArray(response.data) ? response.data : [response.data];
+								console.log('相关订单数据:', this.relatedOrders);
+								// 调试每个订单的allGoodModel
+								this.relatedOrders.forEach(order => {
+									console.log(`订单ID: ${order.id}, allGoodModel:`, order.allGoodModel);
+								});
+							}
+						})
+						.catch(error => {
+							console.error('获取相关订单失败:', error);
+							this.relatedOrders = [];
+						});
+					promises.push(orderPromise);
+				}
+
+				// 获取还筐记录数据
+				if (basket.relateRepayBasketOrderIdList && basket.relateRepayBasketOrderIdList.length > 0) {
+
+					const repayPromise = basketApi.GetRepayBasketOrdersByIdList(basket.relateRepayBasketOrderIdList)
+						.then(response => {
+							if (response.code === 200 && response.data) {
+								this.repayBasketOrders = Array.isArray(response.data) ? response.data : [response.data];
+								console.log('还筐记录数据:', this.repayBasketOrders);
+							}
+						})
+						.catch(error => {
+							console.error('获取还筐记录失败:', error);
+							this.repayBasketOrders = [];
+						});
+					promises.push(repayPromise);
+				}
+
+				// 等待所有请求完成
+				await Promise.all(promises);
+
+				uni.hideLoading();
+			} catch (error) {
+				uni.hideLoading();
+				console.error('加载还筐详情失败:', error);
+				uni.showToast({
+					title: '加载失败，请重试',
+					icon: 'error'
+				});
+			}
+		},
+
+		// 格式化日期显示
+		formatDate(dateString) {
+			console.log('dateString', dateString);
+			if (!dateString) return '--';
+			const date = new Date(dateString);
+			if (isNaN(date.getTime())) return '--';
+			return `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 		}
 	}
 }
@@ -1067,42 +1493,53 @@ export default {
 
 .card1-content {
 	display: flex;
-	padding: 10rpx;
-	gap: 10rpx;
+	padding: 8rpx;
+	gap: 8rpx;
+	height: calc(100% - 50rpx); /* 更精确地计算可用高度 */
+	overflow: hidden;
+	box-sizing: border-box;
 }
 
 .revenue-column {
 	flex: 1;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	height: 100%;
 }
 
 .revenue-column-right {
-	margin-left: 10rpx;
+	margin-left: 8rpx;
 }
 
 .yye-grid {
 	display: flex;
-	height: 40rpx;
+	flex: 1;
 	justify-content: space-between;
+	align-items: center;
 	background-color: #f8f9fa;
-	margin: 5rpx 0;
+	margin: 2rpx 0;
 	border-radius: 6rpx;
-	padding: 8rpx;
+	padding: 6rpx 10rpx;
 	font-size: 12rpx;
-	line-height: 24rpx;
 	border: 1rpx solid #e9ecef;
+	min-height: 35rpx;
+	max-height: 50rpx; /* 减小最大高度 */
 }
 
 .yye-grid-text {
 	font-size: 10rpx;
 	color: #6c757d;
 	font-weight: 500;
+	white-space: nowrap;
 }
 
 .yye-grid-value {
 	font-size: 15rpx;
-	padding-right: 10rpx;
 	color: #2c3e50;
 	font-weight: 600;
+	text-align: right;
+	flex-shrink: 0;
 }
 
 // 底部卡片容器
@@ -1224,25 +1661,18 @@ export default {
 }
 
 .empty-text {
-	font-size: 20px;
+	font-size: 18px;
 	color: #bdc3c7;
 }
 
 // 费用支出卡片特殊样式
-.expense-card .card3-header {
-	
-}
-
 .expense-card .empty-text {
 	color: #e74c3c;
 }
 
 // 备用金卡片特殊样式
-.reserve-card .card3-header {
-	
-}
-
 .reserve-card .empty-text {
+	font-size: 30px;
 	color: #f39c12;
 }
 
@@ -1265,24 +1695,35 @@ export default {
 	background: #fafbfc;
 }
 
+.payment-content {
+	display: flex;
+	flex-direction: column;
+	height: calc(100% - 45rpx); /* 更精确地减去header高度 */
+	padding: 2rpx;
+	overflow: hidden;
+	box-sizing: border-box;
+}
+
 .payment-row {
 	display: flex;
 	justify-content: space-between;
-	margin: 6rpx;
-	gap: 6rpx;
+	margin: 2rpx;
+	gap: 3rpx;
+	flex: 1;
 }
 
 .payment-item {
 	flex: 1;
-	padding: 10rpx 12rpx;
+	padding: 6rpx 8rpx;
 	border-radius: 6rpx;
 	color: white;
 	font-weight: 500;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
-	min-height: 75rpx;
-	max-height: 80rpx;
+	height: 100%;
+	min-height: 50rpx;
+	max-height: 65rpx;
 	box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.12);
 }
 
@@ -1304,26 +1745,26 @@ export default {
 }
 
 .payment-header {
-	margin-bottom: 6rpx;
+	margin-bottom: 4rpx;
 }
 
 .payment-icon-wrapper {
 	display: flex;
 	align-items: center;
-	gap: 6rpx;
+	gap: 4rpx;
 }
 
 .payment-icon {
-	margin-top: -4rpx;
+	margin-top: -2rpx;
 }
 
 .payment-label {
-	font-size: 16rpx;
+	font-size: 14rpx;
 	font-weight: 500;
 }
 
 .payment-amount {
-	font-size: 22rpx;
+	font-size: 20rpx;
 	font-weight: 600;
 	text-align: left;
 }
@@ -2514,6 +2955,410 @@ export default {
 	text-align: center;
 }
 
+/* 备用金记录抽屉样式 */
+.reserve-record-container {
+	padding: 20rpx;
+	background-color: #fff;
+	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.reserve-record-header {
+	padding-bottom: 20rpx;
+	border-bottom: 1rpx solid #eee;
+	margin-bottom: 20rpx;
+}
+
+.reserve-record-title {
+	display: flex;
+	align-items: center;
+	gap: 10rpx;
+	margin-bottom: 10rpx;
+}
+
+.reserve-record-title-icon {
+	display: flex;
+	align-items: center;
+}
+
+.reserve-record-title-text {
+	font-size: 18rpx;
+	font-weight: bold;
+	color: #2c3e50;
+}
+
+.reserve-record-summary {
+	padding: 8rpx 12rpx;
+	background-color: #fff8e1;
+	border-radius: 6rpx;
+	border: 1rpx solid #ffcc80;
+}
+
+.reserve-record-summary-text {
+	font-size: 12rpx;
+	color: #f57c00;
+	font-weight: 500;
+}
+
+.reserve-record-scroll {
+	flex: 1;
+}
+
+.reserve-record-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12rpx;
+}
+
+.reserve-record-item {
+	background-color: #f8f9fa;
+	border: 1rpx solid #e9ecef;
+	border-radius: 8rpx;
+	padding: 16rpx;
+	transition: all 0.2s ease;
+}
+
+.reserve-record-item:hover {
+	background-color: #f1f3f5;
+	border-color: #f39c12;
+	box-shadow: 0 2rpx 8rpx rgba(243, 156, 18, 0.1);
+}
+
+.reserve-record-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 8rpx;
+}
+
+.reserve-record-info {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 4rpx;
+}
+
+.reserve-record-type {
+	font-size: 14rpx;
+	font-weight: bold;
+	color: #2c3e50;
+}
+
+.reserve-record-type.income {
+	color: #16a34a;
+}
+
+.reserve-record-type.expense {
+	color: #dc2626;
+}
+
+.reserve-record-time {
+	font-size: 10rpx;
+	color: #7f8c8d;
+}
+
+.reserve-record-amounts {
+	display: flex;
+	align-items: center;
+}
+
+.reserve-record-amount {
+	font-size: 16rpx;
+	font-weight: bold;
+}
+
+.reserve-record-amount.income {
+	color: #16a34a;
+}
+
+.reserve-record-amount.expense {
+	color: #dc2626;
+}
+
+.reserve-record-detail {
+	display: flex;
+	align-items: center;
+	margin-top: 8rpx;
+}
+
+.reserve-record-remark {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+	width: 100%;
+	padding: 8rpx 12rpx;
+	background-color: #f8f9fa;
+	border-radius: 4rpx;
+	border: 1rpx solid #e9ecef;
+}
+
+.reserve-record-remark-label {
+	font-size: 10rpx;
+	color: #6c757d;
+	font-weight: 500;
+	white-space: nowrap;
+}
+
+.reserve-record-remark-value {
+	font-size: 11rpx;
+	color: #495057;
+	flex: 1;
+	word-break: break-all;
+}
+
+.reserve-record-empty {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60rpx 20rpx;
+	gap: 16rpx;
+}
+
+.reserve-record-empty-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.reserve-record-empty-text {
+	font-size: 14rpx;
+	color: #bdc3c7;
+	text-align: center;
+}
+
+/* 备用金操作按钮样式 */
+.reserve-action-btn {
+	width: 15rpx;
+	height: 15rpx;
+	border-radius: 14rpx;
+	background-color: rgba(243, 156, 18, 0.1);
+	border: 1rpx solid rgba(243, 156, 18, 0.3);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.reserve-action-btn:hover {
+	background-color: rgba(243, 156, 18, 0.2);
+	border-color: #f39c12;
+	transform: scale(1.05);
+}
+
+/* 备用金弹窗样式 */
+.reserve-modal-container {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.modal-mask {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.5);
+	animation: fadeIn 0.3s ease;
+}
+
+.reserve-modal {
+	position: relative;
+	width: 400rpx;
+	background-color: white;
+	border-radius: 12rpx;
+	box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+	animation: slideUp 0.3s ease;
+}
+
+.modal-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 20rpx 24rpx;
+	border-bottom: 1rpx solid #f0f0f0;
+}
+
+.modal-title {
+	font-size: 18rpx;
+	font-weight: bold;
+	color: #2c3e50;
+}
+
+.modal-close {
+	width: 32rpx;
+	height: 32rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	border-radius: 16rpx;
+	transition: background-color 0.2s ease;
+}
+
+.modal-close:hover {
+	background-color: #f5f5f5;
+}
+
+.modal-content {
+	padding: 24rpx;
+}
+
+.operation-type {
+	display: flex;
+	gap: 12rpx;
+	margin-bottom: 24rpx;
+}
+
+.type-btn {
+	flex: 1;
+	padding: 12rpx 16rpx;
+	border: 2rpx solid #e9ecef;
+	border-radius: 8rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8rpx;
+	font-size: 14rpx;
+	color: #6c757d;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.type-btn.active {
+	border-color: #f39c12;
+	background-color: rgba(243, 156, 18, 0.1);
+	color: #f39c12;
+	font-weight: 600;
+}
+
+.type-btn:hover {
+	border-color: #f39c12;
+	background-color: rgba(243, 156, 18, 0.05);
+}
+
+.amount-input-section,
+.remark-input-section {
+	margin-bottom: 20rpx;
+}
+
+.input-label {
+	display: block;
+	font-size: 14rpx;
+	color: #495057;
+	font-weight: 500;
+	margin-bottom: 8rpx;
+}
+
+.amount-input {
+	width: 100%;
+	height: 44rpx;
+	padding: 0 12rpx;
+	border: 1rpx solid #ced4da;
+	border-radius: 6rpx;
+	font-size: 16rpx;
+	color: #495057;
+	box-sizing: border-box;
+	transition: border-color 0.2s ease;
+}
+
+.amount-input:focus {
+	border-color: #f39c12;
+	outline: none;
+	box-shadow: 0 0 0 2rpx rgba(243, 156, 18, 0.1);
+}
+
+.remark-input {
+	width: 100%;
+	height: 80rpx;
+	padding: 8rpx 12rpx;
+	border: 1rpx solid #ced4da;
+	border-radius: 6rpx;
+	font-size: 14rpx;
+	color: #495057;
+	resize: none;
+	box-sizing: border-box;
+	transition: border-color 0.2s ease;
+}
+
+.remark-input:focus {
+	border-color: #f39c12;
+	outline: none;
+	box-shadow: 0 0 0 2rpx rgba(243, 156, 18, 0.1);
+}
+
+.modal-footer {
+	display: flex;
+	gap: 12rpx;
+	padding: 20rpx 24rpx;
+	border-top: 1rpx solid #f0f0f0;
+}
+
+.btn-cancel,
+.btn-confirm {
+	flex: 1;
+	height: 44rpx;
+	line-height: 44rpx;
+	text-align: center;
+	border-radius: 6rpx;
+	font-size: 16rpx;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.btn-cancel {
+	background-color: #f8f9fa;
+	color: #6c757d;
+	border: 1rpx solid #e9ecef;
+}
+
+.btn-cancel:hover {
+	background-color: #e9ecef;
+}
+
+.btn-confirm {
+	background-color: #f39c12;
+	color: white;
+	border: 1rpx solid #f39c12;
+}
+
+.btn-confirm:hover {
+	background-color: #e67e22;
+	border-color: #e67e22;
+}
+
+/* 动画效果 */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes slideUp {
+	from {
+		opacity: 0;
+		transform: translateY(20rpx);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
 /* 响应式调整 */
 @media (max-width: 600rpx) {
 	.info-item {
@@ -2534,5 +3379,181 @@ export default {
 	.debt-order-amounts {
 		align-items: flex-start;
 	}
+}
+
+/* 还筐详情抽屉样式 - 参照已售货款订单列表样式 */
+.basket-detail-drawer-container {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	z-index: 10000;
+	height: 100vh;
+}
+
+.basket-detail-mask {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	height: 100vh;
+	transition: opacity 0.4s ease;
+	backdrop-filter: blur(2px);
+}
+
+.basket-detail-content {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 50%;
+	height: 100vh;
+	background-color: #ffffff;
+	transform: translateX(0);
+	transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+	box-shadow: -8rpx 0 24rpx rgba(0, 0, 0, 0.2);
+}
+
+/* 参照已售货款订单抽屉样式 */
+.basket-detail-order-container {
+	padding: 20rpx;
+	background-color: #fff;
+	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.basket-detail-header {
+	padding-bottom: 20rpx;
+	border-bottom: 1rpx solid #eee;
+	margin-bottom: 20rpx;
+}
+
+.basket-detail-title {
+	display: flex;
+	align-items: center;
+	gap: 10rpx;
+	margin-bottom: 10rpx;
+}
+
+.basket-detail-title-icon {
+	display: flex;
+	align-items: center;
+}
+
+.basket-detail-title-text {
+	font-size: 18rpx;
+	font-weight: bold;
+	color: #2c3e50;
+}
+
+.basket-detail-summary {
+	padding: 8rpx 12rpx;
+	background-color: #f0f8ff;
+	border-radius: 6rpx;
+	border: 1rpx solid #b3d9ff;
+}
+
+.basket-detail-summary-text {
+	font-size: 12rpx;
+	color: #0066cc;
+	font-weight: 500;
+}
+
+.basket-detail-scroll {
+	flex: 1;
+}
+
+.basket-detail-record-list {
+	display: flex;
+	flex-direction: column;
+	gap: 12rpx;
+}
+
+.basket-detail-record-item {
+	background-color: #f8f9fa;
+	border: 1rpx solid #e9ecef;
+	border-radius: 8rpx;
+	padding: 16rpx;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.basket-detail-record-item:hover {
+	background-color: #f1f3f5;
+	border-color: #55aaff;
+	box-shadow: 0 2rpx 8rpx rgba(85, 170, 255, 0.1);
+}
+
+.basket-detail-record-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+}
+
+.basket-detail-record-info {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 4rpx;
+}
+
+.basket-detail-record-type {
+	font-size: 14rpx;
+	font-weight: bold;
+	padding: 2rpx 8rpx;
+	border-radius: 4rpx;
+	display: inline-block;
+	width: fit-content;
+}
+
+.basket-detail-record-type.type-order {
+	color: #28a745;
+	background-color: #d4edda;
+	border: 1rpx solid #c3e6cb;
+}
+
+.basket-detail-record-type.type-repay {
+	color: #4A90E2;
+	background-color: #e7f3ff;
+	border: 1rpx solid #b3d9ff;
+}
+
+.basket-detail-record-time {
+	font-size: 10rpx;
+	color: #7f8c8d;
+}
+
+.basket-detail-record-amounts {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+}
+
+.basket-detail-customer-name {
+	font-size: 14rpx;
+	font-weight: bold;
+	color: #2c3e50;
+	margin-bottom: 4rpx;
+}
+
+.basket-detail-basket-count {
+	font-size: 12rpx;
+	color: #4A90E2;
+	font-weight: 500;
+}
+
+.basket-detail-no-data {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60rpx 20rpx;
+	text-align: center;
+	color: #999;
+	font-size: 12rpx;
 }
 </style>

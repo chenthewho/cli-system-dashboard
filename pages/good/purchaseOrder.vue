@@ -29,7 +29,7 @@
 	     }">
 							<div>
 								<text style="font-size: 15rpx; font-weight: bold;">
-									{{ item.ShipperName }}
+									{{ item.shipperName }}
 								</text>
 								<br>
 								<text style="font-size: 12rpx; font-weight: bold;">

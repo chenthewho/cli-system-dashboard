@@ -21,5 +21,11 @@ export default {
 	},
 	changeDuty(companyId,operatorId){
 		return http.get(`/schedule/changeDuty?companyId=${companyId}&operatorId=${operatorId}`)
+	},
+	addReservefundRecord(data){
+		return http.post(`/schedule/addReservefundRecord`,data)
+	},
+	getReservefundRecordByDutyId(dutyId){
+		return http.get(`/schedule/getReservefundRecordByDutyId?dutyId=${dutyId}`)
 	}
 }

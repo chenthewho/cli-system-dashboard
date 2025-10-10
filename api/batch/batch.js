@@ -31,4 +31,7 @@ export default {
 	UpdateBatchAssist(data){
 		return http.post(`/Batch/UpdateBatchAssist`,data)
 	},
+	GetBatchModifyRecord(batchId) {
+		return http.get(`/Batch/GetBatchModifyRecord?batchId=${batchId}`)
+	},
 }

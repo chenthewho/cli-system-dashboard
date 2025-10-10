@@ -367,15 +367,15 @@
 	},
 	mounted() {
 	  this.currentCompanyId = uni.getStorageSync('companyId');
-		this.loadData();
 	  this.initDates()
+		this.loadData();
 	  this.$nextTick(() => {
 		this.calculateTableHeight()
 	  })
 	},
 	methods: {
 	  loadData() {
-				  tableApi.getBatchProfitSimpleByCompanyId(this.currentCompanyId).then(res => {
+				  tableApi.getBatchProfitSimpleByCompanyId(this.currentCompanyId,this.startDate,this.endDate).then(res => {
 					  console.log("res", res)
 					  this.batchProfitSimpleList = res.data
 					  this.batchProfitSimpleList = this.batchProfitSimpleList.sort((a, b) => {

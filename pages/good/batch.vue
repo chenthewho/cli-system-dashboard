@@ -136,45 +136,47 @@
 <!-- 新增批次弹窗 -->
 <!-- <u-modal title="" :show="BatchAddshow" @close="BatchAddshow=false" :closeOnClickOverlay="false"
   :showConfirmButton="false" width="900px"> -->
-  <div class="znj-batch-modal" v-if="BatchAddshow">
-    <div class="znj-batch-modal-header">
-      <span>新增批次</span>
-      <uni-icons custom-prefix="iconfont" type="icon-icon-cross-squre" size="32"
-        @click="BatchAddshow=false" color="#aa0000" class="znj-batch-modal-close"></uni-icons>
-    </div>
-    <div class="znj-batch-modal-body">
-      <div class="znj-batch-modal-left">
-		<div style="display: flex;">
-        <div class="znj-batch-modal-label" style=" width: 100rpx;">批次号：</div>
-        <input v-model="batshNewCode" disabled="true"
-          class="znj-batch-modal-input"></input>
-		</div>
-        <div class="znj-batch-modal-copy">
-          <u-switch v-model="copyLastBatch" @click="copyLastBatch = !copyLastBatch" style="margin-right: 10rpx;" />
-          是否复制上一批次货品
-        </div>
-        <button class="znj-batch-modal-btn" @click="createBatch">下一步</button>
+  <div class="znj-modal-overlay" v-if="BatchAddshow" @click="BatchAddshow=false">
+    <div class="znj-batch-modal" @click.stop>
+      <div class="znj-batch-modal-header">
+        <span>新增批次</span>
+        <uni-icons custom-prefix="iconfont" type="icon-icon-cross-squre" size="32"
+          @click="BatchAddshow=false" color="#ffffff" class="znj-batch-modal-close"></uni-icons>
       </div>
-      <div class="znj-batch-modal-right">
-        <div class="znj-batch-modal-label-row">
-          <span>选择货主：</span>
-          <button class="znj-batch-modal-add-shipper-btn" @click="ShipperAddshow = true">新增货主</button>
+      <div class="znj-batch-modal-body">
+        <div class="znj-batch-modal-left">
+          <div style="display: flex;">
+            <div class="znj-batch-modal-label" style=" width: 100rpx;">批次号：</div>
+            <input v-model="batshNewCode" disabled="true"
+              class="znj-batch-modal-input"></input>
+          </div>
+          <div class="znj-batch-modal-copy">
+            <u-switch v-model="copyLastBatch" @click="copyLastBatch = !copyLastBatch" style="margin-right: 10rpx;" />
+            是否复制上一批次货品
+          </div>
+          <button class="znj-batch-modal-btn" @click="createBatch">下一步</button>
         </div>
-        <div class="znj-batch-modal-shipper-list">
-          <scroll-view class="znj-batch-modal-scroll" scroll-y="true">
-            <div v-for="(item, index) in shipperList" :key="item.id"
-              :class="['znj-batch-modal-shipper-item', {selected: shipperSelectedId === item.id}]">
-              <div style="display: flex; align-items: center; flex: 1;" @click="changAddedBatchCode(item.id)">
-                <uni-icons custom-prefix="iconfont" type="icon-youjiantou" size="25"
-                  color="#333" style="margin-right: 5rpx;" />
-                {{ (index+1) + '. ' + item.shipperName }}
+        <div class="znj-batch-modal-right">
+          <div class="znj-batch-modal-label-row">
+            <span>选择货主：</span>
+            <button class="znj-batch-modal-add-shipper-btn" @click="ShipperAddshow = true">新增货主</button>
+          </div>
+          <div class="znj-batch-modal-shipper-list">
+            <scroll-view class="znj-batch-modal-scroll" scroll-y="true">
+              <div v-for="(item, index) in shipperList" :key="item.id"
+                :class="['znj-batch-modal-shipper-item', {selected: shipperSelectedId === item.id}]">
+                <div style="display: flex; align-items: center; flex: 1;" @click="changAddedBatchCode(item.id)">
+                  <uni-icons custom-prefix="iconfont" type="icon-youjiantou" size="25"
+                    color="#333" style="margin-right: 5rpx;" />
+                  {{ (index+1) + '. ' + item.shipperName }}
+                </div>
+                <button class="znj-batch-edit-shipper-btn" @click.stop="editShipper(item)" 
+                  style="margin-left: 10rpx; padding: 5rpx 10rpx; background-color: #409EFF; color: white; border: none; border-radius: 5rpx; font-size: 12rpx;">
+                  编辑
+                </button>
               </div>
-              <button class="znj-batch-edit-shipper-btn" @click.stop="editShipper(item)" 
-                style="margin-left: 10rpx; padding: 5rpx 10rpx; background-color: #409EFF; color: white; border: none; border-radius: 5rpx; font-size: 12rpx;">
-                编辑
-              </button>
-            </div>
-          </scroll-view>
+            </scroll-view>
+          </div>
         </div>
       </div>
     </div>
@@ -212,7 +214,6 @@
 <script>
 	import category from '../../api/goods/category'
 	import batch from '../../api/batch/batch'
-
 	export default {
 		data() {
 			return {
@@ -242,7 +243,7 @@
 					value: 1
 				},{
 					text: "记录",
-					value: 1
+					value: 3
 				}]
 			}
 		},
@@ -269,6 +270,11 @@
 				if(e.value === 2) {
 					uni.navigateTo({
 						url: `/pages/good/batchGoodEdit?batchId=${this.selectBatch.id}`
+					})
+				}
+				if(e.value === 3) {
+					uni.navigateTo({
+						url: `/pages/good/batchModifyRecord?batchId=${this.selectBatch.id}`
 					})
 				}
 			},
@@ -598,27 +604,38 @@
 		flex-direction: column;
 		width: 200rpx;
 	}
-	/* 只影响这两个弹窗 */
+	/* 遮罩层样式 */
+.znj-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+/* 只影响这两个弹窗 */
 .znj-batch-modal {
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-  padding: 32rpx 24rpx;
   width: 600rpx;
   box-sizing: border-box;
-  position: absolute;
-  left: 10%;
-  top: 10%;
+  position: relative;
 }
 .znj-batch-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
   font-size: 15rpx;
   font-weight: bold;
   margin-bottom: 15rpx;
-  border-bottom: 1px solid #f0f0f0;
-  padding-bottom: 16rpx;
+  padding: 20px 24px;
+  color: #ffffff;
 }
 .znj-batch-modal-close {
   cursor: pointer;
@@ -626,6 +643,7 @@
 .znj-batch-modal-body {
   display: flex;
   gap: 32rpx;
+  padding: 20rpx;
 }
 .znj-batch-modal-left, .znj-batch-modal-right {
   flex: 1;

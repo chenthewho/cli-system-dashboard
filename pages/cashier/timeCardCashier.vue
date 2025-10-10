@@ -220,6 +220,7 @@
 				</div>
 			</u-col>
 		</u-row>
+		
 		<u-modal title="选择商品" :show="skuDialogVisible" @close="skuDialogVisible=false" :closeOnClickOverlay="true"
 			:showConfirmButton="false" :width="modalWidth">
 			<div class="slot-content">
@@ -252,6 +253,7 @@
 				</u-grid>
 			</div>
 		</u-modal>
+		
 		<u-modal title="选择会员" :show="memberDialogVisible" @close="memberDialogVisible=false" :closeOnClickOverlay="true"
 			:showConfirmButton="false" :width="modalWidth">
 			<div class="slot-content">
@@ -285,6 +287,7 @@
 				</u-grid>
 			</div>
 		</u-modal>
+		
 		<u-modal title="修改商品数量" :show="quantityDialogVisible" @close="quantityDialogVisible=false"
 			:closeOnClickOverlay="true" :showConfirmButton="false" :width="modalWidth">
 			<div class="slot-content" style="overflow-y: auto;">

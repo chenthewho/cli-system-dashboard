@@ -64,10 +64,19 @@ export default {
 	deleteOrder(data) {
 		return http.post(`/Account/DeleteOrder`,data)
 	},
+	destoryOrder(data){
+		return http.post(`/Account/DestoryOrder`,data)
+	},
 	exchangMember(data){
 		return http.post(`/Account/UpdateAccountCustomer`,data)
 	},
 	GetCanvasBase64ById(accountId){
 		return http.get(`/Account/GetCanvasById?accountId=${accountId}`)
+	},
+	GetOriginOrderId(originOrderId,orderId){
+		return http.get(`/Order/GetOriginOrderId?originOrderId=${originOrderId}&orderId=${orderId}`)
+	},
+	GetOrderByOrderIdList(data){
+		return http.post(`/Order/GetOrderByOrderIdList`,data)
 	}
 }

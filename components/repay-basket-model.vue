@@ -41,11 +41,18 @@
 							</div>
 						</div>
 						<div class="payment-methods-grid">
-							<div class="payment-method-card" v-for="payitem in payItemList" :key="payitem.label">
+							<div class="payment-method-card" 
+								v-for="(payitem, index) in payItemList" 
+								:key="payitem.label"
+								:class="{'active': payitem.active}"
+								@click="selectPaymentMethod(index)">
 								<div class="payment-method-card-content">
+									<div class="payment-icon">
+										<u-icon :name="payitem.icon" :size="24" :color="payitem.color"></u-icon>
+									</div>
 									<div class="payment-label">{{payitem.label}}</div>
 								</div>
-								<div class="payment-amount">0</div>
+								<div class="payment-amount">{{payitem.amount.toFixed(2)}}</div>
 							</div>
 						</div>
 					</div>
@@ -116,25 +123,87 @@
 				repayBasketList: [],
 				repayBasketType: 2, // 还框类型 1-抵扣赊欠 2-不抵扣赊欠
 				payItemList: [{
-					label: "微信支付"
+					label: "微信支付",
+					icon: "weixin-fill",
+					color: "#07c160",
+					amount: 0,
+					active: false
 				}, {
-					label: "支付宝"
+					label: "支付宝",
+					icon: "zhifubao",
+					color: "#1677ff",
+					amount: 0,
+					active: false
 				}, {
-					label: "现金"
+					label: "现金",
+					icon: "red-packet-fill",
+					color: "#ff4757",
+					amount: 0,
+					active: false
 				}, {
-					label: "其他"
-				}]
+					label: "其他",
+					icon: "coupon-fill",
+					color: "#ffa502",
+					amount: 0,
+					active: false
+				}],
+				activePaymentIndex: -1
+			}
+		},
+		computed: {
+			// 计算收筐总金额
+			totalBasketAmount() {
+				return this.repayBasketList.reduce((total, item) => {
+					return total + ((item.quantity || 0) * (item.amount || 0));
+				}, 0);
 			}
 		},
 		methods: {
 			// 切换还框类型
 			toggleRepayBasketType() {
 				this.repayBasketType = this.repayBasketType === 1 ? 2 : 1;
+				this.updatePaymentAmounts();
 				uni.showToast({
 					title: this.repayBasketType === 1 ? '已启用抵扣赊欠' : '已关闭抵扣赊欠',
 					icon: 'none',
 					duration: 1500
 				});
+			},
+			// 选择支付方式
+			selectPaymentMethod(index) {
+				if (this.repayBasketType === 1) {
+					// 抵扣赊欠模式下不允许选择支付方式
+					return;
+				}
+				
+				// 重置所有支付方式
+				this.payItemList.forEach(item => {
+					item.active = false;
+					item.amount = 0;
+				});
+				
+				// 设置选中的支付方式
+				this.payItemList[index].active = true;
+				this.payItemList[index].amount = this.totalBasketAmount;
+				this.activePaymentIndex = index;
+			},
+			// 更新支付金额
+			updatePaymentAmounts() {
+				if (this.repayBasketType === 1) {
+					// 抵扣赊欠：所有支付方式金额为0
+					this.payItemList.forEach(item => {
+						item.amount = 0;
+						item.active = false;
+					});
+					this.activePaymentIndex = -1;
+				} else {
+					// 不抵扣赊欠：默认微信支付为总金额
+					this.payItemList.forEach((item, index) => {
+						item.active = index === 0; // 微信支付默认选中
+						item.amount = index === 0 ? this.totalBasketAmount : 0;
+					});
+					this.activePaymentIndex = 0;
+				}
 			},
 			playSystemKeyClickSound() {
 				try {
@@ -169,10 +238,10 @@
 
 
 				let orderExpenseDetail = {
-					"alipayAmount": 0,
-					"wxpayAmount": 0,
-					"cashAmount": 0,
-					"otherAmount": 0
+					"alipayAmount": this.payItemList[1].amount, // 支付宝
+					"wxpayAmount": this.payItemList[0].amount,  // 微信支付
+					"cashAmount": this.payItemList[2].amount,   // 现金
+					"otherAmount": this.payItemList[3].amount   // 其他
 				}
 
 				let param = {
@@ -233,6 +302,11 @@
 				myvalue = myvalue.slice(0, -1); // 去掉最后一个字符
 				// 更新数据模型
 				this.repayBasketList[this.repayBasketActiveIndex].quantity = myvalue === '' ? '0' : myvalue;
+				
+				// 数量变化后更新支付金额
+				this.$nextTick(() => {
+					this.updatePaymentAmounts();
+				});
 			},
 			NumberCk3(val) {
 				this.playSystemKeyClickSound();
@@ -247,6 +321,11 @@
 				var txt = myvalue == null || myvalue == 0 || myvalue == undefined ? '' : myvalue;
 				myvalue = txt + val.toString();
 				this.repayBasketList[this.repayBasketActiveIndex].quantity = myvalue;
+				
+				// 数量变化后更新支付金额
+				this.$nextTick(() => {
+					this.updatePaymentAmounts();
+				});
 			},
 			//取消收筐
 			cancelRepayBasket() {
@@ -264,6 +343,11 @@
 				console.log("prop", this.currentMember)
 				this.resetPayBasket();
 				this.inputModelVisible = true;
+				
+				// 初始化支付金额
+				this.$nextTick(() => {
+					this.updatePaymentAmounts();
+				});
 			}
 		}
 	}
@@ -472,12 +556,36 @@
 						transform: translateY(-1rpx);
 					}
 
+					&.active {
+						background: #dbeafe;
+						border-color: #3b82f6;
+						box-shadow: 0 2rpx 8rpx rgba(59, 130, 246, 0.2);
+						
+						.payment-label {
+							color: #1d4ed8;
+							font-weight: 600;
+						}
+						
+						.payment-amount {
+							color: #1d4ed8;
+							font-weight: 700;
+						}
+					}
+
 					.payment-method-card-content {
 						display: flex;
 						flex-direction: row;
 						align-items: center;
 						justify-content: center;
-						gap: 2rpx;
+						gap: 4rpx;
+					}
+
+					.payment-icon {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						width: 32rpx;
+						height: 32rpx;
 					}
 
 					.payment-label {

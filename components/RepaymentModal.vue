@@ -42,8 +42,8 @@
 						<div class="section-title">支付方式</div>
 						<div class="payment-methods-grid">
 							<div class="payment-method-card" 
-								:class="{'active': selectInput === 4}"
-								@click="handleInputClick(4)">
+								:class="{'active': selectedPaymentMethod === 4}"
+								@click="handlePaymentMethodClick(4)">
 								<div class="payment-method-card-content">
 									<div class="payment-icon">
 										<u-icon name="weixin-fill" :size="24" color="#07c160"></u-icon>
@@ -54,8 +54,8 @@
 							</div>
 							
 							<div class="payment-method-card"
-								:class="{'active': selectInput === 5}"
-								@click="handleInputClick(5)">
+								:class="{'active': selectedPaymentMethod === 5}"
+								@click="handlePaymentMethodClick(5)">
 								<div class="payment-method-card-content">
 									<div class="payment-icon">
 										<u-icon name="zhifubao" :size="24" color="#1677ff"></u-icon>
@@ -66,8 +66,8 @@
 							</div>
 							
 							<div class="payment-method-card"
-								:class="{'active': selectInput === 6}"
-								@click="handleInputClick(6)">
+								:class="{'active': selectedPaymentMethod === 6}"
+								@click="handlePaymentMethodClick(6)">
 								<div class="payment-method-card-content">
 									<div class="payment-icon">
 										<u-icon name="red-packet-fill" :size="24" color="#ff4757"></u-icon>
@@ -78,8 +78,8 @@
 							</div>
 							
 							<div class="payment-method-card"
-								:class="{'active': selectInput === 7}"
-								@click="handleInputClick(7)">
+								:class="{'active': selectedPaymentMethod === 7}"
+								@click="handlePaymentMethodClick(7)">
 								<div class="payment-method-card-content">
 									<div class="payment-icon">
 										<u-icon name="coupon-fill" :size="24" color="#ffa502"></u-icon>
@@ -167,6 +167,8 @@ export default {
 		return {
 			// 当前选中的输入框
 			selectInput: 2, // 默认选中本次还款
+			// 当前选中的支付方式 (4: 微信, 5: 支付宝, 6: 现金, 7: 其他)
+			selectedPaymentMethod: 4, // 默认选中微信
 			// 还款数据
 			repaymentData: {
 				totalDebt: 0,          // 总欠款
@@ -223,8 +225,9 @@ export default {
 			const totalDebt = parseFloat(this.repaymentData.totalDebt) || 0;
 			const currentRepayment = parseFloat(this.repaymentData.currentRepayment) || 0;
 			this.repaymentData.remainingDebt = (totalDebt - currentRepayment).toFixed(0);
-			//默认微信支付
-			this.repaymentData.wechatAmount = this.repaymentData.currentRepayment;
+			
+			// 更新选中支付方式的金额
+			this.updateSelectedPaymentAmount();
 		},
 		
 		// 验证支付方式金额总和
@@ -240,36 +243,51 @@ export default {
 		
 		// 处理输入框点击
 		handleInputClick(inputType) {
-			this.selectInput = inputType;
+			// 只允许点击还款金额输入框，不允许点击支付方式输入框
+			if (inputType === 2) {
+				this.selectInput = inputType;
+			}
+		},
+		
+		// 处理支付方式选择
+		handlePaymentMethodClick(paymentType) {
+			this.selectedPaymentMethod = paymentType;
+			this.updateSelectedPaymentAmount();
+		},
+		
+		// 更新选中支付方式的金额
+		updateSelectedPaymentAmount() {
+			// 先清空所有支付方式金额
+			this.repaymentData.wechatAmount = 0;
+			this.repaymentData.alipayAmount = 0;
+			this.repaymentData.cashAmount = 0;
+			this.repaymentData.otherAmount = 0;
+			
+			// 将还款金额分配给选中的支付方式
+			const currentRepayment = parseFloat(this.repaymentData.currentRepayment) || 0;
+			switch(this.selectedPaymentMethod) {
+				case 4:
+					this.repaymentData.wechatAmount = currentRepayment;
+					break;
+				case 5:
+					this.repaymentData.alipayAmount = currentRepayment;
+					break;
+				case 6:
+					this.repaymentData.cashAmount = currentRepayment;
+					break;
+				case 7:
+					this.repaymentData.otherAmount = currentRepayment;
+					break;
+			}
 		},
 		
 		// 处理数字键盘点击
 		handleNumberClick(num) {
-			let currentValue = '';
-			
-			switch(this.selectInput) {
-				case 2:
-					currentValue = this.repaymentData.currentRepayment.toString();
-					this.repaymentData.currentRepayment = this.appendNumber(currentValue, num);
-					break;
-				case 4:
-					currentValue = this.repaymentData.wechatAmount.toString();
-					this.repaymentData.wechatAmount = this.appendNumber(currentValue, num);
-					break;
-				case 5:
-					currentValue = this.repaymentData.alipayAmount.toString();
-					this.repaymentData.alipayAmount = this.appendNumber(currentValue, num);
-					break;
-				case 6:
-					currentValue = this.repaymentData.cashAmount.toString();
-					this.repaymentData.cashAmount = this.appendNumber(currentValue, num);
-					break;
-				case 7:
-					currentValue = this.repaymentData.otherAmount.toString();
-					this.repaymentData.otherAmount = this.appendNumber(currentValue, num);
-					break;
+			// 只允许修改还款金额，不允许修改支付方式金额
+			if (this.selectInput === 2) {
+				let currentValue = this.repaymentData.currentRepayment.toString();
+				this.repaymentData.currentRepayment = this.appendNumber(currentValue, num);
 			}
-			console.log("currentRepayment",this.repaymentData)
 		},
 		
 		// 数字拼接逻辑
@@ -298,29 +316,10 @@ export default {
 		
 		// 处理删除
 		handleDelete() {
-			let currentValue = '';
-			
-			switch(this.selectInput) {
-				case 2:
-					currentValue = this.repaymentData.currentRepayment.toString();
-					this.repaymentData.currentRepayment = this.deleteLastChar(currentValue);
-					break;
-				case 4:
-					currentValue = this.repaymentData.wechatAmount.toString();
-					this.repaymentData.wechatAmount = this.deleteLastChar(currentValue);
-					break;
-				case 5:
-					currentValue = this.repaymentData.alipayAmount.toString();
-					this.repaymentData.alipayAmount = this.deleteLastChar(currentValue);
-					break;
-				case 6:
-					currentValue = this.repaymentData.cashAmount.toString();
-					this.repaymentData.cashAmount = this.deleteLastChar(currentValue);
-					break;
-				case 7:
-					currentValue = this.repaymentData.otherAmount.toString();
-					this.repaymentData.otherAmount = this.deleteLastChar(currentValue);
-					break;
+			// 只允许修改还款金额，不允许修改支付方式金额
+			if (this.selectInput === 2) {
+				let currentValue = this.repaymentData.currentRepayment.toString();
+				this.repaymentData.currentRepayment = this.deleteLastChar(currentValue);
 			}
 		},
 		
@@ -370,10 +369,8 @@ export default {
 		// 清空所有金额
 		handleClearAll() {
 			this.repaymentData.currentRepayment = 0;
-			this.repaymentData.wechatAmount = 0;
-			this.repaymentData.alipayAmount = 0;
-			this.repaymentData.cashAmount = 0;
-			this.repaymentData.otherAmount = 0;
+			// 清空还款金额后，自动更新支付方式金额
+			this.updateSelectedPaymentAmount();
 		},
 		
 		// 确认还款

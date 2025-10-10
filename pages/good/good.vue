@@ -149,12 +149,21 @@
 				</view>
 			</div>
 		</div>
-		<u-modal title="添加新货品" class="znj-add-good-modal" :show="showAddNewGood" :closeOnClickOverlay="false"
-			:showConfirmButton="false" :width="900" @close="showAddNewGood = false">
-			<div class="znj-add-good-modal-content">
-				<div class="znj-add-good-modal-inner">
-					<uni-section title="表单校验" type="line">
-						<view class="znj-add-good-form">
+	<!-- 添加新货品弹窗 -->
+	<view v-if="showAddNewGood" class="znj-add-good-modal-mask" @click="showAddNewGood = false">
+		<view class="znj-add-good-modal-wrapper" @click.stop>
+			<view class="znj-add-good-modal-container">
+				<!-- 标题栏 -->
+				<view class="znj-add-good-modal-header">
+					<text class="znj-add-good-modal-title">添加新货品</text>
+					<view class="znj-add-good-modal-close" @click="showAddNewGood = false; newGoodInfoReset();">
+						<uni-icons type="closeempty" size="24" color="#fff"></uni-icons>
+					</view>
+				</view>
+				
+				<!-- 内容区域 -->
+				<scroll-view scroll-y="true" class="znj-add-good-modal-body" :style="{ maxHeight: '70vh' }">
+					<view class="znj-add-good-form">
 							<!-- 货品名称 -->
 							<view class="znj-add-good-row">
 								<text class="znj-add-good-label">货品名称：</text>
@@ -171,38 +180,22 @@
 									<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 4}" @click="changSaleType(4)">散装</button>
 								</view>
 							</view>
-							<!-- 单位 -->
+							<!-- 单位/规格 -->
 							<view class="znj-add-good-row">
-								<text class="znj-add-good-label">单位：</text>
+								<text class="znj-add-good-label" v-if="newGoodInfo.saleWay === 2">规格：</text>
+								<text class="znj-add-good-label" v-else-if="newGoodInfo.saleWay === 3">规格一：</text>
+								<text class="znj-add-good-label" v-else>规格：</text>
 								<div v-if="newGoodInfo.saleWay != 3">
 									<selectLayUnit :zindex="1212" :value="newGoodInfo.unit" :name="newGoodInfo.unit" placeholder=" "
 										:options="unit" @selectitem="editCardSpecSelct"></selectLayUnit>
 								</div>
 								<div v-else>
-									<select-lay :zindex="1212" :value="newGoodInfo.specList[0].specName" name="name" placeholder=" "
-										:options="unit" @selectitem="editCardSpecSelct1"></select-lay>
+									<selectLayUnit :zindex="1212" :value="newGoodInfo.specList[0].specName" :name="newGoodInfo.specList[0].specName" placeholder=" "
+										:options="unit" @selectitem="editCardSpecSelct1"></selectLayUnit>
 								</div>
 							</view>
 							<!-- 规格相关 -->
-							<div v-if="newGoodInfo.saleWay != 1">
-								<!-- 按件数规格 -->
-								<view class="znj-add-good-row" v-if="newGoodInfo.saleWay == 2">
-									<text class="znj-add-good-label">规格：</text>
-									<div class="znj-add-good-spec-box">
-										<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.unit }} =</span>
-										<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.price" placeholder="" />
-										<span class="znj-add-good-spec-suffix">元</span>
-									</div>
-								</view>
-								<!-- 按件拆包规格 -->
-								<view class="znj-add-good-row" v-if="newGoodInfo.saleWay == 3">
-									<text class="znj-add-good-label">规格：</text>
-									<div class="znj-add-good-spec-box">
-										<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[0].specName }} =</span>
-										<input class="znj-add-good-spec-input" type="number" v-model="newGoodInfo.specList[0].fixprice" placeholder="" />
-										<span class="znj-add-good-spec-suffix">元</span>
-									</div>
-								</view>
+							<div v-if="newGoodInfo.saleWay != 1 && newGoodInfo.saleWay != 2">
 								<!-- 规格二 -->
 								<view class="znj-add-good-row" v-if="newGoodInfo.specList.length>1">
 									<text class="znj-add-good-label">规格二：</text>
@@ -210,13 +203,9 @@
 										<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[0].specName }} =</span>
 										<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.specList[1].fixcount" placeholder="" />
 									</div>
-									<select-lay :zindex="1210" :value="newGoodInfo.specList[1].specName" name="name" placeholder=" " :textWidth="30"
-										:options="unit" @selectitem="editCardSpecSelct2"></select-lay>
-									<div class="znj-add-good-spec-box">
-										<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[1].specName }} =</span>
-										<input class="znj-add-good-spec-input" type="number" v-model="newGoodInfo.specList[1].fixprice" placeholder="" />
-										<span class="znj-add-good-spec-suffix">元</span>
-									</div>
+									<selectLayUnit :zindex="1211" :value="newGoodInfo.specList[1].specName" :name="newGoodInfo.specList[1].specName" placeholder=" " :textWidth="30"
+										:options="unit" @selectitem="editCardSpecSelct2"></selectLayUnit>
+									<button class="znj-add-good-delete-btn" @click="removeSpec(1)">删除</button>
 								</view>
 								<!-- 规格三 -->
 								<view class="znj-add-good-row" v-if="newGoodInfo.specList.length>2">
@@ -225,13 +214,9 @@
 										<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[1].specName }} =</span>
 										<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.specList[2].fixcount" placeholder="" />
 									</div>
-									<select-lay :zindex="1210" :value="newGoodInfo.specList[2].specName" name="name" placeholder=" " :textWidth="30"
-										:options="unit" @selectitem="editCardSpecSelct3"></select-lay>
-									<div class="znj-add-good-spec-box">
-										<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[2].specName }} =</span>
-										<input class="znj-add-good-spec-input" type="number" v-model="newGoodInfo.specList[2].fixprice" placeholder="" />
-										<span class="znj-add-good-spec-suffix">元</span>
-									</div>
+									<selectLayUnit :zindex="1210" :value="newGoodInfo.specList[2].specName" :name="newGoodInfo.specList[2].specName" placeholder=" " :textWidth="30"
+										:options="unit" @selectitem="editCardSpecSelct3"></selectLayUnit>
+									<button class="znj-add-good-delete-btn" @click="removeSpec(2)">删除</button>
 								</view>
 								<!-- 添加规格按钮 -->
 								<div v-if="newGoodInfo.saleWay === 3">
@@ -267,36 +252,55 @@
 									<button class="znj-add-good-switch-btn" :class="{active: newGoodInfo.showToSale === 0}" @click="newGoodInfo.showToSale = 0">否</button>
 								</div>
 							</view>
-							<!-- 操作按钮 -->
-							<view class="znj-add-good-btns">
-								<button class="znj-add-good-btn cancel" @click="showAddNewGood = false;newGoodInfoReset();">返回</button>
-								<button class="znj-add-good-btn confirm" @click="saveGood">添加</button>
-							</view>
+						<!-- 操作按钮 -->
+						<view class="znj-add-good-btns">
+							<button class="znj-add-good-btn cancel" @click="showAddNewGood = false;newGoodInfoReset();">返回</button>
+							<button class="znj-add-good-btn confirm" @click="saveGood">添加</button>
 						</view>
-					</uni-section>
-				</div>
-			</div>
-		</u-modal>
+					</view>
+				</scroll-view>
+			</view>
+		</view>
+	</view>
 
 
-		<u-modal title="添加新分类" :show="tempSpuDialogVisible" @close="tempSpuDialogVisible=false"
-			:closeOnClickOverlay="false" :showConfirmButton="false" width="400">
-			<div class="slot-content" style="overflow-y: auto;width: 100%;">
-				<div class="slot-modal">
-					<u--input placeholder="输入新分类名称" maxlength="100" v-model="tempSpuSkuName"></u--input>
-					<div style="height: 40rpx;padding:10rpx ;">
-						<!-- <u-divider class="divider" style=" width: 100%; "></u-divider> -->
-						<div style="display:flex; justify-content:center; align-items:center; text-align:center; ">
-							<div class="btn btn-info-plain" @click="tempSpuClose"
-								style="font-size: 15rpx; margin-right: 40rpx;font-weight: bold;height: 30rpx;width: 60rpx;">
-								取消</div>
-							<div class="btn btn-primary" @click="tempSpuSubmit"
-								style="font-size: 15rpx;font-weight: bold;height: 30rpx;width: 60rpx;">确定</div>
+	<!-- 添加新分类弹窗 -->
+	<view v-if="tempSpuDialogVisible" class="znj-add-category-modal-mask" @click="tempSpuClose">
+		<view class="znj-add-category-modal-wrapper" @click.stop>
+			<view class="znj-add-category-modal-container">
+				<!-- 标题栏 -->
+				<view class="znj-add-category-modal-header">
+					<view class="znj-add-category-title-wrapper">
+						<uni-icons custom-prefix="iconfont" type="icon-fenlei" size="24" color="#ffffff"></uni-icons>
+						<text class="znj-add-category-modal-title">添加新分类</text>
+					</view>
+					<view class="znj-add-category-modal-close" @click="tempSpuClose">
+						<uni-icons type="closeempty" size="24" color="#fff"></uni-icons>
+					</view>
+				</view>
+				
+				<!-- 内容区域 -->
+				<view class="znj-add-category-modal-body">
+					<div class="znj-add-category-form">
+						<div class="znj-add-category-row">
+							<text class="znj-add-category-label">分类名称：</text>
+							<input class="znj-add-category-input" 
+								type="text" 
+								placeholder="请输入分类名称" 
+								maxlength="20"
+								v-model="tempSpuSkuName" />
 						</div>
 					</div>
-				</div>
-			</div>
-		</u-modal>
+					
+					<!-- 操作按钮 -->
+					<div class="znj-add-category-btns">
+						<button class="znj-add-category-btn cancel" @click="tempSpuClose">取消</button>
+						<button class="znj-add-category-btn confirm" @click="tempSpuSubmit">确定</button>
+					</div>
+				</view>
+			</view>
+		</view>
+	</view>
 
 	</view>
 </template>
@@ -304,6 +308,7 @@
 <script>
 	import category from '../../api/goods/category'
 	import selectLayUnit from './component/selectLayUnit'
+	import labelApi from '../../api/label/labelApi';
 	export default {
 		components: {
 			selectLayUnit
@@ -352,10 +357,23 @@
 			this.initSystem();
 			this.newGoodInfoReset();
 			this.getAllextralModel();
+			this.getCompanyUnit();
 			// this.getallShipper();
 			// this.getAllBatch();
 		},
 		methods: {
+			getCompanyUnit(){
+				let that = this;
+				labelApi.GetCompanyUnit(this.companyId).then(res => {
+					that.unit = [];
+					for(var i = 0;i<res.data.length;i++){
+						that.unit.push({
+							label: res.data[i].unitName,
+							value: res.data[i].unitName
+						})
+					}
+				})
+			},
 			editCardSpecSelct(e){
 				console.log(this.unit[e]);
 				this.newGoodInfo.unit = this.unit[e].value;
@@ -408,6 +426,21 @@
 						parentId: this.newGoodInfo.specList[this.newGoodInfo.specList.length - 1].id,
 						price: 0
 					});
+				}
+			},
+			removeSpec(index) {
+				if (this.newGoodInfo.specList.length > 1 && index > 0) {
+					// 删除指定索引的规格
+					this.newGoodInfo.specList.splice(index, 1);
+					
+					// 重新设置parentId关系
+					for (let i = 1; i < this.newGoodInfo.specList.length; i++) {
+						if (i === 1) {
+							this.newGoodInfo.specList[i].parentId = this.newGoodInfo.specList[0].id;
+						} else {
+							this.newGoodInfo.specList[i].parentId = this.newGoodInfo.specList[i - 1].id;
+						}
+					}
 				}
 			},
 			getAllextralModel() {
@@ -908,19 +941,71 @@
 	}
 
 	/* 添加新货品弹窗美化样式 */
-	.znj-add-good-modal-content {
-		background: transparent;
-		width: 100%;
-		box-sizing: border-box;
+	.znj-add-good-modal-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 9998;
 	}
-	.znj-add-good-modal-inner {
-		margin: 2rpx;
-		padding: 10rpx;
+	
+	.znj-add-good-modal-wrapper {
+		width: 90%;
+		max-width: 900px;
+		max-height: 90vh;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.znj-add-good-modal-container {
+		background: #ffffff;
 		border-radius: 16px;
-		background: white;
-		box-shadow: 0 0 5rpx #9e9e9e;
-		max-height: 70vh;
+		overflow: hidden;
+		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+		display: flex;
+		flex-direction: column;
+		max-height: 90vh;
+	}
+	
+	.znj-add-good-modal-header {
+		background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+		padding: 20px 24px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-shrink: 0;
+	}
+	
+	.znj-add-good-modal-title {
+		font-size: 24px;
+		font-weight: bold;
+		color: #ffffff;
+	}
+	
+	.znj-add-good-modal-close {
+		width: 36px;
+		height: 36px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		border-radius: 50%;
+		transition: background 0.2s;
+	}
+	
+	.znj-add-good-modal-close:hover {
+		background: rgba(255, 255, 255, 0.2);
+	}
+	
+	.znj-add-good-modal-body {
+		flex: 1;
 		overflow-y: auto;
+		padding: 20px;
 	}
 	.znj-add-good-form {
 		display: flex;
@@ -1079,5 +1164,174 @@
 		background: linear-gradient(135deg, #1565c0, #0d47a1);
 		transform: translateY(-1px);
 		box-shadow: 0 4px 8px rgba(25,118,210,0.3);
+	}
+	.znj-add-good-delete-btn {
+		background: #f44336;
+		color: #fff;
+		border: none;
+		border-radius: 6rpx;
+		padding: 0 12rpx;
+		height: 28rpx;
+		line-height: 28rpx;
+		font-size: 20rpx;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s;
+		margin-left: 8rpx;
+		box-shadow: 0 2px 4px rgba(244,67,54,0.2);
+	}
+	.znj-add-good-delete-btn:hover {
+		background: #d32f2f;
+		transform: translateY(-1px);
+		box-shadow: 0 4px 8px rgba(244,67,54,0.3);
+	}
+
+	/* 添加新分类弹窗美化样式 */
+	.znj-add-category-modal-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: rgba(0, 0, 0, 0.5);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 9999;
+	}
+	
+	.znj-add-category-modal-wrapper {
+		width: 85%;
+		max-width: 700px;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.znj-add-category-modal-container {
+		background: #ffffff;
+		border-radius: 16px;
+		overflow: hidden;
+		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.znj-add-category-modal-header {
+		background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+		padding: 20px 24px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		flex-shrink: 0;
+	}
+	
+	.znj-add-category-title-wrapper {
+		display: flex;
+		align-items: center;
+		gap: 12rpx;
+	}
+	
+	.znj-add-category-modal-title {
+		font-size: 24px;
+		font-weight: bold;
+		color: #ffffff;
+		margin-left: 8px;
+	}
+	
+	.znj-add-category-modal-close {
+		width: 36px;
+		height: 36px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		border-radius: 50%;
+		transition: background 0.2s;
+	}
+	
+	.znj-add-category-modal-close:hover {
+		background: rgba(255, 255, 255, 0.2);
+	}
+	
+	.znj-add-category-modal-body {
+		padding: 30px 24px;
+	}
+	.znj-add-category-form {
+		margin-bottom: 30rpx;
+	}
+	.znj-add-category-row {
+		display: flex;
+		align-items: center;
+		gap: 15rpx;
+		margin-bottom: 20rpx;
+		min-height: 40rpx;
+	}
+	.znj-add-category-label {
+		width: 120rpx;
+		font-size: 22rpx;
+		color: #333;
+		text-align: right;
+		font-weight: 500;
+		flex-shrink: 0;
+	}
+	.znj-add-category-input {
+		flex: 1;
+		height: 40rpx;
+		border-radius: 8rpx;
+		border: 2px solid #e0e0e0;
+		background: #fafbfc;
+		padding: 0 16rpx;
+		font-size: 26rpx;
+		transition: all 0.3s ease;
+		box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+	}
+	.znj-add-category-input:focus {
+		border-color: #1976d2;
+		background: #fff;
+		outline: none;
+		box-shadow: 0 0 0 3px rgba(25,118,210,0.1), inset 0 1px 3px rgba(0,0,0,0.1);
+	}
+	.znj-add-category-input::placeholder {
+		color: #bbb;
+	}
+	.znj-add-category-btns {
+		display: flex;
+		justify-content: center;
+		gap: 30rpx;
+		margin-top: 20rpx;
+		padding-top: 20rpx;
+		border-top: 1px solid #f0f0f0;
+	}
+	.znj-add-category-btn {
+		min-width: 120rpx;
+		height: 40rpx;
+		line-height: 40rpx;
+		padding: 0 25rpx;
+		border: none;
+		border-radius: 8rpx;
+		font-size: 26rpx;
+		font-weight: 600;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+	}
+	.znj-add-category-btn.cancel {
+		background: #f5f5f5;
+		color: #666;
+		border: 1px solid #ddd;
+	}
+	.znj-add-category-btn.cancel:hover {
+		background: #ebebeb;
+		transform: translateY(-2rpx);
+		box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+	}
+	.znj-add-category-btn.confirm {
+		background: linear-gradient(135deg, #1976d2, #1565c0);
+		color: #fff;
+	}
+	.znj-add-category-btn.confirm:hover {
+		background: linear-gradient(135deg, #1565c0, #0d47a1);
+		transform: translateY(-2rpx);
+		box-shadow: 0 4px 16px rgba(25,118,210,0.4);
 	}
 </style>

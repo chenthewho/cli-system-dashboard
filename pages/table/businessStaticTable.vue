@@ -178,7 +178,9 @@
 							<view class="step1-table-content">
 								<scroll-view class="step1-table-scrollArea" scroll-y="true"
 									:style="{ height: tableScrollHeight + 'px' }">
-									<view class="step1-table-content-item" v-for="item in batchProfitSimpleList">
+									<view class="step1-table-content-item" v-for="item in batchProfitSimpleList"
+										  @click="(currentTableTab === 2 || currentTableTab === 3) ? openGoodsDrawer(item) : null"
+										  :class="{ 'clickable-item': currentTableTab === 2 || currentTableTab === 3 }">
 										<view style="flex: 2; display: flex;align-items: center">
 											<view>
 												{{item.name}}
@@ -204,80 +206,149 @@
 		<!-- 抽屉组件 -->
 		<view class="drawer-container">
 			<!-- 遮罩层 -->
-			<view class="drawer-mask" :class="{ 'show': showDrawer }" @tap="closeDrawer"></view>
+			<view class="drawer-mask" :class="{ 'show': showDrawer || showGoodsDrawer }" @tap="showDrawer ? closeDrawer() : closeGoodsDrawer()"></view>
 
 			<!-- 抽屉内容 -->
-			<view class="drawer-content" :class="{ 'show': showDrawer }">
+			<view class="drawer-content" :class="{ 'show': showDrawer || showGoodsDrawer }">
 				<slot>
-					<view class="drawer-content-header">
-						<view >
-							<uni-icons custom-prefix="iconfont" type="icon-guanbi" size="25" color="#ca0000" @click="closeDrawer"
-								style="font-weight: bold;margin-left: 10rpx;margin-right: 10rpx; "></uni-icons>
-							<text>车次明细</text>
+					<!-- 车次明细抽屉 -->
+					<view v-if="showDrawer">
+						<view class="drawer-content-header">
+							<view >
+								<uni-icons custom-prefix="iconfont" type="icon-guanbi" size="25" color="#ca0000" @click="closeDrawer"
+									style="font-weight: bold;margin-left: 10rpx;margin-right: 10rpx; "></uni-icons>
+								<text>车次明细</text>
+							</view>
 						</view>
-					</view>
-					<view class="drawer-content-header2">
-						<view class="drawer-content-header2-title">
-							货主：{{selectAssistBatchDetail.shipperName}} 车次：{{selectAssistBatchDetail.batchCode}} <text
-								v-if="selectAssistBatchDetail.saleStatus===1" class="drawer-content-header2-status"
-								style="--sale-status-color: #00aaff;">
-								在售
-							</text>
-							<text v-if="selectAssistBatchDetail.saleStatus===0" class="drawer-content-header2-status"
-								style="--sale-status-color: #e74c3c;">
-								停售
-							</text>
-							<text v-if="selectAssistBatchDetail.saleStatus===2" class="drawer-content-header2-status"
-								style="--sale-status-color: #00b900;">
-								已结算
-							</text>
+						<view class="drawer-content-header2">
+							<view class="drawer-content-header2-title">
+								货主：{{selectAssistBatchDetail.shipperName}} 车次：{{selectAssistBatchDetail.batchCode}} <text
+									v-if="selectAssistBatchDetail.saleStatus===1" class="drawer-content-header2-status"
+									style="--sale-status-color: #00aaff;">
+									在售
+								</text>
+								<text v-if="selectAssistBatchDetail.saleStatus===0" class="drawer-content-header2-status"
+									style="--sale-status-color: #e74c3c;">
+									停售
+								</text>
+								<text v-if="selectAssistBatchDetail.saleStatus===2" class="drawer-content-header2-status"
+									style="--sale-status-color: #00b900;">
+									已结算
+								</text>
+							</view>
+							<view class="drawer-content-header2-title2">
+								创建时间:  {{selectAssistBatchDetail.createTime}}
+							</view>
 						</view>
-						<view class="drawer-content-header2-title2">
-							创建时间:  {{selectAssistBatchDetail.createTime}}
-						</view>
-					</view>
 
-					<view class="drawer-content-card">
-						<view class="drawer-content-card-title">
-							销售明细
+						<view class="drawer-content-card">
+							<view class="drawer-content-card-title">
+								销售明细
+							</view>
+							<view class="drawer-content-table-content">
+								<scroll-view class="drawer-content-scrollArea" scroll-y="true" scroll-x="true" >
+								 <table border="1" class="drawer-content-table" >
+								    <thead>
+								      <tr class="drawer-content-table-header" >
+								        <th  class="drawer-content-table-header-grid">货品</th>
+								        <th  class="drawer-content-table-header-grid">销量</th>
+								        <th  class="drawer-content-table-header-grid">均重</th>
+								        <th  class="drawer-content-table-header-grid">均价</th>
+								        <th  class="drawer-content-table-header-grid">货款</th>
+								      </tr>
+								    </thead>
+								    <tbody>
+								      <tr v-for="item in selectAssistBatchDetail.allPurchaseAssistList">
+								        <td  class="drawer-content-table-grid" >{{item.commodityName}}</td>
+								        <td class="drawer-content-table-grid" >{{item.saleMount}}</td>
+								        <td class="drawer-content-table-grid" >---</td>
+								        <td class="drawer-content-table-grid" >{{item.averagePrice}}</td>
+								        <td class="drawer-content-table-grid" >{{item.saleSubTotal}}</td>
+								      </tr>
+								    </tbody>
+									<tbody>
+									  <tr >
+									    <td  class="drawer-content-table-grid" >合计:</td>
+									    <td class="drawer-content-table-grid" ></td>
+									    <td class="drawer-content-table-grid" >---</td>
+									    <td class="drawer-content-table-grid" ></td>
+									    <td class="drawer-content-table-grid" ></td>
+									  </tr>
+									</tbody>
+								  </table>
+								  </scroll-view>
+							</view>
 						</view>
-						<view class="drawer-content-table-content">
-							<scroll-view class="drawer-content-scrollArea" scroll-y="true" scroll-x="true" >
-							 <table border="1" class="drawer-content-table" >
-							    <thead>
-							      <tr class="drawer-content-table-header" >
-							        <th  class="drawer-content-table-header-grid">货品</th>
-							        <th  class="drawer-content-table-header-grid">销量</th>
-							        <th  class="drawer-content-table-header-grid">均重</th>
-							        <th  class="drawer-content-table-header-grid">均价</th>
-							        <th  class="drawer-content-table-header-grid">货款</th>
-							      </tr>
-							    </thead>
-							    <tbody>
-							      <tr v-for="item in selectAssistBatchDetail.allPurchaseAssistList">
-							        <td  class="drawer-content-table-grid" >{{item.commodityName}}</td>
-							        <td class="drawer-content-table-grid" >{{item.saleMount}}</td>
-							        <td class="drawer-content-table-grid" >---</td>
-							        <td class="drawer-content-table-grid" >{{item.averagePrice}}</td>
-							        <td class="drawer-content-table-grid" >{{item.saleSubTotal}}</td>
-							      </tr>
-							    </tbody>
-								<tbody>
-								  <tr >
-								    <td  class="drawer-content-table-grid" >合计:</td>
-								    <td class="drawer-content-table-grid" ></td>
-								    <td class="drawer-content-table-grid" >---</td>
-								    <td class="drawer-content-table-grid" ></td>
-								    <td class="drawer-content-table-grid" ></td>
-								  </tr>
-								</tbody>
-							  </table>
-							  </scroll-view>
+					</view>
+					
+					<!-- 货品详情抽屉 -->
+					<view v-if="showGoodsDrawer">
+						<view class="drawer-content-header">
+							<view >
+								<uni-icons custom-prefix="iconfont" type="icon-guanbi" size="25" color="#ca0000" @click="closeGoodsDrawer"
+									style="font-weight: bold;margin-left: 10rpx;margin-right: 10rpx; "></uni-icons>
+								<text>货品详情</text>
+							</view>
+						</view>
+						<view class="drawer-content-header2" v-if="currentGoodsItem">
+							<view class="drawer-content-header2-title">
+								货品名称：{{currentGoodsItem.name}} 
+								<text v-if="currentTableTab === 3" class="drawer-content-header2-status" style="--sale-status-color: #f39c12;">
+									自营
+								</text>
+								<text v-if="currentTableTab === 2" class="drawer-content-header2-status" style="--sale-status-color: #00aaff;">
+									代销
+								</text>
+							</view>
+							<view class="drawer-content-header2-title2">
+								已售重量: {{currentGoodsItem.weightSold}} | 货款总额: ¥{{currentGoodsItem.amountSale}}
+							</view>
+						</view>
+
+						<view class="drawer-content-card">
+							<view class="drawer-content-card-title">
+								订单明细
+							</view>
+							<view class="drawer-content-table-content">
+								<scroll-view class="drawer-content-scrollArea" scroll-y="true" scroll-x="true" 
+											 :style="{ height: (tableScrollHeight) + 'px' }">
+								 <table border="1" class="drawer-content-table" >
+								    <thead>
+								      <tr class="drawer-content-table-header" >
+										<th  class="drawer-content-table-header-grid">时间</th>
+								        <th  class="drawer-content-table-header-grid">数量</th>
+								        <th  class="drawer-content-table-header-grid">重量</th>
+								        <th  class="drawer-content-table-header-grid">单价</th>
+								        <th  class="drawer-content-table-header-grid">小计</th>
+										<th  class="drawer-content-table-header-grid">订单号</th>
+								      </tr>
+								    </thead>
+								    <tbody>
+								      <tr v-for="(goods, index) in goodsList" :key="index">
+										<td class="drawer-content-table-grid" >{{goods.createTime ? goods.createTime.replace("T"," ") : '-'}}</td>
+								        <td class="drawer-content-table-grid" >{{goods.amount || goods.quantity || 0}}</td>
+								        <td class="drawer-content-table-grid" >{{goods.weight || goods.totalWeight || 0}}</td>
+								        <td class="drawer-content-table-grid" >¥{{goods.price || goods.unitPrice || 0}}</td>
+								        <td class="drawer-content-table-grid" >¥{{goods.subtotal || goods.totalAmount || 0}}</td>
+										<td  class="drawer-content-table-grid" >{{goods.orderCode || goods.accountCode || '-'}}</td>
+								      </tr>
+								    </tbody>
+									<tbody v-if="!goodsList || goodsList.length === 0">
+									  <tr>
+									    <td colspan="6" class="drawer-content-table-grid" style="text-align: center; color: #bdc3c7; padding: 40rpx;">
+									      暂无详情记录
+									    </td>
+									  </tr>
+									</tbody>
+								  </table>
+								  </scroll-view>
+							</view>
 						</view>
 					</view>
 				</slot> <!-- 抽屉内容插槽 -->
 			</view>
 		</view>
+
 	</div>
 </template>
 
@@ -312,6 +383,10 @@
 					value: 3,
 				}],
 				vesionType: 1, // 获取版本类型，默认为1
+				// 货品详情抽屉相关数据
+				showGoodsDrawer: false,
+				currentGoodsItem: null,
+				goodsList: [] // 货品详情列表
 			}
 		},
 		onLoad() {
@@ -495,14 +570,61 @@
 			//tab切换方法
 			changeTab(e) {
 				console.log("E", e)
+			},
+			// 打开货品详情抽屉
+			openGoodsDrawer(item) {
+				this.currentGoodsItem = item;
+				if (this.currentTableTab === 3) {
+					this.getEmployGoods(item.id);
+				} else if (this.currentTableTab === 2) {
+					this.getAssistGoods(item.id);
+				}
+			},
+			// 获取自营货品详情
+			getEmployGoods(commodityId) {
+				const beginTime = `${this.dataSelectBeiginTime} 00:00:00`;
+				const endTime = `${this.dateSelectEndTime} 23:59:59`;
+				
+				tableApi.getEmployGoodsByCommodityIdAndTime(this.currentCompanyId, commodityId, beginTime, endTime).then(res => {
+					console.log("getEmployGoods res:", res);
+					this.goodsList = res.data || [];
+					this.showGoodsDrawer = true;
+				}).catch(err => {
+					console.error("获取自营货品详情失败:", err);
+					uni.showToast({
+						title: '获取货品详情失败',
+						icon: 'none'
+					});
+				});
+			},
+			// 获取代销货品详情
+			getAssistGoods(commodityId) {
+				const beginTime = `${this.dataSelectBeiginTime} 00:00:00`;
+				const endTime = `${this.dateSelectEndTime} 23:59:59`;
+				
+				tableApi.getAssistGoodsByCommodityIdAndTime(this.currentCompanyId, commodityId, beginTime, endTime).then(res => {
+					console.log("getAssistGoods res:", res);
+					this.goodsList = res.data || [];
+					this.showGoodsDrawer = true;
+				}).catch(err => {
+					console.error("获取代销货品详情失败:", err);
+					uni.showToast({
+						title: '获取货品详情失败',
+						icon: 'none'
+					});
+				});
+			},
+			// 关闭货品详情抽屉
+			closeGoodsDrawer() {
+				this.showGoodsDrawer = false;
+				this.currentGoodsItem = null;
+				this.goodsList = [];
 			}
 		}
 	}
 </script>
 
 <style>
-	.space {}
-
 	.space-header {
 		display: flex;
 		flex-direction: row;
@@ -751,8 +873,6 @@
 		border-bottom: 2rpx solid #dddddd;
 	}
 
-	.right-side-card .content {}
-
 	.step1-table-header {
 		display: flex;
 		margin: 5rpx;
@@ -762,8 +882,6 @@
 		padding-bottom: 10rpx;
 		border-bottom: 1px solid #dddddd;
 	}
-
-	.step1-table-content {}
 
 	.step1-table-content-item {
 		display: flex;
@@ -892,12 +1010,17 @@
 	}
 	
 	.drawer-content-scrollArea {
-		width: 300rpx;
-			 box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.5);
+		width:350rpx;
+		max-height: 400px;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+		border: 1rpx solid #e9ecef;
+		border-radius: 6rpx;
 	}
 	.drawer-content-table {
 		width: 100%;
+		min-width: 600px;
 		border-collapse: collapse;
+		background-color: white;
 	}
 	
 	.drawer-content-table-header {
@@ -906,13 +1029,33 @@
 	}
 	
 	.drawer-content-table-header-grid {
-		padding: 8px; 
+		padding: 12rpx 8rpx; 
 		text-align: center;
 		font-weight: bold;
+		min-width: 80rpx;
+		border-bottom: 2rpx solid #dee2e6;
+		position: sticky;
+		top: 0;
+		background-color: #f5f5f5;
+		z-index: 1;
 	}
 	.drawer-content-table-grid {
-		padding: 8px;
+		padding: 12rpx 8rpx;
 		text-align: center;
-		font-weight: 800;
+		font-weight: 500;
+		min-width: 80rpx;
+		border-bottom: 1rpx solid #f0f0f0;
+		font-size: 12rpx;
+		word-break: break-all;
+	}
+	
+	/* 可点击项样式 */
+	.clickable-item {
+		cursor: pointer;
+		transition: background-color 0.2s ease;
+	}
+	
+	.clickable-item:hover {
+		background-color: rgba(0, 170, 255, 0.1);
 	}
 </style>

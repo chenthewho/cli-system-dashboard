@@ -51,6 +51,7 @@ export default {
   data() {
     return {
       activeTab: 'tab1', 
+	  vesionType:uni.getStorageSync("vesionType")??1, // 获取版本类型，默认为1
 	  scrollHeight:0,
 	  categoryList_employ:[]
     };
@@ -60,8 +61,10 @@ export default {
 	  	this.activeTab = this.categoryList[0].name;
 	  }
 	  this.scrollHeight = uni.getWindowInfo().windowHeight - 120;
-	  //暂不启用自营商品分类
-	  this.getCategoryList();
+	  if(this.vesionType==1||this.vesionType==3||this.vesionType==4){
+ 				//暂不启用自营商品分类
+ 				this.getCategoryList();
+	  } 
   },
   methods: {
 		//暂不启用自营商品分类

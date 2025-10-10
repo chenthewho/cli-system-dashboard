@@ -107,13 +107,13 @@
 							style="flex: 3; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
 							{{ item.commodityName }}
 						</div>
-						<div
+						<div v-if="item.averagePrice!=undefined"
 							style="flex: 1; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
 							{{ item.averagePrice != null && item.averagePrice != 'NaN' ? item.averagePrice.toFixed(1) : '---' }}
 						</div>
-						<div
+						<div v-if="item.averageWeight!=undefined"
 							style="flex: 1; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							{{ item.averageWeight != null && item.averageWeight != 'NaN' ? item.averageWeight.toFixed(1)  : '---' }}
+							{{ item.averageWeight != null && item.averageWeight != 'NaN'&&item.averageWeight!='Infinity' ? item.averageWeight.toFixed(1)  : '---' }}
 						</div>
 						<div
 							style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
@@ -153,7 +153,7 @@
 							代卖单价：{{ batchCommodityTotal.assistUnitPrice }}/{{ batchCommodityTotal.assistType == 1 ? '数量' :
 								batchCommodityTotal.assistType == 2 ? '重量' : '' }}
 						</div>
-						<div style="flex: 2; padding: 8px; text-align: center;font-weight: bold;">
+						<div v-if="batchCommodityTotal.assistAmount != undefined" style="flex: 2; padding: 8px; text-align: center;font-weight: bold;">
 							代卖总费用：{{ batchCommodityTotal.assistAmount.toFixed(1) }}元
 						</div>
 					</div>
@@ -225,44 +225,136 @@
 			</scroll-view>
 
 			<div style="position: fixed;bottom: 0;height: 30rpx;background: #e5e5e5;width: 100%;" v-if="!showKeyBoard1">
-				<div
+				<div v-if="settingMoney!=undefined&&batchCommodityTotal.totalMoney!=undefined&&batchCommodityTotal.assistAmount!=undefined&&totalSettle!=undefined" 
 					style="height: 1rpx;width: 100%;background-color: #909090;line-height: 30rpx;font-weight: bold;font-size: 12rpx;">
-					<div style="margin-left: 10rpx;"> 结算金额：{{ settingMoney.toFixed(1) }}元(营销总额{{ this.batchCommodityTotal.totalMoney.toFixed(1)
-						}}-代卖费用{{ this.batchCommodityTotal.assistAmount.toFixed(1) }}-其他费用{{ this.totalSettle.toFixed(1) }})</div>
+					<div style="margin-left: 10rpx;"> 结算金额：{{ settingMoney.toFixed(1) }}元(营销总额{{batchCommodityTotal.totalMoney.toFixed(1)
+						}}-代卖费用{{ batchCommodityTotal.assistAmount.toFixed(1) }}-其他费用{{totalSettle.toFixed(1) }})</div>
 				</div>
 				<button
 					style="position: fixed;width: 50rpx;right: 10px;font-weight: bold;height: 25rpx;background-color: #008200;color: white;margin-top: 3rpx;line-height: 25rpx;"
 					@click="settle">结算</button>
 			</div>
 		</div>
-		<u-modal title="新增费用" :show="expenseAddedShow" @close="expenseAddedShow = false" :closeOnClickOverlay="false"
-			:showConfirmButton="false" width="300rpx">
-			<div style="display: flex;flex-direction: column;width: 200rpx;background: #ffffff;">
+		<!-- 美化的新增费用弹窗 -->
+		<div class="expense-add-modal-container" v-if="expenseAddedShow">
+			<div class="expense-add-modal-overlay" @click="closeExpenseModal"></div>
+			<div class="expense-add-modal">
+				<div class="expense-add-modal-header">
+
+					<h3>新增费用</h3>
+					<div class="close-btn" @click="closeExpenseModal">
+						<uni-icons custom-prefix="iconfont" type="icon-icon-cross-squre" size="20" color="white"></uni-icons>
+					</div>
+				</div>
+				
+				<div class="expense-add-modal-body">
+					<!-- 金额输入 -->
+					<div class="input-section">
+						<label class="input-label">
+							<uni-icons custom-prefix="iconfont" type="icon-yen" size="16" color="#666" style="margin-right: 8rpx;"></uni-icons>
+							费用金额
+						</label>
+						<div class="amount-input-wrapper">
+							<u--input 
+								placeholder="请输入金额" 
+								border="surround" 
+								v-model="expenseAdded.money"
+								clearable
+								type="number"
+								class="amount-input"
+							></u--input>
+							<span class="currency-unit">元</span>
+						</div>
+					</div>
+
+					<!-- 费用项选择 -->
+					<div class="input-section">
+						<view class="input-label">
+							<uni-icons custom-prefix="iconfont" type="icon-biaoqian" size="16" color="#666" style="margin-right: 8rpx;"></uni-icons>
+							费用项
+							<view style="margin-left: auto; display: flex; align-items: center; gap: 15rpx;">
+								<uni-icons 
+									type="plus" 
+									size="30" 
+									color="#667eea" 
+									@click="showAddExpenseLabel" 
+									style="cursor: pointer;"
+								></uni-icons>
+								<uni-icons 
+									:type="isEditingLabels ? 'checkmarkempty' : 'compose'" 
+									size="30" 
+									:color="isEditingLabels ? '#52c41a' : '#667eea'" 
+									@click="toggleEditMode" 
+									style="cursor: pointer;"
+								></uni-icons>
+							</view>
+						</view>
+						<div class="expense-labels-container">
+							<div v-if="expenseLabels.length === 0" class="no-labels-tip">
+								<uni-icons type="info-circle" size="14" color="#999" style="margin-right: 5rpx;"></uni-icons>
+								暂无费用标签，请点击 + 添加
+							</div>
+							<button 
+								v-for="(label, index) in expenseLabels" 
+								:key="label.id"
+								:class="['expense-label-btn', { 'active': expenseAdded.labelId === label.id, 'editing': isEditingLabels }]"
+								@click="selectExpenseLabel(label)"
+							>
+								{{ label.label }}
+								<span 
+									v-if="isEditingLabels && expenseLabels.length > 1"
+									@click.stop="deleteExpenseLabel(label, index)" 
+									class="delete-label-btn"
+								>×</span>
+							</button>
+						</div>
+					</div>
+
+					<!-- 备注输入 -->
+					<div class="input-section">
+						<label class="input-label">
+							<uni-icons custom-prefix="iconfont" type="icon-beizhu" size="16" color="#666" style="margin-right: 8rpx;"></uni-icons>
+							备注说明
+						</label>
+						<u--textarea 
+							v-model="expenseAdded.remark" 
+							placeholder="请输入备注信息（可选）" 
+							class="remark-textarea"
+							:maxlength="200"
+							:showWordLimit="true"
+						></u--textarea>
+					</div>
+				</div>
+
+				<!-- 操作按钮 -->
+				<div class="expense-add-modal-footer">
+					<button class="btn-cancel" @click="closeExpenseModal">
+						<uni-icons type="close" size="16" color="#666" style="margin-right: 5rpx;"></uni-icons>
+						取消
+					</button>
+					<button class="btn-confirm" @click="AddExpense">
+						<uni-icons type="checkmarkempty" size="16" color="white" style="margin-right: 5rpx;"></uni-icons>
+						添加费用
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- 新增费用标签弹窗 -->
+		<u-modal title="新增费用标签" :show="expenseLabelAddShow" @close="expenseLabelAddShow = false" :closeOnClickOverlay="false"
+			:showConfirmButton="false" width="250rpx">
+			<div style="display: flex;flex-direction: column;width: 180rpx;background: #ffffff;">
 				<div style="display: flex;">
-					<u--input placeholder="请输入金额" border="surround" style="width: 200rpx;" v-model="expenseAdded.money"
+					<u--input placeholder="请输入标签名称" border="surround" style="width: 180rpx;" v-model="newExpenseLabel.label"
 						clearable></u--input>
-					<div style="font-weight: bold;margin-top: 5rpx;margin-left: 5rpx;font-size: 15rpx; ">元</div>
 				</div>
-				<div style="margin-top: 10rpx;font-weight: bold;">费用项</div>
-				<div style="display: flex;margin-top: 10rpx;">
-					<button :class="`expenseBtn ${expenseAdded.type === 1 ? 'expenseBtnActive' : ''}`"
-						@click="expenseAdded.type = 1">成本</button>
-					<button :class="`expenseBtn ${expenseAdded.type === 2 ? 'expenseBtnActive' : ''}`"
-						@click="expenseAdded.type = 2">运费</button>
-					<button :class="`expenseBtn ${expenseAdded.type === 3 ? 'expenseBtnActive' : ''}`"
-						@click="expenseAdded.type = 3">人工</button>
-					<button :class="`expenseBtn ${expenseAdded.type === 4 ? 'expenseBtnActive' : ''}`"
-						@click="expenseAdded.type = 4">其他</button>
-				</div>
-				<div style="margin-top: 10rpx;font-weight: bold;">备注</div>
-				<u--textarea v-model="expenseAdded.remark" placeholder="请输入备注" style="margin-top: 10rpx;"></u--textarea>
 				<div style="display: flex;margin-top: 20rpx;">
 					<button
-						style="width: 80rpx;height: 30rpx;line-height: 30rpx;font-weight: bold;background-color: #909090;color: #ffffff;"
-						@click="expenseAddedShow = false"> 返回</button>
+						style="width: 70rpx;height: 30rpx;line-height: 30rpx;font-weight: bold;background-color: #909090;color: #ffffff;"
+						@click="expenseLabelAddShow = false"> 取消</button>
 					<button
-						style="width: 80rpx;height: 30rpx;line-height: 30rpx;font-weight: bold;background-color: dodgerblue;color: #ffffff;"
-						@click="AddExpense"> 添加</button>
+						style="width: 70rpx;height: 30rpx;line-height: 30rpx;font-weight: bold;background-color: dodgerblue;color: #ffffff;"
+						@click="addExpenseLabel"> 添加</button>
 				</div>
 			</div>
 		</u-modal>
@@ -397,6 +489,7 @@
 import category from '../../api/goods/category'
 import expense from '../../api/expense/expense'
 import batch from '../../api/batch/batch';
+import labelApi from '../../api/label/labelApi';
 import DropdownOperater from './component/DropdownOperater.vue';
 import SettlementModal from '../../components/SettlementModal.vue'; 
 export default {
@@ -448,6 +541,10 @@ export default {
 			},
 			expenseAddedShow: false,
 			expenseAdded: {},
+			expenseLabels: [],
+			expenseLabelAddShow: false,
+			newExpenseLabel: { label: '' },
+			isEditingLabels: false,
 			companyId: "",
 			shipperAddedName: "",
 			shipperList: [],
@@ -474,9 +571,14 @@ export default {
 				name: '售罄',
 				value: 0
 			}, {
-				name: '已结算',
+				name: '结算中',
 				value: 2
-			}],
+			},
+			// {
+			// 	name: '已结清',
+			// 	value: 2
+			// },
+			],
 			operatorBtnoptions: [{
 				text: "按数量",
 				value: 1
@@ -490,7 +592,7 @@ export default {
 		this.companyId = uni.getStorageSync('companyId');
 		this.getallShipper();
 		this.getAllBatch();
-
+		this.getExpenseLabel();
 		this.WindowHeight = uni.getWindowInfo().windowHeight;
 		this.scrollHeight = this.WindowHeight - 80;
 	},
@@ -548,21 +650,18 @@ export default {
 				this.expenseList = res.data;
 			})
 		},
-		getExpenseName(type) {
-			if (type === 1) {
-				return "成本"
-			} else if (type === 2) {
-				return "运费"
-			} else if (type === 3) {
-				return "人工"
-			} else {
-				return "其他"
-			}
-		},
 		padZero(num) {
 			return num.toString().padStart(2, '0');
 		},
 		AddExpense() {
+			if (!this.expenseAdded.labelId || !this.expenseAdded.money) {
+				uni.showToast({
+					title: "请选择费用项并输入金额",
+					icon: "none"
+				});
+				return;
+			}
+			
 			var newExpense = JSON.parse(JSON.stringify(this.expenseAdded))
 			const now = new Date();
 			const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -581,28 +680,140 @@ export default {
 
 			const iso8601Time = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
 
-
 			this.expenseList.push({
 				id: "",
 				BatchId: this.selectBatch.id,
 				createTime: iso8601Time,
 				expensesMoney: parseFloat(newExpense.money),
-				remark: newExpense.remark,
+				remark: newExpense.remark || "",
 				expensesStatus: 1,
-				expensesLabel: this.getExpenseName(newExpense.type),
-				type: newExpense.type
+				expensesLabel: newExpense.label,
+				labelId: newExpense.labelId
 			})
-			this.expenseAddedShow = false;
+			this.closeExpenseModal();
 			this.settingRecount();
 		},
 		showAddexpenses() {
 			if (!this.selectBatch) return;
 			this.expenseAddedShow = true;
+			// 重置编辑模式状态
+			this.isEditingLabels = false;
 			this.expenseAdded = {
 				money: 0,
 				remark: "",
-				type: 1
+				labelId: this.expenseLabels.length > 0 ? this.expenseLabels[0].id : null,
+				label: this.expenseLabels.length > 0 ? this.expenseLabels[0].label : ""
 			};
+		},
+		// 选择费用标签
+		selectExpenseLabel(label) {
+			this.expenseAdded.labelId = label.id;
+			this.expenseAdded.label = label.label;
+		},
+		// 关闭费用弹窗
+		closeExpenseModal() {
+			this.expenseAddedShow = false;
+			// 重置编辑模式状态
+			this.isEditingLabels = false;
+		},
+		// 切换编辑模式
+		toggleEditMode() {
+			this.isEditingLabels = !this.isEditingLabels;
+			if (this.isEditingLabels) {
+				uni.showToast({
+					title: "编辑模式已开启",
+					icon: "none",
+					duration: 1500
+				});
+			} else {
+				uni.showToast({
+					title: "编辑模式已关闭",
+					icon: "success",
+					duration: 1500
+				});
+			}
+		},
+		// 显示新增费用标签弹窗
+		showAddExpenseLabel() {
+			this.expenseLabelAddShow = true;
+			this.newExpenseLabel = { label: '' };
+		},
+		// 添加费用标签
+		addExpenseLabel() {
+			if (!this.newExpenseLabel.label.trim()) {
+				uni.showToast({
+					title: "请输入标签名称",
+					icon: "none"
+				});
+				return;
+			}
+			var userInfo = uni.getStorageSync("userInfo");
+			const labelData = {
+				companyId: this.companyId,
+				label: this.newExpenseLabel.label.trim(),
+				labelType: 1,
+				operatorId: userInfo.id
+			};
+			
+			labelApi.createExpenseLabel(labelData).then(res => {
+				if (res.code === 200) {
+					uni.showToast({
+						title: "添加成功",
+						icon: "success"
+					});
+					this.expenseLabelAddShow = false;
+					this.getExpenseLabel(); // 重新获取标签列表
+				} else {
+					uni.showToast({
+						title: res.message || "添加失败",
+						icon: "none"
+					});
+				}
+			}).catch(error => {
+				uni.showToast({
+					title: "网络错误",
+					icon: "none"
+				});
+			});
+		},
+		// 删除费用标签
+		deleteExpenseLabel(label, index) {
+			console.log("label", label)
+			uni.showModal({
+				title: '确认删除',
+				content: `确定要删除费用标签"${label.label}"吗？`,
+				success: (res) => {
+					if (res.confirm) {
+						labelApi.deleteExpenseLabel(label.id).then(response => {
+							if (response.code === 200) {
+								uni.showToast({
+									title: "删除成功",
+									icon: "success"
+								});
+								this.getExpenseLabel(); // 重新获取标签列表
+								
+								// 如果当前选中的标签被删除，重置选择
+								if (this.expenseAdded.labelId === label.id && this.expenseLabels.length > 1) {
+									const remainingLabels = this.expenseLabels.filter(l => l.id !== label.id);
+									if (remainingLabels.length > 0) {
+										this.selectExpenseLabel(remainingLabels[0]);
+									}
+								}
+							} else {
+								uni.showToast({
+									title: response.message || "删除失败",
+									icon: "none"
+								});
+							}
+						}).catch(error => {
+							uni.showToast({
+								title: "网络错误",
+								icon: "none"
+							});
+						});
+					}
+				}
+			});
 		},
 		
 		// 验证金额是否有效
@@ -863,7 +1074,14 @@ export default {
 				});
 			}
 		},
-		
+		getExpenseLabel(){
+			labelApi.GetExpenseLabel(this.companyId,1).then(res=>{
+				console.log("GetExpenseLabel",res)
+				if(res.code === 200){
+					this.expenseLabels = res.data || [];
+				}
+			})
+		},
 		// 安全解析金额
 		parseAmount(amount) {
 			if (amount === null || amount === undefined || amount === '') {
@@ -888,9 +1106,7 @@ export default {
 			this.getExpenseByBatchId(item.id);
 		},
 		getBatchCommodityList(id) {
-			console.log("getBatchCommodityList")
 			batch.GetSingleAssistBatchInfoAndProfit(id).then(res => {
-				console.log("getBatchCommodityList",res)
 				this.batchCommodityTotal = {
 					assistType: res.data.assistType,
 					assistAmount: res.data.assistAmount,
@@ -901,6 +1117,7 @@ export default {
 					totalInventory: 0
 				}
 				this.BatchCommodityList = res.data.allPurchaseAssistList;
+				console.log("this.BatchCommodityList",this.BatchCommodityList);
 				this.BatchCommodityList.sort((a, b) => b.inventorySold - a.inventorySold);
 				if (this.BatchCommodityList.length > 0) {
 					for (var i = 0; i < this.BatchCommodityList.length; i++) {
@@ -972,12 +1189,21 @@ export default {
 	border: solid 1px #7a7a7a;
 	background-color: white;
 	color: #7a7a7a;
+	border-radius: 10rpx;
+	padding: 0 8rpx;
+	margin: 2rpx;
+	transition: all 0.3s ease;
+}
+
+.expenseBtn:hover {
+	border-color: dodgerblue;
+	color: dodgerblue;
 }
 
 .expenseBtnActive {
 	background-color: dodgerblue;
 	color: white;
-	border: none;
+	border: solid 1px dodgerblue;
 }
 
 .containerAddBatch {
@@ -1660,5 +1886,368 @@ button {
 	.expense-input {
 		font-size: 16px; /* 防止 iOS Safari 缩放 */
 	}
+
+/* 美化的新增费用弹窗样式 */
+.expense-add-modal-container {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 9999;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.expense-add-modal-overlay {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(5px);
+}
+
+.expense-add-modal {
+	position: relative;
+	width: 80%;
+	max-width: 500px;
+	max-height: 80vh;
+	background: white;
+	border-radius: 20rpx;
+	box-shadow: 0 20rpx 40rpx rgba(0, 0, 0, 0.15);
+	overflow: hidden;
+	animation: modalSlideIn 0.3s ease-out;
+	display: flex;
+	flex-direction: column;
+}
+
+@keyframes modalSlideIn {
+	from {
+		opacity: 0;
+		transform: translateY(-50rpx) scale(0.9);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+.expense-add-modal-header {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	padding: 25rpx 30rpx;
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 15rpx;
+	flex-shrink: 0;
+}
+
+.header-icon {
+	width: 40rpx;
+	height: 40rpx;
+	background: rgba(255, 255, 255, 0.2);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.expense-add-modal-header h3 {
+	color: white;
+	font-size: 18rpx;
+	font-weight: 600;
+	margin: 0;
+	flex: 1;
+}
+
+.close-btn {
+	width: 35rpx;
+	height: 35rpx;
+	background: rgba(255, 255, 255, 0.2);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+	background: rgba(255, 255, 255, 0.3);
+	transform: scale(1.1);
+}
+
+.expense-add-modal-body {
+	padding: 30rpx;
+	flex: 1;
+	overflow-y: auto;
+}
+
+.input-section {
+	margin-bottom: 25rpx;
+}
+
+.input-label {
+	display: flex;
+	align-items: center;
+	font-size: 16rpx;
+	font-weight: 600;
+	color: #333;
+	margin-bottom: 12rpx;
+}
+
+.add-label-btn {
+	margin-left: auto;
+	width: 24px !important;
+	height: 24px !important;
+	min-width: 24px !important;
+	min-height: 24px !important;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	border: none;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	padding: 0 !important;
+	box-sizing: border-box;
+}
+
+.add-label-btn:hover {
+	transform: scale(1.1);
+	box-shadow: 0 4rpx 12rpx rgba(102, 126, 234, 0.3);
+}
+
+.amount-input-wrapper {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.amount-input {
+	flex: 1;
+	border-radius: 5rpx !important;
+	border: 2rpx solid #e9ecef !important;
+	transition: all 0.3s ease;
+	height: 40rpx;
+		font-size: 30rpx !important;
+
+}
+
+.amount-input:focus {
+	border-color: #667eea !important;
+	box-shadow: 0 0 0 6rpx rgba(102, 126, 234, 0.1) !important;
+}
+
+.currency-unit {
+	position: absolute;
+	right: 20rpx;
+	color: #666;
+	font-size: 16rpx;
+	font-weight: 600;
+	pointer-events: none;
+}
+
+.expense-labels-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10rpx;
+	min-height: 40rpx;
+	align-items: flex-start;
+}
+
+.no-labels-tip {
+	display: flex;
+	align-items: center;
+	color: #999;
+	font-size: 14rpx;
+	padding: 15rpx;
+	background: #f8f9fa;
+	border-radius: 10rpx;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.expense-label-btn {
+	padding: 8rpx 16rpx;
+	border: 2rpx solid #e9ecef;
+	border-radius: 20rpx;
+	background: white;
+	color: #666;
+	font-size: 14rpx;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 5rpx;
+}
+
+.expense-label-btn:hover {
+	border-color: #667eea;
+	color: #667eea;
+	transform: translateY(-2rpx);
+}
+
+.expense-label-btn.active {
+	border-color: #667eea;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+	box-shadow: 0 6rpx 20rpx rgba(102, 126, 234, 0.3);
+}
+
+.expense-label-btn.editing {
+	border-color: #ff7875;
+	animation: editingPulse 2s infinite;
+}
+
+@keyframes editingPulse {
+	0%, 100% {
+		border-color: #ff7875;
+		box-shadow: 0 0 0 0 rgba(255, 120, 117, 0.4);
+	}
+	50% {
+		border-color: #ff4d4f;
+		box-shadow: 0 0 0 4px rgba(255, 120, 117, 0.2);
+	}
+}
+
+.delete-label-btn {
+	margin-left: 5rpx;
+	width: 20rpx;
+	height: 20rpx;
+	background: #ff4757;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 12rpx;
+	line-height: 1;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	color: white;
+	font-weight: bold;
+	z-index: 99;
+	animation: deleteButtonShow 0.3s ease-out;
+}
+
+@keyframes deleteButtonShow {
+	from {
+		opacity: 0;
+		transform: scale(0.5);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+.delete-label-btn:hover {
+	background: #ff3742;
+	transform: scale(1.3);
+	box-shadow: 0 2rpx 8rpx rgba(255, 71, 87, 0.4);
+}
+
+.remark-textarea {
+	border-radius: 12rpx !important;
+	border: 2rpx solid #e9ecef !important;
+	min-height: 80rpx !important;
+	transition: all 0.3s ease;
+}
+
+.remark-textarea:focus {
+	border-color: #667eea !important;
+	box-shadow: 0 0 0 6rpx rgba(102, 126, 234, 0.1) !important;
+}
+
+.expense-add-modal-footer {
+	padding: 25rpx 30rpx;
+	background: #f8f9fa;
+	display: flex;
+	gap: 15rpx;
+	border-top: 1rpx solid #e9ecef;
+	flex-shrink: 0;
+}
+
+.btn-cancel,
+.btn-confirm {
+	flex: 1;
+	height: 45rpx;
+	border: none;
+	border-radius: 12rpx;
+	font-size: 16rpx;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 5rpx;
+}
+
+.btn-cancel {
+	background: white;
+	color: #666;
+	border: 2rpx solid #e9ecef;
+}
+
+.btn-cancel:hover {
+	background: #f8f9fa;
+	border-color: #dee2e6;
+}
+
+.btn-confirm {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	color: white;
+	box-shadow: 0 4rpx 15rpx rgba(102, 126, 234, 0.3);
+}
+
+.btn-confirm:hover {
+	transform: translateY(-2rpx);
+	box-shadow: 0 6rpx 20rpx rgba(102, 126, 234, 0.4);
+}
+
+.btn-confirm:active {
+	transform: translateY(0);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+	.expense-add-modal {
+		width: 90%;
+		max-width: 350px;
+	}
+}
+
+@media (max-width: 480px) {
+	.expense-add-modal {
+		width: 95%;
+		max-width: 320px;
+	}
+	
+	.expense-add-modal-header {
+		padding: 20rpx 25rpx;
+	}
+	
+	.expense-add-modal-body {
+		padding: 25rpx;
+	}
+	
+	.expense-add-modal-footer {
+		padding: 20rpx 25rpx;
+		flex-direction: row;
+	}
+	
+	.btn-cancel,
+	.btn-confirm {
+		height: 40rpx;
+		font-size: 14rpx;
+	}
+}
 
 </style>

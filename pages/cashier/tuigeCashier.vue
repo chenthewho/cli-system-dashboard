@@ -319,8 +319,7 @@
 								<!-- 押筐-->
 								<div  v-if="showStep2"
 									style="display: flex; align-items: center;padding: 10rpx;">
-									<text style="border: 1px solid #00aaff;padding: 5rpx;color: #00aaff;font-weight: bold;">押筐</text>
-									<select-lay :zindex="1211" :value="editingCard.extralModel.name"
+									<select-lay :zindex="1211" :name="editingCard.extralModel.name" :value="editingCard.extralModel.id"
 											direction="up"
 											placeholder="请选择项目" :options="editCardExtralModel"
 											@selectitem="editCardExtraModelSelct" slabel="name">
@@ -1141,15 +1140,17 @@
                 uni.navigateBack();
             },
 			editCardExtraModelSelct(e) {
-                this.$nextTick(() => {
-                    this.editingCard.extralModel = JSON.parse(JSON.stringify(this.editCardExtralModel[e]));
-                    console.log("this.editingCard.extralModel",this.editingCard.extralModel);
-                    							//押筐数量处理
-							if (this.editingCard.extralModel) {
-								this.editingCard.extralModel.quantity = this.editingCard.quantity;
-							}
-                })
-			},
+
+this.editingCard.extralModel = JSON.parse(JSON.stringify(this.editCardExtralModel[e]));
+console.log("this.editingCard.extralModel",this.editingCard.extralModel)
+							//押筐数量处理
+			if (this.editingCard.extralModel) {
+				this.editingCard.extralModel.quantity = this.editingCard.quantity;
+				if(this.editingCard.extralModel.weight){	
+					this.editingCard.carweight = this.editingCard.extralModel.quantity*this.editingCard.extralModel.weight;
+				}
+			}
+},
 			onLoadMethod() {
 				this.currentCompanyId = uni.getStorageSync('companyId');
 				this.initCompanySetting();
@@ -1786,6 +1787,7 @@
 				}
 				this.editingIndex = index;
 				this.step1 = false;
+				console.log("this.editingCard",this.editingCard);
 				if (this.editingCard.saleWay === 1) {
 					this.custominputFocusedMethod(3);
 				} else {
@@ -2559,6 +2561,7 @@
 						totalWeight: this.goodSelect[i].allweight,
 						commoditySpec: this.goodSelect[i].commoditySpec,
 						stockType: this.goodSelect[i].stockType,
+						saleWay:this.goodSelect[i].saleWay,
 						commodityId: this.goodSelect[i].commodityId,
 						tareWeight: this.goodSelect[i].carweight,
 						referenceAmount: this.goodSelect[i].referenceAmount,
@@ -2578,7 +2581,6 @@
 								referenceAmount: this.goodSelect[i].extralModel.amount,
 								totalWeight: 0,
 								stockType: 0,
-								commodityId: "",
 								subtotal: 0,
 								tareWeight: 0,
 								commoditySpec: null,
@@ -2589,6 +2591,7 @@
 					goodModelList.push(commodity);
 				}
 
+				console.log("goodModelList",goodModelList);
 				//处理还筐物体
 				for (var i = 0; i < this.repayBasketList.length; i++) {
 					if (parseFloat(this.repayBasketList[i].quantity) > 0) {
