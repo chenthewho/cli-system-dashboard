@@ -42,6 +42,25 @@
 			// console.log("vesionType",this.vesionType);
 		},
 		methods: {
+			refreshPage(){
+				// 刷新当前显示的页面
+				this.$nextTick(() => {
+					if(this.curNow === 0 && this.$refs.batchRef){
+						// 刷新批次管理页面
+						this.$refs.batchRef.getAllBatch();
+					} else if(this.curNow === 1 && this.$refs.goodRef){
+						// 刷新货品管理页面
+						if(this.$refs.goodRef.refreshPage){
+							this.$refs.goodRef.refreshPage();
+						}
+					} else if(this.curNow === 2 && this.$refs.goodEmployRef){
+						// 刷新自营商品页面
+						if(this.$refs.goodEmployRef.refreshPage){
+							this.$refs.goodEmployRef.refreshPage();
+						}
+					}
+				});
+			},
 			refreshBatch(id){
 				this.$refs.batchRef.getBatchCommodityList(id);
 			},

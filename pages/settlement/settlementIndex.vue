@@ -1,12 +1,21 @@
 <template>
-	<div :style="{ 'display': 'flex', 'height': WindowHeight + 'px', width: '100%' }">
+	<div :style="{ 'display': 'flex', 'height': WindowHeight + 'px', width: '100%', overflow: 'hidden' }">
 		<div style="width: 200rpx; background-color: #ffffff;display: flex;">
 			<div>
-				<div style="text-align: center;">
-					<u-tabs :list="tabList" :itemStyle="{ width: '80px', height: '40px', fontWeight: 'bold' }"
-						@click="changeType"
-						style="display: inline-block;margin-top: 10rpx;margin-bottom: 10rpx;"></u-tabs>
-				</div>
+		<div style="text-align: center;">
+		<CustomTabs 
+			ref="customTabs"
+			:list="tabList" 
+			:itemStyle="{ width: '80px', height: '40px', fontWeight: 'bold' }"
+			@click="changeType"
+			:current="currentTabIndex"
+			activeColor="#2979ff"
+			inactiveColor="#606266"
+			underlineColor="#2979ff"
+			:underlineHeight="5"
+			style="display: inline-block;margin-top: 10rpx;margin-bottom: 10rpx;">
+		</CustomTabs>
+		</div>
 				<!-- 圆弧边卡片 -->
 				<div style="display: flex; flex-direction: column; gap: 5rpx;">
 
@@ -58,7 +67,7 @@
 										{{ item.batchCode }}
 									</text>
 								</div>
-								<text style="font-size: 8rpx; font-weight: bold;">创建时间：{{ item.createTime.replace("T", "")}}</text>
+								<text style="font-size: 8rpx; font-weight: bold;">{{ item.createTime.replace("T", " ")}}</text>
 							</div>
 						</div>
 					</scroll-view>
@@ -67,172 +76,287 @@
 			<!-- 垂直线 -->
 			<div style="width: 5rpx; background-color: #ccc; "></div>
 		</div>
-		<div style="width: 100%;; background-color: #ffffff; ">
+		<div class="right-content-container" style="width: 100%; background-color: #ffffff; display: flex; flex-direction: column; overflow: hidden;">
 			<div
-				style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx; display: flex; justify-content: space-between; align-items: center;">
-				<div style="font-size: 15rpx; font-weight: bold;" v-if="selectBatch">
-					<div style="display: flex;"><text
-							style="margin-right: 5rpx;">{{ selectBatch.shipperName }}</text><text>{{ selectBatch.batchCode }}</text>
+				style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx; display: flex; justify-content: space-between; align-items: center; padding: 5rpx 0; flex-shrink: 0;">
+				<div style="font-size: 16rpx; font-weight: bold;" v-if="selectBatch">
+					<div style="display: flex; align-items: center;">
+						<text style="margin-right: 5rpx; color: #333;">{{ selectBatch.shipperName }}</text>
+						<text style="color: #666;">{{ selectBatch.batchCode }}</text>
+						<text style="font-size: 10rpx; font-weight: normal; margin-left: 8rpx; color: #999;">创建：{{ selectBatch.createTime.replace("T", " ")}}</text>
 					</div>
-					<text style="font-size: 8rpx; font-weight: bold;">创建时间：{{ selectBatch.createTime.replace("T", "")}}</text>
 				</div>
-				<div style="text-align: right;font-weight: bold;">
-					<DropdownOperater :options="operatorBtnoptions" :fontSize="12" :menuFontSize="12"
-						:defaultValue="batchCalcType" :width="105" :height="20" :iconPosition="-5"
-						@click="showSetBatchAssist" />
+				<div style="display: flex; gap: 8rpx; align-items: center;">
+					<button style="height: 26rpx; line-height: 26rpx; padding: 0 12rpx; font-weight: bold; background-color: white; border: 2rpx solid #ff4444; color: #ff4444; border-radius: 4rpx; font-size: 13rpx;">售罄</button>
+					<!-- <button style="height: 26rpx; line-height: 26rpx; padding: 0 10rpx; font-weight: bold; background-color: white; border: 2rpx solid #00aa00; color: #00aa00; border-radius: 4rpx; font-size: 13rpx; white-space: nowrap;">销售详情</button>
+				 -->
 				</div>
 			</div>
-			<div style="height: 3rpx;background-color: #ccc;margin-bottom: 5rpx;"></div>
-			<scroll-view class="scrollArea" scroll-y="true" :style="{ height: scrollHeight + 'px' }">
-				<div style="margin-left: 5rpx;margin-right: 5rpx;border: solid 1px #909090;">
-					<!-- 表头 -->
-					<div
-						style="display: flex; background-color: #b9b9b9 ; font-weight: bold; border-bottom: 1px solid #f4f4f4;">
-						<div style="flex: 3; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">货品
-						</div>
-						<div style="flex: 1; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">均价
-						</div>
-						<div style="flex: 1; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">均重
-						</div>
-						<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">销量
-						</div>
-						<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">销售货款
-						</div>
-						<div style="flex: 1; padding: 8px; text-align: center;">库存</div>
+			<div style="height: 1rpx;background-color: #e0e0e0; flex-shrink: 0;"></div>
+			<scroll-view class="scrollArea" scroll-y="true" style="flex: 1; overflow-y: auto; background-color: #f5f5f5; padding: 10rpx 0;">
+				<!-- 未结算货品卡片 -->
+				<div style="margin: 0 10rpx 15rpx 10rpx; background: white; border-radius: 10rpx; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
+					<!-- 货品标题 -->
+				<div style="display: flex; justify-content: space-between; align-items: center; padding: 12rpx 15rpx; border-bottom: 2rpx solid #f0f0f0;">
+					<div style="font-size: 16rpx; font-weight: bold; color: #333;">
+						<uni-icons custom-prefix="iconfont" type="icon-icon-test" size="18" color="#00aa00" style="margin-right: 5rpx;"></uni-icons>
+						未结算货品
 					</div>
-
-					<!-- 表格内容行 -->
-					<div style="display: flex; border-bottom: 1px solid #ddd;" v-for="item in BatchCommodityList">
-						<div
-							style="flex: 3; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							{{ item.commodityName }}
-						</div>
-						<div v-if="item.averagePrice!=undefined"
-							style="flex: 1; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							{{ item.averagePrice != null && item.averagePrice != 'NaN' ? item.averagePrice.toFixed(1) : '---' }}
-						</div>
-						<div v-if="item.averageWeight!=undefined"
-							style="flex: 1; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							{{ item.averageWeight != null && item.averageWeight != 'NaN'&&item.averageWeight!='Infinity' ? item.averageWeight.toFixed(1)  : '---' }}
-						</div>
-						<div
-							style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							<text
-								v-for="model in item.outPutSaleMount">{{ model.mount }}{{ model.specName }}</text>/（{{ item.saleWeight }}斤）
-						</div>
-						<div
-							style="flex: 2; padding: 8px;border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							{{ item.saleSubTotal }}
-						</div>
-						<div style="flex: 1; padding: 8px; text-align: center;font-weight: bold;display: flex;"><text
-								v-for="model in item.outPutPurchaseInventories"
-								v-if="item.outPutPurchaseInventories.length > 0">{{ model.mount }}{{ model.specName }}</text>
-							<text v-if="item.outPutPurchaseInventories.length === 0">0</text>
-						</div>
+					<div>
+				<button @click="showSetBatchAssist" style="width: 100px; height: 28rpx; line-height: 28rpx; font-weight: bold; background-color: white; border: 1rpx solid #00aa00; color: #00aa00; border-radius: 5rpx; font-size: 12rpx; white-space: nowrap; padding: 0; flex-shrink: 0; margin-left: auto;">
+					设置代卖费
+				</button>
+			</div>
 					</div>
-					<!--合计-->
-					<div style="display: flex; border-bottom: 1px solid #ddd;">
-						<div
-							style="flex: 1; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
+				<!-- 货品表格 -->
+				<div style="display: flex; overflow: hidden;">
+					<!-- 固定列容器 -->
+					<div style="flex-shrink: 0; position: relative; z-index: 10; box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);">
+						<!-- 表头固定列 -->
+						<div style="width: 150px; padding: 10px; border-right: 1px solid #d0d0d0; text-align: center; background-color: #e8f4f8; font-weight: bold; border-bottom: 1px solid #d0d0d0; font-size: 14rpx;">
+							货品
+						</div>
+					<!-- 数据行固定列 -->
+					<div v-for="item in BatchCommodityList" :key="item.id" @click="goToGoodDetail(item)" class="commodity-name-cell" style="width: 150px; padding: 10px; border-right: 1px solid #e8e8e8; border-bottom: 1px solid #e8e8e8; text-align: center; font-weight: bold; color: #00aa00; font-size: 14rpx; background-color: #fff; cursor: pointer;">
+						{{ item.commodityName }}
+					</div>
+						<!-- 合计行固定列 -->
+						<div style="width: 150px; padding: 10px; border-right: 1px solid #d0d0d0; text-align: center; color: #333; background-color: #f5f5f5; font-weight: bold; border-top: 1px solid #d0d0d0; font-size: 14rpx;">
 							合计
 						</div>
-						<div style="flex: 3; padding: 8px;  text-align: center;font-weight: bold;">
-							总销量：{{ batchCommodityTotal.totalMount }}|总重：{{ batchCommodityTotal.totalWeight }}斤
-						</div>
-						<div style="flex: 2; padding: 8px; text-align: center;font-weight: bold;">
-							销售总额：{{ batchCommodityTotal.totalMoney }}元
-						</div>
 					</div>
-					<div style="display: flex; border-bottom: 1px solid #ddd;" >
+					
+					<!-- 可滚动列容器 -->
+					<scroll-view scroll-x="true" :style="{ flex: 1,  width: scrollableWidth + 'px' }" :show-scrollbar="false">
+						<div :style="{ display: 'inline-block', minWidth: scrollableWidth + 'px' }">
+							<!-- 表头可滚动列 -->
+							<div style="display: flex; background-color: #e8f4f8; font-weight: bold; border-bottom: 1px solid #d0d0d0; font-size: 14rpx;">
+								<div :style="{ width: columnWidths.sales + 'px', padding: '10px', borderRight: '1px solid #d0d0d0', textAlign: 'center', flexShrink: 0 }">
+									销量
+								</div>
+								<div :style="{ width: columnWidths.avgWeight + 'px', padding: '10px', borderRight: '1px solid #d0d0d0', textAlign: 'center', flexShrink: 0 }">
+									均重
+								</div>
+								<div :style="{ width: columnWidths.avgPrice + 'px', padding: '10px', borderRight: '1px solid #d0d0d0', textAlign: 'center', flexShrink: 0 }">
+									销售均价
+								</div>
+								<div :style="{ width: columnWidths.totalPrice + 'px', padding: '10px', borderRight: '1px solid #d0d0d0', textAlign: 'center', flexShrink: 0 }">
+									销售货款
+								</div>
+								<div :style="{ width: columnWidths.inventory + 'px', padding: '10px', textAlign: 'center', flexShrink: 0 }">
+									库存
+								</div>
+							</div>
+							
+							<!-- 数据行可滚动列 -->
+							<div v-for="item in BatchCommodityList" :key="item.id" style="display: flex; border-bottom: 1px solid #e8e8e8; background-color: #fff;">
+								<div :style="{ width: columnWidths.sales + 'px', padding: '10px', borderRight: '1px solid #e8e8e8', textAlign: 'center', fontWeight: 'normal', color: '#666', fontSize: '13rpx', flexShrink: 0 }">
+									<text v-for="model in item.outPutSaleMount">{{ model.mount }}{{ model.specName }}</text>/({{ item.saleWeight }}斤)
+								</div>
+								<div v-if="item.averageWeight!=undefined" :style="{ width: columnWidths.avgWeight + 'px', padding: '10px', borderRight: '1px solid #e8e8e8', textAlign: 'center', fontWeight: 'normal', color: '#666', fontSize: '13rpx', flexShrink: 0 }">
+									{{ item.averageWeight != null && item.averageWeight != 'NaN'&&item.averageWeight!='Infinity' ? item.averageWeight.toFixed(0) : '--' }}
+								</div>
+								<div v-if="item.averagePrice!=undefined" :style="{ width: columnWidths.avgPrice + 'px', padding: '10px', borderRight: '1px solid #e8e8e8', textAlign: 'center', fontWeight: 'normal', color: '#666', fontSize: '13rpx', flexShrink: 0 }">
+									{{ item.averagePrice != null && item.averagePrice != 'NaN' ? item.averagePrice.toFixed(1) : '--' }}
+								</div>
+								<div :style="{ width: columnWidths.totalPrice + 'px', padding: '10px', borderRight: '1px solid #e8e8e8', textAlign: 'center', fontWeight: 'bold', color: '#333', fontSize: '14rpx', flexShrink: 0 }">
+									{{ item.saleSubTotal }}
+								</div>
+								<div :style="{ width: columnWidths.inventory + 'px', padding: '10px', textAlign: 'center', fontWeight: 'normal', color: '#ff4444', fontSize: '13rpx', display: 'flex', justifyContent: 'center', flexShrink: 0 }">
+									<text v-for="model in item.outPutPurchaseInventories" v-if="item.outPutPurchaseInventories.length > 0">{{ model.mount }}{{ model.specName }}</text>
+									<text v-if="item.outPutPurchaseInventories.length === 0">0</text>
+								</div>
+							</div>
+							
+							<!-- 合计行可滚动列 -->
+							<div style="display: flex; background-color: #f5f5f5; font-weight: bold; border-top: 1px solid #d0d0d0; font-size: 14rpx;">
+								<div :style="{ width: columnWidths.sales + 'px', padding: '10px', borderRight: '1px solid #d0d0d0', textAlign: 'center', color: '#333', flexShrink: 0 }">
+									{{ batchCommodityTotal.totalMount }} /({{ batchCommodityTotal.totalWeight }})
+								</div>
+								<div :style="{ width: columnWidths.avgWeight + 'px', padding: '10px', borderRight: '1px solid #d0d0d0', textAlign: 'center', color: '#666', flexShrink: 0 }">
+									--
+								</div>
+								<div :style="{ width: columnWidths.avgPrice + 'px', padding: '10px', borderRight: '1px solid #d0d0d0', textAlign: 'center', color: '#666', flexShrink: 0 }">
+									--
+								</div>
+								<div :style="{ width: columnWidths.totalPrice + 'px', padding: '10px', borderRight: '1px solid #d0d0d0', textAlign: 'center', color: '#ff6600', flexShrink: 0 }">
+									{{ batchCommodityTotal.totalMoney }}
+								</div>
+								<div :style="{ width: columnWidths.inventory + 'px', padding: '10px', textAlign: 'center', color: '#333', flexShrink: 0 }">
+									数量:{{ batchCommodityTotal.totalMount }} 重量:{{ batchCommodityTotal.totalWeight }}
+								</div>
+							</div>
+						</div>
+					</scroll-view>
+				</div>
+				<div style="height: 100rpx;" v-if="BatchCommodityList.length == 0">
+					<div style=" margin-top: 40rpx; text-align: center;">
+						<uni-icons custom-prefix="iconfont" type="icon-kongliebiao" size="40"
+							color="#969696"></uni-icons>
+						<div style="margin-top: 10px; color: #969696;font-weight: bold;">无货品</div> <!-- 添加的文字 -->
+					</div>
+				</div>
+			</div>
+				<!-- 未结算费用卡片 -->
+				<div style="margin: 0 10rpx 15rpx 10rpx; background: white; border-radius: 10rpx; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
+					<!-- 费用标题 -->
+					<div style="display: flex; justify-content: space-between; align-items: center; padding: 12rpx 15rpx; border-bottom: 2rpx solid #f0f0f0;">
+						<div style="font-size: 16rpx; font-weight: bold; color: #333;">
+							<uni-icons custom-prefix="iconfont" type="icon-fuzhushuxian" size="18" color="#00aaff" style="margin-right: 5rpx;"></uni-icons>
+							未结算费用
+						</div>
+						<div>
+					<button @click="showAddexpenses" style="width: 100rpx; height: 28rpx; line-height: 28rpx; font-weight: bold; background-color: white; border: 2rpx solid #00aaff; color: #00aaff; border-radius: 5rpx; font-size: 12rpx; white-space: nowrap; padding: 0;">
+						添加费用
+					</button>
+				</div>
+					</div>
+					<!-- 费用表格 -->
+					<div>
 						<div
-							style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							代卖类型：{{ batchCommodityTotal.assistType == 0 ? '按批次' : batchCommodityTotal.assistType == 1 ?
-								'按数量' : batchCommodityTotal.assistType == 2 ? '按重量' : '' }}
+							style="display: flex; background-color: #e8f4f8; font-weight: bold; border-bottom: 1px solid #d0d0d0; font-size: 14rpx;">
+							<div style="flex: 2; padding: 10px; border-right: 1px solid #d0d0d0; text-align: center;">费用名
+							</div>
+							<div style="flex: 1; padding: 10px; border-right: 1px solid #d0d0d0; text-align: center;">金额
+							</div>
+							<div style="flex: 2; padding: 10px; border-right: 1px solid #d0d0d0; text-align: center;">添加时间
+							</div>
+							<div style="flex: 3; padding: 10px; border-right: 1px solid #d0d0d0; text-align: center;">备注
+							</div>
+							<div style="flex: 1; padding: 10px; text-align: center;">操作
+							</div>
 						</div>
-						<div style="flex: 2; padding: 8px;  text-align: center;font-weight: bold;" v-if="batchCommodityTotal.assistType != 0">
-							代卖单价：{{ batchCommodityTotal.assistUnitPrice }}/{{ batchCommodityTotal.assistType == 1 ? '数量' :
-								batchCommodityTotal.assistType == 2 ? '重量' : '' }}
+						<!-- 表格内容行 -->
+						<div style="display: flex; border-bottom: 1px solid #e8e8e8; background-color: #fff;" v-for="(item, index) in expenseList">
+							<div
+								style="flex: 2; padding: 10px; border-right: 1px solid #e8e8e8; text-align: center; font-weight: bold; color: #333; font-size: 14rpx;">
+								{{ item.expensesLabel }}
+							</div>
+							<div
+								style="flex: 1; padding: 10px; border-right: 1px solid #e8e8e8; text-align: center; font-weight: normal; color: #666; font-size: 13rpx;">
+								{{ item.expensesMoney }}
+							</div>
+							<div
+								style="flex: 2; padding: 10px; border-right: 1px solid #e8e8e8; text-align: center; font-weight: normal; color: #666; font-size: 13rpx;">
+								{{ item.createTime.replace("T", " ") }}
+							</div>
+							<div
+								style="flex: 3; padding: 10px; border-right: 1px solid #e8e8e8; text-align: center; font-weight: normal; color: #666; font-size: 13rpx;">
+								{{ item.remark }}
+							</div>
+							<div
+								style="flex: 1; padding: 10px; font-weight: normal; display: flex; justify-content: center; align-items: center; gap: 5rpx;">
+								<!-- <uni-icons @click="modifyExpense" custom-prefix="iconfont" type="icon-xiugai" size="16"
+									color="#00aaff" style="cursor: pointer;"></uni-icons> -->
+								<uni-icons @click="deleteExpense(item,index)" custom-prefix="iconfont" type="icon-shanchu"
+									size="16" color="#ff4444" style="cursor: pointer;"></uni-icons>
+							</div>
 						</div>
-						<div v-if="batchCommodityTotal.assistAmount != undefined" style="flex: 2; padding: 8px; text-align: center;font-weight: bold;">
-							代卖总费用：{{ batchCommodityTotal.assistAmount.toFixed(1) }}元
-						</div>
-					</div>
-					<div style="height: 100rpx;" v-if="BatchCommodityList.length == 0">
-						<div style=" margin-top: 40rpx; text-align: center;">
-							<uni-icons custom-prefix="iconfont" type="icon-kongliebiao" size="40"
-								color="#969696"></uni-icons>
-							<div style="margin-top: 10px; color: #969696;font-weight: bold;">无货品</div> <!-- 添加的文字 -->
+						<div style="height: 100rpx;" v-if="expenseList.length == 0">
+							<div style=" margin-top: 40rpx; text-align: center;">
+								<uni-icons custom-prefix="iconfont" type="icon-kongliebiao" size="40" color="#969696"
+									style="margin-right: 5rpx;"></uni-icons>
+								<div style="margin-top: 10px; color: #969696;font-weight: bold;">未添加费用</div> <!-- 添加的文字 -->
+							</div>
 						</div>
 					</div>
 				</div>
-				<div
-					style="display: flex; justify-content: space-between; align-items: center; width: 100%;margin-top: 20rpx;">
-					<div style="text-align: left;font-weight: bold;margin-left: 10rpx;"><uni-icons
-							custom-prefix="iconfont" type="icon-fuzhushuxian" size="20" color="#00aaff"
-							style="margin-right: 5rpx;"></uni-icons>成本费用</div>
-					<div style="text-align: right;"> <button @click="showAddexpenses"
-							style="height: 20rpx;line-height: 20rpx;font-weight: bold;margin-right: 10rpx;background-color: white;border: 1px solid dodgerblue;color: dodgerblue ;">添加费用</button>
+				
+				<!-- 备注卡片 -->
+				<div style="margin: 0 10rpx 15rpx 10rpx; background: white; border-radius: 10rpx; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
+					<!-- 备注标题 -->
+					<div style="display: flex; justify-content: space-between; align-items: center; padding: 12rpx 15rpx; border-bottom: 2rpx solid #f0f0f0;">
+						<div style="font-size: 16rpx; font-weight: bold; color: #333;">
+							<uni-icons type="compose" size="18" color="#00aaff" style="margin-right: 5rpx;"></uni-icons>
+							备注
+						</div>
+						<div>
+					<button style="width: 100rpx; height: 28rpx; line-height: 28rpx; font-weight: bold; background-color: white; border: 2rpx solid #00aaff; color: #00aaff; border-radius: 5rpx; font-size: 12rpx; white-space: nowrap; padding: 0;">
+						添加备注
+					</button>
+				</div>
+					</div>
+					<!-- 备注内容区 -->
+					<div style="padding: 15rpx; min-height: 60rpx;">
+						<div style="color: #999; font-size: 13rpx; text-align: center;">暂无备注</div>
 					</div>
 				</div>
-				<div style="margin-left: 5rpx;margin-right: 5rpx;margin-top: 10px;border: solid 1px #909090;">
-					<div
-						style="display: flex; background-color: #b9b9b9 ; font-weight: bold; border-bottom: 1px solid #f4f4f4;">
-						<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">费用名
-						</div>
-						<div style="flex: 1; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">金额
-						</div>
-						<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">添加时间
-						</div>
-						<div style="flex: 3; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">备注
-						</div>
-						<div style="flex: 1; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">操作
+				
+				<!-- 结算记录卡片 -->
+				<div style="margin: 0 10rpx 15rpx 10rpx; background: white; border-radius: 10rpx; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden;">
+					<!-- 结算记录标题 -->
+					<div style="display: flex; justify-content: space-between; align-items: center; padding: 12rpx 15rpx; border-bottom: 2rpx solid #f0f0f0;">
+						<div style="font-size: 16rpx; font-weight: bold; color: #333;">
+							<uni-icons custom-prefix="iconfont" type="icon-jiesuan" size="18" color="#ff6600" style="margin-right: 5rpx;"></uni-icons>
+							结算记录
 						</div>
 					</div>
+					<!-- 结算记录表格 -->
+					<div>
+						<div style="display: flex; background-color: #e8f4f8; font-weight: bold; border-bottom: 1px solid #d0d0d0; font-size: 14rpx;">
+							<div style="flex: 2; padding: 10px; border-right: 1px solid #d0d0d0; text-align: center;">结算时间</div>
+							<div style="flex: 1; padding: 10px; border-right: 1px solid #d0d0d0; text-align: center;">结算金额</div>
+							<div style="flex: 1; padding: 10px; border-right: 1px solid #d0d0d0; text-align: center;">操作人</div>
+							<div style="flex: 2; padding: 10px; border-right: 1px solid #d0d0d0; text-align: center;">备注</div>
+							<div style="flex: 1; padding: 10px; text-align: center;">操作</div>
+						</div>
 					<!-- 表格内容行 -->
-					<div style="display: flex; border-bottom: 1px solid #ddd;" v-for="(item, index) in expenseList">
-						<div
-							style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							{{ item.expensesLabel }}
+					<div 
+						style="display: flex; border-bottom: 1px solid #e8e8e8; background-color: #fff; cursor: pointer; transition: background-color 0.2s;" 
+						v-for="(item, index) in settleRecords" 
+						:key="item.id"
+						@click="viewSettleDetail(item)"
+						onmouseover="this.style.backgroundColor='#f5f5f5';"
+						onmouseout="this.style.backgroundColor='#fff';"
+					>
+						<div style="flex: 2; padding: 10px; border-right: 1px solid #e8e8e8; text-align: center; font-weight: normal; color: #666; font-size: 13rpx;">
+							{{ item.settleTime ? new Date(item.settleTime).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(/\//g, '-') : '--' }}
 						</div>
-						<div
-							style="flex: 1; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							{{ item.expensesMoney }}
+						<div style="flex: 1; padding: 10px; border-right: 1px solid #e8e8e8; text-align: center; font-weight: bold; color: #ff6600; font-size: 14rpx;">
+							{{ item.settleMoney ? item.settleMoney.toFixed(2) : '0.00' }}
 						</div>
-						<div
-							style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							{{ item.createTime.replace("T", " ") }}
+						<div style="flex: 1; padding: 10px; border-right: 1px solid #e8e8e8; text-align: center; font-weight: normal; color: #666; font-size: 13rpx;">
+							{{ item.operatorName || '--' }}
 						</div>
-						<div
-							style="flex: 3; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							{{ item.remark }}
+						<div style="flex: 2; padding: 10px; border-right: 1px solid #e8e8e8; text-align: center; font-weight: normal; color: #666; font-size: 13rpx;">
+							{{ item.remark || '--' }}
 						</div>
-						<div
-							style="flex: 1; padding: 8px; border-right: 1px solid #ddd; font-weight: bold; display: flex; justify-content: center; align-items: center;">
-							<uni-icons @click="modifyExpense" custom-prefix="iconfont" type="icon-xiugai" size="20"
-								color="#7a7a7a" style="margin-right: 5rpx;"></uni-icons>|
-							<uni-icons @click="deleteExpense(index)" custom-prefix="iconfont" type="icon-shanchu"
-								size="20" color="#aa0000 " style="margin-left: 5rpx;"></uni-icons>
+						<div style="flex: 1; padding: 10px; font-weight: normal; display: flex; justify-content: center; align-items: center;">
+						<button 
+							@click.stop="cancelSettle(item)" 
+							style="height: 20rpx; line-height: 20rpx; padding: 0 6rpx; font-weight: 500; background-color: white; border: 1rpx solid #ff4444; color: #ff4444; border-radius: 3rpx; font-size: 10rpx; cursor: pointer; transition: all 0.3s ease; white-space: nowrap;"
+							onmouseover="this.style.backgroundColor='#ff4444'; this.style.color='white';"
+							onmouseout="this.style.backgroundColor='white'; this.style.color='#ff4444';"
+						>
+							取消结算
+						</button>
 						</div>
 					</div>
-					<div style="height: 100rpx;" v-if="expenseList.length == 0">
-						<div style=" margin-top: 40rpx; text-align: center;">
-							<uni-icons custom-prefix="iconfont" type="icon-kongliebiao" size="40" color="#969696"
-								style="margin-right: 5rpx;"></uni-icons>
-							<div style="margin-top: 10px; color: #969696;font-weight: bold;">未添加费用</div> <!-- 添加的文字 -->
+						<!-- 无记录提示 -->
+						<div style="height: 100rpx;" v-if="settleRecords.length === 0">
+							<div style="margin-top: 40rpx; text-align: center;">
+								<uni-icons custom-prefix="iconfont" type="icon-kongliebiao" size="40" color="#969696"></uni-icons>
+								<div style="margin-top: 10px; color: #969696; font-weight: bold;">暂无结算记录</div>
+							</div>
 						</div>
 					</div>
 				</div>
 			</scroll-view>
 
-			<div style="position: fixed;bottom: 0;height: 30rpx;background: #e5e5e5;width: 100%;" v-if="!showKeyBoard1">
-				<div v-if="settingMoney!=undefined&&batchCommodityTotal.totalMoney!=undefined&&batchCommodityTotal.assistAmount!=undefined&&totalSettle!=undefined" 
-					style="height: 1rpx;width: 100%;background-color: #909090;line-height: 30rpx;font-weight: bold;font-size: 12rpx;">
-					<div style="margin-left: 10rpx;"> 结算金额：{{ settingMoney.toFixed(1) }}元(营销总额{{batchCommodityTotal.totalMoney.toFixed(1)
-						}}-代卖费用{{ batchCommodityTotal.assistAmount.toFixed(1) }}-其他费用{{totalSettle.toFixed(1) }})</div>
-				</div>
-				<button
-					style="position: fixed;width: 50rpx;right: 10px;font-weight: bold;height: 25rpx;background-color: #008200;color: white;margin-top: 3rpx;line-height: 25rpx;"
-					@click="settle">结算</button>
+			<!-- 底部结算区域 -->
+		<div style="height: 60rpx; background: #ffffff; border-top: 2rpx solid #e0e0e0; display: flex; align-items: center; justify-content: space-between; padding: 0 15rpx; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); flex-shrink: 0;" v-if="!showKeyBoard1">
+			<div v-if="settingMoney!=undefined&&batchCommodityTotal.totalMoney!=undefined&&totalSettle!=undefined" 
+				style="font-weight: bold; font-size: 14rpx; color: #333; flex: 1;">
+				<text style="color: #666;">应结算金额：</text>
+				<text style="color: #ff6600; font-size: 20rpx;">{{ settingMoney.toFixed(1) }}</text>
+				<text style="color: #ff6600; font-size: 14rpx;">元</text>
+				<text style="color: #999; font-size: 12rpx; margin-left: 10rpx;">(销售{{batchCommodityTotal.totalMoney.toFixed(1)}}-代卖{{ calculatedAssistAmount.toFixed(1) }}-费用{{totalSettle.toFixed(1)}})</text>
+			</div>
+				<div>
+			<button
+				style="width: 100rpx; height: 40rpx; font-weight: bold; background: linear-gradient(135deg, #ff8800 0%, #ff6600 100%); color: white; border: none; border-radius: 8rpx; line-height: 40rpx; font-size: 15rpx; box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3); white-space: nowrap; padding: 0; flex-shrink: 0;"
+				@click="settle">结算</button>
+			</div>
 			</div>
 		</div>
 		<!-- 美化的新增费用弹窗 -->
@@ -362,12 +486,24 @@
 			<div class="expense-modal-container" v-if="assistAmountShow">
 				<div class="card expense-card" >
 					<div class="card-header">
+						<button 
+							class="header-btn-cancel" 
+							@click="handleModalClose"
+							type="button"
+						>
+							取消
+						</button>
 						<div class="header-content">
 							<h3>代卖费设置</h3>
 						</div>
-						<div class="modal-close-btn" @click="handleModalClose">
-							<uni-icons custom-prefix="iconfont" type="icon-icon-cross-squre" size="24" color="red"></uni-icons>
-						</div>
+						<button 
+							class="header-btn-confirm" 
+							@click="handleConfirmAssist" 
+							:disabled="!isFormValid"
+							type="button"
+						>
+							确认
+						</button>
 					</div>
 					
 					<div class="card-body">
@@ -416,50 +552,64 @@
 								</div>
 								
 								<div class="amount-setting-container">
-									<!-- 快捷金额按钮 -->
-									<!-- <div class="quick-amounts">
-										<button 
-											type="button"
-											class="quick-amount-btn"
-											:class="{ 'active': isQuickAmountActive(amount) }"
-											v-for="amount in getQuickAmounts()"
-											:key="amount"
-											@click="setQuickAmount(amount)"
-										>
-											{{ amount }}元
-										</button>
-									</div> -->
-									
-									<!-- 自定义金额输入 -->
-									<div class="custom-amount-input">
-
-										<u--input v-if="batchAssist.assistType === '0'" placeholder="请输入金额" border="surround" style="width: 200rpx;" v-model="batchAssist.assistAmount"
-											clearable></u--input>
-											<u--input v-if="batchAssist.assistType != '0'" placeholder="请输入金额" border="surround" style="width: 200rpx;" v-model="batchAssist.assistUnitPrice"
-											clearable></u--input>
+								<!-- 按批次 - 输入代卖费总金额 -->
+								<div class="custom-amount-input" v-if="batchAssist.assistType === '0'">
+									<div class="input-hint">请输入本批次的代卖费总金额</div>
+									<div class="input-row">
+										<u--input 
+											placeholder="请输入代卖费总金额" 
+											border="surround" 
+											style="width: 200rpx;" 
+											v-model="batchAssist.assistAmount"
+											type="number"
+											clearable>
+										</u--input>
+										<div class="input-unit">元</div>
 									</div>
 								</div>
-							</div>
-
-							<!-- 操作按钮 -->
-							<div class="buttons">
-								<button 
-									class="btn-cancel" 
-									@click="handleModalClose"
-									type="button"
-								>
-									<!-- <i class="fas fa-arrow-left"></i> -->
-									取消
-								</button>
-								<button 
-									class="btn-confirm" 
-									@click="handleConfirmAssist" 
-									:disabled="!isFormValid"
-									type="button"
-								>
-									<!-- <i class="fas fa-check"></i> -->
-									确认添加
-								</button>
+									
+								<!-- 按数量 - 显示货品列表并输入单价 -->
+								<div class="commodity-list-container" v-if="batchAssist.assistType === '1'">
+									<div class="input-hint">请为每个货品设置代卖单价</div>
+									<scroll-view class="commodity-scroll" scroll-y="true" :style="{ maxHeight: '250px' }">
+										<div class="commodity-item" v-for="(item, index) in BatchCommodityList" :key="index">
+											<div class="commodity-name">{{ item.commodityName }}</div>
+											<div class="commodity-input-wrapper">
+												<u--input 
+													placeholder="单价" 
+													border="surround" 
+													style="width: 100px;" 
+													v-model="item.assistUnitPrice"
+													type="number"
+													clearable>
+												</u--input>
+												<span class="input-unit-inline">元</span>
+											</div>
+										</div>
+									</scroll-view>
+								</div>
+								
+								<!-- 按重量 - 显示货品列表并输入单价 -->
+								<div class="commodity-list-container" v-if="batchAssist.assistType === '2'">
+									<div class="input-hint">请为每个货品设置代卖单价</div>
+									<scroll-view class="commodity-scroll" scroll-y="true" :style="{ maxHeight: '250px' }">
+										<div class="commodity-item" v-for="(item, index) in BatchCommodityList" :key="index">
+											<div class="commodity-name">{{ item.commodityName }}</div>
+											<div class="commodity-input-wrapper">
+												<u--input 
+													placeholder="单价" 
+													border="surround" 
+													style="width: 100px;" 
+													v-model="item.assistUnitPrice"
+													type="number"
+													clearable>
+												</u--input>
+												<span class="input-unit-inline">元</span>
+											</div>
+										</div>
+									</scroll-view>
+								</div>
+								</div>
 							</div>
 						</div>
 						
@@ -491,13 +641,31 @@ import expense from '../../api/expense/expense'
 import batch from '../../api/batch/batch';
 import labelApi from '../../api/label/labelApi';
 import DropdownOperater from './component/DropdownOperater.vue';
-import SettlementModal from '../../components/SettlementModal.vue'; 
+import SettlementModal from '../../components/SettlementModal.vue';
+import CustomTabs from '../../components/CustomTabs/CustomTabs.vue';
 export default {
 	components: {
 		DropdownOperater,
-		SettlementModal
+		SettlementModal,
+		CustomTabs
 	},
 	computed: {
+		// 计算各列的动态宽度
+		columnWidths() {
+			return {
+				sales: Math.max(150, this.scrollableWidth * 0.25), // 销量列
+				avgWeight: Math.max(100, this.scrollableWidth * 0.15), // 均重列
+				avgPrice: Math.max(100, this.scrollableWidth * 0.15), // 销售均价列
+				totalPrice: Math.max(120, this.scrollableWidth * 0.2), // 销售货款列
+				inventory: Math.max(150, this.scrollableWidth * 0.25) // 库存列
+			};
+		},
+		
+		// 计算实际代卖费总额（用于显示）
+		calculatedAssistAmount() {
+			return this.calculateAssistAmount();
+		},
+		
 		// 表单验证
 		isFormValid() {
 			console.log("this.batchAssist",this.batchAssist);
@@ -508,9 +676,14 @@ export default {
 			const assistType = this.batchAssist.assistType;
 			
 			if (assistType === "0") {
+				// 按批次：验证总金额
 				return this.isValidAmount(this.batchAssist.assistAmount);
 			} else if (assistType === "1" || assistType === "2") {
-				return this.isValidAmount(this.batchAssist.assistUnitPrice);
+				// 按数量或按重量：验证至少有一个货品设置了单价
+				if (!this.BatchCommodityList || this.BatchCommodityList.length === 0) {
+					return false;
+				}
+				return this.BatchCommodityList.some(item => this.isValidAmount(item.assistUnitPrice));
 			}
 			console.log("this.batchAssist2",this.batchAssist);
 			return false;
@@ -545,40 +718,43 @@ export default {
 			expenseLabelAddShow: false,
 			newExpenseLabel: { label: '' },
 			isEditingLabels: false,
-			companyId: "",
-			shipperAddedName: "",
-			shipperList: [],
-			batshNewCode: "",
-			expenseList: [],
-			copyLastBatch: false,
-			selectBatch: null,
-			batchCommodityTotal: {},
-			batchList: [],
-			batchShowList: [],
-			BatchCommodityList: [],
-			settingMoney: 0,
-			totalSettle: 0,
-			WindowHeight: 0,
-			scrollHeight: 0,
-			batchCalcType: 1,
-			showSettlementModal: false,
-			customerData: {},
-			initialSettlementData: {},
-			tabList: [{
-				name: '在售',
-				value: 1
-			}, {
-				name: '售罄',
-				value: 0
-			}, {
-				name: '结算中',
-				value: 2
-			},
-			// {
-			// 	name: '已结清',
-			// 	value: 2
-			// },
-			],
+		companyId: "",
+		shipperAddedName: "",
+		shipperList: [],
+		batshNewCode: "",
+		expenseList: [],
+		copyLastBatch: false,
+		selectBatch: null,
+		batchCommodityTotal: {},
+		batchList: [],
+		batchShowList: [],
+		BatchCommodityList: [],
+		settingMoney: 0,
+		totalSettle: 0,
+		WindowHeight: 0,
+		batchCalcType: 1,
+		showSettlementModal: false,
+		customerData: {},
+		initialSettlementData: {},
+		showKeyBoard1: false, // 控制键盘显示状态
+		scrollableWidth: 0, // 可滚动区域的宽度
+		settleRecords: [], // 结算记录列表
+		currentTabIndex: 0, // 当前选中的tab索引
+		tabList: [{
+			name: '在售',
+			value: 1
+		}, {
+			name: '售罄',
+			value: 0
+		}, {
+			name: '已结算',
+			value: 2
+		},
+		// {
+		// 	name: '已结清',
+		// 	value: 2
+		// },
+		],
 			operatorBtnoptions: [{
 				text: "按数量",
 				value: 1
@@ -594,9 +770,143 @@ export default {
 		this.getAllBatch();
 		this.getExpenseLabel();
 		this.WindowHeight = uni.getWindowInfo().windowHeight;
-		this.scrollHeight = this.WindowHeight - 80;
+		
+		// 延迟计算宽度，确保DOM已渲染
+		this.$nextTick(() => {
+			setTimeout(() => {
+				this.calculateScrollableWidth();
+				// 刷新tabs组件下划线
+				this.refreshTabs();
+			}, 100);
+		});
+		
+		// 监听窗口大小变化
+		// #ifdef H5
+		window.addEventListener('resize', () => {
+			setTimeout(() => {
+				this.calculateScrollableWidth();
+			}, 100);
+		});
+		// #endif
+	},
+	onShow() {
+		// 页面显示时刷新tabs组件
+		this.$nextTick(() => {
+			setTimeout(() => {
+				this.refreshTabs();
+			}, 200);
+		});
+	},
+	activated() {
+		// 如果使用了 keep-alive，组件激活时也刷新
+		this.$nextTick(() => {
+			setTimeout(() => {
+				this.refreshTabs();
+			}, 200);
+		});
+	},
+	beforeDestroy() {
+		// 移除窗口大小变化监听
+		// #ifdef H5
+		window.removeEventListener('resize', this.calculateScrollableWidth);
+		// #endif
 	},
 	methods: {
+		// 跳转到货品销售明细
+		goToGoodDetail(item) {
+			if (!item || !item.id) {
+				uni.showToast({
+					title: '货品信息不完整',
+					icon: 'none'
+				});
+				return;
+			}
+			
+			uni.navigateTo({
+				url: `/pages/settlement/goodSaleDetail?id=${item.id}&name=${encodeURIComponent(item.commodityName)}&isSettled=false`
+			});
+		},
+		// 计算可滚动区域宽度
+		calculateScrollableWidth() {
+			// 使用选择器查询获取右侧容器的实际宽度
+			const query = uni.createSelectorQuery().in(this);
+			query.select('.right-content-container').boundingClientRect(data => {
+				if (data) {
+					// 固定列宽度（150px）
+					const fixedColumnWidth = 150;
+					// 预留边距和可能的滚动条
+					const reservedSpace = 10;
+					
+					// 可滚动区域宽度 = 容器宽度 - 固定列宽度 - 预留空间
+					this.scrollableWidth = data.width - fixedColumnWidth - reservedSpace-115;
+					
+					// 确保最小宽度
+					if (this.scrollableWidth < 300) {
+						this.scrollableWidth = 300;
+					}
+					
+					console.log('右侧容器宽度:', data.width, '可滚动宽度:', this.scrollableWidth);
+				} else {
+					// 如果无法获取容器宽度，使用备用方案
+					const windowInfo = uni.getWindowInfo();
+					const windowWidth = windowInfo.windowWidth;
+					const leftSideWidth = 100;
+					const fixedColumnWidth = 150;
+					this.scrollableWidth = Math.max(300, windowWidth - leftSideWidth - fixedColumnWidth - 20);
+					console.log('使用备用方案计算宽度:', this.scrollableWidth);
+				}
+			}).exec();
+		},
+		// 计算代卖费总额
+		calculateAssistAmount() {
+			// 如果没有批次选中或没有代卖费设置，返回0
+			if (!this.batchCommodityTotal || !this.batchCommodityTotal.assistType) {
+				return 0;
+			}
+			console.log("calculateAssistAmount");
+			
+			const assistType = String(this.batchCommodityTotal.assistType);
+			
+			// 按批次：直接返回代卖费总金额（取绝对值确保返回正数）
+			if (assistType === '0') {
+				return Math.abs(parseFloat(this.batchCommodityTotal.assistAmount) || 0);
+			}
+			
+			// 按数量或按重量：计算每个货品的代卖费
+			let totalAssistAmount = 0;
+			
+
+			console.log("BatchCommodityList",this.BatchCommodityList);
+			console.log("assistType",assistType);
+
+			if (this.BatchCommodityList && this.BatchCommodityList.length > 0) {
+				for (let i = 0; i < this.BatchCommodityList.length; i++) {
+					const item = this.BatchCommodityList[i];
+					const unitPrice = parseFloat(item.settlementUnitPrice) || 0;
+					console.log("unitPrice",unitPrice);
+					if (assistType === '1') {
+						console.log("item",item);
+						// 按数量：代卖费单价 * 货品数量
+						let totalMount = 0;
+						if (item.outPutPurchaseInventories && item.outPutPurchaseInventories.length > 0) {
+							for (let k = 0; k < item.outPutPurchaseInventories.length; k++) {
+								totalMount += item.outPutPurchaseInventories[k].mount || 0;
+							}
+						}
+						totalAssistAmount += unitPrice * totalMount;
+						console.log("totalAssistAmount",totalAssistAmount);
+					} else if (assistType === '2') {
+						// 按重量：代卖费单价 * 货品总重量
+						const weight = parseFloat(item.initWeight) || 0;
+						totalAssistAmount += unitPrice * weight;
+					}
+				}
+			}
+			
+			// 返回绝对值，确保代卖费始终为正数
+			return Math.abs(totalAssistAmount);
+		},
+		
 		operabtnChange(e) {
 			console.log("e", e)
 		},
@@ -605,93 +915,228 @@ export default {
 			for (var i = 0; i < this.expenseList.length; i++) {
 				this.totalSettle += this.expenseList[i].expensesMoney;
 			}
-			this.settingMoney = this.batchCommodityTotal.totalMoney - this.totalSettle - this.batchCommodityTotal.assistAmount;
+			
+			// 计算代卖费总额
+			const assistAmount = this.calculateAssistAmount();
+			
+			// 应结算金额 = 销售货款 - 代卖费 - 费用
+			this.settingMoney = (this.batchCommodityTotal.totalMoney || 0) - assistAmount - this.totalSettle;
 		},
-		deleteExpense(index) {
-			this.expenseList.splice(index, 1);
-			this.settingRecount();
-		},
-		changeType(item) {
-			this.batchShowList = []
-			this.batchShowList = this.batchList.filter(batch => {
-				return batch.saleStatus === item.value
-			})
-			this.BatchCommodityList = [];
-			this.expenseList = [];
-			this.selectBatch = null;
-			if (this.batchShowList?.length > 0) {
-				this.exchangeBatch(this.batchShowList[0])
-			}
-		},
-		settle() {
-			if (!this.selectBatch) return;
-			let that = this;
-			this.showSettlementModal = true;
-			// expense.deleteByBatchId(this.selectBatch.id).then(res => {
-			// 	expense.createListExpense(that.expenseList).then(res2 => {
-			// 		if (res2.code === 200) {
-			// 			that.setSaleStatus(2);
-			// 			uni.showToast({
-			// 				title: "结算成功",
-			// 				icon: "success"
-			// 			})
-			// 		} else {
-			// 			uni.showToast({
-			// 				title: "结算失败",
-			// 				icon: "error"
-			// 			})
-			// 		}
-			// 	})
+		deleteExpense(data,index) {
 
-			// })
-		},
-		getExpenseByBatchId(batchId) {
-			expense.getAllExpenseByBatchId(batchId).then(res => {
-				this.expenseList = res.data;
-			})
-		},
-		padZero(num) {
-			return num.toString().padStart(2, '0');
-		},
-		AddExpense() {
-			if (!this.expenseAdded.labelId || !this.expenseAdded.money) {
+		// 调用接口添加费用
+		batch.CancelBatchExpense(data).then(res => {			
+			if (res.code === 200) {
 				uni.showToast({
-					title: "请选择费用项并输入金额",
+					title: "删除成功",
+					icon: "success"
+				});
+				
+				this.expenseList.splice(index, 1);
+				this.settingRecount();
+			} else {
+				uni.showToast({
+					title: res.message || "删除失败",
+					icon: "none"
+				});
+			}
+		}).catch(error => {
+			console.error("删除费用失败:", error);
+			uni.showToast({
+				title: "删除失败，请重试",
+				icon: "none"
+			});
+		});
+
+		},
+refreshTabs() {
+	// 刷新tabs组件的下划线显示
+	if (this.$refs.customTabs && this.$refs.customTabs.refresh) {
+		this.$refs.customTabs.refresh();
+	}
+},
+changeType(item) {
+	// 更新当前选中的tab索引
+	this.currentTabIndex = item.index;
+	
+	this.batchShowList = []
+	this.batchShowList = this.batchList.filter(batch => {
+		return batch.saleStatus === item.value
+	})
+	this.BatchCommodityList = [];
+	this.expenseList = [];
+	this.settleRecords = [];
+	this.selectBatch = null;
+	if (this.batchShowList?.length > 0) {
+		this.exchangeBatch(this.batchShowList[0])
+	}
+},
+		settle() {
+			if (!this.selectBatch) {
+				uni.showToast({
+					title: "请选择批次",
 					icon: "none"
 				});
 				return;
 			}
 			
-			var newExpense = JSON.parse(JSON.stringify(this.expenseAdded))
-			const now = new Date();
-			const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-
-			// 上海时区偏移（毫秒）
-			const offset = 8 * 60 * 60 * 1000;
-
-			// 上海时间的 Date 对象
-			const shanghaiTime = new Date(utc + offset);
-			const year = shanghaiTime.getFullYear();
-			const month = this.padZero(shanghaiTime.getMonth() + 1); // 月份从0开始
-			const day = this.padZero(shanghaiTime.getDate());
-			const hour = this.padZero(shanghaiTime.getHours());
-			const minute = this.padZero(shanghaiTime.getMinutes());
-			const second = this.padZero(shanghaiTime.getSeconds());
-
-			const iso8601Time = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
-
-			this.expenseList.push({
-				id: "",
-				BatchId: this.selectBatch.id,
-				createTime: iso8601Time,
-				expensesMoney: parseFloat(newExpense.money),
-				remark: newExpense.remark || "",
-				expensesStatus: 1,
-				expensesLabel: newExpense.label,
-				labelId: newExpense.labelId
-			})
-			this.closeExpenseModal();
+			// 跳转到结算确认页面
+			uni.navigateTo({
+				url: `/pages/settlement/settlementConfirm?batchId=${this.selectBatch.id}`
+			});
+		},
+	getExpenseByBatchId(batchId) {
+		expense.getAllUnsettleExpenseByBatchId(batchId).then(res => {
+			this.expenseList = res.data;
 			this.settingRecount();
+		})
+	},
+	// 获取结算记录
+	getSettleRecords(batchId) {
+		batch.GetSettleRecordsByBatchIdWithJoin(batchId).then(res => {
+			if (res.code === 200) {
+				this.settleRecords = res.data || [];
+			} else {
+				this.settleRecords = [];
+			}
+		}).catch(error => {
+			console.error("获取结算记录失败:", error);
+			this.settleRecords = [];
+		});
+	},
+	// 查看结算详情
+	viewSettleDetail(record) {
+		if (!record || !record.id) {
+			uni.showToast({
+				title: "结算记录信息不完整",
+				icon: "none"
+			});
+			return;
+		}
+		
+		// 获取当前批次信息
+		const batchCode = this.selectBatch?.batchCode || '';
+		const shipperName = this.selectBatch?.shipperName || '';
+		const assistType = this.selectBatch?.assistType || 0;
+		const assistAmount = this.selectBatch?.assistAmount || 0;
+		const batchId = this.selectBatch?.id || '';
+		
+		// 跳转到结算记录详情页，传递批次信息
+		uni.navigateTo({
+			url: `/pages/settlement/settlementDetail?settleRecordId=${record.id}&batchId=${batchId}&batchCode=${encodeURIComponent(batchCode)}&shipperName=${encodeURIComponent(shipperName)}&assistType=${assistType}&assistAmount=${assistAmount}`
+		});
+	},
+	// 取消结算
+	cancelSettle(record) {
+		if (!record || !record.id) {
+			uni.showToast({
+				title: "结算记录信息不完整",
+				icon: "none"
+			});
+			return;
+		}
+		
+		uni.showModal({
+			title: '确认取消结算',
+			content: `确定要取消这笔 ${record.settleMoney ? record.settleMoney.toFixed(2) : '0.00'} 元的结算吗？取消后将恢复批次的未结算状态。`,
+			confirmColor: '#ff4444',
+			success: (res) => {
+				if (res.confirm) {
+					uni.showLoading({
+						title: "处理中..."
+					});
+					
+					// 调用取消结算API
+					batch.CancelBatchSettle(record.id).then(response => {
+						uni.hideLoading();
+						
+						if (response.code === 200) {
+							uni.showToast({
+								title: "取消结算成功",
+								icon: "success"
+							});
+							
+							// 刷新数据
+							if (this.selectBatch) {
+								this.getSettleRecords(this.selectBatch.id);
+								this.getBatchCommodityList(this.selectBatch.id);
+								this.getExpenseByBatchId(this.selectBatch.id);
+							}
+						} else {
+							uni.showToast({
+								title: response.message || "取消结算失败",
+								icon: "none"
+							});
+						}
+					}).catch(error => {
+						uni.hideLoading();
+						console.error("取消结算失败:", error);
+						uni.showToast({
+							title: "网络错误，请重试",
+							icon: "none"
+						});
+					});
+				}
+			}
+		});
+	},
+		padZero(num) {
+			return num.toString().padStart(2, '0');
+		},
+AddExpense() {
+	if (!this.expenseAdded.label || !this.expenseAdded.money) {
+		uni.showToast({
+			title: "请选择费用项并输入金额",
+			icon: "none"
+		});
+		return;
+	}
+		
+		// 获取用户信息
+		var userInfo = uni.getStorageSync("userInfo");
+		
+	// 构建请求数据
+	const expenseData = {
+		batchId: this.selectBatch.id,
+		expensesLabel: this.expenseAdded.label,
+		expensesMoney: parseFloat(this.expenseAdded.money),
+		remark: this.expenseAdded.remark || "",
+		operatorId: userInfo.id
+	};
+		
+		uni.showLoading({
+			title: "添加中..."
+		});
+		
+		// 调用接口添加费用
+		batch.AddBatchExpense(expenseData).then(res => {
+			uni.hideLoading();
+			
+			if (res.code === 200) {
+				uni.showToast({
+					title: "添加成功",
+					icon: "success"
+				});
+				
+				// 关闭弹窗
+				this.closeExpenseModal();
+				
+				// 刷新未结算费用列表
+				this.getExpenseByBatchId(this.selectBatch.id);
+			} else {
+				uni.showToast({
+					title: res.message || "添加失败",
+					icon: "none"
+				});
+			}
+		}).catch(error => {
+			uni.hideLoading();
+			console.error("添加费用失败:", error);
+			uni.showToast({
+				title: "添加失败，请重试",
+				icon: "none"
+			});
+		});
 		},
 		showAddexpenses() {
 			if (!this.selectBatch) return;
@@ -850,24 +1295,41 @@ export default {
 		},
 		
 		// 选择费用类型
-		selectAssistType(type) {
-			if (this.batchAssist) {
-				this.batchAssist.assistType = type;
-				// 不清空金额字段，让用户可以继续使用之前的输入
-			}
-		},
-		
-		// 获取金额标题
-		getAmountTitle() {
-			if (!this.batchAssist.assistType) return '金额设置';
+	selectAssistType(type) {
+		if (this.batchAssist) {
+			const oldType = this.batchAssist.assistType;
+			this.batchAssist.assistType = type;
 			
-			const titles = {
-				'0': '总金额',
-				'1': '单位金额',
-				'2': '单位金额'
-			};
-			return titles[this.batchAssist.assistType] || '金额设置';
-		},
+			// 切换类型时的处理
+			if (oldType !== type) {
+				// 从按批次切换到按数量/重量时，清空批次总金额
+				if (oldType === '0' && (type === '1' || type === '2')) {
+					this.batchAssist.assistAmount = '';
+				}
+				// 从按数量/重量切换到按批次时，清空货品单价
+				if ((oldType === '1' || oldType === '2') && type === '0') {
+					if (this.BatchCommodityList) {
+						this.BatchCommodityList.forEach(item => {
+							this.$set(item, 'assistUnitPrice', '');
+						});
+					}
+				}
+				// 在按数量和按重量之间切换时，保留货品单价输入
+			}
+		}
+	},
+		
+	// 获取金额标题
+	getAmountTitle() {
+		if (!this.batchAssist.assistType) return '金额设置';
+		
+		const titles = {
+			'0': '代卖费总金额',
+			'1': '代卖单价（按数量）',
+			'2': '代卖单价（按重量）'
+		};
+		return titles[this.batchAssist.assistType] || '金额设置';
+	},
 		
 		// 获取金额占位符
 		getAmountPlaceholder() {
@@ -971,109 +1433,143 @@ export default {
 			this.UpdateBatchAssist();
 		},
 		
-		UpdateBatchAssist() {
-			try {
-				console.log("this.batchAssist",this.batchAssist);
-				// 数据验证
-				if (!this.batchAssist || !this.selectBatch) {
-					uni.showToast({
-						title: "数据异常，请重试",
-						icon: "none"
-					});
-					return;
-				}
-				console.log("进入1");
-				// 深拷贝数据
-				const newBatch = {
-					...this.batchAssist,
-					id: this.selectBatch.id,
-					batchCode: this.selectBatch.batchCode,
-					companyId: this.selectBatch.companyId,
-					shipperId: this.selectBatch.shipperId
-				};
-				
-				// 类型转换和验证
-				const assistType = parseInt(newBatch.assistType);
-				if (isNaN(assistType) || assistType < 0 || assistType > 2) {
-					uni.showToast({
-						title: "费用类型无效",
-						icon: "none"
-					});
-					return;
-				}
-				console.log("进入2");
-				
-				newBatch.assistType = assistType;
-				
-				// 根据费用类型设置金额
-				if (assistType === 0) {
-					// 按批次
-					newBatch.assistAmount = this.parseAmount(this.batchAssist.assistAmount);
-					newBatch.assistUnitPrice = 0;
-					
-					if (newBatch.assistAmount <= 0) {
-						uni.showToast({
-							title: "请输入有效的总金额",
-							icon: "none"
-						});
-						return;
-					}
-				} else {
-					// 按数量或重量
-					newBatch.assistUnitPrice = this.parseAmount(this.batchAssist.assistUnitPrice);
-					newBatch.assistAmount = 0;
-					
-					if (newBatch.assistUnitPrice <= 0) {
-						uni.showToast({
-							title: "请输入有效的单位金额",
-							icon: "none"
-						});
-						return;
-					}
-				}
-				
-				// 显示加载状态
-				uni.showLoading({
-					title: "处理中..."
-				});
-				
-				console.log("提交的费用数据:", newBatch);
-				
-				batch.UpdateBatchAssist(newBatch).then(res => {
-					uni.hideLoading();
-					
-					if (res && res.code === 200) {
-						uni.showToast({
-							title: "添加成功",
-							icon: "success"
-						});
-						
-						// 关闭弹窗并刷新数据
-						this.handleModalClose();
-						this.getBatchCommodityList(this.selectBatch.id);
-					} else {
-						uni.showToast({
-							title: res?.message || "添加失败",
-							icon: "none"
-						});
-					}
-				}).catch(error => {
-					uni.hideLoading();
-					console.error("添加费用失败:", error);
-					uni.showToast({
-						title: "网络错误，请重试",
-						icon: "none"
-					});
-				});
-				
-			} catch (error) {
-				console.error("UpdateBatchAssist 错误:", error);
+	UpdateBatchAssist() {
+		try {
+			console.log("this.batchAssist", this.batchAssist);
+			
+			// 数据验证
+			if (!this.batchAssist || !this.selectBatch) {
 				uni.showToast({
-					title: "操作失败，请重试",
+					title: "数据异常，请重试",
+					icon: "none"
+				});
+				return;
+			}
+			
+			// 类型转换和验证
+			const assistType = parseInt(this.batchAssist.assistType);
+			if (isNaN(assistType) || assistType < 0 || assistType > 2) {
+				uni.showToast({
+					title: "费用类型无效",
+					icon: "none"
+				});
+				return;
+			}
+			
+			// 根据费用类型构建数据
+			let settleData = {
+				batchId: this.selectBatch.id,
+				settleType: assistType,
+				batchSettleAmount: 0,  // 默认为0，按批次时会更新
+				assistPurchaseSettleModelList: []
+			};
+			
+			if (assistType === 0) {
+				// 按批次 - 用户输入总金额，需要分配到每个货品
+				const totalAmount = this.parseAmount(this.batchAssist.assistAmount);
+				
+				if (totalAmount <= 0) {
+					uni.showToast({
+						title: "请输入有效的总金额",
+						icon: "none"
+					});
+					return;
+				}
+				
+				if (!this.BatchCommodityList || this.BatchCommodityList.length === 0) {
+					uni.showToast({
+						title: "没有可分配的货品",
+						icon: "none"
+					});
+					return;
+				}
+				
+				// 按批次时，设置批次总金额
+				settleData.batchSettleAmount = totalAmount;
+				
+				// 将总金额平均分配到每个货品
+				// 也可以按销售额比例分配，这里采用平均分配
+				const averageAmount = totalAmount / this.BatchCommodityList.length;
+				
+				settleData.assistPurchaseSettleModelList = this.BatchCommodityList.map(item => ({
+					purchaseAssistId: item.id,
+					SettleAmount: averageAmount
+				}));
+				
+				console.log("按批次分配 - 总金额:", totalAmount, "平均单价:", averageAmount);
+				
+			} else {
+				// 按数量（1）或重量（2）- 用户为每个货品输入单价
+				const commoditiesWithPrice = this.BatchCommodityList.filter(item => 
+					this.isValidAmount(item.assistUnitPrice)
+				);
+				
+				if (commoditiesWithPrice.length === 0) {
+					uni.showToast({
+						title: assistType === 1 ? "请至少为一个货品设置代卖单价（元/个）" : "请至少为一个货品设置代卖单价（元/斤）",
+						icon: "none"
+					});
+					return;
+				}
+				
+				// 按数量或重量时，batchSettleAmount = 0（已在初始化时设置）
+				settleData.assistPurchaseSettleModelList = commoditiesWithPrice.map(item => ({
+					purchaseAssistId: item.id,
+					SettleAmount: this.parseAmount(item.assistUnitPrice)
+				}));
+				
+				console.log(assistType === 1 ? "按数量设置" : "按重量设置", "货品数量:", commoditiesWithPrice.length);
+			}
+			
+			// 提交数据
+			this.submitBatchAssist(settleData);
+			
+		} catch (error) {
+			console.error("UpdateBatchAssist 错误:", error);
+			uni.showToast({
+				title: "操作失败，请重试",
+				icon: "none"
+			});
+		}
+	},
+	
+	// 提交批次代卖费数据
+	submitBatchAssist(settleData) {
+		// 显示加载状态
+		uni.showLoading({
+			title: "处理中..."
+		});
+		
+		console.log("提交的结算数据:", settleData);
+		
+		// 调用新的API接口
+		batch.UpdateBatchSettleAmountSetting(settleData).then(res => {
+			uni.hideLoading();
+			
+			if (res && res.code === 200) {
+				uni.showToast({
+					title: "设置成功",
+					icon: "success"
+				});
+				
+				// 关闭弹窗并刷新数据
+				this.handleModalClose();
+				this.getBatchCommodityList(this.selectBatch.id);
+			} else {
+				uni.showToast({
+					title: res?.message || "设置失败",
 					icon: "none"
 				});
 			}
-		},
+		}).catch(error => {
+			uni.hideLoading();
+			console.error("设置代卖费失败:", error);
+			uni.showToast({
+				title: "网络错误，请重试",
+				icon: "none"
+			});
+		});
+	},
 		getExpenseLabel(){
 			labelApi.GetExpenseLabel(this.companyId,1).then(res=>{
 				console.log("GetExpenseLabel",res)
@@ -1090,23 +1586,38 @@ export default {
 			const num = parseFloat(amount);
 			return isNaN(num) ? 0 : Math.max(0, num);
 		},
-		showSetBatchAssist() {
-			if (!this.selectBatch) return;
-			this.assistAmountShow = true;
-			this.batchAssist = {
-				id: this.selectBatch.id,
-				assistType: String(this.batchCommodityTotal.assistType || '0'), // 转换为字符串
-				assistUnitPrice: this.batchCommodityTotal.assistUnitPrice,
-				assistAmount: this.batchCommodityTotal.assistAmount
-			};
-		},
-		exchangeBatch(item) {
-			this.selectBatch = item;
-			this.getBatchCommodityList(item.id);
-			this.getExpenseByBatchId(item.id);
-		},
+	showSetBatchAssist() {
+		if (!this.selectBatch) return;
+		
+		this.assistAmountShow = true;
+		
+		// 初始化代卖费设置数据
+		this.batchAssist = {
+			id: this.selectBatch.id,
+			assistType: String(this.batchCommodityTotal.assistType || '0'), // 转换为字符串
+			assistUnitPrice: this.batchCommodityTotal.assistUnitPrice || 0,
+			assistAmount: this.batchCommodityTotal.assistAmount || ''
+		};
+		
+		// 初始化每个货品的代卖单价，从 settlementUnitPrice 字段获取
+		if (this.BatchCommodityList && this.BatchCommodityList.length > 0) {
+			this.BatchCommodityList.forEach(item => {
+				// 从 settlementUnitPrice 字段加载已设置的代卖单价
+				const unitPrice = item.settlementUnitPrice || '';
+				this.$set(item, 'assistUnitPrice', unitPrice);
+			});
+		}
+		
+		console.log("打开代卖费设置弹窗 - 当前类型:", this.batchAssist.assistType, "总金额:", this.batchAssist.assistAmount);
+	},
+	exchangeBatch(item) {
+		this.selectBatch = item;
+		this.getBatchCommodityList(item.id);
+		this.getExpenseByBatchId(item.id);
+		this.getSettleRecords(item.id);
+	},
 		getBatchCommodityList(id) {
-			batch.GetSingleAssistBatchInfoAndProfit(id).then(res => {
+			batch.GetUnsettleAssistBatchInfoAsync(id).then(res => {
 				this.batchCommodityTotal = {
 					assistType: res.data.assistType,
 					assistAmount: res.data.assistAmount,
@@ -1117,7 +1628,6 @@ export default {
 					totalInventory: 0
 				}
 				this.BatchCommodityList = res.data.allPurchaseAssistList;
-				console.log("this.BatchCommodityList",this.BatchCommodityList);
 				this.BatchCommodityList.sort((a, b) => b.inventorySold - a.inventorySold);
 				if (this.BatchCommodityList.length > 0) {
 					for (var i = 0; i < this.BatchCommodityList.length; i++) {
@@ -1135,6 +1645,13 @@ export default {
 					}
 				}
 				this.settingRecount();
+				
+				// 数据加载完成后重新计算宽度
+				this.$nextTick(() => {
+					setTimeout(() => {
+						this.calculateScrollableWidth();
+					}, 50);
+				});
 			})
 		},
 		setSaleStatus(info) {
@@ -1152,20 +1669,21 @@ export default {
 				}
 			})
 		},
-		getAllBatch() {
-			category.GetAllBatch(this.companyId).then(res => {
-				this.batchList = res.data;
-				this.batchList = this.batchList.sort((a, b) =>
-					new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
-				);
-				this.batchShowList = this.batchList.filter(x => x.saleStatus === 1);
-				if (this.batchShowList.length > 0) {
-					this.selectBatch = this.batchShowList[0];
-					this.getExpenseByBatchId(this.selectBatch.id);
-					this.getBatchCommodityList(this.selectBatch.id);
-				}
-			})
-		},
+	getAllBatch() {
+		category.GetAllBatch(this.companyId).then(res => {
+			this.batchList = res.data;
+			this.batchList = this.batchList.sort((a, b) =>
+				new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
+			);
+			this.batchShowList = this.batchList.filter(x => x.saleStatus === 1);
+			if (this.batchShowList.length > 0) {
+				this.selectBatch = this.batchShowList[0];
+				this.getExpenseByBatchId(this.selectBatch.id);
+				this.getBatchCommodityList(this.selectBatch.id);
+				this.getSettleRecords(this.selectBatch.id);
+			}
+		})
+	},
 		shipperSelect(e) {
 			this.shipperSelectedId = e;
 			this.getBatchNewCodeByShipperId();
@@ -1181,6 +1699,12 @@ export default {
 </script>
 
 <style>
+/* 右侧内容容器样式 */
+.right-content-container {
+	box-sizing: border-box;
+	max-width: 100%;
+}
+
 .expenseBtn {
 	height: 20rpx;
 	font-weight: bold;
@@ -1459,68 +1983,103 @@ button {
 
 /* 新增费用弹窗样式优化 */
 .expense-modal-container {
-	top: 20%;
-	left: 20%;
-	position: absolute;
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 	padding: 0;
 	width: 480rpx;
+	max-height: 90vh;
+	z-index: 9999;
 }
 
 .expense-card {
-	margin: 5px;
+	margin: 0;
 	border-radius: 16px;
 	overflow: hidden;
-	box-shadow:  0 0 10px 0 rgba(0, 0, 0, 0.5);
+	box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.5);
+	max-height: 90vh;
+	display: flex;
+	flex-direction: column;
 }
 
 .expense-card .card-header {
 	background: linear-gradient(135deg, #2198cf 0%, #2198cf 100%);
 	position: relative;
-	
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 10px 15px;
+	height: 45px;
 	
 	.header-content {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		
-		i {
-			font-size: 1.5rem;
-		}
-		
-		h2 {
-			margin: 0;
-			font-size: 1.3rem;
-			font-weight: 600;
-		}
-	}
-	
-	.modal-close-btn {
-		position: absolute;
-		top: 15px;
-		right: 15px;
-		width: 30px;
-		height: 30px;
-		background: rgba(255, 255, 255, 0.2);
+		flex: 1;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		gap: 8px;
+		
+		i {
+			font-size: 1.2rem;
+		}
+		
+		h3 {
+			margin: 0;
+			font-size: 16px;
+			font-weight: 600;
+			color: white;
+		}
+	}
+	
+	.header-btn-cancel,
+	.header-btn-confirm {
+		padding: 8px 12px;
+		border-radius: 6px;
+		font-size: 14px;
+		font-weight: 600;
 		cursor: pointer;
 		transition: all 0.3s ease;
+		border: none;
+		outline: none;
+		height: 40px;
+		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 50px;
+	}
+	
+	.header-btn-cancel {
+		background: rgba(255, 255, 255, 0.2);
+		color: white;
+		border: 1px solid rgba(255, 255, 255, 0.3);
 		
 		&:hover {
 			background: rgba(255, 255, 255, 0.3);
-			transform: scale(1.1);
+		}
+	}
+	
+	.header-btn-confirm {
+		background: white;
+		color: #2198cf;
+		
+		&:hover {
+			background: #f0f0f0;
 		}
 		
-		i {
-			color: white;
-			font-size: 14px;
+		&:disabled {
+			background: rgba(255, 255, 255, 0.5);
+			color: rgba(33, 152, 207, 0.5);
+			cursor: not-allowed;
 		}
 	}
 }
 
 .expense-card .card-body {
-	padding: 20px;
+	padding: 15px;
+	flex: 1;
+	overflow-y: auto;
+	max-height: calc(90vh - 45px);
 }
 
 /* 按钮式费用类型选择 */
@@ -1624,6 +2183,94 @@ button {
 
 /* 自定义金额输入 */
 .custom-amount-input {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	
+	.input-hint {
+		font-size: 13px;
+		color: #7f8c8d;
+		padding-left: 5px;
+		font-weight: 500;
+	}
+	
+	.input-row {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+	
+	.input-unit {
+		font-size: 14px;
+		color: #667eea;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+}
+
+/* 货品列表容器 */
+.commodity-list-container {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	
+	.input-hint {
+		font-size: 13px;
+		color: #7f8c8d;
+		padding-left: 5px;
+		font-weight: 500;
+		margin-bottom: 5px;
+	}
+	
+	.commodity-scroll {
+		border: 1px solid #e9ecef;
+		border-radius: 10px;
+		background: #f8f9fa;
+		padding: 10px;
+		
+		.commodity-item {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 12px;
+			background: white;
+			border-radius: 8px;
+			margin-bottom: 10px;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+			transition: all 0.3s ease;
+			
+			&:hover {
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+				transform: translateY(-2px);
+			}
+			
+			&:last-child {
+				margin-bottom: 0;
+			}
+			
+			.commodity-name {
+				flex: 1;
+				font-size: 14px;
+				font-weight: 600;
+				color: #2c3e50;
+				padding-right: 15px;
+			}
+			
+			.commodity-input-wrapper {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				
+				.input-unit-inline {
+					font-size: 12px;
+					color: #667eea;
+					font-weight: 600;
+					white-space: nowrap;
+				}
+			}
+		}
+	}
+	
 	.input-with-icon {
 		position: relative;
 		
@@ -1912,8 +2559,8 @@ button {
 
 .expense-add-modal {
 	position: relative;
-	width: 80%;
-	max-width: 500px;
+	width: 90%;
+	max-width: 650px;
 	max-height: 80vh;
 	background: white;
 	border-radius: 20rpx;
@@ -2219,15 +2866,15 @@ button {
 /* 响应式设计 */
 @media (max-width: 768px) {
 	.expense-add-modal {
-		width: 90%;
-		max-width: 350px;
+		width: 95%;
+		max-width: 450px;
 	}
 }
 
 @media (max-width: 480px) {
 	.expense-add-modal {
 		width: 95%;
-		max-width: 320px;
+		max-width: 380px;
 	}
 	
 	.expense-add-modal-header {
@@ -2249,5 +2896,17 @@ button {
 		font-size: 14rpx;
 	}
 }
+
+/* 货品名称单元格悬停效果 */
+.commodity-name-cell {
+	transition: background-color 0.2s ease;
+}
+
+/* H5 环境悬停效果 */
+/* #ifdef H5 */
+.commodity-name-cell:hover {
+	background-color: #f0f9ff !important;
+}
+/* #endif */
 
 </style>

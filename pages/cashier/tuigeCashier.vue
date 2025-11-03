@@ -11,798 +11,246 @@
                                     <text class="title">改单</text>
 						</div>
                 </div>
-				<div class="cashier-row">
-					<div class="cashier-col cashier-goods">
-						<div class="card-body">
-							<div class="container2" style="position: relative;">
-								<div class="vertical-tab">
-									<VerticalTab @update:activeTab="updateActiveTab" :categoryList="categoryList"
-										:activeTabId="currentTabId" />
-								</div>
-								<div style="flex-wrap: wrap;padding-top: 0;">
-									<scroll-view class="scrollArea" scroll-y="true"
-										:style="{ height: windowHeight-70 + 'px'}">
-
-										<div v-for="(row, rowIndex) in rows" :key="rowIndex">
-											<div style="display: flex;margin-left: 15rpx;">
-												<div v-for="(item, index) in row" :key="index">
-													<div :id="'grid-item-'+item.id"
-														:class="['grid-item', tabActive(item) ? 'grid-item-active' : null]"
-														style="width: 120rpx;" @click="handleClick(item,item.id)"
-														:style="!item.outPutPurchaseInventories || item.outPutPurchaseInventories.length===0 ?{ color:'#aa0000' }:{}">
-														<div
-															style="text-align: left;font-weight: bold;font-size: 25px;letter-spacing: 2px;display: flex;">
-															{{ item.name }}
-														</div>
-														<!-- 														<div v-if="commodityType===1"
-															style="font-size: 15px;font-weight: bold; display: flex;flex-direction:column; text-align: left;color: #888888;">
-															<div>{{currentTabName}}
-															</div>
-														</div> -->
-														<div
-															style="font-size: 15px;margin-top: 4px;font-weight: bold; display: flex;flex-direction:column; text-align: left">
-
-															<div
-																style="text-align: left;color: rgba(0, 0, 0, 0.2);display: flex;">
-																<div v-if="commodityType===1"
-																	style="text-align: left;color: dodgerblue;margin-right: 5px;border: 1px solid dodgerblue;">
-																	代
-																</div>
-																<div v-if="commodityType===2"
-																	style="text-align: left;color: #792292;margin-right: 5px;border: 1px solid #792292;">
-																	自
-																</div>
-																<div v-if="item.saleWay==1"
-																	style="text-align: left;color: #00aa00;margin-right: 5px;border: 1px solid #00aa00;">
-																	非定</div>
-																<div v-if="item.saleWay==2"
-																	style="text-align: left;color: #55aaff;margin-right: 5px;border: 1px solid #55aaff;">
-																	定</div>
-																<div v-if="item.saleWay==3"
-																	style="text-align: left;color: #dc9300;margin-right: 5px;border: 1px solid #dc9300;">
-																	拆包</div>
-																<div v-if="item.saleWay==4"
-																	style="text-align: left;color: #55aaff;margin-right: 5px;border: 1px solid #55aaff;">
-																	散</div>
-															</div>
-
-															<div style="margin-top: 5px;display: flex;color: #888888;"
-															:style="!item.outPutPurchaseInventories || item.outPutPurchaseInventories.length===0 ?{ color:'#aa0000' }:{}"
-															>
-																余: <div v-for="item2 in item.outPutPurchaseInventories"
-																	style="margin-left: 2px;margin-right: 2px;display: flex;">
-																	{{item2.mount}}{{item2.specName}}
-																	<div style="margin-left: 2px;margin-right: 2px;">|
-																	</div>
-																</div>
-															</div>
-														</div>
-													</div>
-												</div>
-											</div>
-										</div>
-									</scroll-view>
-								</div>
-								<!--模糊查询字体列(词云列)-->
-								<div class="vertical-tab2" v-if="rows.length>0"
-									:style="{ height: windowHeight-80 + 'px',position:'absolute',right:'5px' }">
-									<div class="key-word" :class="{ 'key-word-active': currentKeyWord === item }"
-										v-for="item in GoodkeyWord" @click="clickKeyWord(item)">
-										<span v-for="char in item">{{ char }}</span>
-									</div>
-								</div>
-							</div>
+	<div class="cashier-row">
+		<div class="cashier-col cashier-goods">
+			<div class="card-body">
+				<!-- 货品选择面板组件 -->
+			<CashierGoodsPanel
+				ref="goodsPanel"
+				:selectedGoodsIds="goodSelect.map(item => item.id)"
+				:height="windowHeight"
+				:companyId="currentCompanyId"
+				@tab-changed="handleTabChanged"
+				@item-click="handleClick"
+				@category-updated="handleCategoryUpdated"
+			/>
+			</div>
+		</div>
+		<div v-if="step1" class="cashier-card">
+			<div class="cashier-col">
+				<div class="card-title">
+					<!-- 客户信息显示区域 -->
+					<div style="display: inline-flex; align-items: center; gap: 0; margin: 0; padding: 2px 0;">
+						<!-- 主客户按钮（散客/当前客户） -->
+						<div class="customerbtn modern-customer-btn main-customer-btn" @click="memberChange('XiaDan')" :style="{
+							borderRadius: '6px',
+							fontSize:'16px',
+							boxShadow: currentMember.debts > 0 ? '0 3px 10px rgba(245, 34, 45, 0.3)' : '0 3px 10px rgba(56, 158, 13, 0.3)',
+							color:  'white',
+							background: currentMember.debts > 0 ? '#ff4d4f' : '#389e0d',
+							height: '100%',
+							paddingLeft: '8rpx',
+							paddingRight: '8rpx',
+							paddingTop: '10rpx',
+							fontWeight:'700',
+							letterSpacing: '1rpx',
+							paddingBottom: '10rpx',
+							display:'inline-flex',
+							alignItems: 'center',
+							flexShrink: 0,
+							transition: 'all 0.3s ease',
+							border: 'none',
+							marginLeft: '0',
+							marginRight: '1px'
+						}">
+							{{currentMember.customName ? currentMember.customName : '散客'}}
 						</div>
 					</div>
-					<div v-if="step1">
-						<div class="cashier-col cashier-card">
-							<div class="card-title">
-								<div style="display: flex; flex-flow: row; align-items: center; padding: 2px 6px;">
-									<div @click="memberChange('XiaDan')" :style="{
-										                borderRadius: '5px',
-														fontSize:'20px',
-										                boxShadow: '0 0 5rpx rgba(0, 0, 0, 0.3)',
-										                color:  'white',
-										                backgroundColor: currentMember.debts > 0 ? 'darkred' : 'green',
-										                height: '100%',
-										                marginLeft: '-4rpx',
-										                paddingLeft: '20rpx',
-										                paddingRight: '20rpx',
-										                paddingTop: '5rpx',
-														fontWeight:'bold',
-														letterSpacing: '2rpx',
-										                paddingBottom: '10rpx',
-														display:'flex'
-										            }">
-										{{currentMember.customName?currentMember.customName : '散客'}} <text
-											v-if="currentMember.debts > 0"
-											style="font-size: 12px;margin-left: 10rpx; display: flex;">|欠:{{currentMember.debts}}</text>
-									</div>
-								</div>
-								<div style="display: flex;">
-									<div style="display: flex;font-weight: bold;margin-right: 20rpx;">
-										<uni-icons custom-prefix="iconfont" type="icon-ehl_sanlunche" size="30"
-											color="#00aaff"
-											style="margin-right: 5rpx;margin-left: 5rpx;margin-top: 3px;"></uni-icons>
-										<div style="margin-top: 5rpx;color:#00aaff ;">运费</div>
-									</div>
-									<!-- <div class="btn" @click="memberChange('ShouKuang')"
-										style="margin-right: 10rpx;  height:20rpx; bolder; color: white;border: 1px solid dodgerblue;background: dodgerblue; box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);">
-										<uni-icons custom-prefix="iconfont" type="icon-basket" size="15" color="#ffffff"
-											style="margin-right: 5rpx;"></uni-icons>收筐
-									</div> -->
-									<!-- <div class="btn" @click="addTemplateGood"
-										style="height:20rpx;color: white;background-color: dodgerblue;margin-right: 10px;">
-										<uni-icons custom-prefix="iconfont" type="icon-linshi" size="30"
-											color="#ffffff"></uni-icons>临时物品
-									</div> -->
-								</div>
-							</div>
-							<!-- <u-empty class="card-body-empty" v-if="cashier.cards.length===0"
-					icon="../../static/img/empty/empty-card.png"></u-empty> -->
-							<div class="card-body">
-								<div class="table-header">
-									<div style="width: 100rpx;text-align: center;" @click="memberChange('XiaDan')">名称
-									</div>
-									<div style="width: 40rpx;text-align: center;">数量</div>
-									<div style="width: 40rpx;text-align: center;">单价</div>
-									<div style="width: 100rpx;text-align: center;">重量</div>
-									<!-- <div style="width: 50rpx;text-align: center;">皮重</div> -->
-									<div style="width: 50rpx;text-align: center;">小计</div>
-									<div style="width: 10rpx;"></div>
-								</div>
-								<div v-if="goodSelect.length>0" class="table-body" v-for="(card ,index ) in goodSelect"
-									:key="card.key" @click="showStep2(card,index)">
-									<div class="table-row"
-										:style="{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#e7e7e7' }">
-										<div
-											style="width: 100rpx;text-align: center;font-size: 15rpx;font-weight: bold;display: flex;margin-left: 3rpx;">
-											{{card.skuName}}
-											<div v-if="card.extralModel&&card.extralModel.id!=''&&card.extralModel.quantity>0"
-												style="border-radius: 3rpx; margin-left: 3rpx; background-color: orange;font-size: 10rpx;height: 10rpx;padding: 2rpx;color: white;">
-												{{card.extralModel.name}}
-											</div>
-										</div>
-										<div
-											style="width: 40rpx;justify-content: center; font-size: 15rpx;font-weight: bold;display: flex;">
-											{{card.quantity}}{{card.commoditySpec?card.commoditySpec.specName:""}}
-											<!-- 	<input type="number"    v-model=""  id="input-id"
-										placeholder="" /> -->
-										</div>
-										<div
-											style="width: 40rpx;text-align: center;font-size: 15rpx;font-weight: bold;">
-											{{card.referenceAmount}}
-										</div>
-										<div
-											style="width: 100rpx;text-align: center;font-size: 15rpx;font-weight: bold;">
-											{{card.allweight-card.carweight}}({{card.allweight}}-{{card.carweight}})
-										</div>
-										<div
-											style="width: 50rpx;text-align: center;font-size: 15rpx;font-weight: bold;">
-											{{card.money}}
-										</div>
-										<div style="width: 10rpx;" @click.stop="deleteItem(card)"><u-icon name="trash"
-												color="#ff0000" size="26"></u-icon></div>
-									</div>
-								</div>
-								<div v-if="goodSelect.length == 0" style=" margin-top: 30%; text-align: center;">
-									<uni-icons custom-prefix="iconfont" type="icon-kongliebiao" size="80"
-										color="#969696" style="margin-right: 5rpx;"></uni-icons>
-									<div style="margin-top: 10px; color: #969696;">没有选中物品</div> <!-- 添加的文字 -->
-								</div>
-							</div>
-							<!-- <div class="card-sumarry" v-if="extraModel.length>0"
-								style="height: 30rpx;background-color: #F56C6C; border-radius: 5px;box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.2);">
-								<div class="detail-list">
-									<div class="detail-item payable"
-										style="display: flex; justify-content: space-between; align-items: center;">
-										<div class="label"
-											style="display: flex; align-items: center;width: 25%;font-weight: bold;">
-											附加：{{extraModel[0].name}}
-										</div>
-										<div class="label"
-											style="display: flex; align-items: center;width: 25%;font-weight: bold;">
-											数量：<input v-model="extraModel[0].quantity" type="number"
-												@blur="blurExtralModel1"
-												style="height: 20rpx;padding-left: 5rpx;margin-left: 5px;width: 50%;border: 1.5px solid #000000;text-align: center;font-size: 12rpx;background-color: darkgray;" />
-										</div>
-										<div class="label"
-											style="display: flex; align-items: center;width: 20%;margin-left: 5%;font-weight: bold;">
-											<span>单价：{{extraModel[0].amount}}</span>
-										</div>
-										<div class="label"
-											style="display: flex; align-items: center;width: 25%;font-weight: bold;">
-											<span>小计：</span><input v-model="extraModel[0].money" type="number"
-												style="height: 20rpx; margin-left: 5px;width: 50%;border: 1.5px solid #000000;padding-left: 5rpx;text-align: center;font-size: 12rpx;background-color: darkgray;" />
-										</div>
-									</div>
-								</div>
-							</div> -->
-							<div class="card-sumarry">
-								<div class="detail-list">
-									<div class="detail-item payable" style="font-weight: bold;">
-										<div>总计金额</div>
-										<div class="amount">￥
-											<span>{{ payAmount.total}}</span>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="card-footer">
-								<div class="footer-item footer-left">
+					<div style="display: flex;"></div>
+				</div>
+			<OrderGoodsPanel
+				:goodsList="goodSelect"
+				:totalAmount="payAmount.total"
+				:shippingFee="cashier.shippingFee"
+				:showHangOrder="false"
+				checkoutButtonText="改单"
+				@name-click="memberChange('XiaDan')"
+				@item-click="handleItemClick"
+				@delete-item="deleteItem"
+				@shipping-click="showShippingModal"
+				@checkout="orderCreate"
+			/>
+			</div>
+		</div>
+		<!-- 使用 GoodEditKeyboard 组件 -->
+		<div v-if="!step1" class="cashier-card">
+			<GoodEditKeyboard 
+				:card="editingCard"
+				:fixed-tare-weight="fixedTareWeight"
+				:show-step2="showStep2"
+				:edit-card-extral-model="editCardExtralModel"
+				@confirm="handleGoodEditConfirm"
+				@extra-model-select="handleExtraModelSelect"
+			/>
+		</div>
+	</div>
+	<u-modal title="添加新顾客" class="payment" :show="customerDialogVisibleAdd" :closeOnClickOverlay="false"
+		:showConfirmButton="false" :width="700" @close="customerDialogVisibleAdd = false">
+		<div class="slot-content" style="overflow-y: auto;">
+			<uni-section title="表单校验" type="line">
+				<view class="example" style="font-size: 15rpx;">
+					<!-- 基础表单校验 -->
+					<view class="input-container" style="margin-top: 10px;">
+						<text class="label" style="width: 20%;">客户名称：</text>
+						<input class="input-field" type="text" :adjust-position="false" placeholder=" "
+							style="height: 40rpx;width: 80%;border-radius: 5rpx;background-color: lightgray;font-size: 15rpx;padding-left: 10px;font-weight: bold;"
+							v-model="AddedCustomerFormData.name" />
+					</view>
+					<view class="input-container" style="margin-top: 10px;">
+						<text class="label" style="width: 20%;">联系方式：</text>
+						<input class="input-field" type="text" :adjust-position="false" placeholder=" "
+							style="height: 40rpx;width: 80%;border-radius: 5rpx;background-color: lightgray;font-size: 15rpx;padding-left: 10px;font-weight: bold;"
+							v-model="AddedCustomerFormData.phone" />
+					</view>
+					<view class="input-container" style="margin-top: 10px;">
+						<text class="label" style="width: 20%;">车牌：</text>
+						<input class="input-field" type="text" placeholder=" "
+							style="	height: 40rpx;width: 80%;border-radius: 5rpx;background-color: lightgray;font-size: 15rpx;padding-left: 10px;font-weight: bold;"
+							v-model="AddedCustomerFormData.carNum" />
+					</view>
+					<view class="input-container" style="margin-top: 10px;">
+						<text class="label" style="width: 20%;">地址：</text>
+						<input class="input-field" type="text" placeholder=" "
+							style="	height: 40rpx;width: 80%;border-radius: 5rpx;background-color: lightgray;font-size: 15rpx;padding-left: 10px;font-weight: bold;"
+							v-model="AddedCustomerFormData.address" />
+					</view>
+					<view style="display: flex;">
+						<button @click="customerDialogVisibleAdd = false;memberDialogVisible = true;"
+							style="width: 30%;margin-top: 20px;background-color: lightgrey; box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);font-weight: bold;">返回</button>
+						<button type="primary" @click="submitAddCustomer()"
+							style="width: 30%;margin-top: 20px; box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);font-weight: bold;">添加</button>
+					</view>
+				</view>
+			</uni-section>
+		</div>
+	</u-modal>
+	<!--客户中心-->
+	<CustomerSelector
+		:visible="memberDialogVisible"
+		:customerList="memberSearchOptions"
+		:mode="memberStyle"
+		:selectType="currentSelctCustomerType"
+		:windowHeight="windowHeight"
+		:showAddButton="memberStyle === 'XiaDan'"
+		@close="memberDialogVisible = false"
+		@select="changeMember"
+		@add-customer="memberDialogVisible = false; customerDialogVisibleAdd = true"
+		@change-type="currentSelctCustomerType = $event"
+	/>
+		<!--收银弹窗-->
+		<PaymentModal
+			:visible="payTypeDialogVisible"
+			:payAmount="payAmount"
+			:accountExpense="AccountExpense"
+			:discountAmount="discountAmount"
+			:accountDiscount="accountDiscount"
+			:currentMember="currentMember"
+			:repayBasketList="repayBasketList"
+			@close="payTypeDialogVisible = false"
+			@play-sound="playSystemKeyClickSound"
+			@collect-basket="collectBasketoffestMoney"
+			@member-change="memberChange"
+			@confirm="handlePaymentConfirm"
+		/>
 
-								</div>
-								<div class="footer-item footer-right">
-									<div class="btn btn-primary btn-submit"
-										style="font-weight: bold;   box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);"
-										@click="orderCreate">
-										改单
-									</div>
-								</div>
-							</div>
-						</div>
+	<!-- 运费弹窗 -->
+	<ShippingModal 
+		:visible="shippingModalVisible" 
+		:initialValue="cashier.shippingFee"
+		@close="shippingModalVisible = false"
+		@confirm="handleShippingConfirm"
+	/>
+
+	<!-- 规格选择弹窗（拆包） -->
+	<div v-if="specPopup.visible" class="spec-popup-mask" @click="closeSpecPopup">
+		<div 
+			class="spec-popup-container" 
+			:style="specPopupStyle"
+			@click.stop
+		>
+			<div class="spec-popup-content">
+				<div 
+					v-for="(spec, index) in specPopup.specList" 
+					:key="index"
+					class="spec-item"
+					@click="specPopup.isEditMode ? handleSpecClickForEdit(spec, specPopup.editIndex) : handleSpecClick(spec)"
+				>
+					<!-- 商品名称 + 规格名称 -->
+					<div class="spec-item-name">
+						{{ specPopup.commodity.name }}-{{ spec.specName }}
 					</div>
-					<div v-if="!step1" class="cashier-col cashier-card">
-						<div class="cashier-col cashier-card">
-							<div class="card-title">
-								<div
-									style=" display: flex; flex-flow: row; align-items: center; padding: 2px 6px;font-weight: bold;">
-									<u-icon @click="showStep1" name="arrow-left" color="#2979ff" size="25"></u-icon>
-									<div @click="showStep1">返回</div>
-									<div style="font-size: 15rpx;margin-left: 110rpx;text-align: center;">
-										{{editingCard.skuName}}
-									</div>
-									<u-icon name="edit-pen" color="#969696" size="30"
-										style="right: 10rpx;position: fixed;"
-										@click="showAllweightStr =!showAllweightStr"></u-icon>
-
-								</div>
-							</div>
-							<!--非定装输入-->
-							<div class="card-body" v-if="editingCard.saleWay===1">
-								<div
-									style="padding: 10rpx;display: flex; justify-content: space-between; align-items: center;">
-
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused3}"
-										@click="custominputFocusedMethod(3)">
-										总重
-										<div style="display: flex;">
-											<input class="step1-input" v-model="editingCard.allweight"
-												inputmode="none"></input>
-											<span class="currency-label">斤</span>
-										</div>
-									</div>
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused}"
-										@click="custominputFocusedMethod(1)">
-										数量
-										<div style="display: flex;">
-											<input class="step1-input" ref="myInput1" inputmode="none"
-												v-model="editingCard.quantity"></input>
-											<span class="currency-label">件</span>
-										</div>
-									</div>
-								</div>
-
-								<div v-if="showAllweightStr" style="font-size: 18rpx; color:white; font-weight: bold; padding-left: 5rpx; line-height: 20rpx; 
-								            background-color: orange; width: 90%; margin-left: 5%; border-radius: 5rpx; 
-								            word-break: break-all; /* 或者使用 break-word */
-								            white-space: normal; /* 允许换行 */
-								            ">
-									总重：{{ this.editingCard.allweightSrt }}
-								</div>
-								<div
-									style="padding: 10rpx;display: flex; justify-content: space-between; align-items: center;">
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused4}"
-										@click="custominputFocusedMethod(4)">
-										皮重
-										<div style="display: flex;">
-											<input class="step1-input" v-model="editingCard.carweight"
-												inputmode="none"></input>
-											<span class="currency-label">斤</span>
-										</div>
-									</div>
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused2}"
-										@click="custominputFocusedMethod(2)">
-										单价
-										<div style="display: flex;">
-											<input class="step1-input" v-model="editingCard.referenceAmount"
-												inputmode="none"></input>
-											<span class="currency-label">元</span>
-										</div>
-									</div>
-
-								</div>
-								<!-- 押筐-->
-								<div  v-if="showStep2"
-									style="display: flex; align-items: center;padding: 10rpx;">
-									<select-lay :zindex="1211" :name="editingCard.extralModel.name" :value="editingCard.extralModel.id"
-											direction="up"
-											placeholder="请选择项目" :options="editCardExtralModel"
-											@selectitem="editCardExtraModelSelct" slabel="name">
-										</select-lay>
-								</div>
-							</div>
-							<!--定装输入-->
-							<div class="card-body"
-								v-if="editingCard.saleWay===2||editingCard.saleWay===3||editingCard.saleWay===4">
-								<div
-									style="padding: 10rpx;display: flex; justify-content: space-between; align-items: center;">
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused}"
-										@click="custominputFocusedMethod(1)">
-										数量
-										<div style="display: flex;">
-											<input class="step1-input" ref="myInput1" inputmode="none"
-												v-model="editingCard.quantity"></input>
-											<span
-												class="currency-label">{{editingCard.commoditySpec?editingCard.commoditySpec.specName:""}}</span>
-										</div>
-									</div>
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused2}"
-										@click="custominputFocusedMethod(2)">
-										单价
-										<div style="display: flex;">
-											<input class="step1-input" v-model="editingCard.referenceAmount"
-												inputmode="none"></input>
-											<span class="currency-label">元</span>
-										</div>
-									</div>
-
-								</div>
-							</div>
-							<view class="mybrankmask"
-								:style="{ width: '340rpx', height: '200rpx', backgroundColor: '#ffffff', zIndex: 999, left: 0, bottom: 0 }">
-								<view style="padding: 5rpx;">
-									<view class="MymaskList">
-										<view class="maskListItem" @click="NumberCk(1)">1</view>
-										<view class="maskListItem" @click="NumberCk(2)">2</view>
-										<view class="maskListItem" @click="NumberCk(3)">3</view>
-										<view class="maskListItem" @click="Tuige1()"><uni-icons custom-prefix="iconfont"
-												type="icon-tuige" size="30" color="#ffffff"
-												style="margin-right: 5rpx;"></uni-icons></view>
-
-									</view>
-									<view class="MymaskList">
-										<view class="maskListItem" @click="NumberCk(4)">4</view>
-										<view class="maskListItem" @click="NumberCk(5)">5</view>
-										<view class="maskListItem" @click="NumberCk(6)">6</view>
-
-										<view class="maskListItem" @click="NumberCk('+')">+</view>
-										<!-- <view class="maskListItem" style="background-color: #F56C6C;color: #fff;"
-											@click="Clear1()">清空</view> -->
-									</view>
-									<view class="MymaskList">
-										<view class="maskListItem" @click="NumberCk(7)">7</view>
-										<view class="maskListItem" @click="NumberCk(8)">8</view>
-										<view class="maskListItem" @click="NumberCk(9)">9</view>
-										<view class="maskListItem" @click="NumberCk('-')">-</view>
-									</view>
-									<view class="MymaskList">
-										<view class="maskListItem" @click="NumberCk(0)" style="width: 48%;">0</view>
-										<view class="maskListItem" @click="NumberCk('.')">.</view>
-										<view class="maskListItem" style="background-color: #31BDEC;color: #fff;"
-											@click="showStep1()">确定</view>
-									</view>
-								</view>
-							</view>
+					
+					<!-- 商品信息区域 -->
+					<div class="spec-item-info">
+						<!-- 标签行 -->
+						<div class="spec-item-tags">
+							<div v-if="commodityType === 1" class="tag tag-consignment">代卖</div>
+							<div v-if="commodityType === 2" class="tag tag-self">自营</div>
+							<div class="tag tag-unpack">拆包</div>
 						</div>
 					</div>
 				</div>
-				<u-modal title="添加新顾客" class="payment" :show="customerDialogVisibleAdd" :closeOnClickOverlay="false"
-					:showConfirmButton="false" :width="700" @close="customerDialogVisibleAdd = false">
-					<div class="slot-content" style="overflow-y: auto;">
-						<uni-section title="表单校验" type="line">
-							<view class="example" style="font-size: 15rpx;">
-								<!-- 基础表单校验 -->
-								<view class="input-container" style="margin-top: 10px;">
-									<text class="label" style="width: 20%;">客户名称：</text>
-									<input class="input-field" type="text" :adjust-position="false" placeholder=" "
-										style="height: 40rpx;width: 80%;border-radius: 5rpx;background-color: lightgray;font-size: 15rpx;padding-left: 10px;font-weight: bold;"
-										v-model="AddedCustomerFormData.name" />
-								</view>
-								<view class="input-container" style="margin-top: 10px;">
-									<text class="label" style="width: 20%;">联系方式：</text>
-									<input class="input-field" type="text" :adjust-position="false" placeholder=" "
-										style="height: 40rpx;width: 80%;border-radius: 5rpx;background-color: lightgray;font-size: 15rpx;padding-left: 10px;font-weight: bold;"
-										v-model="AddedCustomerFormData.phone" />
-								</view>
-								<view class="input-container" style="margin-top: 10px;">
-									<text class="label" style="width: 20%;">车牌：</text>
-									<input class="input-field" type="text" placeholder=" "
-										style="	height: 40rpx;width: 80%;border-radius: 5rpx;background-color: lightgray;font-size: 15rpx;padding-left: 10px;font-weight: bold;"
-										v-model="AddedCustomerFormData.carNum" />
-								</view>
-								<view class="input-container" style="margin-top: 10px;">
-									<text class="label" style="width: 20%;">地址：</text>
-									<input class="input-field" type="text" placeholder=" "
-										style="	height: 40rpx;width: 80%;border-radius: 5rpx;background-color: lightgray;font-size: 15rpx;padding-left: 10px;font-weight: bold;"
-										v-model="AddedCustomerFormData.address" />
-								</view>
-								<view style="display: flex;">
-									<button @click="customerDialogVisibleAdd = false;memberDialogVisible = true;"
-										style="width: 30%;margin-top: 20px;background-color: lightgrey; box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);font-weight: bold;">返回</button>
-									<button type="primary" @click="submitAddCustomer()"
-										style="width: 30%;margin-top: 20px; box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);font-weight: bold;">添加</button>
-								</view>
-							</view>
-						</uni-section>
-					</div>
-				</u-modal>
-				<!--客户中心-->
-				<u-modal title="" :show="memberDialogVisible" @close="memberDialogVisible=false"
-					:closeOnClickOverlay="true" :showConfirmButton="false" width="900px">
-					<div class="slot-content">
-						<div class="search-member">
-
-							<view class="search-member-right">
-								<div style="width: 200rpx;">
-									<u--input placeholder="搜索顾客名称" border="surround" v-model="memberSearchKeyword"
-										clearable :adjustPosition="false"
-										@change="memberSearch(memberSearchKeyword)"></u--input>
-								</div>
-								<div style="width: 50rpx;">
-									<u-button type="primary" text="重置" @click="memberSearchKeyword=''"
-										style="height: 20rpx;border-radius: 5rpx;margin-left: 10rpx;background-color: #959595;color: white;border-color:#959595;"></u-button>
-								</div>
-								<div style="width: 50rpx;z-index: 999;" v-if="memberStyle==='XiaDan'">
-									<u-button type="primary" icon="plus-circle"
-										@click="memberDialogVisible = false;customerDialogVisibleAdd = true;"
-										text="添加顾客"
-										style="height: 20rpx;border-radius: 5rpx;margin-left: 30rpx;width: 100px;"></u-button>
-								</div>
-							</view>
-
-						</div>
-						<scroll-view class="scrollArea" scroll-y="true" :style="{ height: windowHeight-200 + 'px' }">
-							<view class="grid-member-container">
-								<view class="grid-member-item" v-for="(item, index) in memberSearchOptions" :key="index"
-									style=" box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);" @click="changeMember(item)">
-
-									<!-- 第一行 -->
-									<view class="row" style="display: flex;">
-										<text class="member-name" :style="{
-										                color: item.debts ? '#000000' : '#000000',
-										                fontSize: '18rpx',
-										                fontWeight: 'bold'
-										            }">{{ item.customName }}</text>
-										<view style=" display: flex;align-items: center;font-size: 8rpx;"
-											v-if="item.id&&item.id!=''">
-											<text class="member-btn" style="color: gray;"></text>
-										</view>
-									</view>
-
-									<!-- 第二行 -->
-									<view class="row" style="margin-top: 5rpx;">
-										<text class="member-name" style="color: black;"
-											v-if="memberStyle==='ShouKuang' ">欠筐:{{ item.owebasket }}</text>
-									</view>
-								</view>
-
-							</view>
-						</scroll-view>
-					</div>
-				</u-modal>
-				<u-modal title="挂单中心" :show="hangListVisible" @close="hangListVisible=false" :closeOnClickOverlay="true"
-					:showConfirmButton="false" :width="'600rpx'">
-					<div style="display: flex; height: 350rpx; border: 1px solid #ccc;width: 600rpx;">
-						<!-- 左边订单列表 -->
-						<div class="slot-content"
-							style="flex: 1; overflow-y: auto; border-right: 1px solid #eee; padding: 10rpx;height: 325rpx;">
-							<view class="grid-member-container">
-								<view v-for="(group, index) in hangList" :key="group.date" class="group-container">
-									<view class="group-title"
-										style="font-weight: bold; margin-bottom: 10rpx;font-size: 20rpx;">
-										{{ group.date }}
-									</view>
-									<view class="grid-member-item2" v-for="(item, idx) in group.items"
-										:key="item.key || idx" @click="selectGDorder(item)" :style="{ fontWeight: 'bold', cursor: 'pointer', 
-										backgroundColor: orderGDSelect && orderGDSelect.id === item.id ? '#00aaff' : 'transparent',
-										color: orderGDSelect && orderGDSelect.id === item.id ? '#ffffff' : 'black',
-										 padding: '8rpx', marginBottom: '5rpx', borderRadius: '4rpx' }">
-										<text>{{ item.key }}</text>
-										<div
-											style="padding: 2rpx; font-size: 10rpx; display: flex; justify-content: space-between; align-items: center;">
-											<div>{{ item.createTime.replace('T', ' ') }}</div>
-											<div>{{ item.customName }}</div>
-										</div>
-										<div
-											style="margin-top: 5rpx; font-size: 10rpx;white-space: nowrap;width: 250rpx;text-overflow: ellipsis;overflow: hidden;">
-											{{ item.modelInfo }}
-										</div>
-									</view>
-								</view>
-							</view>
-						</div>
-
-						<!-- 右边订单详情 -->
-						<div class="order-detail" style="flex: 1;  position: relative;">
-							<template v-if="orderGDSelect">
-								<view class="table" style=" border: 1px solid #ccc;">
-									<!-- 表头 -->
-									<view class="table-row header"
-										style=" background-color: #cecece;font-weight: bold;">
-										<view class="table-cell2">名称</view>
-										<view class="table-cell2">单价</view>
-										<view class="table-cell2">总重</view>
-										<view class="table-cell2">皮重</view>
-										<view class="table-cell2">小计</view>
-									</view>
-
-									<!-- 表格内容示例 -->
-									<view class="table-row" v-for="(item, index) in orderGDSelect.modelList"
-										:key="index" style="overflow-y: auto; ">
-										<view class="table-cell2">{{ item.name }}</view>
-										<view class="table-cell2">{{ item.referenceAmount }}</view>
-										<view class="table-cell2">{{ item.totalWeight }}</view>
-										<view class="table-cell2">{{ item.tareWeight }}</view>
-										<view class="table-cell2">{{ item.subtotal }}</view>
-									</view>
-								</view>
-							</template>
-							<div
-								style="position: absolute; bottom: 0; height: 35rpx; border-top: 1px solid #ccc; width: 100%; display: flex;">
-								<button @click="deleteGDorder(orderGDSelect)"
-									style="width: 70rpx;font-weight: bold; color: #ffffff;background: gainsboro; height: 25rpx; line-height: 25rpx; font-size: 12rpx; margin-top: 5rpx;">删除</button>
-								<button
-									style="width: 70rpx;font-weight: bold;color: #ffffff;background: orange; height: 25rpx; line-height: 25rpx; font-size: 12rpx; margin-top: 5rpx;"
-									@click="printerGDModel(orderGDSelect)">打印挂单</button>
-								<button @click="hangOrderParse(orderGDSelect)"
-									style="width: 70rpx;font-weight: bold;color: #ffffff;background: #00aaff; height: 25rpx; line-height: 25rpx; font-size: 12rpx; margin-top: 5rpx;">取挂单</button>
-							</div>
-						</div>
-					</div>
-				</u-modal>
-				<!-- 				<u-modal title="添加临时商品" :show="tempSpuDialogVisible" @close="tempSpuDialogVisible=false"
-					:closeOnClickOverlay="true" :showConfirmButton="false" :width="modalWidth">
-					<div class="slot-content" style="overflow-y: auto;">
-						<div class="slot-modal">
-							<u--form ref="tempSpuForm" :rules="tempSpuRules" :model="tempSpu" labelPosition="left"
-								labelAlign="right" label-width="80px">
-								<u-form-item label="商品名称:" prop="skuName">
-									<u--input placeholder="输入商品名称" maxlength="100" v-model="tempSpu.skuName"></u--input>
-								</u-form-item>
-								<u-form-item label="商品单价:" prop="adjustAmount">
-									<u--input placeholder="输入商品单价" type="number"
-										v-model="tempSpu.adjustAmount"></u--input>
-								</u-form-item>
-								<u-form-item label="商品数量:" prop="quantity">
-									<u--input placeholder="输入商品数量" type="number" v-model="tempSpu.quantity"></u--input>
-								</u-form-item>
-							</u--form>
-							<div class="footer">
-								<div class="btn btn-info-plain" @click="tempSpuClose">取消</div>
-								<div class="btn btn-primary" @click="tempSpuSubmit">确定</div>
-							</div>
-						</div>
-					</div>
-				</u-modal> -->
-
-				<!--收银弹窗-->
-
-				<u-modal title="" class="modern-payment-modal" :show="payTypeDialogVisible" :closeOnClickOverlay="true"
-					:showConfirmButton="false" :width="800" @close="payTypeDialogVisible = false">
-					<div class="payment-modal-container">
-						<!-- 关闭按钮 -->
-						<div class="modal-close-btn" @click="payTypeDialogVisible = false">
-							<uni-icons custom-prefix="iconfont" type="icon-icon-cross-squre" size="24" color="#666"></uni-icons>
-						</div>
-						
-
-						
-						<div class="payment-content-grid">
-							<!-- 左侧：金额输入和支付方式 -->
-							<div class="left-input-section">
-								<!-- 金额输入区域 -->
-								<div class="amount-inputs-section">
-									<!-- <div class="section-title">金额设置</div> -->
-									<div class="amount-inputs">
-										<div class="input-row" :class="{'active': selectInput_pay === 1}" @click="editingPaymentClick(1)">
-											<label class="input-label">应付金额</label>
-											<input v-model="payAmount.total" inputmode="none" class="amount-input" readonly>
-										</div>
-										
-										<div class="input-row discount-row" :class="{'active': selectInput_pay === 9}" @click="editingPaymentClick(9)">
-											<div class="discount-toggle">
-												<button class="discount-btn" :class="{'active': accountDiscount}" @click="setDicountAmount">优惠</button>
-												<button class="discount-btn" :class="{'active': !accountDiscount}" @click="setOverchargeAmount">多收</button>
-											</div>
-											<input v-model="discountAmount" inputmode="none" class="amount-input">
-										</div>
-										
-										<div class="input-row" :class="{'active': selectInput_pay === 4}" @click="editingPaymentClick(4)">
-											<label class="input-label">收筐抵扣</label>
-											<input v-model="payAmount.BasketOffsetAmount" inputmode="none" class="amount-input">
-											<button class="collect-btn" @click="collectBasketoffestMoney">收筐</button>
-										</div>
-										
-										<div class="input-row" :class="{'active': selectInput_pay === 3}" @click="editingPaymentClick(3)">
-											<label class="input-label">下欠金额</label>
-											<input v-model="payAmount.debt" inputmode="none" class="amount-input">
-										</div>
-										
-										<div class="input-row" :class="{'active': selectInput_pay === 2}" @click="editingPaymentClick(2)">
-											<label class="input-label">实付金额</label>
-											<input v-model="payAmount.actual" inputmode="none" class="amount-input">
-										</div>
-									</div>
-								</div>
-								
-								<!-- 支付方式区域 -->
-								<div class="payment-methods-section">
-									<div class="section-title">支付方式</div>
-									<div class="payment-methods-grid" v-if="AccountExpense">
-										<div class="payment-method-card" 
-											:class="{'active': selectInput_pay === 5}"
-											@click="editingPaymentClick(5)">
-											<div class="payment-method-card-content">
-												<div class="payment-icon">
-													<u-icon name="weixin-fill" :size="24" color="#07c160"></u-icon>
-												</div>
-												<div class="payment-label">微信</div>
-											</div>
-											<div class="payment-amount">{{AccountExpense.wxpayAmount}}</div>
-										</div>
-										
-										<div class="payment-method-card"
-											:class="{'active': selectInput_pay === 6}"
-											@click="editingPaymentClick(6)">
-											<div class="payment-method-card-content">
-												<div class="payment-icon">
-													<u-icon name="zhifubao" :size="24" color="#1677ff"></u-icon>
-												</div>
-												<div class="payment-label">支付宝</div>
-											</div>
-											<div class="payment-amount">{{AccountExpense.alipayAmount}}</div>
-										</div>
-										
-										<div class="payment-method-card"
-											:class="{'active': selectInput_pay === 7}"
-											@click="editingPaymentClick(7)">
-											<div class="payment-method-card-content">
-												<div class="payment-icon">
-													<u-icon name="red-packet-fill" :size="24" color="#ff4757"></u-icon>
-												</div>
-												<div class="payment-label">现金</div>
-											</div>
-											<div class="payment-amount">{{AccountExpense.cashAmount}}</div>
-										</div>
-										
-										<div class="payment-method-card"
-											:class="{'active': selectInput_pay === 8}"
-											@click="editingPaymentClick(8)">
-											<div class="payment-method-card-content">
-												<div class="payment-icon">
-													<u-icon name="coupon-fill" :size="24" color="#ffa502"></u-icon>
-												</div>
-												<div class="payment-label">其他</div>
-											</div>
-											<div class="payment-amount">{{AccountExpense.otherAmount}}</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							
-							<!-- 右侧：顾客信息、数字键盘和操作按钮 -->
-							<div class="right-keypad-section">
-								<!-- 顾客信息 -->
-								<div class="customer-info-section">
-									<div class="customer-badge" :class="currentMember.debts > 0 ? 'debt' : 'normal'">
-										<div class="customer-name">{{currentMember.customName ? currentMember.customName : '散客'}}</div>
-										<div v-if="currentMember.debts > 0" class="debt-info">总下欠：{{currentMember.debts}}元</div>
-									</div>
-								</div>
-								
-								<!-- 数字键盘 -->
-								<div class="modern-keypad">
-									<div class="keypad-row">
-										<button class="keypad-btn" @click="NumberCk2(1)">1</button>
-										<button class="keypad-btn" @click="NumberCk2(2)">2</button>
-										<button class="keypad-btn" @click="NumberCk2(3)">3</button>
-									</div>
-									<div class="keypad-row">
-										<button class="keypad-btn" @click="NumberCk2(4)">4</button>
-										<button class="keypad-btn" @click="NumberCk2(5)">5</button>
-										<button class="keypad-btn" @click="NumberCk2(6)">6</button>
-									</div>
-									<div class="keypad-row">
-										<button class="keypad-btn" @click="NumberCk2(7)">7</button>
-										<button class="keypad-btn" @click="NumberCk2(8)">8</button>
-										<button class="keypad-btn" @click="NumberCk2(9)">9</button>
-									</div>
-									<div class="keypad-row">
-										<button class="keypad-btn" @click="NumberCk2(0)">0</button>
-										<button class="keypad-btn" @click="NumberCk2('.')">.</button>
-										<button class="keypad-btn delete-btn" @click="Tuige2()">
-											<uni-icons custom-prefix="iconfont" type="icon-tuige" size="40" color="#fff"></uni-icons>
-										</button>
-									</div>
-								</div>
-								
-								<!-- 操作按钮 -->
-								<div class="action-buttons">
-									<button class="action-btn debt-btn" @click="payTypeDebt">整单下欠</button>
-									<button class="action-btn confirm-btn" @click="payTypeConfirm">确认收款</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				</u-modal>
-
-				<u-modal title="订单详情" :show="LastOrderShow" @close="LastOrderShow = false" :closeOnClickOverlay="true"
-					:showConfirmButton="false" :width="'500rpx'">
-					<div class="slot-content" v-if="lastOrder" style="position: relative;">
-						<div style="display: inline-block; margin-right: 10px;">
-							创建时间: {{ lastOrder.createTime ? lastOrder.createTime.replace("T", " ") : "" }}
-						</div>
-						<div style="display: inline-block; margin-right: 10px;margin-left: 50px;">
-							订单号: {{ lastOrder.accountCode ? lastOrder.accountCode : "" }}
-						</div>
-						<div style="display: inline-block; margin-right: 10px;margin-left: 50px;">
-							<div>顾客: {{ lastOrder.customName ? lastOrder.customName : "散客" }}</div>
-						</div>
-						<br>
-						<div style="display: inline-block; margin-right: 10px;margin-top: 20px;margin-bottom: 20px;">
-							<div>总计金额: {{ lastOrder.payableAmount ? lastOrder.payableAmount : 0 }}</div>
-						</div>
-						<div v-if="lastOrder.basketOffsetAmount&&lastOrder.basketOffsetAmount>0"
-							style="display: inline-block;margin-left: 50px; margin-right: 10px;margin-top: 20px;margin-bottom: 20px;">
-							<div>收筐抵扣:
-								{{ lastOrder.basketOffsetAmount ? lastOrder.basketOffsetAmount : 0 }}({{lastOrder.basketOffsetNum}}个)
-							</div>
-						</div>
-						<div style="display: inline-block; margin-right: 10px;margin-left: 50px;">
-							<div>实付金额: {{ lastOrder.actualMoney ? lastOrder.actualMoney : 0 }}</div>
-						</div>
-						<div v-if="lastOrder.debt>0"
-							style="display: inline-block; margin-right: 10px;margin-left: 50px;color: red;">
-							<div>下欠: {{ lastOrder.debt  }}</div>
-						</div>
-
-						<div class="table">
-							<div class="table-row">
-								<div class="table-header-cell">货品</div>
-								<div class="table-header-cell">数量</div>
-								<div class="table-header-cell">总重</div>
-								<div class="table-header-cell">皮重</div>
-								<div class="table-header-cell">单价</div>
-								<div class="table-header-cell">小计</div>
-							</div>
-							<scroll-view class="scrollArea" scroll-y="true" :style="{ height: 150 + 'rpx' }">
-								<div class="table-row" v-for="item in lastOrder.modelList">
-									<div class="table-cell">{{item.name}}</div>
-									<div class="table-cell">{{item.mount}}</div>
-									<div class="table-cell">{{item.totalWeight}}</div>
-									<div class="table-cell">{{item.tareWeight}}</div>
-									<div class="table-cell">{{item.referenceAmount}}</div>
-									<div class="table-cell">{{item.subtotal}}</div>
-								</div>
-							</scroll-view>
-						</div>
-						<view
-							style="display: flex; justify-content: space-between; align-items: center; width: 100%;padding-top: 5rpx;">
-							<view style="text-align: right;padding-right: 5rpx;"><u-button type="primary"
-									@click="orderMemberChange" text="客户变更"></u-button></view>
-							<view style="text-align: right;padding-right: 5rpx;"><u-button type="primary"
-									@click="printerModel(lastOrder);" text="打印"></u-button></view>
-						</view>
-						<u-button icon="share-square" :plain="true" shape="circle" type="primary" text="发单"
-							@click="shareOrder(lastOrder.id)"
-							style="position: absolute; top: 0; right: 0;width: 50rpx;">
-						</u-button>
-					</div>
-				</u-modal>
-
 			</div>
 		</div>
+	</div>
 
-		<!--下单成功弹窗-->
+	<!-- 分级商品选择弹窗 -->
+	<div v-if="multiLevelPopup.visible" class="multilevel-popup-mask" @click="closeMultiLevelPopup">
+		<div 
+			class="multilevel-popup-container" 
+			:style="multiLevelPopupStyle"
+			@click.stop
+		>
+			<div class="multilevel-popup-content">
+				<div 
+					v-for="(child, index) in multiLevelPopup.childrenList" 
+					:key="child.id || index"
+					:id="'multilevel-grid-item-' + child.id"
+					class="multilevel-grid-item"
+					@click="handleMultiLevelClick(child)"
+				>
+					<!-- 商品名称 -->
+					<div class="multilevel-item-name">
+						{{ child.commodityName || child.name }}
+					</div>
+					
+					<!-- 商品信息区域 -->
+					<div class="multilevel-item-info">
+						<!-- 标签行 -->
+						<div class="multilevel-item-tags">
+							<div v-if="commodityType === 1" class="tag tag-consignment">代</div>
+							<div v-if="commodityType === 2" class="tag tag-self">自</div>
+							
+							<div v-if="child.saleWay == 1" class="tag tag-unfixed">非定</div>
+							<div v-if="child.saleWay == 2" class="tag tag-fixed">
+								定{{ child.initWeight ? child.initWeight : '' }}
+							</div>
+							<div v-if="child.saleWay == 3" class="tag tag-unpack">拆包</div>
+							<div v-if="child.saleWay == 4" class="tag tag-bulk">散</div>
+						</div>
+						
+						<!-- 库存信息 -->
+						<div 
+							class="multilevel-item-stock"
+							:style="!child.outPutPurchaseInventories || child.outPutPurchaseInventories.length === 0 ? { color: '#aa0000' } : {}"
+						>
+							余: 
+							<span v-for="item2 in child.outPutPurchaseInventories" :key="item2.id" class="stock-item">
+								{{ item2.mount }}{{ item2.specName }}
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	</div>
+	</div>
+
+	<!--下单成功弹窗-->
 		<u-modal title=" " class="payment" :show="popup_paysuccess_show" :closeOnClickOverlay="true"
-			:showConfirmButton="false" :width="500" @close="inputModelVisible = false">
+			:showConfirmButton="false" :width="500" @close="popup_paysuccess_show = false">
 			<view style="border-radius: 10rpx;">
 				<div style="display: flex;">
 					<div>
@@ -845,50 +293,37 @@
 </template>
 
 <script>
-	import Sidebar from '@/components/Sidebar.vue'
-	import VerticalTab from '@/components/VerticalTab.vue'
-	import cashierDiscount from '../../api/cashier/cashierDiscount'
-	import cashierIgnore from '../../api/cashier/cashierIgnore'
+	import CashierGoodsPanel from '@/components/CashierGoodsPanel/CashierGoodsPanel.vue'
 	import cashierOrder from '../../api/cashier/cashierOrder'
 	import category from '../../api/goods/category'
 	import member from '../../api/member/member'
-	import timeCard from '../../api/member/timeCard'
-	import payment from '../../api/cashier/payment'
-	import staff from '../../api/security/staff'
-	import stockStore from '../../api/stock/stockStore'
 	import config from '../../common/config'
-	import global from '../../common/const/global'
-	import login from '../../api/auth/login'
-	import cashierHang from '../../api/cashier/cashierHang'
-	import Purchase from '../../api/purchase/purchase.js'
-	import {
-		generateGUID
-	} from '../util/CommonMethod.js'
-	import {
-		getCompanyId
-	} from '../../common/const/cacheSync'
-	import MyNumberInputVue from '../../components/MyNumberInput.vue'
 	import BasketOffestModel from './component/basket-offest-model.vue'
 	import RepayModal from '@/components/RepaymentModal.vue'
+	import GoodEditKeyboard from '@/components/GoodEditKeyboard.vue'
+	import OrderGoodsPanel from '@/components/OrderGoodsPanel/OrderGoodsPanel.vue'
+	import PaymentModal from '@/components/PaymentModal.vue'
+	import CustomerSelector from '@/components/CustomerSelector/CustomerSelector.vue'
+	import ShippingModal from '@/components/ShippingModal.vue'
 
 	export default {
 		name: 'Cashier',
-		components: {
-			Sidebar,
-			VerticalTab,
-			MyNumberInputVue,
-			BasketOffestModel,
-			RepayModal
-		},
+	components: {
+		CashierGoodsPanel,
+		BasketOffestModel,
+		RepayModal,
+		GoodEditKeyboard,
+		OrderGoodsPanel,
+		PaymentModal,
+		CustomerSelector,
+		ShippingModal
+	},
 		data() {
 			return {
 				currentSelctCustomerType: 1, //当前选中的顾客操作类型 1-下单 2-还筐 3-还款
-				test: 0,
 				popup_paysuccess_show: false,
-				currentTabId: "",
 				repayBasketList: [], //2.0仅用于收银还筐
 				repayBasketActiveIndex: 0,
-				currentTabName: "",
 				accountDiscount: true,
 				payWay: [{
 						label: "微信支付",
@@ -924,12 +359,27 @@
 					alipayAmount: 0,
 					wxpayAmount: 0
 				},
-				discountAmount: 0,
-				actionView: null,
-				maskView: null,
-				memberStyle: "XiaDan",
+		discountAmount: 0,
+		actionView: null,
+		maskView: null,
+		// 规格弹窗数据（拆包）
+		specPopup: {
+			visible: false,
+			left: 0,
+			top: 0,
+			commodity: null,
+			specList: []
+		},
+		// 分级商品弹窗数据
+		multiLevelPopup: {
+			visible: false,
+			left: 0,
+			top: 0,
+			parentCommodity: null,
+			childrenList: []
+		},
+		memberStyle: "XiaDan",
 				AddedCustomerFormData: {},
-				canvasheight: 0,
 				currentPayWay: 1,
 				custominputFocused: false,
 				custominputFocused2: false,
@@ -937,33 +387,20 @@
 				custominputFocused4: false,
 				custominputFocusIndex: '',
 				editingPaymentIndex: 1,
-				LastOrderShow: false,
 				showRepaymentModal: false,
 				repayCustomerData:{},
 				step1: true,
-				spuCol: 3,
-				skuCol: 2,
-				inputModelTitle: "收筐",
-				inputModelType: 2,
-				inputModelVisible: false,
-				memberCol: 3,
-				modalWidth: '700px',
-				showKeyBord: false,
 				editingCard: '',
 				editingIndex: '',
-				fixedTareWeight: {
-					action: false,
-					value: 0
-				},
-				fixedPayPrint: false,
-				memberEventInfo: {
-					member: null,
-					collectBasketNum: 0
-				},
-				orderGDSelect: {
-
-				},
-				cashier: {
+			fixedTareWeight: {
+				action: false,
+				value: 0
+			},
+			memberEventInfo: {
+				member: null,
+				collectBasketNum: 0
+			},
+			cashier: {
 					type: 0,
 					discount: 10,
 					ignoreType: 0,
@@ -976,81 +413,29 @@
 					memberId: '',
 					member: {},
 					cards: [],
-					source: config.platformCode
-				},
-				customerDialogVisibleAdd: false,
-				skuDialogVisible: false,
-				skuOptions: [],
-				windowHeight: 0,
-				tempSpuDialogVisible: false,
-				tempSpu: {
-					skuName: '',
-					adjustAmount: '',
-					quantity: ''
-				},
-				selectCashierCardItem: {},
-				showAllweightStr: false,
-				memberDialogVisible: false,
-				hangListVisible: false,
-				memberSearchKeyword: '',
-				memberOptions: [],
-				memberSearchOptions: [],
-				hangleList: [],
-				hangDialogVisible: false,
-				hangPopupVisible: false,
-				hangBtnLoading: false,
-				lastOrder: null,
-				hangFormRules: {
-					'name': {
-						type: 'string',
-						required: true,
-						message: '请填写备注信息',
-						trigger: ['blur', 'change']
-					}
-				},
-				hangInfo: {
-					name: '',
-					remark: ''
-				},
-				hangList: [],
+			source: config.platformCode
+		},
+		customerDialogVisibleAdd: false,
+		windowHeight: 0,
+		showAllweightStr: false,
+		memberDialogVisible: false,
+		memberSearchKeyword: '',
+		memberOptions: [],
+		memberSearchOptions: [],
+		lastOrder: null,
 				categoryList: [],
 				currentOrderInfo: {
 
 				},
-				currentMember: {
-					customName: "散客",
-					id: ""
-				},
-				tempSpuRules: {
-					'skuName': {
-						type: 'string',
-						required: true,
-						message: '请填写商品名',
-						trigger: ['blur', 'change']
-					},
-					'adjustAmount': {
-						type: 'number',
-						required: true,
-						message: '请填写单价',
-						trigger: ['blur', 'change']
-					},
-					'quantity': {
-						type: 'number',
-						required: true,
-						message: '请填写购买数量',
-						trigger: ['blur', 'change']
-					}
-				},
-				payTypeDialogVisible: false,
-				selectInput_pay: 1,
-				payResult: {},
-				rows: [],
-				showRows: [],
-				GoodkeyWord: [],
-				currentKeyWord: "",
-				commidityList: [],
-				selectPay: {},
-				commodityType: 1,
+			currentMember: {
+				customName: "散客",
+				id: ""
+			},
+		payTypeDialogVisible: false,
+		shippingModalVisible: false,
+		selectInput_pay: 1,
+			payResult: {},
+			commodityType: 1,
 				payAmount: {
 					total: 0,
 					actual: 0,
@@ -1073,15 +458,143 @@
 		onShow() {
 			this.initSystem();
 			this.currentCompanyId = uni.getStorageSync('companyId');
-			this.getCategoryList();
 			this.initCompanySetting();
 		},
-		mounted() {
-			this.windowHeight = uni.getWindowInfo().windowHeight;
-			this.onLoadMethod();
+	mounted() {
+		this.windowHeight = uni.getWindowInfo().windowHeight;
+		this.onLoadMethod();
             this.getallextralgood();
+	},
+	computed: {
+	// 规格弹窗样式
+	specPopupStyle() {
+		const { left, top, specList } = this.specPopup;
+		const itemHeight = 90; // 每项高度
+		const popupHeight = Math.min(specList.length * itemHeight + 10, 450); // 限制最大高度450px
+		
+		// 使用 uni-app 兼容的方式获取屏幕高度
+		const screenHeight = this.windowHeight || uni.getWindowInfo().windowHeight;
+		
+		// 计算最佳位置（避免超出屏幕）
+		let adjustedTop = top - 100 < 0 ? 0 : top - 100;
+		adjustedTop = adjustedTop + popupHeight > screenHeight 
+			? screenHeight - popupHeight - 20
+			: adjustedTop;
+		
+		return {
+			left: left + 'px',
+			top: adjustedTop + 'px'
+		};
+	},
+	// 分级商品弹窗样式
+	multiLevelPopupStyle() {
+			const { left, top, childrenList } = this.multiLevelPopup;
+			const itemHeight = 90; // 每个 grid-item 的高度（包含边距）
+			const popupPadding = 20; // 弹窗内边距
+			const popupHeight = Math.min(childrenList.length * itemHeight + popupPadding * 2, 500); // 最大高度500px
+			
+			// 使用 uni-app 兼容的方式获取屏幕高度
+			const screenHeight = this.windowHeight || uni.getWindowInfo().windowHeight;
+			
+			// 计算最佳位置（避免超出屏幕）
+			let adjustedTop = top - 100 < 0 ? 0 : top - 100;
+			adjustedTop = adjustedTop + popupHeight > screenHeight 
+				? screenHeight - popupHeight - 20
+				: adjustedTop;
+			
+			return {
+				left: left + 'px',
+				top: adjustedTop + 'px',
+				maxHeight: '500px'
+			};
+		}
+	},
+	methods: {
+		// 处理标签切换事件（从 CashierGoodsPanel 组件触发）
+		handleTabChanged(data) {
+			// 组件内部已经处理了商品加载逻辑
+			// 这里只需要处理父组件需要知道的状态变化
+			console.log('标签已切换:', data);
 		},
-		methods: {
+		
+	// 处理分类列表更新事件（从 CashierGoodsPanel 组件触发）
+	handleCategoryUpdated(categoryList) {
+		// 更新父组件的 categoryList（用于其他功能）
+		this.categoryList = categoryList;
+		console.log('分类列表已更新:', categoryList);
+	},
+	
+	// 处理 OrderGoodsPanel 组件的商品点击事件（编辑已添加的商品）
+	handleItemClick({ item, index }) {
+		console.log("编辑商品 - item:", item);
+		console.log("saleWay:", item.saleWay, "commoditySpecs:", item.commoditySpecs);
+
+		// 如果是拆包类型 (saleWay === 3)，检查是否有多个规格
+		if (item.saleWay === 3 && item.commoditySpecs && item.commoditySpecs.length > 1) {
+			console.log("显示拆包规格选择弹窗，规格数量:", item.commoditySpecs.length);
+			// 保存当前编辑的商品索引，供规格选择后更新使用
+			this.editingIndex = index;
+			this.editingCard = item;
+			// 获取元素位置用于弹窗定位
+			// 直接在屏幕中央显示弹窗
+			const screenWidth = uni.getWindowInfo().windowWidth;
+			const screenHeight = uni.getWindowInfo().windowHeight;
+			this.createNativeViewForEdit(screenWidth / 2, screenHeight / 3, item, item.commoditySpecs, index);
+			return;
+		}
+		
+		console.log("直接进入编辑界面");
+		// 其他情况直接进入编辑界面
+		this.showStep2(item, index);
+	},
+
+	// GoodEditKeyboard 组件确认事件处理
+	handleGoodEditConfirm(updatedCard) {
+		// 更新编辑中的商品数据
+		this.editingCard = updatedCard;
+		this.goodSelect[this.editingIndex] = updatedCard;
+
+		this.reCountGoodSelect();
+		
+		// 返回商品列表
+		this.step1 = true;
+		this.custominputFocused = false;
+		this.custominputFocused2 = false;
+		this.custominputFocused3 = false;
+		this.custominputFocused4 = false;
+		this.showAllweightStr = false;
+	},
+
+	// GoodEditKeyboard 组件押筐选择事件处理
+	handleExtraModelSelect(extralModel) {
+		// 更新 editingCard 的押筐模型
+		this.editingCard.extralModel = extralModel;
+		
+		// 同步到 goodSelect 数组
+		this.goodSelect[this.editingIndex] = this.editingCard;
+	},
+	
+	// PaymentModal 组件确认事件处理
+	async handlePaymentConfirm(paymentData) {
+		// PaymentModal 组件会处理所有支付逻辑，这里直接调用原来的确认方法
+		await this.payTypeConfirm();
+	},
+
+	// 运费相关方法
+	showShippingModal() {
+		this.shippingModalVisible = true;
+	},
+	handleShippingConfirm(fee) {
+		this.cashier.shippingFee = fee;
+		this.shippingModalVisible = false;
+		// 重新计算总金额
+		this.reCountGoodSelect();
+		uni.showToast({
+			title: '运费设置成功',
+			icon: 'success'
+		});
+	},
+	
             //还原订单
             parseoldOrder(){
                 let modelList = JSON.parse(this.old_order.module);
@@ -1154,6 +667,7 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 			onLoadMethod() {
 				this.currentCompanyId = uni.getStorageSync('companyId');
 				this.initCompanySetting();
+				this.getCategoryList();
 			},
 			initCompanySetting() {
 				var companySetting = uni.getStorageSync("companySetting")
@@ -1174,23 +688,6 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 					this.shareOrder(this.lastOrder.id);
 				}
 			},
-			clickKeyWord(key) {
-				this.currentKeyWord = key;
-				if (key === "全") {
-					this.rows = [];
-					this.commidityList.sort((a, b) => b.inventory - a.inventory);
-					for (let i = 0; i < this.commidityList.length; i += 2) {
-						this.rows.push(this.commidityList.slice(i, i + 2));
-					}
-				} else {
-					var commidityList = this.commidityList.filter(x => x.name.includes(key));
-					this.rows = [];
-					commidityList.sort((a, b) => b.inventory - a.inventory);
-					for (let i = 0; i < commidityList.length; i += 2) {
-						this.rows.push(commidityList.slice(i, i + 2));
-					}
-				}
-			},
 			setDicountAmount() {
 				this.accountDiscount = true;
 				this.payAmount.actual = eval(this.payAmount.total) - eval(this.discountAmount) - eval(this.payAmount.debt);
@@ -1209,52 +706,31 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 					wxpayAmount: val
 				}
 			},
-			countTareWeight(str) {
-				console.log(str)
-				return eval(str)
-			},
-			cancelRepayBasket() {
-				this.inputModelVisible = false;
-				this.resetPayBasket();
-				this.payAmount.actual = this.payAmount.actual + this.payAmount.BasketOffsetAmount;
-				this.payAmount.BasketOffsetAmount = 0;
-			},
-			saveBasketOffest(basketList) {
-				console.log("basketList", basketList)
-				// if (parseInt(this.memberEventInfo.collectBasketNum) === 0) {
-				// 	return;
-				// }
-				this.repayBasketList = basketList;
-				this.payAmount.actual += this.payAmount.BasketOffsetAmount;
-				this.payAmount.BasketOffsetAmount = 0;
-				for (var i = 0; i < this.repayBasketList.length; i++) {
-					this.payAmount.BasketOffsetAmount += parseFloat(this.repayBasketList[i].quantity) * parseFloat(this
-						.repayBasketList[i].amount);
-				}
-				this.payAmount.actual = parseFloat((this.payAmount.actual - this.payAmount.BasketOffsetAmount).toFixed(
-					1));
-				this.inputModelVisible = false;
-			},
-			collectBasketoffestMoney() {
-				this.$nextTick(() => {
-					this.$refs.modeloffestBasketRef.open(this.repayBasketList);
-				});
-				this.playSystemKeyClickSound();
-				// this.inputModelType = 3;
-				// this.inputModelVisible = true;
-			},
-			blurExtralModel1(e) {
-				if (e.target.value == null || e.target.value === "" || e.target.value == NaN) {
-					this.extraModel[0].quantity = 0;
-				} else {
-					this.extraModel[0].quantity = e.target.value;
-				}
-				this.reCountGoodSelect2();
-			},
-			async getlastOrder_print() {
-				let that = this;
-				return await cashierOrder.GetLastAccountCompanyId(that.currentCompanyId)
-			},
+		countTareWeight(str) {
+			console.log(str)
+			return eval(str)
+		},
+		saveBasketOffest(basketList) {
+			console.log("basketList", basketList)
+			// if (parseInt(this.memberEventInfo.collectBasketNum) === 0) {
+			// 	return;
+			// }
+			this.repayBasketList = basketList;
+			this.payAmount.actual += this.payAmount.BasketOffsetAmount;
+			this.payAmount.BasketOffsetAmount = 0;
+			for (var i = 0; i < this.repayBasketList.length; i++) {
+				this.payAmount.BasketOffsetAmount += parseFloat(this.repayBasketList[i].quantity) * parseFloat(this
+					.repayBasketList[i].amount);
+			}
+			this.payAmount.actual = parseFloat((this.payAmount.actual - this.payAmount.BasketOffsetAmount).toFixed(
+				1));
+		},
+		collectBasketoffestMoney() {
+			this.$nextTick(() => {
+				this.$refs.modeloffestBasketRef.open(this.repayBasketList);
+			});
+			this.playSystemKeyClickSound();
+		},
 			getallextralgood() {
 				this.extraModel = [];
 				this.editCardExtralModel = [{
@@ -1283,42 +759,10 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 				this.memberDialogVisible = false
 					this.currentMember = e;
 			},
-			//处理还款事件
-			handleRepaymentConfirm(data) {
-				console.log("data", data)
-			},
-			selectGDorder(e) {
-				this.orderGDSelect = e;
-				this.orderGDSelect.modelList = JSON.parse(e.module);
-			},
-			//取挂单
-			hangOrderParse(e) {
-				this.goodSelect = [];
-				let modelList = JSON.parse(e.module);
-				for (let i = 0; i < modelList.length; i++) {
-					let model = modelList[i];
-					let good = {
-						key: i,
-						skuName: model.name,
-						referenceAmount: model.referenceAmount,
-						quantity: model.mount,
-						carweight: model.tareWeight,
-						allweight: model.totalWeight,
-						money: model.subtotal && model.subtotal != null ? model.subtotal : 0,
-						id: model.Id ? model.Id : ""
-					}
-					this.goodSelect.push(good);
-				}
-				this.currentOrderInfo.Id = e.id;
-				this.currentOrderInfo.accountCode = e.accountCode;
-				if (e.customerId != null && e.customerId != "") {
-					member.GetmemberByCustomeId(e.customerId).then(res => {
-						this.currentMember = res.data;
-					})
-				}
-				this.reCountGoodSelect();
-				this.hangListVisible = false;
-			},
+		//处理还款事件
+		handleRepaymentConfirm(data) {
+			console.log("data", data)
+		},
 			changPayWay(index) {
 				for (var i = 0; i < this.payWay.length; i++) {
 					this.payWay[i].select = 0;
@@ -1805,169 +1249,15 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 				this.custominputFocused4 = false;
 			},
 
-			windowResizeCallback(res) {
-				const width = res.size.windowWidth
-				this.initCol(width)
-			},
-			initSystem() {
-				const window = uni.getWindowInfo()
-				const width = window.windowWidth
-				// this.initCol(width)
-			},
-			initCol(width) {
-				this.modalWidth = global.getModalWidth()
-				if (width <= 800) {
-					this.spuCol = 2
-					this.skuCol = 1
-					this.memberCol = 1
-				} else if (width <= 1000) {
-					this.spuCol = 2
-					this.skuCol = 1
-					this.memberCol = 2
-				} else if (width <= 1300) {
-					this.spuCol = 3
-					this.skuCol = 2
-					this.memberCol = 3
-				} else if (width <= 1600) {
-					this.spuCol = 4
-					this.skuCol = 3
-					this.memberCol = 4
-				} else {
-					this.spuCol = 5
-					this.skuCol = 4
-					this.memberCol = 5
-				}
-			},
-			updateActiveTab(res) {
-				this.commodityType = res.type;
-				this.currentTabId = res.id;
-				this.commidityList = [];
-				this.rows = [];
-				if (res.type === 1) {
-					category.GetBybatchId2(res.id).then(res => {
-						for (let i = 0; i < res.data.length; i++) {
-							//1-非定装 2-定装 4-散装 单位都为specList第一个
-							if ((res.data[i].saleWay === 1 || res.data[i].saleWay === 2 || res.data[i].saleWay ===
-									4) && res.data[i].specList != null && res.data[i].specList.length > 0) {
-								res.data[i].commoditySpec = res.data[i].specList[0];
-							}
-							//3-拆包类型,单位使用列表装起来
-							if (res.data[i].saleWay === 3) {
-								res.data[i].commoditySpecs = res.data[i].specList;
-							}
-
-							this.commidityList.push({
-								id: res.data[i].id,
-								purchaseAssistId: res.data[i].id,
-								key: i,
-								name: res.data[i].commodityName,
-								price: 0,
-								inventory: res.data[i].initMount - res.data[i].saleMount,
-								type: 0,
-								stockType: 2, //2-代销
-								saleWay: res.data[i].saleWay, //售卖方式1-非定装 2-定装 3-拆包 4-散装
-								commodityId: res.data[i].commodityId,
-								outPutPurchaseInventories: res.data[i].outPutPurchaseInventories, //库存
-								extralModel: res.data[i].extralModel,
-								unit: res.data[i].unit,
-								fixedTare: res.data[i].fixedTare, //皮重
-								initWeight: res.data[i].initWeight, //固定重量
-								commoditySpec: res.data[i].commoditySpec
-							})
-
-						}
-						for (let i = 0; i < this.commidityList.length; i += 2) {
-							this.rows.push(this.commidityList.slice(i, i + 2));
-						}
-						this.generateWordCloud(this.commidityList);
-					})
-
-					const tab = this.categoryList.find(t => t.id === res.id);
-					if (tab) {
-						this.currentTabName = tab.shipperName + tab.batchCode;
-					} else {
-						this.currentTabName = "";
-					}
-				} else {
-					Purchase.GetEmployCommidityByClassId(res.id).then(res => {
-						console.log(res.data)
-
-						for (let i = 0; i < res.data.length; i++) {
-							this.commidityList.push({
-								id: res.data[i].id,
-								key: i,
-								name: res.data[i].commodityName,
-								price: 0,
-								inventory: res.data[i].initMount - res.data[i].saleMount,
-								type: 0,
-								stockType: 1, //1-自营
-								saleWay: res.data[i].saleWay,
-								commodityId: res.data[i].commodityId,
-								outPutPurchaseInventories: res.data[i].outPutPurchaseInventories,
-								unit: res.data[i].unit,
-								initWeight: res.data[i].initWeight,
-								commoditySpecs: res.data[i].commoditySpecs
-							})
-
-							if ((res.data[i].saleWay === 1 || res.data[i].saleWay === 2) && res.data[i]
-								.commoditySpecs != null && res.data[i].commoditySpecs.length > 0) {
-								res.data[i].commoditySpec = res.data[i].commoditySpecs[0];
-							}
-							if (res.data[i].saleWay === 3) {
-								res.data[i].commoditySpecs = res.data[i].commoditySpecs;
-							}
-						}
-						for (let i = 0; i < this.commidityList.length; i += 2) {
-							this.rows.push(this.commidityList.slice(i, i + 2));
-						}
-						this.generateWordCloud(this.commidityList);
-						console.log("自营商品", this.commidityList)
-					})
-				}
-
-			},
-			//生产右边词云搜索
-			generateWordCloud(goodModelList) {
-				this.GoodkeyWord = [];
-				this.GoodkeyWord.push("全");
-				this.currentKeyWord = "全";
-				var nameInput = [];
-				for (var i = 0; i < goodModelList.length; i++) {
-					nameInput.push(goodModelList[i].name)
-				}
-				// 处理名称列表，分割成数组
-				const names = nameInput.filter(name => name.trim() !== '');
-
-				// 统计每个字出现的频率
-				const charFrequency = {};
-				names.forEach(name => {
-					for (const char of name) {
-						charFrequency[char] = (charFrequency[char] || 0) + 1;
-					}
-				});
-				// 转换为数组并排序
-				const charArray = Object.keys(charFrequency).map(char => ({
-					char: char,
-					count: charFrequency[char]
-				})).sort((a, b) => b.count - a.count);
-				for (var i = 0; i < Math.min(charArray.length, 10); i++) {
-					this.GoodkeyWord.push(charArray[i].char);
-				}
-			},
+		initSystem() {
+			const window = uni.getWindowInfo()
+			const width = window.windowWidth
+		},
 
 			getCategoryList() {
-				let that = this;
-				category.GetAllActiveBatch(this.currentCompanyId).then(res => {
-					that.categoryList = res.data.sort((a, b) => {
-						return new Date(b.createTime) - new Date(a.createTime);
-					});
-					if (res.data.length > 0) {
-						that.updateActiveTab({
-							id: this.categoryList[0].id,
-							type: 1
-						})
-					}
-				})
+				if (this.$refs.goodsPanel) {
+			this.$refs.goodsPanel.getCategoryList();
+				}
 			},
 			deleteItem(e) {
 				this.playSystemKeyClickSound();
@@ -2029,66 +1319,35 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 					})
 				}
 			},
-			printerModel(order) {
-				getApp().senBleLabel(order);
-			},
-			printerGDModel(order) {
-				getApp().senBleLabel_GD(order);
-			},
-			tempSpuClose() {
-				this.tempSpu = {}
-				this.tempSpuDialogVisible = false
-			},
-			tempSpuSubmit() {
-				this.$refs.tempSpuForm.validate().then(valid => {
-					this.tempAddCard(this.tempSpu)
-					this.tempSpuClose()
-				}).catch((error) => {
-					console.log(error)
-				})
-			},
-			tempAddCard(item) {
-				const index = this.cashier.cards.findIndex(x => x.skuId === item.skuId)
-				if (index >= 0) {
-					this.cashier.cards[index].quantity += 1
-				} else {
-					const card = {
-						key: new Date().getTime().toString(),
-						skuId: item.skuId,
-						skuName: item.skuName,
-						quantity: item.quantity,
-						adjustAmount: item.adjustAmount,
-						payableAmount: item.payableAmount,
-						skuNo: item.skuNo
-					}
-					this.cashier.cards.push(card)
+		printerModel(order) {
+			getApp().senBleLabel(order);
+		},
+
+		//商品金额计算方法
+		reCountGoodSelect() {
+			this.payAmount.total = 0;
+            console.log("this.goodSelect",this.goodSelect);
+			this.goodSelect.forEach(x => {
+				if (x.saleWay === 1) {
+					x.money = Math.round((parseFloat(x.allweight) - parseFloat(x.carweight)) * parseFloat(x
+						.referenceAmount));
+				} else if (x.saleWay === 2 || x.saleWay === 3 || x.saleWay === 4) {
+					x.money = Math.round(parseFloat(x.quantity) * parseFloat(x
+						.referenceAmount));
 				}
-				// this.cashierAmount()
-			},
 
-			//商品金额计算方法
-			reCountGoodSelect() {
-				this.payAmount.total = 0;
-                console.log("this.goodSelect",this.goodSelect);
-				this.goodSelect.forEach(x => {
-					if (x.saleWay === 1) {
-						x.money = Math.round((parseFloat(x.allweight) - parseFloat(x.carweight)) * parseFloat(x
-							.referenceAmount));
-					} else if (x.saleWay === 2 || x.saleWay === 3 || x.saleWay === 4) {
-						x.money = Math.round(parseFloat(x.quantity) * parseFloat(x
-							.referenceAmount));
-					}
-
-					this.payAmount.total +=parseFloat(x.money);//货品金额
-                    x.extralModelMoney = 0;//初始化押筐金额
-					if (x.extralModel && x.extralModel.id != "") {
-						x.extralModelMoney +=parseFloat(x.extralModel.quantity) * parseFloat(x.extralModel.amount);
-						this.payAmount.total += x.extralModelMoney;
-					}
-				})
-                console.log("this.payAmount.total",this.payAmount.total);
-				this.payAmount.total = parseFloat(this.payAmount.total).toFixed(0);
-			},
+				this.payAmount.total +=parseFloat(x.money);//货品金额
+                x.extralModelMoney = 0;//初始化押筐金额
+				if (x.extralModel && x.extralModel.id != "") {
+					x.extralModelMoney +=parseFloat(x.extralModel.quantity) * parseFloat(x.extralModel.amount);
+					this.payAmount.total += x.extralModelMoney;
+				}
+				// 计算包含押筐金额的总小计
+				x.money2 = parseFloat(x.money) + parseFloat(x.extralModelMoney);
+			})
+            console.log("this.payAmount.total",this.payAmount.total);
+			this.payAmount.total = parseFloat(this.payAmount.total).toFixed(0);
+		},
 			//计算方法2---改变箩筐值计算
 			reCountGoodSelect2() {
 				this.payAmount.total = 0;
@@ -2128,258 +1387,215 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 				}
 				// this.cashierAmount()
 			},
-			clearCard() {
-				this.cashier = {
-					type: 0,
-					discount: 10,
-					discountAmount: 0, // 打折
-
-					ignoreAmount: 0, // 抹零
-					preferentialAmount: 0, // 优惠金额
-					collectAmount: 0, // 优惠后金额
-					adjustAmount: 0, // 调整金额
-					payableAmount: 0, // 应收
-					remark: '',
-					memberId: '',
-					member: {},
-					cards: [],
-					source: config.platformCode
-				}
-				this.payTypeDialogVisible = false
-				this.payResult = {}
-				this.payAmount = 0
-			},
-			tabActive(e) {
-				const foundItem = this.goodSelect.find(item => item.id === e.id);
-				if (foundItem) {
-					return true
-				} else {
-					return false;
-				}
-			},
-			createNativeView(left, top, commodity, specList) {
-				console.log(specList)
-				if (this.actionView || !specList || specList.length < 0) return;
-				let that = this;
-				this.maskView = new plus.nativeObj.View("maskView", {
-					top: "0px",
-					left: "0px",
-					width: "100%",
-					height: "100%",
-					backgroundColor: "rgba(0,0,0,0.01)" // 接近透明
-
-				});
-				this.maskView.addEventListener("click", () => {
-
-					that.actionView.close();
-					that.actionView = null;
-					that.maskView.close();
-					that.maskView = null;
-				});
-				this.maskView.show();
-
-				var zoneHeight = specList.length * 100;
-				var zoneTop = top - 100 < 0 ? 0 : top - 100;
-				zoneTop = zoneTop + zoneHeight > plus.screen.resolutionHeight ? plus.screen.resolutionHeight - zoneHeight :
-					zoneTop;
-				this.actionView = new plus.nativeObj.View("actionView", {
-					backgroundColor: "rgba(255, 255, 255, 0.1)",
-					border: "5px solid #FF0000",
-					borderRadius: "10px",
-					left: left,
-					top: zoneTop,
-					width: "150px",
-					height: zoneHeight + "px"
-				});
-
-
-				for (var i = 0; i < specList.length; i++) {
-					this.actionView.drawRect({
-						color: "#000000", // 边框颜色
-						width: "1px", // 边框宽度
-						radius: "10px" // 圆角半径（关键！）
-					}, {
-						top: i * 100 + "px",
-						left: "0px",
-						width: "150px",
-						height: "100px"
-					});
-					this.actionView.drawRect({
-						color: "#ffffff", // 边框颜色
-						width: "1px", // 边框宽度
-						radius: "10px" // 圆角半径（关键！）
-					}, {
-						top: i * 100 + 1 + "px",
-						left: "1px",
-						width: "149px",
-						height: "99px"
-					});
-
-
-					this.actionView.draw([{
-						tag: 'font',
-						id: 'font' + i,
-						text: specList[i].specName,
-						textStyles: {
-							size: '50px'
-						},
-						// 添加边框样式
-						border: {
-							width: '2px', // 边框宽度
-							style: 'solid', // 边框样式（solid, dashed, dotted）
-							color: '#000000' // 边框颜色（黑色）
-						},
-						position: {
-							top: i * 100 + 25 + 'px',
-							left: '0px',
-							width: '100%',
-							height: '60px'
-						}
-					}]);
-
-				}
-
-				// 添加点击事件
-				this.actionView.addEventListener("click", (e) => {
-					const x = e.clientX;
-					const y = e.clientY;
-					// 判断点击位置
-					for (var i = 0; i < specList.length; i++) {
-						if (x > 0 && x < 150 && y > i * 100 && y < (i + 1) * 100) {
-							that.commodityClickSaleWay3(commodity, specList[i])
-						}
-					}
-
-					that.actionView.close();
-					that.actionView = null;
-					that.maskView.close();
-					that.maskView = null;
-				});
-
-
-				this.actionView.show();
-			},
-			handleClick(e, id) {
-				console.log("e", e)
-				//进入输入重量界面不可添加货品
-				if (!this.step1) return;
-				//1-非定装 2-定装 4-散装
-				if (e.saleWay === 1 || e.saleWay === 2 || e.saleWay === 4) {
-					this.goodSelect.push({
-						key: this.goodSelect.length,
-						skuName: e.name, //货品名称
-						referenceAmount: e.price, //单价
-						stockType: e.stockType, //库存类型 
-						quantity: 0,
-						id: e.id,
-						purchaseAssistId: e.purchaseAssistId,
-						saleWay: e.saleWay,
-						commodityId: e.commodityId,
-						extralModel: e.extralModel,
-						fixedTare: e.fixedTare,
-						allweight: 0,
-						allweightSrt: 0,
-						commoditySpec: e.commoditySpec,
-						carweight: 0,
-						money: 0,
-						index: this.goodSelect.length + 1
-					});
-					this.showAllweightStr = false;
-					//显示输入价格界面
-					this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
-				} else if (e.saleWay === 3) {
-					uni.createSelectorQuery().selectAll(`#grid-item-${id}`).boundingClientRect(data => {
-						// const { left, top, width, height } = data;
-						console.log("data", data)
-						this.createNativeView(data[0].left + data[0].width / 2, data[0].top, e, e.commoditySpecs)
-					}).exec()
-				}
-				// }
-				// this.reCountGoodSelect();
-				// }
-			},
-
-			commodityClickSaleWay3(e, spec) {
-				this.goodSelect.push({
-					key: this.goodSelect.length,
-					skuName: e.name,
-					referenceAmount: e.price,
-					stockType: e.stockType,
-					quantity: 0,
-					id: e.id,
-					commodityId: e.commodityId,
-					saleWay: e.saleWay,
-					allweight: 0,
-					allweightSrt: 0,
-					commoditySpec: spec,
-					carweight: 0,
-					money: 0,
-					index: this.goodSelect.length + 1
-				});
+		// 使用 DIV 替代原生 View 的规格选择弹窗
+		createNativeView(left, top, commodity, specList) {
+			if (!specList || specList.length < 1) return;
+			
+			this.specPopup = {
+				visible: true,
+				left,
+				top,
+				commodity,
+				specList
+			};
+		},
+		
+		// 关闭规格弹窗
+		closeSpecPopup() {
+			this.specPopup.visible = false;
+			// 延迟清空数据，等动画完成
+			setTimeout(() => {
+				this.specPopup = {
+					visible: false,
+					left: 0,
+					top: 0,
+					commodity: null,
+					specList: []
+				};
+			}, 300);
+		},
+		
+		// 点击规格项
+		handleSpecClick(spec) {
+			this.commodityClickSaleWay3(this.specPopup.commodity, spec);
+			this.closeSpecPopup();
+		},
+		
+	// 为编辑已存在商品创建规格选择弹窗
+	createNativeViewForEdit(left, top, commodity, specList, editIndex) {
+		console.log('创建编辑商品的规格选择弹窗', specList);
+		if (!specList || specList.length < 1) return;
+		
+		// 保存编辑索引，用于后续更新
+		this.editingIndexForSpec = editIndex;
+		
+		// 使用同一个规格弹窗，但标记为编辑模式
+		this.specPopup = {
+			visible: true,
+			left,
+			top,
+			commodity,
+			specList,
+			isEditMode: true, // 标记为编辑模式
+			editIndex: editIndex
+		};
+	},
+	
+	// 点击规格项（编辑模式）
+	handleSpecClickForEdit(spec, editIndex) {
+		this.updateCommoditySpec(this.specPopup.commodity, spec, editIndex);
+		this.closeSpecPopup();
+	},
+		
+	// 更新已存在商品的规格
+	updateCommoditySpec(commodity, spec, editIndex) {
+		console.log('更新商品规格 - commodity:', commodity, 'spec:', spec, 'editIndex:', editIndex);
+		// 更新商品的规格信息
+		this.goodSelect[editIndex].commoditySpec = spec;
+		this.goodSelect[editIndex].skuName = commodity.name;
+		console.log('更新后的商品:', this.goodSelect[editIndex]);
+		
+		// 进入编辑界面
+		this.showStep2(this.goodSelect[editIndex], editIndex);
+	},
+	
+	// 创建分级商品弹窗
+	createMultiLevelView(left, top, parentCommodity, childrenList) {
+		if (!childrenList || childrenList.length < 1) return;
+		
+		this.multiLevelPopup = {
+			visible: true,
+			left,
+			top,
+			parentCommodity,
+			childrenList
+		};
+	},
+	
+	// 关闭分级商品弹窗
+	closeMultiLevelPopup() {
+		this.multiLevelPopup.visible = false;
+		// 延迟清空数据，等动画完成
+		setTimeout(() => {
+			this.multiLevelPopup = {
+				visible: false,
+				left: 0,
+				top: 0,
+				parentCommodity: null,
+				childrenList: []
+			};
+		}, 300);
+	},
+	
+	// 点击分级商品项
+	handleMultiLevelClick(childCommodity) {
+		// 处理分级商品的点击逻辑，类似普通商品
+		this.closeMultiLevelPopup();
+		// 调用 handleClick 处理选中的子商品
+		this.handleClick(childCommodity, childCommodity.id);
+	},
+	
+		
+		handleClick(e, id) {
+					//如果在step2状态下点击新货品，先移除未确定的货品
+		if (!this.step1 && this.editingIndex === this.goodSelect.length - 1) {
+			// 移除最后一个未确定的货品
+			this.goodSelect.splice(this.editingIndex, 1);
+		}
+		
+		// 检查是否为分级商品
+		if (e.isMultiLevel === 1) {
+			uni.createSelectorQuery().selectAll(`#grid-item-${id}`).boundingClientRect(data => {
+				console.log("分级商品弹窗位置:", data);
+				this.createMultiLevelView(data[0].left + data[0].width / 2, data[0].top, e, e.childrenList);
+			}).exec();
+			return; // 显示分级商品弹窗后直接返回
+		}
+		
+		console.log("e",e)
+			
+			// 如果id未提供，从e对象中获取（适配GoodsSelector组件）
+			const itemId = id || e.id;
+			
+		//1-非定装 2-定装 4-散装
+		if (e.saleWay === 1 || e.saleWay === 2 || e.saleWay === 4) {
+			this.goodSelect.push({
+				key: this.goodSelect.length,
+				skuName: e.name, //货品名称
+				referenceAmount: e.price, //单价
+				stockType: e.stockType, //库存类型 
+				quantity: 0,
+				id: e.id,
+				purchaseAssistId: e.purchaseAssistId,
+				saleWay: e.saleWay,
+				commodityId: e.commodityId,
+				extralModel: e.extralModel,
+				fixedTare: e.fixedTare,
+				allweight: 0,
+				allweightSrt: 0,
+				commoditySpec: e.commoditySpec,
+				carweight: 0,
+				money: 0,//物品金额（不含押筐）
+				money2: 0,//包含押筐金额
+				index: this.goodSelect.length + 1
+			});
 				this.showAllweightStr = false;
+				//显示输入价格界面
 				this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
-			},
+			} else if (e.saleWay === 3) {
+				uni.createSelectorQuery().selectAll(`#grid-item-${itemId}`).boundingClientRect(data => {
+					// const { left, top, width, height } = data;
+					console.log("data", data)
+					this.createNativeView(data[0].left + data[0].width / 2, data[0].top, e, e.commoditySpecs)
+				}).exec()
+			}
+		},
 
-			addTemplateGood() {
-				this.goodSelect.push({
-					key: this.goodSelect.length,
-					skuName: "临时物品",
-					referenceAmount: 0,
-					quantity: 1,
-					id: this.generateGUID,
-					allweight: 0,
-					allweightSrt: 0,
-					carweight: 0,
-					money: 0,
-					index: this.goodSelect.length + 1
-				});
-				this.showAllweightStr = false;
-				this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
-				this.reCountGoodSelect();
-			},
-			cashierAmount() {
-				cashierOrder.cashierOrderCompute(this.cashier).then(res => {
-					const data = res.data
-					const cards = []
-					data.skus.forEach(item => {
-						cards.push({
-							key: item.key,
-							skuId: item.skuId,
-							skuName: item.skuName,
-							quantity: item.quantity,
-							referenceAmount: item.referenceAmount,
-							adjustAmount: item.adjustAmount,
-							payableAmount: item.payableAmount,
-							skuNo: item.skuNo
-						})
-					})
-					this.cashier.discountAmount = data.discountAmount
-					this.cashier.ignoreAmount = data.ignoreAmount
-					this.cashier.preferentialAmount = data.preferentialAmount
-					this.cashier.adjustAmount = data.adjustAmount
-					this.cashier.payableAmount = data.payableAmount
-					this.cashier.cards = cards
-				})
-			},
-			skuClick(item) {
-				this.skuDialogVisible = false
-				this.addCard(item)
-			},
-			saleHang() {
-				this.hangBtnLoading = true
-				this.hangDialogVisible = true
-			},
-			deleteGDorder(item) {
-				uni.showModal({
-					title: '删除挂单',
-					content: `您确定要删除吗？`, // 假设 item 有一个 name 属性
-					success: (res) => {
-						if (res.confirm) {
+	commodityClickSaleWay3(e, spec) {
+		console.log('选择拆包规格:', e, spec);
+		this.goodSelect.push({
+			key: this.goodSelect.length,
+			skuName: e.name,
+			referenceAmount: e.price,
+			stockType: e.stockType,
+			quantity: 0,
+			id: e.id,
+			purchaseAssistId: e.purchaseAssistId,
+			commodityId: e.commodityId,
+			saleWay: e.saleWay,
+			extralModel: e.extralModel,
+			fixedTare: e.fixedTare,
+			allweight: 0,
+			allweightSrt: 0,
+			commoditySpec: spec,
+			commoditySpecs: e.commoditySpecs, // 保存所有规格，以便后续可以修改
+			carweight: 0,
+			money: 0,//物品金额（不含押筐）
+			money2: 0,//包含押筐金额
+			index: this.goodSelect.length + 1
+		});
+		this.showAllweightStr = false;
+		this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
+	},
 
-						}
-					}
-				});
-			},
+		addTemplateGood() {
+			this.goodSelect.push({
+				key: this.goodSelect.length,
+				skuName: "临时物品",
+				referenceAmount: 0,
+				quantity: 1,
+				id: this.generateGUID,
+				allweight: 0,
+				allweightSrt: 0,
+				carweight: 0,
+				money: 0,//物品金额（不含押筐）
+				money2: 0,//包含押筐金额
+				index: this.goodSelect.length + 1
+			});
+			this.showAllweightStr = false;
+			this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
+			this.reCountGoodSelect();
+		},
 			submitAddCustomer() {
 				if (this.AddedCustomerFormData.name == undefined || this.AddedCustomerFormData.name == "") {
 					uni.showToast({
@@ -2433,49 +1649,6 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 
 				})
 			},
-			saleHangList() {
-				let that = this;
-				cashierOrder.GetAllGDorder(this.currentCompanyId).then(res => {
-					that.hangListVisible = true;
-					var hangleList = res.data;
-					// // 根据 createTime 进行排序
-					//  hangleList.sort((a, b) => {
-					// 	// 将 createTime 转换为时间戳进行比较
-					// 	return new Date(b.createTime) - new Date(a.createTime);
-					// });
-					hangleList.forEach((item, index) => {
-						let modelList = JSON.parse(item.module)
-						item.modelInfo = "";
-						modelList.forEach((item2, index2) => {
-							item.modelInfo += item2.name + "x" + item2.mount + "|";
-						})
-					});
-
-
-					const grouped = hangleList.reduce((acc, item) => {
-						const dateKey = item.createTime.slice(0, 10);
-
-						if (!acc[dateKey]) {
-							acc[dateKey] = [];
-						}
-						acc[dateKey].push(item);
-						return acc;
-					}, {});
-
-					// 转换为数组并按日期降序排序
-					const groupedArray = Object.keys(grouped).map(date => ({
-						date,
-						items: grouped[date],
-					}));
-
-					groupedArray.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-					this.hangList = groupedArray;
-					if (groupedArray.length > 0) {
-						this.selectGDorder(groupedArray[0].items[0]);
-					}
-				})
-			},
 			memberSearch(query) {
 				this.memberSearchOptions = [];
 				if (query !== '') {
@@ -2496,7 +1669,7 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 				this.memberOptions = [];
 				this.memberSearchOptions = [];
 				this.memberSearchKeyword = "";
-				member.memberList(this.currentCompanyId).then(res => {
+				member.GetmemberListByCompanyIdPage({ Id: this.currentCompanyId, pageSize: 1000, currentPage: 1 }).then(res => {
 					this.memberOptions.push({
 						customName: "散客",
 						id: ""
@@ -2505,29 +1678,12 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 						customName: "散客",
 						id: ""
 					})
-					this.memberOptions.push(...(res.data || []));
-					this.memberSearchOptions.push(...(res.data || []));
+					// 适配分页结果格式
+					const memberList = res.data.Data || res.data.data || [];
+					this.memberOptions.push(...memberList);
+					this.memberSearchOptions.push(...memberList);
 					this.memberDialogVisible = true
 				}).finally(() => {})
-			},
-			orderMemberChange() {
-
-
-				this.memberChange('MemberChange');
-				this.LastOrderShow = false;
-			},
-			orderMemberChangeMain(memberNew, order) {
-				var orderNew = JSON.parse(JSON.stringify(order));
-				orderNew.customerId = memberNew.id;
-				orderNew.customName = memberNew.customName;
-				cashierOrder.exchangMember(JSON.stringify(orderNew)).then(res => {
-					if (res.code === 200) {
-						uni.showToast({
-							title: '客户变更成功',
-							icon: 'none'
-						})
-					}
-				});
 			},
 			async payTypeDebt() {
 				this.playSystemKeyClickSound();
@@ -2689,19 +1845,6 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 
 				}
 			},
-			resetAction() {
-				let that = this;
-				uni.showModal({
-					title: '确认清空',
-					content: '您确定要清空物品吗？',
-					success: (res) => {
-						if (res.confirm) {
-							that.resetOrder();
-						}
-					}
-
-				})
-			},
 			resetOrder() {
 				let that = this;
 				that.payAmount = {
@@ -2727,55 +1870,7 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 					collectBasketNum: 0
 				}
 
-			},
-			showLastOrder() {
-				this.LastOrderShow = true;
-			},
-			refreshHeaderInfo() {
-				this.$refs.headerInfo.refresh();
-			},
-			//收筐
-			payBasketConfirm() {
-				if (parseInt(this.memberEventInfo.collectBasketNum) === 0) {
-					uni.showToast({
-						title: "收筐数量必须大于0",
-						icon: "error",
-						duration: 2000
-					});
-					return;
-				}
-				var userInfo = uni.getStorageSync("userInfo");
-				var CompanyId = uni.getStorageSync('companyId');
-				let param = {
-					customerId: this.memberEventInfo.member.id,
-					repayBasket: parseFloat(this.memberEventInfo.collectBasketNum),
-					orderList: [],
-					operatorId: userInfo.id,
-					operatorName: userInfo.userName,
-					CompanyId: CompanyId,
-					customerName: this.memberEventInfo.member.customName
-				}
-				member.RepayBasket(JSON.stringify(param)).then(res => {
-					if (res.code == 200) {
-						uni.showToast({
-							title: "收筐成功",
-							icon: "success",
-							duration: 2000
-						});
-					} else {
-						uni.showToast({
-							title: "收筐失败",
-							icon: "error",
-							duration: 2000
-						});
-					}
-					this.inputModelVisible = false;
-					this.memberEventInfo = {
-						member: null,
-						collectBasketNum: 0
-					}
-				})
-			},
+		},
 			async payBasket_beforePay() {
 				if (this.currentMember?.id == null || this.currentMember?.id == "") return;
 				var userInfo = uni.getStorageSync("userInfo");
@@ -2790,109 +1885,6 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 					customerName: this.currentMember.customName
 				}
 				await member.RepayBasket(JSON.stringify(param));
-			},
-			//挂单
-			hangOrder() {
-				this.playSystemKeyClickSound();
-				if (this.goodSelect.length === 0) return;
-				var CompanyId = this.currentCompanyId;
-				var goodModelList = [];
-				for (var i = 0; i < this.goodSelect.length; i++) {
-					goodModelList.push({
-						Id: this.goodSelect[i].id,
-						name: this.goodSelect[i].skuName,
-						mount: this.goodSelect[i].quantity,
-						totalWeight: this.goodSelect[i].allweight,
-						tareWeight: this.goodSelect[i].carweight,
-						referenceAmount: this.goodSelect[i].referenceAmount,
-						subtotal: this.goodSelect[i].money
-					})
-				}
-				var param = {
-					CompanyId: CompanyId,
-					CustomName: this.currentMember.customName,
-					CustomerId: this.currentMember.id,
-					Status: 0,
-					accountType: 0,
-					Module: JSON.stringify(goodModelList),
-					Payway: -1,
-					PayableAmount: this.payAmount.total,
-					ActualMoney: 0,
-					Debt: 0,
-					ExtraMoney: 0
-				}
-				if (this.currentOrderInfo != null && this.currentOrderInfo.Id) {
-					param.Id = this.currentOrderInfo.Id;
-					param.accountCode = this.currentOrderInfo.accountCode;
-				}
-				cashierOrder.CreateGD(JSON.stringify(param)).then(res => {
-					if (res.data != null || res.data != "") {
-						uni.showToast({
-							title: '挂单成功',
-							duration: 2000
-						});
-						this.currentMember = {};
-						this.resetOrder();
-					}
-				})
-			},
-
-			downLoadImage(base64) {
-				let that = this;
-				const bitmap = new plus.nativeObj.Bitmap("test");
-				bitmap.loadBase64Data(base64, function() {
-					const url = "_doc/" + new Date().getTime() + ".png"; // url为时间戳命名方式
-					bitmap.save(url, {
-						overwrite: true, // 是否覆盖
-						quality: 10 // 图片清晰度
-					}, (i) => {
-						uni.saveImageToPhotosAlbum({
-							filePath: url,
-							success: function() {
-								that.shareImage(url);
-								uni.showToast({
-									title: '图片保存成功',
-									icon: 'none'
-								})
-								bitmap.clear()
-							}
-						});
-					}, (e) => {
-						uni.showToast({
-							title: '图片保存失败',
-							icon: 'none'
-						})
-						bitmap.clear()
-					});
-				}, (e) => {
-					uni.showToast({
-						title: '图片保存失败',
-						icon: 'none'
-					})
-					bitmap.clear()
-				});
-			},
-			shareOrder(id) {
-				cashierOrder.GetCanvasBase64ById(id).then(res => {
-					if (res.code == 200) {
-						this.downLoadImage(res.data);
-					}
-				})
-
-			},
-			shareImage(tempFilePath) {
-				uni.share({
-					provider: 'weixin',
-					type: 2, // 图片类型
-					scene: 'WXSceneSession', // 分享到聊天界面
-					imageUrl: tempFilePath, // 只分享这张图片的地址
-					success(res) {
-						console.log('分享成功', res);
-					},
-					fail(err) {
-						console.log('分享失败', err);
-					}
-				});
 			},
 
 		}
@@ -3723,23 +2715,305 @@ console.log("this.editingCard.extralModel",this.editingCard.extralModel)
 		flex: 2;
 		display: flex;
 	}
-    .container-header {
-        height: 50px;
-        background-color: #ffffff;
-        width: 100%;
-        display: flex;
-        align-items: center; /* 垂直居中 */
+   .container-header {
+       height: 50px;
+       background-color: #ffffff;
+       width: 100%;
+       display: flex;
+       align-items: center; /* 垂直居中 */
 
-        .left{
-            margin-left: 10px;
-           align-items: left;
-           display: flex;
-        }
-        .title{
-            margin-left: 10rpx;
-            font-size: 18rpx;
-            font-weight: 800;
-        }
-    }
+       .left{
+           margin-left: 10px;
+          align-items: left;
+          display: flex;
+       }
+       .title{
+           margin-left: 10rpx;
+           font-size: 18rpx;
+           font-weight: 800;
+       }
+   }
+
+	/* 规格选择弹窗样式（拆包） - 与分级弹窗保持一致 */
+	.spec-popup-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.3);
+		z-index: 9998;
+		animation: fadeIn 0.2s ease-out;
+	}
+	
+	.spec-popup-container {
+		position: fixed;
+		min-width: 250px;
+		max-width: 500px;
+		background-color: #ffffff;
+		border: 3px solid #00aaff;
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+		z-index: 9999;
+		animation: scaleIn 0.2s ease-out;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.spec-popup-content {
+		padding: 5px;
+		overflow-y: auto;
+		max-height: 450px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	
+	.spec-item {
+		min-height: 70px;
+		padding: 12px;
+		border: 3px solid #7e7e7e;
+		border-radius: 8px;
+		background: #ffffff;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	
+	.spec-item:hover {
+		border-color: #00aaff;
+		background: linear-gradient(135deg, rgba(0, 170, 255, 0.05) 0%, rgba(0, 136, 204, 0.05) 100%);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
+	}
+	
+	.spec-item:active {
+		transform: translateY(0);
+		box-shadow: 0 2px 6px rgba(0, 170, 255, 0.3);
+	}
+	
+	.spec-item-name {
+		font-size: 18rpx;
+		font-weight: bold;
+		color: #333;
+		line-height: 1.4;
+		word-break: break-all;
+	}
+	
+	.spec-item-info {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	
+	.spec-item-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+
+	/* 分级商品弹窗样式 */
+	.multilevel-popup-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.3);
+		z-index: 9998;
+		animation: fadeIn 0.2s ease-out;
+	}
+	
+	.multilevel-popup-container {
+		position: fixed;
+		min-width: 250px;
+		max-width: 500px;
+		background-color: #ffffff;
+		border: 3px solid #00aaff;
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+		z-index: 9999;
+		animation: scaleIn 0.2s ease-out;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.multilevel-popup-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 15px 20px;
+		background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
+		border-bottom: 2px solid #0088cc;
+	}
+	
+	.multilevel-popup-title {
+		font-size: 20px;
+		font-weight: bold;
+		color: #ffffff;
+		letter-spacing: 1px;
+	}
+	
+	.multilevel-popup-close {
+		font-size: 24px;
+		font-weight: bold;
+		color: #ffffff;
+		cursor: pointer;
+		width: 30px;
+		height: 30px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-radius: 50%;
+		transition: all 0.2s;
+		
+		&:hover {
+			background-color: rgba(255, 255, 255, 0.2);
+			transform: rotate(90deg);
+		}
+		
+		&:active {
+			background-color: rgba(255, 255, 255, 0.3);
+		}
+	}
+	
+	.multilevel-popup-content {
+		padding: 5px;
+		overflow-y: auto;
+		max-height: 450px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	
+	.multilevel-grid-item {
+		min-height: 70px;
+		padding: 12px;
+		border: 3px solid #7e7e7e;
+		border-radius: 8px;
+		background: #ffffff;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		
+		&:hover {
+			border-color: #00aaff;
+			background: #f0f9ff;
+			box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
+			transform: translateX(5px);
+		}
+		
+		&:active {
+			transform: translateX(5px) scale(0.98);
+			background: #e6f7ff;
+		}
+	}
+	
+	.multilevel-item-name {
+		font-size: 18rpx;
+		font-weight: bold;
+		color: #333;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	
+	.multilevel-item-info {
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+		font-size: 14px;
+	}
+	
+	.multilevel-item-tags {
+		display: flex;
+		gap: 5px;
+		flex-wrap: wrap;
+	}
+	
+	.tag {
+		padding: 2px 6px;
+		border-radius: 3px;
+		font-size: 12rpx;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+	
+	.tag-consignment {
+		color: dodgerblue;
+		border: 1px solid dodgerblue;
+		background: rgba(30, 144, 255, 0.1);
+	}
+	
+	.tag-self {
+		color: #792292;
+		border: 1px solid #792292;
+		background: rgba(121, 34, 146, 0.1);
+	}
+	
+	.tag-unfixed {
+		color: #00aa00;
+		border: 1px solid #00aa00;
+		background: rgba(0, 170, 0, 0.1);
+	}
+	
+	.tag-fixed {
+		color: #55aaff;
+		border: 1px solid #55aaff;
+		background: rgba(85, 170, 255, 0.1);
+	}
+	
+	.tag-unpack {
+		color: #dc9300;
+		border: 1px solid #dc9300;
+		background: rgba(220, 147, 0, 0.1);
+	}
+	
+	.tag-bulk {
+		color: #55aaff;
+		border: 1px solid #55aaff;
+		background: rgba(85, 170, 255, 0.1);
+	}
+	
+	.multilevel-item-stock {
+		font-size: 13rpx;
+		font-weight: 600;
+		color: #666;
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		flex-wrap: wrap;
+	}
+	
+	.stock-item {
+		margin-right: 8px;
+	}
+	
+	/* 动画 */
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+	
+	@keyframes scaleIn {
+		from {
+			opacity: 0;
+			transform: scale(0.9);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
 
 </style>

@@ -1,7 +1,10 @@
 <template>
 	<view class="uni-select-lay" :style="{'z-index':zindex}">
-		<text style="font-size: 12rpx;color: black;padding: 8rpx 5rpx;background-color: #d7d7d7;display: flex;justify-content: center;align-items: center;">押筐项</text>
-		<view class="uni-select-lay-select" :class="{'active':active}">
+		<!-- 蒙板层 -->
+		<view class="uni-select-lay-mask" v-show="active" @click="closeMask"></view>
+		
+		<text v-if="showLabel" class="uni-select-lay-label" :style="{backgroundColor: labelColor}">{{labelText}}</text>
+		<view class="uni-select-lay-select" :class="{'active':active, 'no-label': !showLabel}" :style="{height: height, width: width, padding: padding}">
 			<!-- 禁用mask -->
 			<view class="uni-disabled" v-if="disabled"></view>
 			<!-- 禁用mask -->
@@ -95,6 +98,36 @@
 				validator: function (value) {
 					return ['down', 'up'].indexOf(value) !== -1
 				}
+			},
+			// 新增：可自定义的高度
+			height: {
+				type: String,
+				default: '36rpx'
+			},
+			// 新增：可自定义的宽度
+			width: {
+				type: String,
+				default: 'auto'
+			},
+			// 新增：可自定义的padding
+			padding: {
+				type: String,
+				default: '0 30px 0 10px'
+			},
+			// 新增：是否显示标签
+			showLabel: {
+				type: Boolean,
+				default: true
+			},
+			// 新增：标签文字内容
+			labelText: {
+				type: String,
+				default: '押筐项'
+			},
+			// 新增：标签背景颜色
+			labelColor: {
+				type: String,
+				default: '#1890ff'
 			}
 		},
 		data() {
@@ -230,14 +263,21 @@
 
 			},
 
-			//点击组件列
-			selectitem(index, item) {
-				this.changevalue = this.oldvalue;
-				this.active = false;
-				this.$emit("selectitem", index, item)
-			}
+		//点击组件列
+		selectitem(index, item) {
+			this.changevalue = this.oldvalue;
+			this.active = false;
+			this.$emit("selectitem", index, item)
+		},
+		
+		//点击蒙板关闭选择框
+		closeMask() {
+			this.active = false;
+			this.changevalue = this.oldvalue;
+			this.changes = false;
 		}
 	}
+}
 </script>
 
 <style lang="scss" scoped>
@@ -245,6 +285,30 @@
 		position: relative;
 		z-index: 999;
 		display: flex;
+
+		// 蒙板层样式
+		.uni-select-lay-mask {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background-color: rgba(0, 0, 0, 0.5);
+			z-index: 1;
+		}
+
+	// 标签样式
+	.uni-select-lay-label {
+		position: relative;
+		z-index: 10;
+		font-size: 12rpx;
+		color: white;
+		padding: 8rpx 5rpx;
+		background-color: #1890ff;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
 
 		.uni-select-input {
 			opacity: 0;
@@ -256,7 +320,7 @@
 		.uni-select-lay-select {
 			user-select: none;
 			position: relative;
-			z-index: 3;
+			z-index: 10;
 			height: 36rpx;
 			padding: 0 30px 0 10px;
 			box-sizing: border-box;
@@ -267,6 +331,10 @@
 			align-items: center;
 			font-size: 14px;
 			color: #999;
+			
+			&.no-label {
+				border-top-left-radius: 4px;
+			}
 
 			.uni-disabled {
 				position: absolute;
@@ -329,9 +397,9 @@
 				line-height: 30px;
 				box-sizing: border-box;
 
-				&.active {
-					color: #3fbbec
-				}
+			&.active {
+				color: #1890ff
+			}
 			}
 
 			.uni-select-lay-icon {
@@ -426,7 +494,7 @@
 			background: #fff;
 			padding: 5px 0;
 			box-sizing: border-box;
-			z-index: 9;
+			z-index: 11;
 
 			&.dropdown-up {
 				top: auto;
@@ -434,22 +502,22 @@
 			}
 
 			.uni-select-lay-item {
-				padding: 0 10px;
+				padding: 10px 20px;
 				box-sizing: border-box;
 				cursor: pointer;
 				line-height: 2.5;
 				transition: .3s;
-				font-size: 14px;
+				font-size: 15px;
 
-				&.active {
-					background: #007AFF;
+			&.active {
+				background: #1890ff;
+				color: #fff;
+
+				&:hover {
+					background: #1890ff;
 					color: #fff;
-
-					&:hover {
-						background: #007AFF;
-						color: #fff;
-					}
 				}
+			}
 
 				&:hover {
 					background-color: #f5f5f5;

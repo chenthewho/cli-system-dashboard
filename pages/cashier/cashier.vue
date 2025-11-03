@@ -1,7 +1,7 @@
 <template>
 	<div>
 		<default-header ref="headerInfo" theme="light" @showlastOrder="showLastOrder" @showHangList="saleHangList"
-			:lastOrder="lastOrder"></default-header>
+			@goToManagement="goToManagement" :showManageBtn="true" :lastOrder="lastOrder"></default-header>
 		<div class="container">
 			<div class="cashier" @click="closeKeyBoard">
 				<div class="cashier-row">
@@ -9,550 +9,153 @@
 						<div class="card-body">
 
 							
-							<div class="container2" style="position: relative;">
-								<div class="vertical-tab">
-									<VerticalTab @update:activeTab="updateActiveTab" :categoryList="categoryList"
-										:activeTabId="currentTabId" />
+					<!-- 货品选择面板组件 -->
+					<CashierGoodsPanel
+						ref="goodsPanel"
+						:selectedGoodsIds="goodSelect.map(item => item.id)"
+						:height="windowHeight"
+						:vesionType="vesionType"
+						:companyId="currentCompanyId"
+						@tab-changed="handleTabChanged"
+						@item-click="handleClick"
+						@category-updated="handleCategoryUpdated"
+					/>
+				</div>
+			</div>
+				<div v-if="step1" class="cashier-card">
+					<div class="cashier-col">
+						<div class="card-title">
+						<!-- 可滑动的客户管理区域 -->
+					<scroll-view 
+						scroll-x="true" 
+						:show-scrollbar="false"
+						:scroll-left="scrollLeft"
+						style="white-space: nowrap; padding: 2px 0; flex: 1; overflow: hidden;"
+						class="customer-scroll-view"
+					>
+									<view style="display: inline-flex; align-items: center; gap: 0; margin: 0; padding: 0;">
+					<!-- 主客户按钮（散客/当前客户） -->
+					<div class="customerbtn modern-customer-btn main-customer-btn" @click="activateMainCustomer" :style="{
+						                borderRadius: '0 0px 0px 0',
+										fontSize:'16px',
+						                boxShadow: isMainCustomerActive ? (mainCustomerData.member.debts > 0 ? '0 3px 10px rgba(245, 34, 45, 0.3)' : '0 3px 10px rgba(56, 158, 13, 0.3)') : '0 2px 6px rgba(0, 0, 0, 0.1)',
+						                color:  'white',
+						                background: mainCustomerData.member.debts > 0 ? '#ff4d4f' : (isMainCustomerActive ? '#389e0d' : '#8c8c8c'),
+						                height: '100%',
+						                paddingLeft: '16rpx',
+						                paddingRight: '16rpx',
+						                paddingTop: '10rpx',
+										fontWeight:'700',
+										letterSpacing: '1rpx',
+						                paddingBottom: '10rpx',
+										display:'inline-flex',
+										alignItems: 'center',
+										flexShrink: 0,
+										transition: 'all 0.3s ease',
+										border: 'none',
+										marginLeft: '0',
+										marginRight: '1px'
+						            }">
+								{{mainCustomerData.member.customName?mainCustomerData.member.customName : '散客'}} 
+							</div>
+										
+	<!-- 动态添加的客户按钮列表 -->
+	<div 
+		v-for="(customerBtn, index) in customerButtons" 
+		:key="`customer_btn_${customerBtn.id}`"
+		class="customerbtn modern-customer-btn dynamic-customer-btn" 
+		:style="{
+			borderRadius: '6px',
+			fontSize:'15px',
+			boxShadow: customerBtn.isActive ? '0 3px 10px rgba(56, 158, 13, 0.3)' : '0 2px 6px rgba(0, 0, 0, 0.1)',
+			color:  '#ffffff',
+			background: customerBtn.isActive ? '#389e0d' : '#8c8c8c',
+			height: '100%',
+			paddingLeft: '12rpx',
+			paddingRight: '8rpx',
+			paddingTop: '10rpx',
+			fontWeight:'600',
+			letterSpacing: '0.5rpx',
+			paddingBottom: '10rpx',
+			display:'inline-flex',
+			alignItems: 'center',
+			flexShrink: 0,
+			position: 'relative',
+			border: 'none',
+			transition: 'all 0.3s ease',
+			marginRight: '1px'
+		}"
+	>
+				<div @click="switchToCustomerByIndex(index)" style="display: flex; align-items: center; gap: 6rpx;">
+					{{customerBtn.name}}
+					<text v-if="customerBtn.goodsCount > 0" style="font-size: 11px; display: flex; color: #ffffff;">|{{customerBtn.goodsCount}}件</text>
+				</div>
+				<div @click.stop="deleteCustomerByIndex(index)" style="display: flex; align-items: center; margin-left: 8rpx; cursor: pointer; padding: 2rpx;">
+					<uni-icons 
+						type="close" 
+						size="18" 
+						color="#ffffff"
+						style="opacity: 0.9;"
+					></uni-icons>
+				</div>
+			</div>
+										
+									<!-- 添加客户按钮 -->
+									<div class="add-customer-btn" @click="addNewCustomerButton" :style="{
+									                borderRadius: '50%',
+													fontSize:'14px',
+									                color:  'transparent',
+									                background: 'transparent',
+									                width: '32px',
+									                height: '32px',
+													fontWeight:'700',
+													minWidth: '32px',
+													minHeight: '32px',
+									                paddingTop: '0',
+													paddingBottom: '0',
+													paddingLeft: '0',
+													paddingRight: '0',
+													display:'inline-flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													cursor: 'pointer',
+													flexShrink: 0,
+													transition: 'all 0.3s ease',
+													border: 'none',
+													marginLeft: '2px'
+									            }" title="添加客户">
+									<uni-icons type="plus" size="30" color="#ff7043"></uni-icons>
 								</div>
-								<div style="flex-wrap: wrap;padding-top: 0;">
 
-							<!-- 商品搜索框 -->
-							<!-- <div class="goods-search-container">
-								<div class="search-input-wrapper">
-									
-								</div>
-							</div> -->
-
-
-																		
-				<view style="display: flex; align-items: center; gap: 20rpx;" >
-					<view class="search-container">
-						<view class="search-input-wrapper">
-							<uni-icons type="search" size="18" color="#999" class="search-icon"></uni-icons>
-							<input 
-								class="search-input" 
-								type="text" 
-								v-model="goodsSearchKeyword"
-								placeholder="商品搜索..."
-								@input="onGoodsSearch"
-								@confirm="onGoodsSearchConfirm"
-							/>
-							<view 
-								class="clear-btn" 
-								v-if="goodsSearchKeyword" 
-								@click="clearGoodsSearch"
-							>
-								<uni-icons type="clear" size="16" color="#ccc"></uni-icons>
-							</view>
-						</view>
-					</view>
 				</view>
-
-							<!-- <input 
-
-										class="goods-search-input" 
-										placeholder="搜索商品名称..." 
-										v-model="goodsSearchKeyword"
-										@input="searchGoods"
-										type="text"										
-									/> -->
-
-									<scroll-view class="scrollArea" scroll-y="true"
-										:style="{ height: windowHeight-70 + 'px'}">
-
-										<div v-for="(row, rowIndex) in rows" :key="rowIndex">
-											<div style="display: flex;margin-left: 15rpx;">
-												<div v-for="(item, index) in row" :key="index">
-													<div :id="'grid-item-'+item.id"
-														:class="['grid-item', tabActive(item) ? 'grid-item-active' : null]"
-														style="width: 120rpx;" @click="handleClick(item,item.id)"
-														:style="!item.outPutPurchaseInventories || item.outPutPurchaseInventories.length===0 ?{ color:'#aa0000' }:{}">
-														<div
-															style="text-align: left;font-weight: bold;font-size: 25px;letter-spacing: 2px;display: flex;">
-															{{ item.name }}
-														</div>
-														<!-- 														<div v-if="commodityType===1"
-															style="font-size: 15px;font-weight: bold; display: flex;flex-direction:column; text-align: left;color: #888888;">
-															<div>{{currentTabName}}
-															</div>
-														</div> -->
-														<div
-															style="font-size: 15px;margin-top: 4px;font-weight: bold; display: flex;flex-direction:column; text-align: left">
-
-															<div
-																style="text-align: left;color: rgba(0, 0, 0, 0.2);display: flex;">
-																<div v-if="commodityType===1"
-																	style="text-align: left;color: dodgerblue;margin-right: 5px;border: 1px solid dodgerblue;">
-																	代
-																</div>
-																<div v-if="commodityType===2"
-																	style="text-align: left;color: #792292;margin-right: 5px;border: 1px solid #792292;">
-																	自
-																</div>
-																<div v-if="item.saleWay==1"
-																	style="text-align: left;color: #00aa00;margin-right: 5px;border: 1px solid #00aa00;">
-																	非定</div>
-																<div v-if="item.saleWay==2"
-																	style="text-align: left;color: #55aaff;margin-right: 5px;border: 1px solid #55aaff;">
-																	定{{item.initWeight?item.initWeight:''}}</div>
-																<div v-if="item.saleWay==3"
-																	style="text-align: left;color: #dc9300;margin-right: 5px;border: 1px solid #dc9300;">
-																	拆包</div>
-																<div v-if="item.saleWay==4"
-																	style="text-align: left;color: #55aaff;margin-right: 5px;border: 1px solid #55aaff;">
-																	散</div>
-															</div>
-
-															<div style="margin-top: 5px;display: flex;"
-															:style="!item.outPutPurchaseInventories || item.outPutPurchaseInventories.length===0 ?{ color:'#aa0000' }:{}"
-															>
-																余: <div v-for="item2 in item.outPutPurchaseInventories"
-																	style="margin-left: 2px;margin-right: 2px;display: flex;">
-																	{{item2.mount}}{{item2.specName}}
-																	<div style="margin-left: 2px;margin-right: 2px;">|
-																	</div>
-																</div>
-															</div>
-														</div>
-													</div>
-												</div>
-											</div>
-										</div>
-									</scroll-view>
-								</div>
-								<!--模糊查询字体列(词云列)-->
-								<div class="vertical-tab2" v-if="rows.length>0"
-									:style="{ height: windowHeight-80 + 'px',position:'absolute',right:'5px' }">
-									<div class="key-word" :class="{ 'key-word-active': currentKeyWord === item }"
-										v-for="item in GoodkeyWord" @click="clickKeyWord(item)">
-										<span v-for="char in item">{{ char }}</span>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-					<div v-if="step1">
-						<div class="cashier-col cashier-card">
-							<div class="card-title">
-								<!-- 可滑动的客户管理区域 -->
-								<scroll-view 
-									scroll-x="true" 
-									:show-scrollbar="false"
-									:scroll-left="scrollLeft"
-									style="white-space: nowrap; padding: 2px 6px; width: 500px; min-width: 500px; max-width: 500px; overflow: hidden;"
-									class="customer-scroll-view"
-								>
-									<view style="display: inline-flex; align-items: center; gap: 10rpx;">
-										<!-- 主客户按钮（散客/当前客户） -->
-										<div class="customerbtn" @click="memberChange('XiaDan')" :style="{
-											                borderRadius: '5px',
-															fontSize:'20px',
-											                boxShadow: '0 0 5rpx rgba(0, 0, 0, 0.3)',
-											                color:  'white',
-											                backgroundColor: currentMember.debts > 0 ? 'darkred' : 'green',
-											                height: '100%',
-											                paddingLeft: '20rpx',
-											                paddingRight: '20rpx',
-											                paddingTop: '10rpx',
-															fontWeight:'bold',
-															letterSpacing: '2rpx',
-											                paddingBottom: '10rpx',
-															display:'inline-flex',
-															flexShrink: 0
-											            }">
-											{{currentMember.customName?currentMember.customName : '散客'}} <text
-												v-if="currentMember.debts > 0"
-												style="font-size: 12px;margin-left: 10rpx; display: flex;">|欠:{{currentMember.debts}}</text>
-										</div>
-										
-										<!-- 动态添加的客户按钮列表 -->
-										<div 
-											v-for="(customerBtn, index) in customerButtons" 
-											:key="`customer_btn_${customerBtn.id}`"
-											class="customerbtn" 
-											@click="switchToCustomerByIndex(index)" 
-											:style="{
-												borderRadius: '5px',
-												fontSize:'20px',
-												boxShadow: '0 0 5rpx rgba(0, 0, 0, 0.3)',
-												color:  'white',
-												backgroundColor: customerBtn.isActive ? 'green' : '#722ed1',
-												height: '100%',
-												paddingLeft: '5rpx',
-												paddingRight: '5rpx',
-												paddingTop: '10rpx',
-												fontWeight:'bold',
-												letterSpacing: '2rpx',
-												paddingBottom: '10rpx',
-												display:'inline-flex',
-												flexShrink: 0
-											}"
-										>
-											{{customerBtn.name}}
-											<text v-if="customerBtn.goodsCount > 0" style="font-size: 12px;margin-left: 10rpx; display: flex;">|{{customerBtn.goodsCount}}件</text>
-										</div>
-										
-											<!-- 添加客户按钮 -->
-											<div @click="addNewCustomerButton" :style="{
-											                borderRadius: '5px',
-															fontSize:'16px',
-											                boxShadow: '0 0 5rpx rgba(0, 0, 0, 0.3)',
-											                color:  'white',
-											                backgroundColor: '#1890ff',
-											                height: '100%',
-											                paddingLeft: '5rpx',
-											                paddingRight: '5rpx',
-											                paddingTop: '10rpx',
-															fontWeight:'bold',
-											                paddingBottom: '10rpx',
-															display:'inline-flex',
-															alignItems: 'center',
-															cursor: 'pointer',
-															flexShrink: 0
-											            }" title="添加客户">
-											<uni-icons type="plus" size="30" color="#ffffff" style="margin-right: 0rpx;"></uni-icons>
-										</div>
-
-									</view>
-								</scroll-view>
-																	
-							<!-- 删除主客户按钮 (只有动态客户时显示) - 固定在右侧 -->
-							<div 
-								v-if="customerButtons.length > 0"
-								@click="deleteMainCustomer" 
-								:style="{
-									position: 'fixed',
-									right: '10px',
-									top: '50%',
-									transform: 'translateY(-50%)',
-									borderRadius: '8px',
-									fontSize:'12px',
-									boxShadow: '0 2px 12px rgba(255, 77, 79, 0.4)',
-									color: 'white',
-									backgroundColor: '#ff4d4f',
-									padding: '15rpx 10rpx',
-									display:'flex',
-									alignItems: 'center',
-									justifyContent: 'center',
-									cursor: 'pointer',
-									zIndex: 999,
-									transition: 'all 0.3s ease'
-								}" 
-								title="删除当前主客户"
-							>
-								<uni-icons type="trash" size="30" color="#ffffff"></uni-icons>
-							</div>
-																	
-								<div style="display: flex;">
+			</scroll-view>
 									
-									<!-- <div class="btn" @click="memberChange('ShouKuang')"
-										style="margin-right: 10rpx;  height:20rpx; bolder; color: white;border: 1px solid dodgerblue;background: dodgerblue; box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);">
-										<uni-icons custom-prefix="iconfont" type="icon-basket" size="15" color="#ffffff"
-											style="margin-right: 5rpx;"></uni-icons>收筐
-									</div> -->
-									<!-- <div class="btn" @click="addTemplateGood"
-										style="height:20rpx;color: white;background-color: dodgerblue;margin-right: 10px;">
-										<uni-icons custom-prefix="iconfont" type="icon-linshi" size="30"
-											color="#ffffff"></uni-icons>临时物品
-									</div> -->
+				<div style="display: flex;">
 								</div>
 							</div>
-							<!-- <u-empty class="card-body-empty" v-if="cashier.cards.length===0"
-					icon="../../static/img/empty/empty-card.png"></u-empty> -->
-							<div class="card-body">
-								<div class="table-header">
-									<div style="width: 100rpx;text-align: center;" @click="memberChange('XiaDan')">名称
-									</div>
-									<div style="width: 40rpx;text-align: center;">数量</div>
-									<div style="width: 40rpx;text-align: center;">单价</div>
-									<div style="width: 100rpx;text-align: center;">重量</div>
-									<!-- <div style="width: 50rpx;text-align: center;">皮重</div> -->
-									<div style="width: 50rpx;text-align: center;">小计</div>
-									<div style="width: 10rpx;"></div>
-								</div>
-								<div v-if="goodSelect.length>0" class="table-body" v-for="(card ,index ) in goodSelect"
-									:key="card.key" @click="showStep2(card,index)">
-									<div class="table-row"
-										:style="{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#e7e7e7' }">
-										<div
-											style="width: 100rpx;text-align: center;font-size: 15rpx;font-weight: bold;display: flex;margin-left: 3rpx;">
-											{{card.skuName}}
-											<div v-if="card.extralModel&&card.extralModel.id!=''&&card.extralModel.quantity>0"
-												style="border-radius: 3rpx; margin-left: 3rpx; background-color: orange;font-size: 10rpx;height: 10rpx;padding: 1rpx;color: white;">
-												{{card.extralModel.name}}
-											</div>
-										</div>
-										<div
-											style="width: 40rpx;justify-content: center; font-size: 15rpx;font-weight: bold;display: flex;">
-											{{card.quantity}}
-											<!-- 	<input type="number"    v-model=""  id="input-id"
-										placeholder="" /> -->
-										</div>
-										<div
-											style="width: 40rpx;text-align: center;font-size: 15rpx;font-weight: bold;">
-											{{card.referenceAmount}}
-										</div>
-										<div
-											style="width: 100rpx;text-align: center;font-size: 15rpx;font-weight: bold;">
-											{{card.allweight-card.carweight}}({{card.allweight}}-{{card.carweight}})
-										</div>
-										<div
-											style="width: 50rpx;text-align: center;font-size: 15rpx;font-weight: bold;">
-											{{card.money2}}
-										</div>
-										<div style="width: 10rpx;" @click.stop="deleteItem(card)"><u-icon name="trash"
-												color="#ff0000" size="26"></u-icon></div>
-									</div>
-								</div>
-								<div v-if="goodSelect.length == 0" style=" margin-top: 30%; text-align: center;">
-									<uni-icons custom-prefix="iconfont" type="icon-kongliebiao" size="80"
-										color="#969696" style="margin-right: 5rpx;"></uni-icons>
-									<div style="margin-top: 10px; color: #969696;">没有选中物品</div> <!-- 添加的文字 -->
-								</div>
-							</div>
-							<!-- <div class="card-sumarry" v-if="extraModel.length>0"
-								style="height: 30rpx;background-color: #F56C6C; border-radius: 5px;box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.2);">
-								<div class="detail-list">
-									<div class="detail-item payable"
-										style="display: flex; justify-content: space-between; align-items: center;">
-										<div class="label"
-											style="display: flex; align-items: center;width: 25%;font-weight: bold;">
-											附加：{{extraModel[0].name}}
-										</div>
-										<div class="label"
-											style="display: flex; align-items: center;width: 25%;font-weight: bold;">
-											数量：<input v-model="extraModel[0].quantity" type="number"
-												@blur="blurExtralModel1"
-												style="height: 20rpx;padding-left: 5rpx;margin-left: 5px;width: 50%;border: 1.5px solid #000000;text-align: center;font-size: 12rpx;background-color: darkgray;" />
-										</div>
-										<div class="label"
-											style="display: flex; align-items: center;width: 20%;margin-left: 5%;font-weight: bold;">
-											<span>单价：{{extraModel[0].amount}}</span>
-										</div>
-										<div class="label"
-											style="display: flex; align-items: center;width: 25%;font-weight: bold;">
-											<span>小计：</span><input v-model="extraModel[0].money" type="number"
-												style="height: 20rpx; margin-left: 5px;width: 50%;border: 1.5px solid #000000;padding-left: 5rpx;text-align: center;font-size: 12rpx;background-color: darkgray;" />
-										</div>
-									</div>
-								</div>
-							</div> -->
-							<div class="card-sumarry">
-								<div class="detail-list">
-									<div class="detail-item payable" style="font-weight: bold;">
-										<div>总计金额</div>
-										<div class="amount">￥
-											<span>{{ payAmount.total}}</span>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="card-footer">
-								<!-- <div class="footer-item footer-left">
-									<div class="btn" @click="resetAction()"
-										style="font-weight: bold;  box-shadow: 0 0 5rpx rgba(0, 0, 0,0.3);">清空</div>
-								</div> -->
-								<div style="display: flex;font-weight: bold;margin-right: 20rpx;margin-left: 20rpx;cursor: pointer;" @click="showShippingModal">
-										<uni-icons custom-prefix="iconfont" type="icon-ehl_sanlunche" size="30"
-											color="#00aaff"
-											style="margin-right: 5rpx;margin-left: 5rpx;margin-top: 3px;"></uni-icons>
-										<div style="margin-top: 5rpx;color:#00aaff ;">运费{{cashier.shippingFee > 0 ? '：' + cashier.shippingFee + '元' : ''}}</div>
-									</div>
-								<div class="footer-item footer-right">
-									<div class="btn btn-primary-plain btn-submit"
-										style=" font-weight: bold;  box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);"
-										@click="hangOrder">
-										挂单
-									</div>
-									<div class="btn btn-primary btn-submit"
-										style="font-weight: bold;   box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);"
-										@click="orderCreate">
-										结账
-									</div>
-								</div>
-							</div>
-						</div>
+						<OrderGoodsPanel
+							:goodsList="goodSelect"
+							:totalAmount="payAmount.total"
+							:shippingFee="cashier.shippingFee"
+							@name-click="memberChange('XiaDan')"
+							@item-click="handleItemClick"
+							@delete-item="deleteItem"
+							@shipping-click="showShippingModal"
+							@hang-order="hangOrder"
+							@checkout="orderCreate"
+						/>
 					</div>
-					<div v-if="!step1" class="cashier-col cashier-card">
-						<div class="cashier-col cashier-card">
-							<div class="card-title">
-								<div
-									style=" display: flex; flex-flow: row; align-items: center; padding: 2px 6px;font-weight: bold;">
-									<u-icon @click="showStep1" name="arrow-left" color="#2979ff" size="25"></u-icon>
-									<div @click="showStep1">返回</div>
-									<div style="font-size: 15rpx;margin-left: 110rpx;text-align: center;">
-										{{editingCard.skuName}}
-									</div>
-									<u-icon name="edit-pen" color="#969696" size="30"
-										style="right: 10rpx;position: fixed;"
-										@click="showAllweightStr =!showAllweightStr"></u-icon>
-
-								</div>
-							</div>
-							<!--非定装输入-->
-							<div class="card-body" v-if="editingCard.saleWay===1">
-								<div
-									style="padding: 10rpx;display: flex; justify-content: space-between; align-items: center;">
-
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused3}"
-										@click="custominputFocusedMethod(3)">
-										总重
-										<div style="display: flex;">
-											<input class="step1-input" v-model="editingCard.allweight"
-												inputmode="none"></input>
-											<span class="currency-label">斤</span>
-										</div>
-									</div>
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused}"
-										@click="custominputFocusedMethod(1)">
-										数量
-										<div style="display: flex;">
-											<input class="step1-input" ref="myInput1" inputmode="none"
-												v-model="editingCard.quantity"></input>
-											<span class="currency-label">件</span>
-										</div>
-									</div>
-								</div>
-
-								<div v-if="showAllweightStr" style="font-size: 18rpx; color:white; font-weight: bold; padding-left: 5rpx; line-height: 20rpx; 
-								            background-color: orange; width: 90%; margin-left: 5%; border-radius: 5rpx; 
-								            word-break: break-all; /* 或者使用 break-word */
-								            white-space: normal; /* 允许换行 */
-								            ">
-									总重：{{ editingCard.allweightSrt }}
-								</div>
-								<div
-									style="padding: 10rpx;display: flex; justify-content: space-between; align-items: center;">
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused4}"
-										@click="custominputFocusedMethod(4)">
-										皮重
-										<div style="display: flex;">
-											<input class="step1-input" v-model="editingCard.carweight"
-												inputmode="none"></input>
-											<span class="currency-label">斤</span>
-										</div>
-									</div>
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused2}"
-										@click="custominputFocusedMethod(2)">
-										单价
-										<div style="display: flex;">
-											<input class="step1-input" v-model="editingCard.referenceAmount"
-												inputmode="none"></input>
-											<span class="currency-label">元</span>
-										</div>
-									</div>
-
-								</div>
-								<!-- 押筐-->
-								<div  v-if="showStep2"
-									style="display: flex; align-items: center;padding: 10rpx;">
-									<select-lay :zindex="1211" :name="editingCard.extralModel.name" :value="editingCard.extralModel.id"
-											direction="up"
-											placeholder="请选择项目" :options="editCardExtralModel"
-											@selectitem="editCardExtraModelSelct" slabel="name">
-										</select-lay>
-								</div>
-							</div>
-							<!--定装输入-->
-							<div class="card-body"
-								v-if="editingCard.saleWay===2||editingCard.saleWay===3">
-								<div
-									style="padding: 10rpx;display: flex; justify-content: space-between; align-items: center;">
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused}"
-										@click="custominputFocusedMethod(1)">
-										数量
-										<div style="display: flex;">
-											<input class="step1-input" ref="myInput1" inputmode="none"
-												v-model="editingCard.quantity"></input>
-											<span
-												class="currency-label">{{editingCard.commoditySpec?editingCard.commoditySpec.specName:""}}</span>
-										</div>
-									</div>
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused2}"
-										@click="custominputFocusedMethod(2)">
-										单价
-										<div style="display: flex;">
-											<input class="step1-input" v-model="editingCard.referenceAmount"
-												inputmode="none"></input>
-											<span class="currency-label">元</span>
-										</div>
-									</div>
-
-								</div>
-							</div>
-							<!--散装输入-->
-							<div class="card-body"
-								v-if="editingCard.saleWay===4">
-								<div
-									style="padding: 10rpx;display: flex; justify-content: space-between; align-items: center;">
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused3}"
-										@click="custominputFocusedMethod(3)">
-										总重
-										<div style="display: flex;">
-											<input class="step1-input" ref="myInput1" inputmode="none"
-												v-model="editingCard.allweightSrt"></input>
-											<span
-												class="currency-label"></span>
-										</div>
-									</div>
-
-									<div :class="{'custom-input': true, 'input-focused': custominputFocused2}"
-										@click="custominputFocusedMethod(2)">
-										单价
-										<div style="display: flex;">
-											<input class="step1-input" v-model="editingCard.referenceAmount"
-												inputmode="none"></input>
-											<span class="currency-label">元</span>
-										</div>
-									</div>
-
-								</div>
-							</div>
-							<!-- 键盘1-->
-							<view class="mybrankmask"
-								:style="{ width: '340rpx', height: '200rpx', backgroundColor: '#ffffff', zIndex: 999, left: 0, bottom: 0 }">
-								<view style="padding: 5rpx;">
-									<view class="MymaskList">
-										<view class="maskListItem" @click="NumberCk(1)">1</view>
-										<view class="maskListItem" @click="NumberCk(2)">2</view>
-										<view class="maskListItem" @click="NumberCk(3)">3</view>
-										<view class="maskListItem" @click="Tuige1()"><uni-icons custom-prefix="iconfont"
-												type="icon-tuige" size="30" color="#ffffff"
-												style="margin-right: 5rpx;"></uni-icons></view>
-
-									</view>
-									<view class="MymaskList">
-										<view class="maskListItem" @click="NumberCk(4)">4</view>
-										<view class="maskListItem" @click="NumberCk(5)">5</view>
-										<view class="maskListItem" @click="NumberCk(6)">6</view>
-
-										<view class="maskListItem" @click="NumberCk('+')">+</view>
-										<!-- <view class="maskListItem" style="background-color: #F56C6C;color: #fff;"
-											@click="Clear1()">清空</view> -->
-									</view>
-									<view class="MymaskList">
-										<view class="maskListItem" @click="NumberCk(7)">7</view>
-										<view class="maskListItem" @click="NumberCk(8)">8</view>
-										<view class="maskListItem" @click="NumberCk(9)">9</view>
-										<view class="maskListItem" @click="NumberCk('-')">-</view>
-									</view>
-									<view class="MymaskList">
-										<view class="maskListItem" @click="NumberCk(0)" style="width: 48%;">0</view>
-										<view class="maskListItem" @click="NumberCk('.')">.</view>
-										<view class="maskListItem" style="background-color: #31BDEC;color: #fff;"
-											@click="showStep1()">确定</view>
-									</view>
-								</view>
-							</view>
-						</div>
-					</div>
+				</div>
+				<!-- 使用 GoodEditKeyboard 组件 -->
+				<div v-if="!step1" class="cashier-card">
+					<GoodEditKeyboard 
+						:card="editingCard"
+						:fixed-tare-weight="fixedTareWeight"
+						:show-step2="showStep2"
+						:edit-card-extral-model="editCardExtralModel"
+						@confirm="handleGoodEditConfirm"
+						@extra-model-select="handleExtraModelSelect"
+					/>
 				</div>
 				<u-modal title="添加新顾客" class="payment" :show="customerDialogVisibleAdd" :closeOnClickOverlay="false"
 					:showConfirmButton="false" :width="700" @close="customerDialogVisibleAdd = false">
@@ -595,72 +198,18 @@
 					</div>
 				</u-modal>
 				<!--客户中心-->
-				<u-modal title="" :show="memberDialogVisible" @close="memberDialogVisible=false"
-					:closeOnClickOverlay="true" :showConfirmButton="false" width="900px">
-					<div class="slot-content">
-						<div class="search-member">
-
-							<view class="search-member-right">
-								<div style="width: 200rpx;">
-									<u--input placeholder="搜索顾客名称" border="surround" v-model="memberSearchKeyword"
-										clearable :adjustPosition="false"
-										@change="memberSearch(memberSearchKeyword)"></u--input>
-								</div>
-								<div style="width: 50rpx;">
-									<u-button type="primary" text="重置" @click="memberSearchKeyword=''"
-										style="height: 20rpx;border-radius: 5rpx;margin-left: 10rpx;background-color: #959595;color: white;border-color:#959595;"></u-button>
-								</div>
-								<div style="width: 50rpx;z-index: 999;" v-if="memberStyle==='XiaDan'">
-									<u-button type="primary" icon="plus-circle"
-										@click="memberDialogVisible = false;customerDialogVisibleAdd = true;"
-										text="添加顾客"
-										style="height: 20rpx;border-radius: 5rpx;margin-left: 30rpx;width: 100px;"></u-button>
-								</div>
-							</view>
-							<view class="search-member-left">
-								<view class="search-member-select">
-									<text class="search-member-select-text" @click="currentSelctCustomerType=1"
-										:class="currentSelctCustomerType==1? 'search-member-select-text-active':null">收银</text>
-									<text class="search-member-select-text" @click="currentSelctCustomerType=2"
-										:class="currentSelctCustomerType==2?'search-member-select-text-active':null">收筐</text>
-									<!-- <text class="search-member-select-text" @click="currentSelctCustomerType=3"
-										:class="currentSelctCustomerType==3?'search-member-select-text-active':null">还款</text> -->
-								</view>
-							</view>
-						</div>
-						<scroll-view class="scrollArea" scroll-y="true" :style="{ height: windowHeight-200 + 'px' }">
-							<view class="grid-member-container">
-								<view class="grid-member-item" v-for="(item, index) in memberSearchOptions" :key="index"
-									style=" box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);" @click="changeMember(item)">
-
-									<!-- 第一行 -->
-									<view class="row" style="display: flex;">
-										<text class="member-name" :style="{
-										                color: item.debts ? '#000000' : '#000000',
-										                fontSize: '18rpx',
-										                fontWeight: 'bold'
-										            }">{{ item.customName }}</text>
-										<view style=" display: flex;align-items: center;font-size: 8rpx;"
-											v-if="item.id&&item.id!=''">
-											<text class="member-btn" style="color: gray;"></text>
-										</view>
-									</view>
-
-									<!-- 第二行 -->
-									<view class="row" style="margin-top: 5rpx;">
-										<!-- <text class="member-name" style="color: #aa0000;"
-										v-if="item.debts>0">欠款:{{ item.debts }}</text>-->
-										<text class="member-name" style="color: black;"
-											v-if="memberStyle==='ShouKuang' ">欠筐:{{ item.owebasket }}</text>
-										<!-- 	<text class="member-name" style="color: black;display: flex;"
-										v-if="item.orderNum!=undefined">{{'单数:'+ item.orderNum }}</text> -->
-									</view>
-								</view>
-
-							</view>
-						</scroll-view>
-					</div>
-				</u-modal>
+				<CustomerSelector
+					:visible="memberDialogVisible"
+					:customerList="memberSearchOptions"
+					:mode="memberStyle"
+					:selectType="currentSelctCustomerType"
+					:windowHeight="windowHeight"
+					:showAddButton="memberStyle === 'XiaDan'"
+					@close="memberDialogVisible = false"
+					@select="changeMember"
+					@add-customer="memberDialogVisible = false; customerDialogVisibleAdd = true"
+					@change-type="currentSelctCustomerType = $event"
+				/>
 				<u-modal title="挂单中心" :show="hangListVisible" @close="hangListVisible=false" :closeOnClickOverlay="true"
 					:showConfirmButton="false" :width="'600rpx'">
 					<div style="display: flex; height: 350rpx; border: 1px solid #ccc;width: 600rpx;">
@@ -674,7 +223,7 @@
 										{{ group.date }}
 									</view>
 									<view class="grid-member-item2" v-for="(item, idx) in group.items"
-										:key="item.key || idx" @click="selectGDorder(item)" :style="{ fontWeight: 'bold', cursor: 'pointer', 
+										:key="item.uniqueKey" @click="selectGDorder(item)" :style="{ fontWeight: 'bold', cursor: 'pointer', 
 										backgroundColor: orderGDSelect && orderGDSelect.id === item.id ? '#00aaff' : 'transparent',
 										color: orderGDSelect && orderGDSelect.id === item.id ? '#ffffff' : 'black',
 										 padding: '8rpx', marginBottom: '5rpx', borderRadius: '4rpx' }">
@@ -731,359 +280,35 @@
 						</div>
 					</div>
 				</u-modal>
-				<!-- 				<u-modal title="添加临时商品" :show="tempSpuDialogVisible" @close="tempSpuDialogVisible=false"
-					:closeOnClickOverlay="true" :showConfirmButton="false" :width="modalWidth">
-					<div class="slot-content" style="overflow-y: auto;">
-						<div class="slot-modal">
-							<u--form ref="tempSpuForm" :rules="tempSpuRules" :model="tempSpu" labelPosition="left"
-								labelAlign="right" label-width="80px">
-								<u-form-item label="商品名称:" prop="skuName">
-									<u--input placeholder="输入商品名称" maxlength="100" v-model="tempSpu.skuName"></u--input>
-								</u-form-item>
-								<u-form-item label="商品单价:" prop="adjustAmount">
-									<u--input placeholder="输入商品单价" type="number"
-										v-model="tempSpu.adjustAmount"></u--input>
-								</u-form-item>
-								<u-form-item label="商品数量:" prop="quantity">
-									<u--input placeholder="输入商品数量" type="number" v-model="tempSpu.quantity"></u--input>
-								</u-form-item>
-							</u--form>
-							<div class="footer">
-								<div class="btn btn-info-plain" @click="tempSpuClose">取消</div>
-								<div class="btn btn-primary" @click="tempSpuSubmit">确定</div>
-							</div>
-						</div>
-					</div>
-				</u-modal> -->
+				
+			<!--收银弹窗-->
+			<PaymentModal
+				:visible="payTypeDialogVisible"
+				:payAmount="payAmount"
+				:accountExpense="AccountExpense"
+				:discountAmount="discountAmount"
+				:accountDiscount="accountDiscount"
+				:currentMember="currentMember"
+				:repayBasketList="repayBasketList"
+				@close="payTypeDialogVisible = false"
+				@play-sound="playSystemKeyClickSound"
+				@collect-basket="collectBasketoffestMoney"
+				@member-change="memberChange"
+				@confirm="handlePaymentConfirm"
+			/>
 
-				<!--收银弹窗-->
+			<!-- 订单详情抽屉 -->
+			<OrderDetailDrawer
+				:visible="LastOrderShow"
+				:orderData="lastOrder"
+				:containerHeight="windowHeight"
+				:showActions="true"
+				@close="LastOrderShow = false"
+				@print="printerModel"
+				@share="shareOrder(lastOrder.id)"
+			/>
 
-				<u-modal title="" class="modern-payment-modal" :show="payTypeDialogVisible" :closeOnClickOverlay="true"
-					:showConfirmButton="false" :width="800" @close="payTypeDialogVisible = false">
-					<div class="payment-modal-container">
-						<!-- 关闭按钮 -->
-						<div class="modal-close-btn" @click="payTypeDialogVisible = false">
-							<uni-icons custom-prefix="iconfont" type="icon-icon-cross-squre" size="24" color="#666"></uni-icons>
-						</div>
-						
 
-						
-						<div class="payment-content-grid">
-							<!-- 左侧：金额输入和支付方式 -->
-							<div class="left-input-section">
-								<!-- 金额输入区域 -->
-								<div class="amount-inputs-section">
-									<!-- <div class="section-title">金额设置</div> -->
-									<div class="amount-inputs">
-										<div class="input-row" :class="{'active': selectInput_pay === 1}" @click="editingPaymentClick(1)">
-											<label class="input-label">应付金额</label>
-											<input v-model="payAmount.total" inputmode="none" class="amount-input" readonly>
-										</div>
-										
-										<div class="input-row discount-row" :class="{'active': selectInput_pay === 9}" @click="editingPaymentClick(9)">
-											<div class="discount-toggle">
-												<button class="discount-btn" :class="{'active': accountDiscount}" @click="setDicountAmount">优惠</button>
-												<button class="discount-btn" :class="{'active': !accountDiscount}" @click="setOverchargeAmount">多收</button>
-											</div>
-											<input v-model="discountAmount" inputmode="none" class="amount-input">
-											<button v-if="shouldShowSmartRoundButton" class="smart-round-btn" @click="smartRound">{{ smartRoundButtonText }}</button>
-										</div>
-										
-										<div class="input-row" :class="{'active': selectInput_pay === 4}" @click="editingPaymentClick(4)">
-											<label class="input-label">收筐抵扣</label>
-											<input v-model="payAmount.BasketOffsetAmount" inputmode="none" class="amount-input">
-											<button class="collect-btn" @click="collectBasketoffestMoney">收筐</button>
-										</div>
-										
-										<div class="input-row" :class="{'active': selectInput_pay === 3}" @click="editingPaymentClick(3)">
-											<label class="input-label">下欠金额</label>
-											<input v-model="payAmount.debt" inputmode="none" class="amount-input">
-										</div>
-										
-										<div class="input-row" :class="{'active': selectInput_pay === 2}" @click="editingPaymentClick(2)">
-											<label class="input-label">实付金额</label>
-											<input v-model="payAmount.actual" inputmode="none" class="amount-input">
-										</div>
-									</div>
-								</div>
-								
-								<!-- 支付方式区域 -->
-								<div class="payment-methods-section">
-									<div class="section-title">支付方式</div>
-									<div class="payment-methods-grid" v-if="AccountExpense">
-										<div class="payment-method-card" 
-											:class="{'active': selectInput_pay === 5}"
-											@click="editingPaymentClick(5)">
-											<div class="payment-method-card-content">
-												<div class="payment-icon">
-													<u-icon name="weixin-fill" :size="24" color="#07c160"></u-icon>
-												</div>
-												<div class="payment-label">微信</div>
-											</div>
-											<div class="payment-amount">{{AccountExpense.wxpayAmount}}</div>
-										</div>
-										
-										<div class="payment-method-card"
-											:class="{'active': selectInput_pay === 6}"
-											@click="editingPaymentClick(6)">
-											<div class="payment-method-card-content">
-												<div class="payment-icon">
-													<u-icon name="zhifubao" :size="24" color="#1677ff"></u-icon>
-												</div>
-												<div class="payment-label">支付宝</div>
-											</div>
-											<div class="payment-amount">{{AccountExpense.alipayAmount}}</div>
-										</div>
-										
-										<div class="payment-method-card"
-											:class="{'active': selectInput_pay === 7}"
-											@click="editingPaymentClick(7)">
-											<div class="payment-method-card-content">
-												<div class="payment-icon">
-													<u-icon name="red-packet-fill" :size="24" color="#ff4757"></u-icon>
-												</div>
-												<div class="payment-label">现金</div>
-											</div>
-											<div class="payment-amount">{{AccountExpense.cashAmount}}</div>
-										</div>
-										
-										<div class="payment-method-card"
-											:class="{'active': selectInput_pay === 8}"
-											@click="editingPaymentClick(8)">
-											<div class="payment-method-card-content">
-												<div class="payment-icon">
-													<u-icon name="coupon-fill" :size="24" color="#ffa502"></u-icon>
-												</div>
-												<div class="payment-label">其他</div>
-											</div>
-											<div class="payment-amount">{{AccountExpense.otherAmount}}</div>
-										</div>
-									</div>
-								</div>
-							</div>
-							
-							<!-- 右侧：顾客信息、数字键盘和操作按钮 -->
-							<div class="right-keypad-section">
-								<!-- 顾客信息 -->
-								<div class="customer-info-section">
-									<div class="customer-badge" :class="currentMember.debts > 0 ? 'debt' : 'normal'">
-										<div class="customer-name">{{currentMember.customName ? currentMember.customName : '散客'}}</div>
-										<div v-if="currentMember.debts > 0" class="debt-info">总下欠：{{currentMember.debts}}元</div>
-									</div>
-								</div>
-								
-								<!-- 数字键盘 -->
-								<div class="modern-keypad">
-									<div class="keypad-row">
-										<button class="keypad-btn" @click="NumberCk2(1)">1</button>
-										<button class="keypad-btn" @click="NumberCk2(2)">2</button>
-										<button class="keypad-btn" @click="NumberCk2(3)">3</button>
-									</div>
-									<div class="keypad-row">
-										<button class="keypad-btn" @click="NumberCk2(4)">4</button>
-										<button class="keypad-btn" @click="NumberCk2(5)">5</button>
-										<button class="keypad-btn" @click="NumberCk2(6)">6</button>
-									</div>
-									<div class="keypad-row">
-										<button class="keypad-btn" @click="NumberCk2(7)">7</button>
-										<button class="keypad-btn" @click="NumberCk2(8)">8</button>
-										<button class="keypad-btn" @click="NumberCk2(9)">9</button>
-									</div>
-									<div class="keypad-row">
-										<button class="keypad-btn" @click="NumberCk2(0)">0</button>
-										<button class="keypad-btn" @click="NumberCk2('.')">.</button>
-										<button class="keypad-btn delete-btn" @click="Tuige2()">
-											<uni-icons custom-prefix="iconfont" type="icon-tuige" size="40" color="#fff"></uni-icons>
-										</button>
-									</div>
-								</div>
-								
-								<!-- 操作按钮 -->
-								<div class="action-buttons">
-									<button class="action-btn debt-btn" @click="payTypeDebt" v-if="payAmount.actual>=0">整单下欠</button>
-									<button class="action-btn confirm-btn" :class="{'confirm-btn2': payAmount.actual<0}" @click="payTypeConfirm">确认收款</button>
-								</div>
-							</div>
-						</div>
-					</div>
-				</u-modal>
-
-				<u-modal title="订单详情" :show="LastOrderShow" @close="LastOrderShow = false" :closeOnClickOverlay="true"
-					:showConfirmButton="false" :width="'500rpx'">
-					<div class="slot-content" v-if="lastOrder" style="position: relative;">
-						<div style="display: inline-block; margin-right: 10px;">
-							创建时间: {{ lastOrder.createTime ? lastOrder.createTime.replace("T", " ") : "" }}
-						</div>
-						<div style="display: inline-block; margin-right: 10px;margin-left: 50px;">
-							订单号: {{ lastOrder.accountCode ? lastOrder.accountCode : "" }}
-						</div>
-						<div style="display: inline-block; margin-right: 10px;margin-left: 50px;">
-							<div>顾客: {{ lastOrder.customName ? lastOrder.customName : "散客" }}</div>
-						</div>
-						<br>
-						<div style="display: inline-block; margin-right: 10px;margin-top: 20px;margin-bottom: 20px;">
-							<div>总计金额: {{ lastOrder.payableAmount ? lastOrder.payableAmount : 0 }}</div>
-						</div>
-						<div v-if="lastOrder.basketOffsetAmount&&lastOrder.basketOffsetAmount>0"
-							style="display: inline-block;margin-left: 50px; margin-right: 10px;margin-top: 20px;margin-bottom: 20px;">
-							<div>收筐抵扣:
-								{{ lastOrder.basketOffsetAmount ? lastOrder.basketOffsetAmount : 0 }}({{lastOrder.basketOffsetNum}}个)
-							</div>
-						</div>
-						<div style="display: inline-block; margin-right: 10px;margin-left: 50px;">
-							<div>实付金额: {{ lastOrder.actualMoney ? lastOrder.actualMoney : 0 }}</div>
-						</div>
-						<div v-if="lastOrder.debt>0"
-							style="display: inline-block; margin-right: 10px;margin-left: 50px;color: red;">
-							<div>下欠: {{ lastOrder.debt  }}</div>
-						</div>
-
-						<div class="table">
-							<div class="table-row">
-								<div class="table-header-cell">货品</div>
-								<div class="table-header-cell">数量</div>
-								<div class="table-header-cell">总重</div>
-								<div class="table-header-cell">皮重</div>
-								<div class="table-header-cell">单价</div>
-								<div class="table-header-cell">小计</div>
-							</div>
-							<scroll-view class="scrollArea" scroll-y="true" :style="{ height: 150 + 'rpx' }">
-								<div class="table-row" v-for="item in lastOrder.modelList">
-									<div class="table-cell">{{item.name}}</div>
-									<div class="table-cell">{{item.mount}}</div>
-									<div class="table-cell">{{item.totalWeight}}</div>
-									<div class="table-cell">{{item.tareWeight}}</div>
-									<div class="table-cell">{{item.referenceAmount}}</div>
-									<div class="table-cell">{{item.subtotal}}</div>
-								</div>
-							</scroll-view>
-						</div>
-						<view
-							style="display: flex; justify-content: space-between; align-items: center; width: 100%;padding-top: 5rpx;">
-							<view style="text-align: right;padding-right: 5rpx;">
-								<!-- <u-button type="primary"
-									@click="orderMemberChange" text="客户变更"></u-button> -->
-								</view>
-							<view style="text-align: right;padding-right: 5rpx;"><u-button type="primary"
-									@click="printerModel(lastOrder);" text="打印"></u-button></view>
-						</view>
-						<u-button icon="share-square" :plain="true" shape="circle" type="primary" text="发单"
-							@click="shareOrder(lastOrder.id)"
-							style="position: absolute; top: 0; right: 0;width: 50rpx;">
-						</u-button>
-					</div>
-				</u-modal>
-				<u-modal title=" " class="payment" :show="inputModelVisible" :closeOnClickOverlay="true"
-					:showConfirmButton="false" :width="800" @close="inputModelVisible = false">
-					<div class="slot-content" style="overflow-y: auto;">
-						<div class="slot-modal pay-type">
-							<div class="body">
-								<div class="pay-amount">
-									<div class="form-row">
-										<div class="form-container" style="width: 95%;">
-											<div v-for="(item,index) in repayBasketList" :key="index"
-												style="display: flex; flex-direction: column; gap: 8px; padding: 6px;">
-												<div style="display: flex; border: 1px solid #ddd;"> <!-- 外层容器加边框 -->
-													<div @click="repayBasketActiveIndex = index" style="
-													     width: 150rpx; 
-													     font-size: 15rpx; 
-													     font-weight: bold; 
-													     display: flex; 
-													     border-right: 1px solid #ddd;
-													     align-items: center;     /* 垂直居中 */
-													     justify-content: center; /* 水平居中 */
-													   ">
-														<div style="flex: 1; padding: 5rpx; text-align: center;">数量：
-														</div>
-														<input
-															style="flex: 1; font-size: 15rpx; color: white; margin-right: 10rpx;  border: 1px solid #ccc; align-self: center;"
-															:style="{'text-align': 'center','background-color': index === repayBasketActiveIndex ? 'dodgerblue' : 'gainsboro'}"
-															v-model="item.quantity" />
-													</div>
-
-													<div
-														style="flex: 1; font-size: 15rpx; font-weight: bold; padding: 5rpx; border-right: 1px solid #ddd;text-align: center;">
-														{{ item.name }}
-													</div>
-
-													<div
-														style="flex: 1; font-size: 15rpx; font-weight: bold; padding: 5rpx; border-right: 1px solid #ddd;text-align: center;">
-														单价：{{ item.amount || 0 }}
-													</div>
-
-													<div
-														style="flex: 1; font-size: 15rpx; font-weight: bold; padding: 5rpx;text-align: center;">
-														小计：{{ (item.quantity || 0) * (item.amount || 0) }}
-													</div>
-												</div>
-											</div>
-											<!-- <text
-														style="font-size: 20rpx;font-weight: bold;width: 120rpx;">收筐数量：</text><input
-														v-model="memberEventInfo.collectBasketNum" inputmode="none"
-														style="width: 150rpx;text-align: center; font-size: 25rpx;font-weight: bold;border-bottom: 2px solid #000;"></input> -->
-											<!-- 	<u-form-item label="收筐数量：" prop="payAmount" borderBottom ref="item1"
-													v-if="inputModelType==2||inputModelType==3" class="form-item" >
-													<input v-model="memberEventInfo.collectBasketNum"
-														inputmode="none" style="font-size: 25rpx;font-weight: bold;"></input>
-												</u-form-item> -->
-											<view class="mybrankmask2"
-												:style="{marginLeft:'60rpx', width: '340rpx', height: '180rpx', zIndex: 999, left: 0, bottom: 0,marginTop:'20rpx' }">
-												<view style="padding: 5rpx;">
-													<view class="MymaskList">
-														<view class="maskListItem" @click="NumberCk3(1)">1</view>
-														<view class="maskListItem" @click="NumberCk3(2)">2</view>
-														<view class="maskListItem" @click="NumberCk3(3)">3</view>
-													</view>
-													<view class="MymaskList">
-														<view class="maskListItem" @click="NumberCk3(4)">4</view>
-														<view class="maskListItem" @click="NumberCk3(5)">5</view>
-														<view class="maskListItem" @click="NumberCk3(6)">6</view>
-													</view>
-													<view class="MymaskList">
-														<view class="maskListItem" @click="NumberCk3(7)">7</view>
-														<view class="maskListItem" @click="NumberCk3(8)">8</view>
-														<view class="maskListItem" @click="NumberCk3(9)">9</view>
-													</view>
-													<view class="MymaskList">
-
-														<view class="maskListItem" @click="Clear3()">C</view>
-														<view class="maskListItem" @click="NumberCk3(0)">0</view>
-														<view class="maskListItem " @click="Tuige3()"><uni-icons
-																custom-prefix="iconfont" type="icon-tuige" size="30"
-																color="#ffffff" style="margin-right: 5rpx;"></uni-icons>
-														</view>
-													</view>
-												</view>
-											</view>
-										</div>
-									</div>
-								</div>
-							</div>
-							<div class="footer">
-								<u-row customStyle="margin-bottom: 10px;margin-top:10px;" v-if="inputModelType==2">
-									<u-col span="6">
-										<div class="btn btn-info-plain" style="font-size: 20rpx;font-weight: bold;"
-											@click="inputModelVisible = false">取消收筐</div>
-									</u-col>
-									<u-col span="6">
-										<div class="btn btn-primary" style="font-size: 20rpx;font-weight: bold;"
-											@click="payBasketConfirm">确认收筐</div>
-									</u-col>
-								</u-row>
-								<u-row customStyle="margin-bottom: 10px;margin-top:10px;" v-if="inputModelType==3">
-									<u-col span="6">
-										<div class="btn btn-info-plain" style="font-size: 20rpx;font-weight: bold;"
-											@click="cancelRepayBasket">取消收筐</div>
-									</u-col>
-									<u-col span="6">
-										<div class="btn btn-primary" style="font-size: 20rpx;font-weight: bold;"
-											@click="saveBasketOffest">确认收筐</div>
-									</u-col>
-								</u-row>
-							</div>
-						</div>
-					</div>
-				</u-modal>
 
 			</div>
 		</div>
@@ -1130,182 +355,116 @@
       @close="showRepaymentModal = false">
 		</RepayModal>
 
-		<!--运费弹窗-->
-		<view v-if="shippingModalVisible" class="shipping-modal-mask" @click="cancelShipping">
-			<view class="shipping-modal-wrapper" @click.stop>
-				<view class="shipping-modal-container">
-					<!-- 标题区域 -->
-					<view class="shipping-modal-header">
-						<text class="header-title">设置运费</text>
-						<text class="header-subtitle">请输入本单的运费金额</text>
-					</view>
-					
-					<!-- 内容区域 -->
-					<view class="shipping-modal-content">
-						
-						<!-- 输入框 -->
-						<view class="input-wrapper">
-							<view class="input-label">
-								<text class="label-text">运费金额</text>
-								<text class="label-required">*</text>
-							</view>
-							<view class="input-container">
-								<text class="input-prefix">¥</text>
-								<input 
-									type="digit"
-									v-model="tempShippingFee" 
-									placeholder="0.00"
-									class="shipping-input"
-									@input="validateShippingFee"
-								/>
-								<button 
-									v-if="tempShippingFee && tempShippingFee > 0" 
-									@click="tempShippingFee = 0"
-									class="clear-shipping-btn"
-								>
-									清空
-								</button>
-							</view>
-							<text class="input-hint">运费将计入订单总金额</text>
-						</view>
-						
-						<!-- 快捷金额选择 -->
-						<view class="quick-amount-section">
-							<text class="section-label">快捷选择</text>
-							<view class="quick-amount-buttons">
-								<view 
-									v-for="amount in [5, 10, 20, 30]" 
-									:key="amount"
-									@click="tempShippingFee = amount"
-									class="quick-amount-btn"
-									:class="{ active: tempShippingFee == amount }"
-								>
-									¥{{ amount }}
-								</view>
-							</view>
-						</view>
-					</view>
-					
-					<!-- 底部按钮 -->
-					<view class="shipping-modal-footer">
-						<button class="btn-cancel" @click="cancelShipping">
-							取消
-						</button>
-					<button 
-						class="btn-confirm" 
-						@click="confirmShipping"
-						:class="{ disabled: tempShippingFee == null || tempShippingFee === '' || tempShippingFee < 0 }"
-						:disabled="tempShippingFee == null || tempShippingFee === '' || tempShippingFee < 0"
-					>
-							<uni-icons type="checkmarkempty" size="26" color="#fff" style="margin-right: 6px;"></uni-icons>
-							确认设置
-						</button>
-					</view>
-				</view>
-			</view>
-		</view>
+		<!-- 运费弹窗 -->
+		<ShippingModal 
+			:visible="shippingModalVisible" 
+			:initialValue="cashier.shippingFee"
+			@close="shippingModalVisible = false"
+			@confirm="handleShippingConfirm"
+		/>
 
-		<!-- 多客户管理弹窗 -->
-		<u-modal 
-			title="多客户管理" 
-			class="multi-customer-modal" 
-			:show="multiCustomerModalVisible" 
-			:closeOnClickOverlay="true"
-			:showConfirmButton="false" 
-			:width="600" 
-			@close="multiCustomerModalVisible = false"
+
+	<!-- 规格选择弹窗（拆包） -->
+	<div v-if="specPopup.visible" class="spec-popup-mask" @click="closeSpecPopup">
+		<div 
+			class="spec-popup-container" 
+			:style="specPopupStyle"
+			@click.stop
 		>
-			<div style="max-height: 400px; overflow-y: auto;">
-				<!-- 客户列表 -->
-				<div v-if="customerCacheList.length > 0">
-					<div 
-						v-for="(customerCache, index) in customerCacheList" 
-						:key="customerCache.key"
-						:style="{
-							display: 'flex',
-							alignItems: 'center',
-							padding: '15rpx',
-							margin: '10rpx 0',
-							backgroundColor: customerCache.customerId === getCurrentMemberId() ? '#e6f7ff' : '#f9f9f9',
-							borderRadius: '8rpx',
-							border: customerCache.customerId === getCurrentMemberId() ? '2px solid #1890ff' : '1px solid #e8e8e8'
-						}"
-					>
-						<!-- 客户信息 -->
-						<div style="flex: 1;">
-							<div style="font-size: 18px; font-weight: bold; color: #333;">
-								{{customerCache.customerName}}
-								<span v-if="customerCache.customerId === getCurrentMemberId()" style="color: #1890ff; font-size: 14px;">[当前]</span>
-							</div>
-							<div style="font-size: 14px; color: #666; margin-top: 5rpx;">
-								购物车商品: {{customerCache.goodSelectCount}} 件
-								<span v-if="customerCache.shippingFee > 0" style="margin-left: 10px; color: #00aaff;">
-									| 运费: ¥{{customerCache.shippingFee}}
-								</span>
-							</div>
-							<div style="font-size: 12px; color: #999; margin-top: 5rpx;">
-								最后使用: {{formatTimestamp(customerCache.timestamp)}}
-							</div>
-						</div>
-						
-						<!-- 操作按钮 -->
-						<div style="display: flex; gap: 10rpx;">
-							<button 
-								v-if="customerCache.customerId !== getCurrentMemberId()"
-								@click="switchToCustomer(customerCache)"
-								style="padding: 8rpx 16rpx; background: #1890ff; color: white; border: none; border-radius: 4rpx; font-size: 14px;"
-							>
-								切换
-							</button>
-							<button 
-								@click="removeCustomerCache(customerCache)"
-								style="padding: 8rpx 16rpx; background: #ff4d4f; color: white; border: none; border-radius: 4rpx; font-size: 14px;"
-							>
-								删除
-							</button>
+			<div class="spec-popup-content">
+				<div 
+					v-for="(spec, index) in specPopup.specList" 
+					:key="index"
+					class="spec-item"
+					@click="handleSpecClick(spec)"
+				>
+					<!-- 商品名称 + 规格名称 -->
+					<div class="spec-item-name">
+						{{ specPopup.commodity.name }}-{{ spec.specName }}
+					</div>
+					
+					<!-- 商品信息区域 -->
+					<div class="spec-item-info">
+						<!-- 标签行 -->
+						<div class="spec-item-tags">
+							<div v-if="commodityType === 1" class="tag tag-consignment">代卖</div>
+							<div v-if="commodityType === 2" class="tag tag-self">自营</div>
+							<div class="tag tag-unpack">拆包</div>
 						</div>
 					</div>
 				</div>
-				
-				<!-- 无客户数据提示 -->
-				<div v-else style="text-align: center; padding: 40rpx; color: #999;">
-					<uni-icons type="person" size="50" color="#ccc" style="margin-bottom: 20rpx;"></uni-icons>
-					<div>暂无客户数据</div>
-				</div>
-				
-				<!-- 操作按钮 -->
-				<div style="display: flex; gap: 15rpx; margin-top: 30rpx; padding-top: 20rpx; border-top: 1px solid #f0f0f0;">
-					<button 
-						@click="addCustomerFromManager"
-						style="flex: 1; padding: 12rpx; background: #52c41a; color: white; border: none; border-radius: 6rpx; font-size: 16px; font-weight: bold;"
-					>
-						<uni-icons type="person-add" size="16" color="#ffffff" style="margin-right: 8rpx;"></uni-icons>
-						添加客户
-					</button>
-					<button 
-						@click="clearAllCustomerCaches"
-						style="flex: 1; padding: 12rpx; background: #ff7875; color: white; border: none; border-radius: 6rpx; font-size: 16px; font-weight: bold;"
-					>
-						<uni-icons type="trash" size="16" color="#ffffff" style="margin-right: 8rpx;"></uni-icons>
-						清空所有
-					</button>
-					<button 
-						@click="multiCustomerModalVisible = false"
-						style="flex: 1; padding: 12rpx; background: #d9d9d9; color: #666; border: none; border-radius: 6rpx; font-size: 16px; font-weight: bold;"
-					>
-						关闭
-					</button>
-				</div>
 			</div>
-		</u-modal>
-
+		</div>
 	</div>
 
+	<!-- 分级商品选择弹窗 -->
+	<div v-if="multiLevelPopup.visible" class="multilevel-popup-mask" @click="closeMultiLevelPopup">
+		<div 
+			class="multilevel-popup-container" 
+			:style="multiLevelPopupStyle"
+			@click.stop
+		>
+			<!-- <div class="multilevel-popup-header">
+				<span class="multilevel-popup-title">选择分级商品</span>
+			</div> -->
+			<div class="multilevel-popup-content">
+				<div 
+					v-for="(child, index) in multiLevelPopup.childrenList" 
+					:key="child.id || index"
+					:id="'multilevel-grid-item-' + child.id"
+					class="multilevel-grid-item"
+					@click="handleMultiLevelClick(child)"
+				>
+					<!-- 商品名称 -->
+					<div class="multilevel-item-name">
+						{{ child.commodityName || child.name }}
+					</div>
+					
+					<!-- 商品信息区域 -->
+					<div class="multilevel-item-info">
+						<!-- 标签行 -->
+						<div class="multilevel-item-tags">
+							<div v-if="commodityType === 1" class="tag tag-consignment">代</div>
+							<div v-if="commodityType === 2" class="tag tag-self">自</div>
+							
+							<div v-if="child.saleWay == 1" class="tag tag-unfixed">非定</div>
+							<div v-if="child.saleWay == 2" class="tag tag-fixed">
+								定{{ child.initWeight ? child.initWeight : '' }}
+							</div>
+							<div v-if="child.saleWay == 3" class="tag tag-unpack">拆包</div>
+							<div v-if="child.saleWay == 4" class="tag tag-bulk">散</div>
+						</div>
+						
+						<!-- 库存信息 -->
+						<div 
+							class="multilevel-item-stock"
+							:style="!child.outPutPurchaseInventories || child.outPutPurchaseInventories.length === 0 ? { color: '#aa0000' } : {}"
+						>
+							余: 
+							<span v-for="item2 in child.outPutPurchaseInventories" :key="item2.id" class="stock-item">
+								{{ item2.mount }}{{ item2.specName }}
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</div>
+
+</div>
 </template>
 
 <script>
 	import Sidebar from '@/components/Sidebar.vue'
 	import VerticalTab from '@/components/VerticalTab.vue'
+	import GoodEditKeyboard from '@/components/GoodEditKeyboard.vue'
+	import PaymentModal from '@/components/PaymentModal.vue'
+	import OrderDetailDrawer from '@/components/OrderDetailDrawer.vue'
+	import CashierGoodsPanel from '@/components/CashierGoodsPanel/CashierGoodsPanel.vue'
+	import CustomerSelector from '@/components/CustomerSelector/CustomerSelector.vue'
+	import OrderGoodsPanel from '@/components/OrderGoodsPanel/OrderGoodsPanel.vue'
 	import cashierDiscount from '../../api/cashier/cashierDiscount'
 	import cashierIgnore from '../../api/cashier/cashierIgnore'
 	import cashierOrder from '../../api/cashier/cashierOrder'
@@ -1330,27 +489,34 @@
 	import RepayBasketModel from '@/components/repay-basket-model.vue' //还筐弹窗
 	import BasketOffestModel from './component/basket-offest-model.vue'
 	import RepayModal from '@/components/RepaymentModal.vue'
+	import ShippingModal from '@/components/ShippingModal.vue'
 
 	export default {
 		name: 'Cashier',
 		components: {
 			Sidebar,
 			VerticalTab,
+			GoodEditKeyboard,
 			MyNumberInputVue,
 			RepayBasketModel,
 			BasketOffestModel,
-			RepayModal
+			RepayModal,
+			PaymentModal,
+			OrderDetailDrawer,
+			CashierGoodsPanel,
+			CustomerSelector,
+			OrderGoodsPanel,
+			ShippingModal
 		},
 		data() {
 			return {
 				currentSelctCustomerType: 1, //当前选中的顾客操作类型 1-下单 2-还筐 3-还款
 				test: 0,
 				popup_paysuccess_show: false,
-				currentTabId: "",
 				repayBasketList: [], //2.0仅用于收银还筐
 				repayBasketActiveIndex: 0,
-				currentTabName: "",
 				accountDiscount: true,
+				vesionType:1,//版本号
 				payWay: [{
 						label: "微信支付",
 						coin: "weixin-fill",
@@ -1388,16 +554,36 @@
 				discountAmount: 0,
 				actionView: null,
 				maskView: null,
+			// 规格弹窗数据
+			specPopup: {
+				visible: false,
+				left: 0,
+				top: 0,
+				commodity: null,
+				specList: []
+			},
+			// 分级商品弹窗数据
+			multiLevelPopup: {
+				visible: false,
+				left: 0,
+				top: 0,
+				parentCommodity: null,
+				childrenList: []
+			},
 				memberStyle: "XiaDan",
 				AddedCustomerFormData: {},
 				canvasheight: 0,
 				currentPayWay: 1,
-				custominputFocused: false,
-				custominputFocused2: false,
-				custominputFocused3: false,
-				custominputFocused4: false,
-				custominputFocusIndex: '',
-				editingPaymentIndex: 1,
+		custominputFocused: false,
+		custominputFocused2: false,
+		custominputFocused3: false,
+		custominputFocused4: false,
+		custominputFocusIndex: '',
+		editingPaymentIndex: 1,
+		// 输入缓冲区 - 用于优化键盘输入性能（只延迟复杂计算）
+		inputBuffer: {
+			timer: null  // 只用于延迟复杂计算
+		},
 				LastOrderShow: false,
 				showRepaymentModal: false,
 				repayCustomerData:{},
@@ -1507,26 +693,24 @@
 				payTypeDialogVisible: false,
 				selectInput_pay: 1,
 				payResult: {},
-				rows: [],
-				showRows: [],
-				GoodkeyWord: [],
-				currentKeyWord: "",
-				commidityList: [],
-				selectPay: {},
-				commodityType: 1,
-				payAmount: {
-					total: 0,
-					actual: 0,
-					debt: 0,
-					ExtraMoney: 0,
-					BasketOffsetAmount: 0
-				},
-				currentCompanyId: "",
-				extraModel: [],
-				editCardExtralModel: [],
-				goodSelect: [],
-				shippingModalVisible: false,
-				tempShippingFee: 0,
+			rows: [],
+			showRows: [],
+		selectPay: {},
+			payAmount: {
+				total: 0,
+				actual: 0,
+				debt: 0,
+				ExtraMoney: 0,
+				BasketOffsetAmount: 0
+			},
+			currentCompanyId: "",
+			extraModel: [],
+			editCardExtralModel: [],
+		goodSelect: [],
+	goodSelectKeyCounter: 0, // 用于生成唯一的 key
+	customerInfoFlash: false, // 客户信息闪烁标识
+	actualAmountFlash: false, // 实付金额闪烁标识
+			shippingModalVisible: false,
 				// 多客户管理相关
 				multiCustomerModalVisible: false,
 				customerCacheList: [],
@@ -1536,21 +720,29 @@
 					phone: '',
 					address: ''
 				},
-				// 快速客户切换相关
-				showCustomerButtons: false,
-				customerButtons: [], // 动态添加的客户按钮列表
-				scrollLeft: 0 // 滚动位置
+	// 快速客户切换相关
+	showCustomerButtons: false,
+	customerButtons: [], // 动态添加的客户按钮列表
+	scrollLeft: 0, // 滚动位置
+	isMainCustomerActive: true, // 主客户是否激活（默认激活）
+	editingCustomerButtonIndex: -1, // 正在编辑的客户按钮索引（-1表示不在编辑状态）
+	mainCustomerData: { // 主客户的独立数据
+		member: { customName: '散客', id: '' },
+		goodSelect: [],
+		shippingFee: 0
+	}
 			}
 		},
 		computed: {
-			smartRoundButtonText() {
-				// 强制依赖这些响应式数据，确保更新
-				const total = parseFloat(String(this.payAmount.total)) || 0;
-				const debt = parseFloat(String(this.payAmount.debt)) || 0;
-				const goodSelectLength = this.goodSelect.length; // 添加依赖确保商品变化时更新
-				const shippingFee = parseFloat(String(this.cashier.shippingFee)) || 0; // 添加运费依赖
-				
-				const baseAmount = total - debt;
+		smartRoundButtonText() {
+			// 强制依赖这些响应式数据，确保更新
+			const total = parseFloat(String(this.payAmount.total)) || 0;
+			const debt = parseFloat(String(this.payAmount.debt)) || 0;
+			const basketOffset = parseFloat(String(this.payAmount.BasketOffsetAmount)) || 0;
+			const goodSelectLength = this.goodSelect.length; // 添加依赖确保商品变化时更新
+			const shippingFee = parseFloat(String(this.cashier.shippingFee)) || 0; // 添加运费依赖
+			
+			const baseAmount = total - basketOffset - debt;
 				
 				if (baseAmount <= 0) {
 					return '取零';
@@ -1601,44 +793,153 @@
 				const adjustmentStr = Math.abs(adjustment).toFixed(2);
 				return isDiscount ? `优惠${adjustmentStr}` : `多收${adjustmentStr}`;
 			},
-			shouldShowSmartRoundButton() {
-				const total = parseFloat(String(this.payAmount.total)) || 0;
-				const debt = parseFloat(String(this.payAmount.debt)) || 0;
-				const baseAmount = total - debt;
-				
-				if (baseAmount <= 0) {
-					return false;
-				}
-				
-				// 获取个位数
-				const lastDigit = Math.floor(baseAmount) % 10;
-				
-				// 如果已经是0或5结尾，不显示按钮
-				return !(lastDigit === 0 || lastDigit === 5);
+		shouldShowSmartRoundButton() {
+			const total = parseFloat(String(this.payAmount.total)) || 0;
+			const debt = parseFloat(String(this.payAmount.debt)) || 0;
+			const basketOffset = parseFloat(String(this.payAmount.BasketOffsetAmount)) || 0;
+			const baseAmount = total - basketOffset - debt;
+			
+			if (baseAmount <= 0) {
+				return false;
 			}
-		},
-		onShow() {
-			this.initSystem();
-			this.currentCompanyId = uni.getStorageSync('companyId');
-			this.getCategoryList();
-			this.getlastOrder();
-			this.initCompanySetting();
-		},
-		mounted() {
-			this.windowHeight = uni.getWindowInfo().windowHeight;
-			this.onLoadMethod();
-			this.getlastOrder();
-			this.getallextralgood();
-			// 从缓存恢复客户和 goodSelect 数据
-			this.loadLastCustomerAndGoodSelect();
-		},
-		methods: {
-			// 缓存相关方法
-			getCustomerCacheKey(customerId) {
-				// 为每个客户生成唯一的缓存key，散客使用 'guest' 作为标识
-				const customerKey = customerId || 'guest';
-				return `cashier_customer_${customerKey}_cache`;
+			
+		// 获取个位数
+		const lastDigit = Math.floor(baseAmount) % 10;
+		
+		// 如果已经是0或5结尾，不显示按钮
+		return !(lastDigit === 0 || lastDigit === 5);
+	},
+	// 动态计算弹窗位置
+	specPopupStyle() {
+		const { left, top, specList } = this.specPopup;
+		const itemHeight = 90; // 每项高度（更新为新样式的高度：70px min-height + padding + gap）
+		const popupHeight = Math.min(specList.length * itemHeight + 10, 450); // 限制最大高度450px
+		
+		// 使用 uni-app 兼容的方式获取屏幕高度
+		const screenHeight = this.windowHeight || uni.getWindowInfo().windowHeight;
+		
+		// 计算最佳位置（避免超出屏幕）
+		let adjustedTop = top - 100 < 0 ? 0 : top - 100;
+		adjustedTop = adjustedTop + popupHeight > screenHeight 
+			? screenHeight - popupHeight - 20
+			: adjustedTop;
+		
+		return {
+			left: left + 'px',
+			top: adjustedTop + 'px'
+		};
+	},
+	// 分级商品弹窗样式
+	multiLevelPopupStyle() {
+		const { left, top, childrenList } = this.multiLevelPopup;
+		const itemHeight = 90; // 每个 grid-item 的高度（包含边距）
+		const popupPadding = 20; // 弹窗内边距
+		const popupHeight = Math.min(childrenList.length * itemHeight + popupPadding * 2, 500); // 最大高度500px
+		
+		// 使用 uni-app 兼容的方式获取屏幕高度
+		const screenHeight = this.windowHeight || uni.getWindowInfo().windowHeight;
+		
+		// 计算最佳位置（避免超出屏幕）
+		let adjustedTop = top - 100 < 0 ? 0 : top - 100;
+		adjustedTop = adjustedTop + popupHeight > screenHeight 
+			? screenHeight - popupHeight - 20
+			: adjustedTop;
+		
+		return {
+			left: left + 'px',
+			top: adjustedTop + 'px',
+			maxHeight: '500px'
+		};
+	}
+	},
+	mounted() {
+		console.log('cashier mounted');
+		this.refreshPage();
+		this.calculateScrollHeight();
+		// 监听窗口大小变化
+		uni.onWindowResize(() => {
+			this.calculateScrollHeight();
+		});
+	},
+	beforeDestroy() {
+		// 清理所有待处理的定时器
+		if (this.inputBuffer.timer) {
+			clearTimeout(this.inputBuffer.timer);
+		}
+	},
+methods: {
+	// 触发客户信息闪烁效果
+	flashCustomerInfo() {
+		this.customerInfoFlash = true;
+		setTimeout(() => {
+			this.customerInfoFlash = false;
+		}, 1000); // 1秒后关闭闪烁效果（闪烁2次）
+	},
+	// 触发实付金额闪烁效果
+	flashActualAmount() {
+		console.log('触发实付金额闪烁动画', this.actualAmountFlash);
+		// 先重置，确保动画可以重复播放
+		this.actualAmountFlash = false;
+		// 使用 $nextTick 确保 DOM 更新
+		this.$nextTick(() => {
+			this.actualAmountFlash = true;
+			console.log('设置闪烁状态为 true', this.actualAmountFlash);
+			setTimeout(() => {
+				this.actualAmountFlash = false;
+				console.log('实付金额闪烁动画结束');
+			}, 1000);
+		});
+	},
+	// 计算scroll-view的高度
+	calculateScrollHeight() {
+		const windowInfo = uni.getWindowInfo();
+		this.windowHeight = windowInfo.windowHeight;
+		// header高度(50px) + 搜索框区域(40px) + 其他间距(30px) = 120px
+		// 这样可以确保商品列表完整显示
+	},
+	// 刷新页面数据 - 供父组件调用
+	refreshPage() {
+		console.log('cashier refreshPage');
+		this.vesionType = uni.getStorageSync("vesionType") ?? 1;
+		this.windowHeight = uni.getWindowInfo().windowHeight;
+		// this.initSystem();
+		this.currentCompanyId = uni.getStorageSync('companyId');
+		// this.getCategoryList();
+		this.getlastOrder();
+		this.initCompanySetting();
+		this.onLoadMethod();
+		this.getallextralgood();
+		// 从缓存恢复客户和 goodSelect 数据
+		this.loadLastCustomerAndGoodSelect();
+		// 刷新 VerticalTab 组件
+		if (this.$refs.verticalTabRef) {
+			this.$refs.verticalTabRef.refresh();
+		}
+	},
+			// 切换到管理页面（订单）
+			goToManagement() {
+				console.log('goToManagement - 向父组件发出事件');
+				// 向父组件（index.vue）发出事件
+				this.$emit('goToManagement');
 			},
+		// 缓存相关方法
+		getCustomerCacheKey(customerId) {
+			// 为每个客户生成唯一的缓存key，散客使用 'guest' 作为标识
+			// 加入 companyId 区分不同商行的客户数据
+			const customerKey = customerId || 'guest';
+			const companyId = this.currentCompanyId || uni.getStorageSync('companyId') || 'default';
+			return `cashier_customer_${companyId}_${customerKey}_cache`;
+		},
+		// 生成客户按钮列表的缓存key（按商行区分）
+		getCustomerButtonsCacheKey() {
+			const companyId = this.currentCompanyId || uni.getStorageSync('companyId') || 'default';
+			return `cashier_customer_buttons_${companyId}`;
+		},
+		// 生成最后使用的客户ID的缓存key（按商行区分）
+		getLastCustomerIdCacheKey() {
+			const companyId = this.currentCompanyId || uni.getStorageSync('companyId') || 'default';
+			return `cashier_last_customer_id_${companyId}`;
+		},
 			saveCustomerDataToCache() {
 				try {
 					const customerId = (this.currentMember && this.currentMember.id) || '';
@@ -1657,12 +958,13 @@
 					console.error('保存客户数据缓存失败:', e);
 				}
 			},
-			// 保存所有客户按钮到缓存
-			saveCustomerButtonsToCache() {
-				try {
-					// 保存客户按钮列表
-					uni.setStorageSync('cashier_customer_buttons', JSON.stringify(this.customerButtons));
-					console.log('已保存客户按钮列表到缓存:', this.customerButtons);
+		// 保存所有客户按钮到缓存
+		saveCustomerButtonsToCache() {
+			try {
+				// 保存客户按钮列表（按商行区分）
+				const cacheKey = this.getCustomerButtonsCacheKey();
+				uni.setStorageSync(cacheKey, JSON.stringify(this.customerButtons));
+				console.log(`已保存客户按钮列表到缓存 [${cacheKey}]:`, this.customerButtons);
 					
 					// 为每个客户按钮保存其对应的数据到单独的缓存
 					this.customerButtons.forEach(btn => {
@@ -1682,13 +984,14 @@
 					console.error('保存客户按钮列表缓存失败:', e);
 				}
 			},
-			// 从缓存恢复所有客户按钮
-			loadCustomerButtonsFromCache() {
-				try {
-					const cachedButtons = uni.getStorageSync('cashier_customer_buttons');
-					if (cachedButtons) {
-						const buttons = JSON.parse(cachedButtons);
-						console.log('从缓存恢复客户按钮列表:', buttons);
+		// 从缓存恢复所有客户按钮
+		loadCustomerButtonsFromCache() {
+			try {
+				const cacheKey = this.getCustomerButtonsCacheKey();
+				const cachedButtons = uni.getStorageSync(cacheKey);
+				if (cachedButtons) {
+					const buttons = JSON.parse(cachedButtons);
+					console.log(`从缓存恢复客户按钮列表 [${cacheKey}]:`, buttons);
 						
 						// 为每个按钮加载其对应的数据
 						this.customerButtons = buttons.map(btn => {
@@ -1737,27 +1040,36 @@
 					console.error('清空客户缓存失败:', e);
 				}
 			},
-			clearAllCustomerCaches() {
-				uni.showModal({
-					title: '确认清空',
-					content: '确定要清空所有客户的购物车数据吗？此操作不可恢复！',
-					success: (res) => {
-						if (res.confirm) {
-							try {
-								// 获取所有存储的key，清除客户相关的缓存
-								const allKeys = uni.getStorageInfoSync().keys || [];
-								const customerCacheKeys = allKeys.filter(key => key.startsWith('cashier_customer_'));
-								customerCacheKeys.forEach(key => {
-									uni.removeStorageSync(key);
-									console.log(`已清空缓存 [${key}]`);
-								});
-								
-								// 清除最后使用的客户ID
-								uni.removeStorageSync('cashier_last_customer_id');
-								
-								// 清除客户按钮列表
-								uni.removeStorageSync('cashier_customer_buttons');
-								this.customerButtons = [];
+		clearAllCustomerCaches() {
+			uni.showModal({
+				title: '确认清空',
+				content: '确定要清空当前商行所有客户的购物车数据吗？此操作不可恢复！',
+				success: (res) => {
+					if (res.confirm) {
+						try {
+							// 获取当前商行ID
+							const companyId = this.currentCompanyId || uni.getStorageSync('companyId') || 'default';
+							console.log(`清理商行 [${companyId}] 的所有客户缓存`);
+							
+							// 获取所有存储的key，清除当前商行的客户相关缓存
+							const allKeys = uni.getStorageInfoSync().keys || [];
+							const customerCachePrefix = `cashier_customer_${companyId}_`;
+							const customerCacheKeys = allKeys.filter(key => key.startsWith(customerCachePrefix));
+							customerCacheKeys.forEach(key => {
+								uni.removeStorageSync(key);
+								console.log(`已清空缓存 [${key}]`);
+							});
+							
+							// 清除当前商行最后使用的客户ID
+							const lastCustomerIdKey = this.getLastCustomerIdCacheKey();
+							uni.removeStorageSync(lastCustomerIdKey);
+							console.log(`已清空最后客户ID缓存 [${lastCustomerIdKey}]`);
+							
+							// 清除当前商行的客户按钮列表
+							const customerButtonsKey = this.getCustomerButtonsCacheKey();
+							uni.removeStorageSync(customerButtonsKey);
+							console.log(`已清空客户按钮列表缓存 [${customerButtonsKey}]`);
+							this.customerButtons = [];
 								
 								// 刷新列表
 								this.customerCacheList = [];
@@ -1810,13 +1122,46 @@
 				const customerId = (this.currentMember && this.currentMember.id) || '';
 				this.clearCustomerCache(customerId);
 			},
-			saveCurrentCustomerDataBeforeSwitch() {
-				// 保存当前客户的 goodSelect 和运费数据到缓存
-				if (this.goodSelect.length > 0 || this.cashier.shippingFee > 0) {
-					this.saveCustomerDataToCache();
-					console.log('客户切换前已保存当前数据');
-				}
-			},
+	saveCurrentCustomerDataBeforeSwitch() {
+		// 保存当前激活客户按钮的数据
+		const currentActiveIndex = this.customerButtons.findIndex(btn => btn.isActive);
+		if (currentActiveIndex !== -1) {
+			this.customerButtons[currentActiveIndex].member = { ...this.currentMember };
+			this.customerButtons[currentActiveIndex].goodSelect = [...this.goodSelect];
+			this.customerButtons[currentActiveIndex].shippingFee = this.cashier.shippingFee || 0;
+			this.customerButtons[currentActiveIndex].goodsCount = this.goodSelect.length;
+			console.log('已保存激活客户按钮的数据');
+		}
+		
+		// 保存当前客户的 goodSelect 和运费数据到缓存
+		if (this.goodSelect.length > 0 || this.cashier.shippingFee > 0) {
+			this.saveCustomerDataToCache();
+			console.log('客户切换前已保存当前数据到缓存');
+		}
+	},
+saveCurrentActiveCustomerData() {
+	// 保存当前激活客户的数据到缓存
+	this.saveCustomerDataToCache();
+	
+	// 如果主客户是激活状态，保存到主客户数据
+	if (this.isMainCustomerActive) {
+		this.mainCustomerData.member = { ...this.currentMember };
+		this.mainCustomerData.goodSelect = [...this.goodSelect];
+		this.mainCustomerData.shippingFee = this.cashier.shippingFee || 0;
+		console.log('主客户激活，已保存主客户数据');
+		return;
+	}
+	
+	// 如果某个动态客户是激活状态，保存其数据
+	const currentActiveIndex = this.customerButtons.findIndex(btn => btn.isActive);
+	if (currentActiveIndex !== -1) {
+		this.customerButtons[currentActiveIndex].member = { ...this.currentMember };
+		this.customerButtons[currentActiveIndex].goodSelect = [...this.goodSelect];
+		this.customerButtons[currentActiveIndex].shippingFee = this.cashier.shippingFee || 0;
+		this.customerButtons[currentActiveIndex].goodsCount = this.goodSelect.length;
+		console.log('已保存激活的动态客户按钮数据');
+	}
+},
 			loadNewCustomerData(newCustomerId) {
 				// 加载新客户的 goodSelect 数据
 				const customerData = this.loadCustomerDataFromCache(newCustomerId);
@@ -1834,83 +1179,115 @@
 					console.log('新客户无缓存数据，已清空购物车');
 				}
 			},
-			loadLastCustomerAndGoodSelect() {
-				try {
-					// 先恢复客户按钮列表
-					this.loadCustomerButtonsFromCache();
-					
-					// 尝试恢复最后使用的客户信息
-					const lastCustomerId = uni.getStorageSync('cashier_last_customer_id') || '';
-					console.log('尝试恢复最后使用的客户ID:', lastCustomerId);
-					
-					const customerData = this.loadCustomerDataFromCache(lastCustomerId);
-					if (customerData) {
-						// 恢复客户信息和购物车数据
-						if (customerData.member) {
-							this.currentMember = customerData.member;
-							console.log('已恢复客户信息:', this.currentMember);
-						}
-						if (customerData.goodSelect && customerData.goodSelect.length > 0) {
-							this.goodSelect = customerData.goodSelect;
-							console.log('已恢复购物车数据:', this.goodSelect);
-							// 重新计算金额
-							this.$nextTick(() => {
-								this.reCountGoodSelect();
+	loadLastCustomerAndGoodSelect() {
+		try {
+			// 先恢复客户按钮列表
+			this.loadCustomerButtonsFromCache();
+			
+			// 检查是否有激活的动态客户按钮
+			const activeButtonIndex = this.customerButtons.findIndex(btn => btn.isActive);
+			if (activeButtonIndex !== -1) {
+				// 如果有激活的动态客户，主客户设为未激活
+				this.isMainCustomerActive = false;
+				console.log('检测到激活的动态客户按钮，主客户设为未激活');
+			} else {
+				// 没有激活的动态客户，主客户保持激活状态
+				this.isMainCustomerActive = true;
+				console.log('没有激活的动态客户按钮，主客户保持激活');
+			}
+			
+		// 尝试恢复最后使用的客户信息（按商行区分）
+		const lastCustomerIdCacheKey = this.getLastCustomerIdCacheKey();
+		const lastCustomerId = uni.getStorageSync(lastCustomerIdCacheKey) || '';
+		console.log(`尝试恢复最后使用的客户ID [${lastCustomerIdCacheKey}]:`, lastCustomerId);
+			
+			const customerData = this.loadCustomerDataFromCache(lastCustomerId);
+			if (customerData) {
+				// 恢复客户信息和购物车数据
+				if (customerData.member) {
+					this.currentMember = customerData.member;
+					// 如果主客户是激活状态，同步到主客户数据
+					if (this.isMainCustomerActive) {
+						this.mainCustomerData.member = { ...customerData.member };
+					}
+					console.log('已恢复客户信息:', this.currentMember);
+				}
+				if (customerData.goodSelect && customerData.goodSelect.length > 0) {
+					this.goodSelect = customerData.goodSelect;
+					// 如果主客户是激活状态，同步到主客户数据
+					if (this.isMainCustomerActive) {
+						this.mainCustomerData.goodSelect = [...customerData.goodSelect];
+					}
+					console.log('已恢复购物车数据:', this.goodSelect);
+					// 重新计算金额
+					this.$nextTick(() => {
+						this.reCountGoodSelect();
+					});
+				}
+				// 恢复运费
+				this.cashier.shippingFee = customerData.shippingFee || 0;
+				// 如果主客户是激活状态，同步到主客户数据
+				if (this.isMainCustomerActive) {
+					this.mainCustomerData.shippingFee = customerData.shippingFee || 0;
+				}
+				console.log('已恢复运费:', this.cashier.shippingFee);
+			} else {
+				// 没有缓存数据，使用默认的散客
+				console.log('无缓存数据，使用默认散客状态');
+			}
+		} catch (e) {
+			console.error('加载最后客户数据失败:', e);
+		}
+	},
+		saveLastCustomerId() {
+			try {
+				const customerId = (this.currentMember && this.currentMember.id) || '';
+				const cacheKey = this.getLastCustomerIdCacheKey();
+				uni.setStorageSync(cacheKey, customerId);
+				console.log(`已保存最后使用的客户ID [${cacheKey}]:`, customerId);
+			} catch (e) {
+				console.error('保存最后客户ID失败:', e);
+			}
+		},
+		// 管理功能：获取当前商行所有客户缓存列表
+		getAllCustomerCaches() {
+			try {
+				// 获取当前商行ID
+				const companyId = this.currentCompanyId || uni.getStorageSync('companyId') || 'default';
+				const allKeys = uni.getStorageInfoSync().keys || [];
+				// 只获取当前商行的客户缓存
+				const customerCachePrefix = `cashier_customer_${companyId}_`;
+				const customerCacheKeys = allKeys.filter(key => key.startsWith(customerCachePrefix));
+				const caches = [];
+				
+				console.log(`获取商行 [${companyId}] 的客户缓存，找到 ${customerCacheKeys.length} 个`);
+				
+				customerCacheKeys.forEach(key => {
+					try {
+						const data = uni.getStorageSync(key);
+						if (data) {
+							const customerData = JSON.parse(data);
+							caches.push({
+								key,
+								customerId: customerData.member?.id || '',
+								customerName: customerData.member?.customName || '散客',
+								goodSelectCount: customerData.goodSelect?.length || 0,
+								shippingFee: customerData.shippingFee || 0,
+								timestamp: customerData.timestamp || 0,
+								member: customerData.member
 							});
 						}
-						// 恢复运费
-						this.cashier.shippingFee = customerData.shippingFee || 0;
-						console.log('已恢复运费:', this.cashier.shippingFee);
-					} else {
-						// 没有缓存数据，使用默认的散客
-						console.log('无缓存数据，使用默认散客状态');
+					} catch (e) {
+						console.error(`解析缓存失败 [${key}]:`, e);
 					}
-				} catch (e) {
-					console.error('加载最后客户数据失败:', e);
-				}
-			},
-			saveLastCustomerId() {
-				try {
-					const customerId = (this.currentMember && this.currentMember.id) || '';
-					uni.setStorageSync('cashier_last_customer_id', customerId);
-					console.log('已保存最后使用的客户ID:', customerId);
-				} catch (e) {
-					console.error('保存最后客户ID失败:', e);
-				}
-			},
-			// 管理功能：获取所有客户缓存列表
-			getAllCustomerCaches() {
-				try {
-					const allKeys = uni.getStorageInfoSync().keys || [];
-					const customerCacheKeys = allKeys.filter(key => key.startsWith('cashier_customer_'));
-					const caches = [];
-					
-					customerCacheKeys.forEach(key => {
-						try {
-							const data = uni.getStorageSync(key);
-							if (data) {
-								const customerData = JSON.parse(data);
-								caches.push({
-									key,
-									customerId: customerData.member?.id || '',
-									customerName: customerData.member?.customName || '散客',
-									goodSelectCount: customerData.goodSelect?.length || 0,
-									shippingFee: customerData.shippingFee || 0,
-									timestamp: customerData.timestamp || 0,
-									member: customerData.member
-								});
-							}
-						} catch (e) {
-							console.error(`解析缓存失败 [${key}]:`, e);
-						}
-					});
-					
-					return caches.sort((a, b) => b.timestamp - a.timestamp);
-				} catch (e) {
-					console.error('获取客户缓存列表失败:', e);
-					return [];
-				}
-			},
+				});
+				
+				return caches.sort((a, b) => b.timestamp - a.timestamp);
+			} catch (e) {
+				console.error('获取客户缓存列表失败:', e);
+				return [];
+			}
+		},
 			getAllCustomerCachesCount() {
 				return this.getAllCustomerCaches().length;
 			},
@@ -2014,40 +1391,92 @@
 				
 				// 添加到客户按钮列表
 				this.customerButtons.push(newCustomerBtn);
-				
 				// 保存客户按钮列表到缓存
 				this.saveCustomerButtonsToCache();
-				
-				uni.showToast({
-					title: `已添加${newCustomerBtn.name}`,
-					icon: 'success',
-					duration: 1500
-				});
 			},
-			switchToCustomerByIndex(index) {
-				if (index < 0 || index >= this.customerButtons.length) return;
-				
-				const targetCustomerBtn = this.customerButtons[index];
-				
-				// 如果点击的是当前激活的客户，不需要切换
-				if (targetCustomerBtn.isActive) {
-					uni.showToast({
-						title: '当前已是该客户',
-						icon: 'none',
-						duration: 1500
-					});
-					return;
-				}
-				
-				// 实现客户位置交换逻辑
-				this.swapCustomerPositions(index);
-				
-				uni.showToast({
-					title: `已切换到: ${targetCustomerBtn.name}`,
-					icon: 'success',
-					duration: 1500
-				});
-			},
+activateMainCustomer() {
+	// 如果主客户已经是激活状态，打开客户选择对话框更换主客户
+	if (this.isMainCustomerActive) {
+		this.editingCustomerButtonIndex = -1; // 标记为编辑主客户
+		this.memberChange('XiaDan');
+		return;
+	}
+	
+	// 保存当前激活客户的数据
+	this.saveCurrentActiveCustomerData();
+	
+	// 将所有动态客户按钮设为非激活状态
+	this.customerButtons.forEach(btn => {
+		btn.isActive = false;
+	});
+	
+	// 激活主客户
+	this.isMainCustomerActive = true;
+	
+	// 加载主客户的数据到工作区
+	this.currentMember = { ...this.mainCustomerData.member };
+	this.goodSelect = [...this.mainCustomerData.goodSelect];
+	this.cashier.shippingFee = this.mainCustomerData.shippingFee || 0;
+	
+	// 保存客户按钮列表到缓存
+	this.saveCustomerButtonsToCache();
+	
+	// 重新计算金额
+	this.changeFee();
+	
+	uni.showToast({
+		title: `已切换到: ${this.mainCustomerData.member.customName || '散客'}`,
+		icon: 'success',
+		duration: 1500
+	});
+},
+	switchToCustomerByIndex(index) {
+		if (index < 0 || index >= this.customerButtons.length) return;
+		
+		const targetCustomerBtn = this.customerButtons[index];
+		
+		// 如果点击的是当前激活的客户，打开客户选择对话框更换该位置的客户
+		if (targetCustomerBtn.isActive) {
+			// 保存当前索引，用于稍后更新对应位置的客户
+			this.editingCustomerButtonIndex = index;
+			this.memberChange('XiaDan');
+			return;
+		}
+		
+		// 保存当前激活客户的数据
+		this.saveCurrentActiveCustomerData();
+		
+		// 将主客户设为非激活状态
+		this.isMainCustomerActive = false;
+		
+		// 将所有动态客户按钮设为非激活状态	
+		this.customerButtons.forEach(btn => {
+			btn.isActive = false;
+		});
+		
+		// 激活目标按钮
+		this.customerButtons[index].isActive = true;
+		
+		// 加载目标客户的数据
+		this.currentMember = { ...targetCustomerBtn.member };
+		this.goodSelect = targetCustomerBtn.goodSelect || [];
+		this.cashier.shippingFee = targetCustomerBtn.shippingFee || 0;
+		
+		// 保存最后使用的客户ID
+		this.saveLastCustomerId();
+		
+		// 保存客户按钮列表到缓存
+		this.saveCustomerButtonsToCache();
+		
+		// 重新计算金额
+		this.changeFee();
+		
+		uni.showToast({
+			title: `已切换到: ${targetCustomerBtn.name}`,
+			icon: 'success',
+			duration: 1500
+		});
+	},
 			saveCurrentCustomerToButton() {
 				// 找到当前激活的客户按钮并保存数据
 				const activeIndex = this.customerButtons.findIndex(btn => btn.isActive);
@@ -2142,31 +1571,79 @@
 				// 滚动到最前面
 				this.scrollToFront();
 			},
-			deleteMainCustomer() {
-				// 检查是否有动态客户可以提升
-				if (this.customerButtons.length === 0) {
-					uni.showToast({
-						title: '没有其他客户可以切换',
-						icon: 'error',
-						duration: 2000
-					});
-					return;
+deleteCustomerByIndex(index) {
+	// 获取要删除的客户
+	const customerToDelete = this.customerButtons[index];
+	if (!customerToDelete) {
+		return;
+	}
+	
+	// 确认删除
+	uni.showModal({
+		title: '确认删除',
+		content: `确定要删除客户"${customerToDelete.name}"吗？`,
+		confirmText: '删除',
+		cancelText: '取消',
+		confirmColor: '#ff4d4f',
+		success: (res) => {
+			if (res.confirm) {
+				// 检查是否删除的是当前激活的客户
+				const isActiveCustomer = customerToDelete.isActive;
+				
+				// 清除该客户的缓存
+				const customerId = customerToDelete.member?.id || customerToDelete.member?.customId;
+				if (customerId) {
+					this.clearCustomerCache(customerId);
 				}
 				
-				// 确认删除
-				uni.showModal({
-					title: '确认删除',
-					content: `确定要删除当前主客户"${this.currentMember.customName || '散客'}"吗？第一个客户"${this.customerButtons[0].name}"将成为新的主客户。`,
-					confirmText: '删除',
-					cancelText: '取消',
-					confirmColor: '#ff4d4f',
-					success: (res) => {
-						if (res.confirm) {
-							this.performDeleteMainCustomer();
-						}
-					}
+				// 从动态客户列表中移除
+				this.customerButtons.splice(index, 1);
+				
+				// 如果删除的是激活客户，激活主客户
+				if (isActiveCustomer) {
+					this.customerButtons.forEach(btn => {
+						btn.isActive = false;
+					});
+					this.isMainCustomerActive = true;
+				}
+				
+				// 保存客户按钮列表到缓存
+				this.saveCustomerButtonsToCache();
+				
+				uni.showToast({
+					title: `已删除客户"${customerToDelete.name}"`,
+					icon: 'success',
+					duration: 2000
 				});
-			},
+			}
+		}
+	});
+},
+		deleteMainCustomer() {
+			// 检查是否有动态客户可以提升
+			if (this.customerButtons.length === 0) {
+				uni.showToast({
+					title: '没有其他客户可以切换',
+					icon: 'error',
+					duration: 2000
+				});
+				return;
+			}
+			
+			// 确认删除
+			uni.showModal({
+				title: '确认删除',
+				content: `确定要删除当前主客户"${this.currentMember.customName || '散客'}"吗？第一个客户"${this.customerButtons[0].name}"将成为新的主客户。`,
+				confirmText: '删除',
+				cancelText: '取消',
+				confirmColor: '#ff4d4f',
+				success: (res) => {
+					if (res.confirm) {
+						this.performDeleteMainCustomer();
+					}
+				}
+			});
+		},
 			performDeleteMainCustomer() {
 				// 清除当前主客户的缓存
 				const currentCustomerId = this.getCurrentMemberId();
@@ -2252,32 +1729,18 @@
 			},
 			// 运费相关方法
 			showShippingModal() {
-				this.tempShippingFee = this.cashier.shippingFee;
 				this.shippingModalVisible = true;
 			},
-			cancelShipping() {
+			handleShippingConfirm(fee) {
+				this.cashier.shippingFee = fee;
 				this.shippingModalVisible = false;
-				this.tempShippingFee = 0;
-			},
-			confirmShipping() {
-				if (this.tempShippingFee >= 0) {
-					this.cashier.shippingFee = parseFloat(this.tempShippingFee);
-					this.shippingModalVisible = false;
-					this.tempShippingFee = 0;
-					// 保存运费到客户缓存
-					this.saveCustomerDataToCache();
-					this.reCountGoodSelect(); // 重新计算总金额
-					uni.showToast({
-						title: '运费设置成功',
-						icon: 'success'
-					});
-				}
-			},
-			validateShippingFee() {
-				// 确保输入的是有效数字
-				if (this.tempShippingFee < 0) {
-					this.tempShippingFee = 0;
-				}
+				// 保存运费到客户缓存
+				this.saveCustomerDataToCache();
+				this.reCountGoodSelect(); // 重新计算总金额
+				uni.showToast({
+					title: '运费设置成功',
+					icon: 'success'
+				});
 			},
 			onInputFocus() {
 				// 输入框获得焦点时的处理
@@ -2324,44 +1787,47 @@
 				this.currentKeyWord = key;
 				// 清空文本搜索框，避免冲突
 				this.goodsSearchKeyword = '';
-				
-				if (key === "全") {
-					this.rows = [];
-					this.commidityList.sort((a, b) => b.inventory - a.inventory);
-					for (let i = 0; i < this.commidityList.length; i += 2) {
-						this.rows.push(this.commidityList.slice(i, i + 2));
-					}
-				} else {
-					var commidityList = this.commidityList.filter(x => x.name.includes(key));
-					this.rows = [];
-					commidityList.sort((a, b) => b.inventory - a.inventory);
-					for (let i = 0; i < commidityList.length; i += 2) {
-						this.rows.push(commidityList.slice(i, i + 2));
-					}
+			
+			if (key === "全") {
+				this.rows = [];
+				this.commidityList.sort((a, b) => b.inventory - a.inventory);
+				for (let i = 0; i < this.commidityList.length; i += 3) {
+					this.rows.push(this.commidityList.slice(i, i + 3));
 				}
+			} else {
+				var commidityList = this.commidityList.filter(x => x.name.includes(key));
+				this.rows = [];
+				commidityList.sort((a, b) => b.inventory - a.inventory);
+				for (let i = 0; i < commidityList.length; i += 3) {
+					this.rows.push(commidityList.slice(i, i + 3));
+				}
+			}
 			},
-			setDicountAmount() {
-				this.accountDiscount = true;
-				// 安全的数字转换
-				const total = parseFloat(this.payAmount.total) || 0;
-				const discount = parseFloat(this.discountAmount) || 0;
-				const debt = parseFloat(this.payAmount.debt) || 0;
-				this.payAmount.actual = Math.floor(total - discount - debt);
-				this.setAccountExpense(this.payAmount.actual);
-			},
-			setOverchargeAmount() {
-				this.accountDiscount = false;
-				// 安全的数字转换
-				const total = parseFloat(this.payAmount.total) || 0;
-				const discount = parseFloat(this.discountAmount) || 0;
-				const debt = parseFloat(this.payAmount.debt) || 0;
-				this.payAmount.actual = Math.floor(total + discount - debt);
-				this.setAccountExpense(this.payAmount.actual);
-			},
-			smartRound() {
-				const total = parseFloat(this.payAmount.total) || 0;
-				const debt = parseFloat(this.payAmount.debt) || 0;
-				const baseAmount = total - debt;
+		setDicountAmount() {
+			this.accountDiscount = true;
+			// 安全的数字转换
+			const total = parseFloat(this.payAmount.total) || 0;
+			const discount = parseFloat(this.discountAmount) || 0;
+			const debt = parseFloat(this.payAmount.debt) || 0;
+			const basketOffset = parseFloat(this.payAmount.BasketOffsetAmount) || 0;
+			this.payAmount.actual = Math.floor(total - discount - basketOffset - debt);
+			this.setAccountExpense(this.payAmount.actual);
+		},
+		setOverchargeAmount() {
+			this.accountDiscount = false;
+			// 安全的数字转换
+			const total = parseFloat(this.payAmount.total) || 0;
+			const discount = parseFloat(this.discountAmount) || 0;
+			const debt = parseFloat(this.payAmount.debt) || 0;
+			const basketOffset = parseFloat(this.payAmount.BasketOffsetAmount) || 0;
+			this.payAmount.actual = Math.floor(total + discount - basketOffset - debt);
+			this.setAccountExpense(this.payAmount.actual);
+		},
+		smartRound() {
+			const total = parseFloat(this.payAmount.total) || 0;
+			const debt = parseFloat(this.payAmount.debt) || 0;
+			const basketOffset = parseFloat(this.payAmount.BasketOffsetAmount) || 0;
+			const baseAmount = total - basketOffset - debt;
 				
 				// 获取个位数
 				const lastDigit = Math.floor(baseAmount) % 10;
@@ -2401,12 +1867,16 @@
 				// 设置优惠/多收金额（显示为整数）
 				this.discountAmount = Math.floor(Math.abs(adjustment));
 				
-				// 重新计算实付金额
-				if (this.accountDiscount) {
-					this.payAmount.actual = eval(this.payAmount.total) - eval(this.discountAmount) - eval(this.payAmount.debt);
-				} else {
-					this.payAmount.actual = eval(this.payAmount.total) + eval(this.discountAmount) - eval(this.payAmount.debt);
-				}
+			// 重新计算实付金额
+			const totalAmt = eval(this.payAmount.total);
+			const discountAmt = eval(this.discountAmount);
+			const debtAmt = eval(this.payAmount.debt);
+			const basketOffsetAmt = eval(this.payAmount.BasketOffsetAmount) || 0;
+			if (this.accountDiscount) {
+				this.payAmount.actual = totalAmt - discountAmt - basketOffsetAmt - debtAmt;
+			} else {
+				this.payAmount.actual = totalAmt + discountAmt - basketOffsetAmt - debtAmt;
+			}
 				this.setAccountExpense(this.payAmount.actual);
 			},
 			setAccountExpense(val) {
@@ -2427,21 +1897,32 @@
 				this.payAmount.actual = this.payAmount.actual + this.payAmount.BasketOffsetAmount;
 				this.payAmount.BasketOffsetAmount = 0;
 			},
-			saveBasketOffest(basketList) {
-				console.log("basketList", basketList)
-				// if (parseInt(this.memberEventInfo.collectBasketNum) === 0) {
-				// 	return;
-				// }
-				this.repayBasketList = basketList;
-				this.payAmount.actual += this.payAmount.BasketOffsetAmount;
-				this.payAmount.BasketOffsetAmount = 0;
-				for (var i = 0; i < this.repayBasketList.length; i++) {
-					this.payAmount.BasketOffsetAmount += parseFloat(this.repayBasketList[i].quantity) * parseFloat(this
-						.repayBasketList[i].amount);
-				}
-				this.payAmount.actual = Math.floor(parseFloat(this.payAmount.actual) - parseFloat(this.payAmount.BasketOffsetAmount));
-				this.inputModelVisible = false;
-			},
+	saveBasketOffest(basketList) {
+		console.log("basketList", basketList)
+		// if (parseInt(this.memberEventInfo.collectBasketNum) === 0) {
+		// 	return;
+		// }
+		this.repayBasketList = basketList;
+		this.payAmount.actual += this.payAmount.BasketOffsetAmount;
+		this.payAmount.BasketOffsetAmount = 0;
+		for (var i = 0; i < this.repayBasketList.length; i++) {
+			this.payAmount.BasketOffsetAmount += parseFloat(this.repayBasketList[i].quantity) * parseFloat(this
+				.repayBasketList[i].amount);
+		}
+		// 计算实付金额：应付金额 +/- 优惠多收 - 收筐抵扣 - 下欠金额
+		const total = parseFloat(this.payAmount.total) || 0;
+		const basketOffset = parseFloat(this.payAmount.BasketOffsetAmount) || 0;
+		const debt = parseFloat(this.payAmount.debt) || 0;
+		const discount = parseFloat(this.discountAmount) || 0;
+		if (this.accountDiscount) {
+			this.payAmount.actual = Math.floor(total - discount - basketOffset - debt);
+		} else {
+			this.payAmount.actual = Math.floor(total + discount - basketOffset - debt);
+		}
+		// 实付金额改变时，重置支付方式并默认分配到微信支付
+		this.setAccountExpense(this.payAmount.actual);
+		this.inputModelVisible = false;
+	},
 			collectBasketoffestMoney() {
 				this.$nextTick(() => {
 					this.$refs.modeloffestBasketRef.open(this.repayBasketList);
@@ -2501,28 +1982,74 @@
 				})
 			},
 			//客户中心点击客户事件
-			changeMember(e) {
-				console.log("this.currentSelctCustomerType", this.currentSelctCustomerType)
-				this.memberDialogVisible = false
-				if (this.currentSelctCustomerType === 1) {
-					// 在切换客户前，先保存当前客户的数据
-					this.saveCurrentCustomerDataBeforeSwitch();
-					
-					// 切换到新客户
-					this.currentMember = e;
-					
-					// 保存最后使用的客户ID
-					this.saveLastCustomerId();
-					
-					// 加载新客户的数据
-					this.loadNewCustomerData(e?.id);
-				} else if (this.currentSelctCustomerType === 2) {
-
-					this.$refs.repayBasketModelRef.openRepayBasket(e);
-				}else if(this.currentSelctCustomerType === 3){
-					this.repayCustomerData = e;
-					this.showRepaymentModal = true;
+changeMember(e) {
+	console.log("this.currentSelctCustomerType", this.currentSelctCustomerType)
+	this.memberDialogVisible = false
+	if (this.currentSelctCustomerType === 1) {
+		// 检查是否在编辑某个动态客户按钮
+		if (this.editingCustomerButtonIndex !== -1) {
+			// 更新该位置的客户信息
+			const index = this.editingCustomerButtonIndex;
+			if (index >= 0 && index < this.customerButtons.length) {
+				// 保存新客户到该按钮
+				this.customerButtons[index].member = { ...e };
+				this.customerButtons[index].name = e.customName || '散客';
+				// 保持该按钮的商品和运费数据不变
+				this.customerButtons[index].goodsCount = this.customerButtons[index].goodSelect?.length || 0;
+				
+				// 如果该按钮是激活状态，更新主显示区域
+				if (this.customerButtons[index].isActive) {
+					this.currentMember = { ...e };
+					// 保持当前购物车数据不变
 				}
+				
+				// 保存客户按钮列表到缓存
+				this.saveCustomerButtonsToCache();
+				
+				uni.showToast({
+					title: `已更新客户: ${e.customName || '散客'}`,
+					icon: 'success',
+					duration: 1500
+				});
+			}
+			
+			// 重置编辑索引
+			this.editingCustomerButtonIndex = -1;
+			return;
+		}
+		
+	// 在切换客户前，先保存当前客户的数据
+	this.saveCurrentCustomerDataBeforeSwitch();
+	
+	// 切换到新客户
+	this.currentMember = e;
+	
+	// 更新主客户数据
+	this.mainCustomerData.member = { ...e };
+	
+	// 激活主客户
+	this.isMainCustomerActive = true;
+	
+	// 清除所有动态客户按钮的激活状态（因为主客户被重新选择）
+	this.customerButtons.forEach(btn => {
+		btn.isActive = false;
+	});
+	
+	// 保存最后使用的客户ID
+	this.saveLastCustomerId();
+	
+	// 保存客户按钮列表到缓存
+	this.saveCustomerButtonsToCache();
+	
+	// 加载新客户的数据
+	this.loadNewCustomerData(e?.id);
+	} else if (this.currentSelctCustomerType === 2) {
+
+		this.$refs.repayBasketModelRef.openRepayBasket(e);
+	}else if(this.currentSelctCustomerType === 3){
+		this.repayCustomerData = e;
+		this.showRepaymentModal = true;
+	}
 
 
 				// if (this.memberStyle === "XiaDan") {
@@ -2560,12 +2087,12 @@
 				this.goodSelect = [];
 				let modelList = JSON.parse(e.module);
                 console.log("modelList",modelList);
-				for (let i = 0; i < modelList.length; i++) {
-					let model = modelList[i];
+			for (let i = 0; i < modelList.length; i++) {
+				let model = modelList[i];
                     if(model.type==1){
                         let good = {
-						key: i,
-						skuName: model.name,
+					key: this.goodSelectKeyCounter++,
+					skuName: model.name,
 						referenceAmount: model.referenceAmount,
 						quantity: model.mount,
 						carweight: model.tareWeight,
@@ -2621,272 +2148,291 @@
 				this.payWay[index].select = 1;
 				this.currentPayWay = this.payWay[index].id;
 			},
-			playSystemKeyClickSound() {
-				try {
-					var Context = plus.android.importClass("android.content.Context");
-					var AudioManager = plus.android.importClass("android.media.AudioManager");
-					var main = plus.android.runtimeMainActivity();
-					var audioManager = main.getSystemService(Context.AUDIO_SERVICE);
-					audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
-				} catch (e) {
-					console.error("播放系统按键音失败:", e);
-				}
-			},
-			NumberCk(val) {
-				this.playSystemKeyClickSound();
-				let myvalue = "";
-				//修改allweightStr
-				if (this.custominputFocusIndex === 3) {
-					if (this.editingCard.allweightSrt.toString() === "0") {
-						this.$nextTick(() => {
-							this.editingCard.allweightSrt = val.toString();
-						})
-
-					} else {
-						this.$nextTick(() => {
-							this.editingCard.allweightSrt = this.editingCard.allweightSrt + val.toString();
-						})
-
-					}
-
-				}
-				switch (this.custominputFocusIndex) {
-					case 1:
-						myvalue = this.editingCard.quantity;
-						break;
-					case 2:
-						myvalue = this.editingCard.referenceAmount;
-						break;
-					case 3:
-						myvalue = this.editingCard.allweight;
-						break;
-					case 4:
-						myvalue = this.editingCard.carweight;
-						break;
-				}
-				var myvalueStr = myvalue.toString();
-				if (val == '.') {
-					if (myvalueStr.indexOf('.') >= 0) {
-						return;
-					}
-				}
-				if ((val === '+' || val === '-') && myvalueStr === '0') {
+		playSystemKeyClickSound() {
+			// #ifdef APP-PLUS
+			try {
+				// 检查 plus 对象是否存在
+				if (typeof plus === 'undefined') {
 					return;
 				}
-				var txt = myvalue == null || (myvalueStr === '0' && val != ".") || myvalue == undefined ? '' : myvalue;
-
-				if (val === "+" || val === "-") {
-					txt = eval(txt);	
+				var Context = plus.android.importClass("android.content.Context");
+				var AudioManager = plus.android.importClass("android.media.AudioManager");
+				var main = plus.android.runtimeMainActivity();
+				var audioManager = main.getSystemService(Context.AUDIO_SERVICE);
+				audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
+			} catch (e) {
+				console.error("播放系统按键音失败:", e);
+			}
+			// #endif
+		},
+	NumberCk(val) {
+		// this.playSystemKeyClickSound();
+		
+		// 取消之前的复杂计算定时器
+		if (this.inputBuffer.timer) {
+			clearTimeout(this.inputBuffer.timer);
+			this.inputBuffer.timer = null;
+		}
+		
+		const focusIndex = this.custominputFocusIndex;
+		const fieldMap = ['', 'quantity', 'referenceAmount', 'allweight', 'carweight'];
+		const field = fieldMap[focusIndex];
+		if (!field) return;
+		
+		// 从数据模型读取当前值（保持与 :value 绑定一致）
+		let currentValue = String(this.editingCard[field] || '0');
+		
+		// 快速验证：小数点重复检查
+		if (val === '.' && currentValue.includes('.')) {
+			return;
+		}
+		
+		// 快速验证：0开头不能输入运算符
+		if ((val === '+' || val === '-') && currentValue === '0') {
+			return;
+		}
+		
+		// 优化初始值处理
+		let txt = (currentValue === '0' && val !== '.') ? '' : currentValue;
+		
+		// 运算符处理：仅在必要时计算表达式
+		const isOperator = val === '+' || val === '-';
+		if (isOperator && txt) {
+			const numValue = parseFloat(txt);
+			txt = isNaN(numValue) ? 0 : numValue;
+		}
+		
+		// 计算新值
+		const newValue = String(txt) + val;
+		
+		// ===【关键】立即更新数据模型，触发 Vue 响应式更新===
+		this.editingCard[field] = newValue;
+		
+		// allweightSrt 特殊处理（散装模式下）
+		if (focusIndex === 3) {
+			const allweightSrt = this.editingCard.allweightSrt || '0';
+			this.editingCard.allweightSrt = (allweightSrt.toString() === '0') ? val : allweightSrt + val;
+		}
+		
+		// 【优化】只延迟复杂计算，显示更新已经完成
+		if (focusIndex === 1 && this.fixedTareWeight.action === true) {
+			this.inputBuffer.timer = setTimeout(() => {
+				const currentQuantity = parseFloat(newValue) || 0;
+				let calculatedCarWeight = 0;
+				
+				// 皮重处理
+				if (this.editingCard.fixedTare) {
+					calculatedCarWeight = this.editingCard.fixedTare * currentQuantity;
 				}
-				myvalue = txt + val.toString();
-				switch (this.custominputFocusIndex) {
-					case 1:
-						this.editingCard.quantity = myvalue;
-						if (this.fixedTareWeight.action === true) {
-							var carWeightNew = this.editingCard.fixedTare * parseFloat(this.editingCard.quantity)
-							//皮重处理
-							if (carWeightNew) {
-								this.$nextTick(() => {
-									this.editingCard.carweight = carWeightNew;
-								})
-							}
-							//押筐数量处理
-							if (this.editingCard.extralModel) {
-								this.editingCard.extralModel.quantity = this.editingCard.quantity;
-								if(this.editingCard.extralModel.weight){
-									this.editingCard.carweight =parseFloat(this.editingCard.carweight)+parseFloat(this.editingCard.extralModel.quantity)*parseFloat(this.editingCard.extralModel.weight);
-								}
-							}
-							console.log("this.editingCard.initWeight",this.editingCard);
-							//固定重量处理
-							if(this.editingCard.initWeight){
-								this.editingCard.allweight = parseFloat(this.editingCard.quantity) * parseFloat(this.editingCard.initWeight);
-							}
-						}
-						break;
-					case 2:
-						this.$nextTick(() => {
-							this.editingCard.referenceAmount = myvalue;
-						})
-
-						break;
-					case 3:
-						this.$nextTick(() => {
-							this.editingCard.allweight = myvalue;
-						})
-
-						break;
-					case 4:
-						this.$nextTick(() => {
-							this.editingCard.carweight = myvalue;
-						})
-
-						break;
+				
+				// 押筐数量处理
+				if (this.editingCard.extralModel) {
+					this.editingCard.extralModel.quantity = newValue;
+					if (this.editingCard.extralModel.weight) {
+						calculatedCarWeight += currentQuantity * parseFloat(this.editingCard.extralModel.weight);
+					}
 				}
-				// this.goodSelect[this.editingIndex] = this.editingCard;
-			},
-			inputFinsh1() {
-				this.playSystemKeyClickSound();
-				this.editingCard.quantity = eval(this.editingCard.quantity);
-				this.editingCard.referenceAmount = eval(this.editingCard.referenceAmount);
-				this.editingCard.allweight = eval(this.editingCard.allweight);
-				this.editingCard.carweight = eval(this.editingCard.carweight);
-			},
-			Tuige1() {
-				this.playSystemKeyClickSound();
-				let myvalue = "";
-				switch (this.custominputFocusIndex) {
-					case 1:
-						myvalue = this.editingCard.quantity;
-						break;
-					case 2:
-						myvalue = this.editingCard.referenceAmount;
-						break;
-					case 3:
-						myvalue = this.editingCard.allweight;
-						break;
-					case 4:
-						myvalue = this.editingCard.carweight;
-						break;
+				
+				// 统一设置 carweight（会触发响应式更新）
+				this.editingCard.carweight = calculatedCarWeight;
+				
+				// 固定重量处理
+				if (this.editingCard.initWeight) {
+					this.editingCard.allweight = currentQuantity * parseFloat(this.editingCard.initWeight);
 				}
-
-				// 如果当前值为空或为零，直接返回
-				if (myvalue == null || myvalue === '' || myvalue === '0') {
-					return;
+			}, 50); // 50ms 后执行复杂计算
+		}
+	},
+	inputFinsh1() {
+		this.playSystemKeyClickSound();
+		
+		// 清理待处理的定时器
+		if (this.inputBuffer.timer) {
+			clearTimeout(this.inputBuffer.timer);
+			this.inputBuffer.timer = null;
+		}
+		
+		// 安全计算表达式，替换 eval()
+		const safeEval = (expr) => {
+			try {
+				return new Function('return ' + expr)();
+			} catch (e) {
+				return parseFloat(expr) || 0;
+			}
+		};
+		
+		// 批量计算表达式并更新（数据已经在输入时同步了）
+		Object.assign(this.editingCard, {
+			quantity: safeEval(this.editingCard.quantity),
+			referenceAmount: safeEval(this.editingCard.referenceAmount),
+			allweight: safeEval(this.editingCard.allweight),
+			carweight: safeEval(this.editingCard.carweight)
+		});
+		
+		// 确保更新到数组和缓存
+		this.goodSelect[this.editingIndex] = this.editingCard;
+		this.saveGoodSelectToCache();
+	},
+	Tuige1() {
+		this.playSystemKeyClickSound();
+		
+		// 取消复杂计算定时器
+		if (this.inputBuffer.timer) {
+			clearTimeout(this.inputBuffer.timer);
+		}
+		
+		const focusIndex = this.custominputFocusIndex;
+		const fieldMap = ['', 'quantity', 'referenceAmount', 'allweight', 'carweight'];
+		const field = fieldMap[focusIndex];
+		if (!field) return;
+		
+		// 从数据模型读取当前值
+		let currentValue = String(this.editingCard[field] || '0');
+		
+		// 如果当前值为空或为零，直接返回
+		if (currentValue === '' || currentValue === '0') {
+			return;
+		}
+		
+		// 回退一个字符
+		let newValue = currentValue.slice(0, -1);
+		newValue = newValue === '' ? '0' : newValue;
+		
+		// ===【关键】立即更新数据模型，触发 Vue 响应式更新===
+		this.editingCard[field] = newValue;
+		
+		// 散装模式总重特殊处理
+		if (focusIndex === 3) {
+			let srt = this.editingCard.allweightSrt;
+			if (srt != null && srt !== '') {
+				srt = srt.toString().slice(0, -1);
+				this.editingCard.allweightSrt = srt === '' ? '0' : srt;
+			}
+		}
+		
+		// 【优化】只延迟复杂计算，显示更新已经完成
+		if (focusIndex === 1 && this.fixedTareWeight.action === true) {
+			this.inputBuffer.timer = setTimeout(() => {
+				const currentQuantity = parseFloat(newValue) || 0;
+				let calculatedCarWeight = 0;
+				
+				// 皮重处理
+				if (this.editingCard.fixedTare) {
+					calculatedCarWeight = this.editingCard.fixedTare * currentQuantity;
 				}
-				myvalue = myvalue ? myvalue.toString() : '';
-				// 回退一个字符
-				myvalue = myvalue.slice(0, -1); // 去掉最后一个字符
-				// 更新数据模型
-				switch (this.custominputFocusIndex) {
-					case 1:
-						this.editingCard.quantity = myvalue === '' ? '0' : myvalue; // 如果为空，设置为0
-						if (this.fixedTareWeight.action === true) {
-							var carWeightNew = this.editingCard.fixedTare * parseFloat(this.editingCard.quantity)
-							//皮重处理
-							if (carWeightNew) {
-								this.$nextTick(() => {
-									this.editingCard.carweight = carWeightNew;
-								})
-							}
-							//押筐数量处理
-							if (this.editingCard.extralModel) {
-								this.editingCard.extralModel.quantity = this.editingCard.quantity;
-								if(this.editingCard.extralModel.weight){
-									this.editingCard.carweight =parseFloat(this.editingCard.carweight)+parseFloat(this.editingCard.extralModel.quantity)*parseFloat(this.editingCard.extralModel.weight);
-								}
-							}
-						}
-						break;
-					case 2:
-						this.editingCard.referenceAmount = myvalue === '' ? '0' : myvalue;
-						break;
-					case 3:
-						this.editingCard.allweight = myvalue === '' ? '0' : myvalue;
-						this.editingCard.allweightSrt = myvalue === '' ? '0' : myvalue;
-						break;
-					case 4:
-						this.editingCard.carweight = myvalue === '' ? '0' : myvalue;
-						break;
+				
+				// 押筐数量处理
+				if (this.editingCard.extralModel) {
+					this.editingCard.extralModel.quantity = newValue;
+					if (this.editingCard.extralModel.weight) {
+						calculatedCarWeight += currentQuantity * parseFloat(this.editingCard.extralModel.weight);
+					}
 				}
+				
+				// 统一设置 carweight
+				this.editingCard.carweight = calculatedCarWeight;
+				
 				this.goodSelect[this.editingIndex] = this.editingCard;
-				// 保存到缓存
 				this.saveGoodSelectToCache();
-			},
-			Tuige2() {
-				this.playSystemKeyClickSound();
-				let myvalue = "";
-				switch (this.editingPaymentIndex) {
-					case 1:
-						myvalue = this.payAmount.total;
-						break;
-					case 2:
-						myvalue = this.payAmount.actual;
-						break;
-					case 3:
-						myvalue = this.payAmount.debt;
-						break;
-					case 5:
-						myvalue = this.AccountExpense.wxpayAmount;
-						break;
-					case 6:
-						myvalue = this.AccountExpense.alipayAmount;
-						break;
-					case 7:
-						myvalue = this.AccountExpense.cashAmount;
-						break;
-					case 8:
-						myvalue = this.AccountExpense.otherAmount;
-						break;
-					case 9:
-						myvalue = this.discountAmount;
-						break;
-				}
+			}, 50);
+		}
+	},
+		Tuige2() {
+			this.playSystemKeyClickSound();
+			let myvalue = "";
+			switch (this.editingPaymentIndex) {
+				case 1:
+					myvalue = this.payAmount.total;
+					break;
+				case 2:
+					myvalue = this.payAmount.actual;
+					break;
+				case 3:
+					myvalue = this.payAmount.debt;
+					break;
+				case 5:
+					myvalue = this.AccountExpense.wxpayAmount;
+					break;
+				case 6:
+					myvalue = this.AccountExpense.alipayAmount;
+					break;
+				case 7:
+					myvalue = this.AccountExpense.cashAmount;
+					break;
+				case 8:
+					myvalue = this.AccountExpense.otherAmount;
+					break;
+				case 9:
+					myvalue = this.discountAmount;
+					break;
+			}
 
-				// 如果当前值为空或为零，直接返回
-				if (myvalue == null || myvalue === '' || myvalue === '0') {
-					return;
+			// 如果当前值为空或为零，直接返回
+			if (myvalue == null || myvalue === '' || myvalue === '0') {
+				return;
+			}
+			myvalue = myvalue ? myvalue.toString() : '';
+			// 回退一个字符
+			myvalue = myvalue.slice(0, -1); // 去掉最后一个字符
+			myvalue = myvalue === '' ? '0' : myvalue; // 如果为空，设置为0
+			
+		// 直接更新，移除 $nextTick 以提高响应速度
+		switch (this.editingPaymentIndex) {
+			case 1:
+				this.payAmount.total = myvalue;
+				break;
+			case 2:
+				this.payAmount.actual = myvalue;
+				// 实付金额改变时，重置支付方式并默认分配到微信支付
+				this.setAccountExpense(parseFloat(myvalue) || 0);
+				break;
+			case 3:
+				this.payAmount.debt = myvalue;
+				// 计算实付金额：应付金额 +/- 优惠多收 - 收筐抵扣 - 下欠金额
+				const totalAmountDebt = parseFloat(this.payAmount.total) || 0;
+				const basketOffsetAmountDebt = parseFloat(this.payAmount.BasketOffsetAmount) || 0;
+				const debtAmountDebt = parseFloat(this.payAmount.debt) || 0;
+				const discountAmtDebt = parseFloat(this.discountAmount) || 0;
+				if (this.accountDiscount) {
+					// 优惠模式：应付 - 优惠 - 收筐 - 下欠
+					this.payAmount.actual = totalAmountDebt - discountAmtDebt - basketOffsetAmountDebt - debtAmountDebt;
+				} else {
+					// 多收模式：应付 + 多收 - 收筐 - 下欠
+					this.payAmount.actual = totalAmountDebt + discountAmtDebt - basketOffsetAmountDebt - debtAmountDebt;
 				}
-				myvalue = myvalue ? myvalue.toString() : '';
-				// 回退一个字符
-				myvalue = myvalue.slice(0, -1); // 去掉最后一个字符
-				// 更新数据模型
-				switch (this.editingPaymentIndex) {
-					case 1:
-						this.$nextTick(() => {
-							this.payAmount.total = myvalue === '' ? '0' : myvalue; // 如果为空，设置为0
-						})
-						break;
-					case 2:
-						this.$nextTick(() => {
-							this.payAmount.actual = myvalue === '' ? '0' : myvalue;
-						})
-						break;
-					case 3:
-						this.$nextTick(() => {
-							this.payAmount.debt = myvalue === '' ? '0' : myvalue;
-						})
-						break;
-					case 5:
-						this.$nextTick(() => {
-							this.AccountExpense.wxpayAmount = myvalue === '' ? '0' : myvalue;
-						})
-						break;
-					case 6:
-						this.$nextTick(() => {
-							this.AccountExpense.alipayAmount = myvalue === '' ? '0' : myvalue;
-						})
-						break;
-					case 7:
-						this.$nextTick(() => {
-							this.AccountExpense.cashAmount = myvalue === '' ? '0' : myvalue;
-						})
-						break;
-					case 8:
-						this.$nextTick(() => {
-							this.AccountExpense.otherAmount = myvalue === '' ? '0' : myvalue;
-						})
-						break;
-					case 9:
-						this.$nextTick(() => {
-							this.discountAmount = myvalue === '' ? '0' : myvalue;
-							// 安全的数字转换
-							const total = parseFloat(this.payAmount.total) || 0;
-							const discount = parseFloat(this.discountAmount) || 0;
-							const debt = parseFloat(this.payAmount.debt) || 0;
-							
-							if (this.accountDiscount) {
-								this.payAmount.actual = Math.floor(total - discount - debt);
-								this.setAccountExpense(this.payAmount.actual);
-							} else {
-								this.payAmount.actual = Math.floor(total + discount - debt);
-								this.setAccountExpense(this.payAmount.actual);
-							}
-						})
-						break;
-
+				// 实付金额改变时，重置支付方式并默认分配到微信支付
+				this.setAccountExpense(this.payAmount.actual);
+				break;
+			case 5:
+				this.AccountExpense.wxpayAmount = myvalue;
+				break;
+			case 6:
+				this.AccountExpense.alipayAmount = myvalue;
+				break;
+			case 7:
+				this.AccountExpense.cashAmount = myvalue;
+				break;
+			case 8:
+				this.AccountExpense.otherAmount = myvalue;
+				break;
+			case 9:
+				this.discountAmount = myvalue;
+				// 安全的数字转换
+				const total = parseFloat(this.payAmount.total) || 0;
+				const discount = parseFloat(this.discountAmount) || 0;
+				const debt = parseFloat(this.payAmount.debt) || 0;
+				const basketOffset = parseFloat(this.payAmount.BasketOffsetAmount) || 0;
+				
+				if (this.accountDiscount) {
+					this.payAmount.actual = Math.floor(total - discount - basketOffset - debt);
+					this.setAccountExpense(this.payAmount.actual);
+				} else {
+					this.payAmount.actual = Math.floor(total + discount - basketOffset - debt);
+					this.setAccountExpense(this.payAmount.actual);
 				}
-			},
+				break;
+		}
+	},
 			Tuige3() {
 				this.playSystemKeyClickSound();
 				if (this.repayBasketList.length === 0) return;
@@ -2903,36 +2449,42 @@
 				// 更新数据模型
 				this.repayBasketList[this.repayBasketActiveIndex].quantity = myvalue === '' ? '0' : myvalue;
 			},
-			editingPaymentClick(index) {
-				this.editingPaymentIndex = index;
-				this.selectInput_pay = index;
-				this.payAmount.total = eval(this.payAmount.total);
-				this.payAmount.actual = eval(this.payAmount.actual);
-				this.payAmount.debt = eval(this.payAmount.debt);
-			},
-			Clear1() {
-				// 根据 custominputFocusIndex 清空对应的值
-				switch (this.custominputFocusIndex) {
-					case 1:
-						this.editingCard.quantity = '0'; // 清空为 0
-						break;
-					case 2:
-						this.editingCard.referenceAmount = '0'; // 清空为 0
-						break;
-					case 3:
-						this.editingCard.allweight = '0'; // 清空为 0
-						break;
-					case 4:
-						this.editingCard.carweight = '0'; // 清空为 0
-						break;
-				}
+		editingPaymentClick(index) {
+			// 应付金额不允许输入
+			if (index === 1) {
+				return;
+			}
+			this.editingPaymentIndex = index;
+			this.selectInput_pay = index;
+			this.payAmount.total = eval(this.payAmount.total);
+			this.payAmount.actual = eval(this.payAmount.actual);
+			this.payAmount.debt = eval(this.payAmount.debt);
+		},
+	Clear1() {
+		// 取消定时器
+		if (this.inputBuffer.timer) {
+			clearTimeout(this.inputBuffer.timer);
+		}
+		
+		const focusIndex = this.custominputFocusIndex;
+		const fieldMap = ['', 'quantity', 'referenceAmount', 'allweight', 'carweight'];
+		const field = fieldMap[focusIndex];
+		if (!field) return;
+		
+		// ===【关键】立即更新数据模型，触发 Vue 响应式更新===
+		this.editingCard[field] = '0';
+		
+		// 散装模式特殊处理
+		if (focusIndex === 3) {
+			this.editingCard.allweightSrt = '0';
+		}
 
-				// 更新 goodSelect 数组
-				this.goodSelect[this.editingIndex] = this.editingCard;
-				// 保存到缓存
-				this.saveGoodSelectToCache();
-				this.reCountGoodSelect();
-			},
+		// 更新 goodSelect 数组
+		this.goodSelect[this.editingIndex] = this.editingCard;
+		// 保存到缓存
+		this.saveGoodSelectToCache();
+		this.reCountGoodSelect();
+	},
 			Clear2() {
 				this.playSystemKeyClickSound();
 				// 根据 custominputFocusIndex 清空对应的值
@@ -2957,103 +2509,106 @@
 				// 根据 custominputFocusIndex 清空对应的值
 				this.memberEventInfo.collectBasketNum = '0';
 			},
-			NumberCk2(val) {
-				this.playSystemKeyClickSound();
-				let myvalue = "";
-				switch (this.editingPaymentIndex) {
-					case 1:
-						myvalue = this.payAmount.total;
-						break;
-					case 2:
-						myvalue = this.payAmount.actual;
-						break;
-					case 3:
-						myvalue = this.payAmount.debt;
-						break;
-					case 5:
-						myvalue = this.AccountExpense.wxpayAmount;
-						break;
-					case 6:
-						myvalue = this.AccountExpense.alipayAmount;
-						break;
-					case 7:
-						myvalue = this.AccountExpense.cashAmount;
-						break;
-					case 8:
-						myvalue = this.AccountExpense.otherAmount;
-						break;
-					case 9:
-						myvalue = this.discountAmount;
-						break;
+	NumberCk2(val) {
+		this.playSystemKeyClickSound();
+		// 应付金额不允许输入
+		if (this.editingPaymentIndex === 1) {
+			return;
+		}
+		let myvalue = "";
+		switch (this.editingPaymentIndex) {
+			case 1:
+				myvalue = this.payAmount.total;
+				break;
+			case 2:
+				myvalue = this.payAmount.actual;
+				break;
+			case 3:
+				myvalue = this.payAmount.debt;
+				break;
+			case 5:
+				myvalue = this.AccountExpense.wxpayAmount;
+				break;
+			case 6:
+				myvalue = this.AccountExpense.alipayAmount;
+				break;
+			case 7:
+				myvalue = this.AccountExpense.cashAmount;
+				break;
+			case 8:
+				myvalue = this.AccountExpense.otherAmount;
+				break;
+			case 9:
+				myvalue = this.discountAmount;
+				break;
+		}
+			if (val == '.') {
+				// 对于优惠多收金额(case 9)，不允许输入小数点
+				if (this.editingPaymentIndex === 9) {
+					return;
 				}
-				if (val == '.') {
-					// 对于优惠多收金额(case 9)，不允许输入小数点
-					if (this.editingPaymentIndex === 9) {
-						return;
-					}
-					if (myvalue.toString().indexOf('.') >= 0) {
-						return;
-					}
+				if (myvalue.toString().indexOf('.') >= 0) {
+					return;
 				}
-				var txt = myvalue == null || myvalue == 0 || myvalue == undefined ? '' : myvalue;
-				myvalue = txt + val.toString();
-				switch (this.editingPaymentIndex) {
-					case 1:
-						this.$nextTick(() => {
-							this.payAmount.total = myvalue;
-						})
-						break;
-					case 2:
-						this.$nextTick(() => {
-							this.payAmount.actual = myvalue;
-						})
-						break;
-					case 3:
-						this.$nextTick(() => {
-							this.payAmount.debt = myvalue;
-							this.payAmount.actual = parseFloat(this.payAmount.total) - parseFloat(this.payAmount
-								.debt)
-						})
-						break;
-					case 5:
-						this.$nextTick(() => {
-							this.AccountExpense.wxpayAmount = myvalue;
-						})
-						break;
-					case 6:
-						this.$nextTick(() => {
-							this.AccountExpense.alipayAmount = myvalue;
-						})
-						break;
-					case 7:
-						this.$nextTick(() => {
-							this.AccountExpense.cashAmount = myvalue;
-						})
-						break;
-					case 8:
-
-						this.$nextTick(() => {
-							this.AccountExpense.otherAmount = myvalue;
-						})
-						break;
-					case 9:
-						this.$nextTick(() => {
-							this.discountAmount = myvalue;
-							// 安全的数字转换
-							const total = parseFloat(this.payAmount.total) || 0;
-							const discount = parseFloat(this.discountAmount) || 0;
-							const debt = parseFloat(this.payAmount.debt) || 0;
-							if (this.accountDiscount) {
-								this.payAmount.actual = Math.floor(total - discount - debt);
-								this.setAccountExpense(this.payAmount.actual);
-							} else {
-								this.payAmount.actual = Math.floor(total + discount - debt);
-								this.setAccountExpense(this.payAmount.actual);
-							}
-						})
-						break;
+			}
+		var txt = myvalue == null || myvalue == 0 || myvalue == undefined ? '' : myvalue;
+		myvalue = txt + val.toString();
+		// 直接更新，移除 $nextTick 以提高响应速度
+		switch (this.editingPaymentIndex) {
+			case 1:
+				this.payAmount.total = myvalue;
+				break;
+			case 2:
+				this.payAmount.actual = myvalue;
+				// 实付金额改变时，重置支付方式并默认分配到微信支付
+				this.setAccountExpense(parseFloat(myvalue) || 0);
+				break;
+	case 3:
+			this.payAmount.debt = myvalue;
+			// 计算实付金额：应付金额 +/- 优惠多收 - 收筐抵扣 - 下欠金额
+			const totalAmount = parseFloat(this.payAmount.total) || 0;
+			const basketOffsetAmount = parseFloat(this.payAmount.BasketOffsetAmount) || 0;
+			const debtAmount = parseFloat(this.payAmount.debt) || 0;
+			const discountAmt = parseFloat(this.discountAmount) || 0;
+			if (this.accountDiscount) {
+				// 优惠模式：应付 - 优惠 - 收筐 - 下欠
+				this.payAmount.actual = totalAmount - discountAmt - basketOffsetAmount - debtAmount;
+			} else {
+				// 多收模式：应付 + 多收 - 收筐 - 下欠
+				this.payAmount.actual = totalAmount + discountAmt - basketOffsetAmount - debtAmount;
+			}
+			// 实付金额改变时，重置支付方式并默认分配到微信支付
+			this.setAccountExpense(this.payAmount.actual);
+			break;
+				case 5:
+					this.AccountExpense.wxpayAmount = myvalue;
+					break;
+				case 6:
+					this.AccountExpense.alipayAmount = myvalue;
+					break;
+				case 7:
+					this.AccountExpense.cashAmount = myvalue;
+					break;
+				case 8:
+					this.AccountExpense.otherAmount = myvalue;
+					break;
+			case 9:
+				this.discountAmount = myvalue;
+				// 安全的数字转换
+				const total = parseFloat(this.payAmount.total) || 0;
+				const discount = parseFloat(this.discountAmount) || 0;
+				const debt = parseFloat(this.payAmount.debt) || 0;
+				const basketOffsetAmt2 = parseFloat(this.payAmount.BasketOffsetAmount) || 0;
+				if (this.accountDiscount) {
+					this.payAmount.actual = Math.floor(total - discount - basketOffsetAmt2 - debt);
+					this.setAccountExpense(this.payAmount.actual);
+				} else {
+					this.payAmount.actual = Math.floor(total + discount - basketOffsetAmt2 - debt);
+					this.setAccountExpense(this.payAmount.actual);
 				}
-			},
+				break;
+			}
+		},
 			NumberCk3(val) {
 				this.playSystemKeyClickSound();
 				if (this.repayBasketList.length === 0) return;
@@ -3068,73 +2623,112 @@
 				myvalue = txt + val.toString();
 				this.repayBasketList[this.repayBasketActiveIndex].quantity = myvalue;
 			},
-			custominputFocusedMethod(index) {
-				this.inputFinsh1();
-				this.custominputFocused = false;
-				this.custominputFocused2 = false;
-				this.custominputFocused3 = false;
-				this.custominputFocused4 = false;
-				switch (index) {
-					case 1:
-						this.custominputFocused = true;
-						break;
-					case 2:
-						this.custominputFocused2 = true;
-						break;
-					case 3:
-						this.custominputFocused3 = true;
-						break;
-					case 4:
-						this.custominputFocused4 = true;
-						break;
-				}
-				this.custominputFocusIndex = index;
+		custominputFocusedMethod(index) {
+			// 清理之前输入框的待处理更新
+			if (this.inputBuffer.timer) {
+				clearTimeout(this.inputBuffer.timer);
+				this.inputBuffer.timer = null;
+			}
+			
+			this.inputFinsh1();
+			this.custominputFocused = false;
+			this.custominputFocused2 = false;
+			this.custominputFocused3 = false;
+			this.custominputFocused4 = false;
+			switch (index) {
+				case 1:
+					this.custominputFocused = true;
+					break;
+				case 2:
+					this.custominputFocused2 = true;
+					break;
+				case 3:
+					this.custominputFocused3 = true;
+					break;
+				case 4:
+					this.custominputFocused4 = true;
+					break;
+			}
+			this.custominputFocusIndex = index;
 			},
-			showStep2(e, index) {
-				//进入输入编辑的物品，输入完返回对应的添加物品
-				this.editingCard = e;
-				if (this.editingCard.extralModel) {
-					this.editingCard.extralModel.quantity = this.editingCard.quantity;
-					if(this.editingCard.extralModel.weight){
-						this.editingCard.carweight = this.editingCard.extralModel.quantity*this.editingCard.extralModel.weight;
-					}
-				} else {
-					this.editingCard.extralModel = {
-						name: "空",
-						amount: 0,
-						id: "",
-						quantity: 0,
-						money: 0
-					}
+		showStep2(e, index) {
+			//进入输入编辑的物品，输入完返回对应的添加物品
+			this.editingCard = e;
+			if (this.editingCard.extralModel) {
+				this.editingCard.extralModel.quantity = this.editingCard.quantity;
+				if(this.editingCard.extralModel.weight){
+					this.editingCard.carweight = this.editingCard.extralModel.quantity*this.editingCard.extralModel.weight;
 				}
-				this.editingIndex = index;
-				this.step1 = false;
-				if (this.editingCard.saleWay === 1||this.editingCard.saleWay === 4) {
-					this.custominputFocusedMethod(3);
-				} else {
-					this.custominputFocusedMethod(1);
+			} else {
+				this.editingCard.extralModel = {
+					name: "空",
+					amount: 0,
+					id: "",
+					quantity: 0,
+					money: 0
 				}
+			}
+			this.editingIndex = index;
+			this.step1 = false;
+			if (this.editingCard.saleWay === 1||this.editingCard.saleWay === 4) {
+				this.custominputFocusedMethod(3);
+			} else {
+				this.custominputFocusedMethod(1);
+			}
 
-			},
-			showStep1() {
-				this.inputFinsh1();
-				this.reCountGoodSelect();
-				this.step1 = true;
-				this.custominputFocused = false;
-				this.custominputFocused2 = false;
-				this.custominputFocused3 = false;
-				this.custominputFocused4 = false;
-			},
+		},
+		// 处理 OrderGoodsPanel 组件的商品点击事件
+		handleItemClick({ item, index }) {
+			this.showStep2(item, index);
+		},
+		showStep1() {
+			this.inputFinsh1();
+			this.reCountGoodSelect();
+			this.step1 = true;
+			this.custominputFocused = false;
+			this.custominputFocused2 = false;
+			this.custominputFocused3 = false;
+			this.custominputFocused4 = false;
+		},
 
-			windowResizeCallback(res) {
+		// GoodEditKeyboard 组件确认事件处理
+		handleGoodEditConfirm(updatedCard) {
+			// 更新编辑中的商品数据
+			this.editingCard = updatedCard;
+			this.goodSelect[this.editingIndex] = updatedCard;
+			
+			// 保存到缓存并重新计算
+			this.saveGoodSelectToCache();
+			this.reCountGoodSelect();
+			
+			// 返回商品列表
+			this.step1 = true;
+			this.custominputFocused = false;
+			this.custominputFocused2 = false;
+			this.custominputFocused3 = false;
+			this.custominputFocused4 = false;
+			this.showAllweightStr = false;
+		},
+
+		// GoodEditKeyboard 组件押筐选择事件处理
+		handleExtraModelSelect(extralModel) {
+			// 更新 editingCard 的押筐模型
+			this.editingCard.extralModel = extralModel;
+			
+			// 同步到 goodSelect 数组
+			this.goodSelect[this.editingIndex] = this.editingCard;
+			this.saveGoodSelectToCache();
+		},
+
+		windowResizeCallback(res) {
 				const width = res.size.windowWidth
 				this.initCol(width)
 			},
-			initSystem() {
-				const window = uni.getWindowInfo()
-				const width = window.windowWidth
-				// this.initCol(width)
-			},
+		initSystem() {
+			const window = uni.getWindowInfo()
+			const width = window.windowWidth
+			// this.initCol(width)
+		},
 			initCol(width) {
 				this.modalWidth = global.getModalWidth()
 				if (width <= 800) {
@@ -3159,140 +2753,30 @@
 					this.memberCol = 5
 				}
 			},
-			updateActiveTab(res) {
-				this.commodityType = res.type;
-				this.currentTabId = res.id;
-				this.commidityList = [];
-				this.rows = [];
-				if (res.type === 1) {
-					category.GetBybatchId2(res.id).then(res => {
-						for (let i = 0; i < res.data.length; i++) {
-							//1-非定装 2-定装 4-散装 单位都为specList第一个
-							if ((res.data[i].saleWay === 1 || res.data[i].saleWay === 2 || res.data[i].saleWay ===
-									4) && res.data[i].specList != null && res.data[i].specList.length > 0) {
-								res.data[i].commoditySpec = res.data[i].specList[0];
-							}
-							//3-拆包类型,单位使用列表装起来
-							if (res.data[i].saleWay === 3) {
-								res.data[i].commoditySpecs = res.data[i].specList;
-							}
 
-							this.commidityList.push({
-								id: res.data[i].id,
-								purchaseAssistId: res.data[i].id,
-								key: i,
-								name: res.data[i].commodityName,
-								price: 0,
-								inventory: res.data[i].initMount - res.data[i].saleMount,
-								type: 0,
-								stockType: 2, //2-代销
-								saleWay: res.data[i].saleWay, //售卖方式1-非定装 2-定装 3-拆包 4-散装
-								commodityId: res.data[i].commodityId,
-								outPutPurchaseInventories: res.data[i].outPutPurchaseInventories, //库存
-								extralModel: res.data[i].extralModel,
-								unit: res.data[i].unit,
-								fixedTare: res.data[i].fixedTare, //皮重
-								initWeight: res.data[i].fixWeight, //固定重量
-								commoditySpec: res.data[i].commoditySpec
-							})
+	// 处理标签切换事件（从 CashierGoodsPanel 组件触发）
+	handleTabChanged(data) {
+		// 组件内部已经处理了商品加载逻辑
+		// 这里只需要处理父组件需要知道的状态变化
+		console.log('标签已切换:', data);
+	},
+	
+	// 处理分类列表更新事件（从 CashierGoodsPanel 组件触发）
+	handleCategoryUpdated(categoryList) {
+		// 更新父组件的 categoryList（用于其他功能）
+		this.categoryList = categoryList;
+		console.log('分类列表已更新:', categoryList);
+	},
 
-						}
-						for (let i = 0; i < this.commidityList.length; i += 2) {
-							this.rows.push(this.commidityList.slice(i, i + 2));
-						}
-						this.generateWordCloud(this.commidityList);
-					})
-
-					const tab = this.categoryList.find(t => t.id === res.id);
-					if (tab) {
-						this.currentTabName = tab.shipperName + tab.batchCode;
-					} else {
-						this.currentTabName = "";
-					}
-				} else {
-					Purchase.GetEmployCommidityByClassId(res.id).then(res => {
-						console.log(res.data)
-
-						for (let i = 0; i < res.data.length; i++) {
-
-							if ((res.data[i].saleWay === 1 || res.data[i].saleWay === 2) && res.data[i].commoditySpecs != null && res.data[i].commoditySpecs.length > 0) {
-								res.data[i].commoditySpec = res.data[i].commoditySpecs[0];
-							}
-							if (res.data[i].saleWay === 3) {
-								res.data[i].commoditySpecs = res.data[i].commoditySpecs;
-							}
-
-
-							this.commidityList.push({
-								id: res.data[i].id,
-								key: i,
-								name: res.data[i].commodityName,
-								price: 0,
-								inventory: res.data[i].initMount - res.data[i].saleMount,
-								type: 0,
-								stockType: 1, //1-自营
-								saleWay: res.data[i].saleWay,
-								commodityId: res.data[i].commodityId,
-								outPutPurchaseInventories: res.data[i].outPutPurchaseInventories,
-								unit: res.data[i].unit,
-								initWeight: res.data[i].initWeight,
-								commoditySpecs: res.data[i].commoditySpecs,
-								commoditySpec: res.data[i].commoditySpec
-							})
-
-						}
-						for (let i = 0; i < this.commidityList.length; i += 2) {
-							this.rows.push(this.commidityList.slice(i, i + 2));
-						}
-						this.generateWordCloud(this.commidityList);
-						console.log("自营商品", this.commidityList)
-					})
-				}
-
-			},
-			//生产右边词云搜索
-			generateWordCloud(goodModelList) {
-				this.GoodkeyWord = [];
-				this.GoodkeyWord.push("全");
-				this.currentKeyWord = "全";
-				var nameInput = [];
-				for (var i = 0; i < goodModelList.length; i++) {
-					nameInput.push(goodModelList[i].name)
-				}
-				// 处理名称列表，分割成数组
-				const names = nameInput.filter(name => name.trim() !== '');
-
-				// 统计每个字出现的频率
-				const charFrequency = {};
-				names.forEach(name => {
-					for (const char of name) {
-						charFrequency[char] = (charFrequency[char] || 0) + 1;
-					}
-				});
-				// 转换为数组并排序
-				const charArray = Object.keys(charFrequency).map(char => ({
-					char: char,
-					count: charFrequency[char]
-				})).sort((a, b) => b.count - a.count);
-				for (var i = 0; i < Math.min(charArray.length, 10); i++) {
-					this.GoodkeyWord.push(charArray[i].char);
-				}
-			},
-
-			getCategoryList() {
-				let that = this;
-				category.GetAllActiveBatch(this.currentCompanyId).then(res => {
-					that.categoryList = res.data.sort((a, b) => {
-						return new Date(b.createTime) - new Date(a.createTime);
-					});
-					if (res.data.length > 0) {
-						that.updateActiveTab({
-							id: this.categoryList[0].id,
-							type: 1
-						})
-					}
-				})
-			},
+	/**
+	 * 获取分类列表（统一入口）
+	 * 现在直接调用 CashierGoodsPanel 组件的方法
+	 */
+	getCategoryList() {
+		if (this.$refs.goodsPanel) {
+			this.$refs.goodsPanel.getCategoryList();
+		}
+	},
 			deleteItem(e) {
 				this.playSystemKeyClickSound();
 				const indexToDelete = this.goodSelect.findIndex(item => item.index === e.index);
@@ -3391,9 +2875,14 @@
 				}
 				// this.cashierAmount()
 			},
-			closeKeyBoard() {
-				this.showKeyBord = false;
-			},
+	closeKeyBoard() {
+		// 清理所有待处理的更新
+		if (this.inputBuffer.timer) {
+			clearTimeout(this.inputBuffer.timer);
+			this.inputBuffer.timer = null;
+		}
+		this.showKeyBord = false;
+	},
 
 			//商品金额计算方法
 			reCountGoodSelect() {
@@ -3493,195 +2982,179 @@
 					return false;
 				}
 			},
-			createNativeView(left, top, commodity, specList) {
-				console.log(specList)
-				if (this.actionView || !specList || specList.length < 0) return;
-				let that = this;
-				this.maskView = new plus.nativeObj.View("maskView", {
-					top: "0px",
-					left: "0px",
-					width: "100%",
-					height: "100%",
-					backgroundColor: "rgba(0,0,0,0.1)" // 接近透明
+	// 使用 DIV 替代原生 View 的规格选择弹窗
+	createNativeView(left, top, commodity, specList) {
+		if (!specList || specList.length < 1) return;
+		
+		this.specPopup = {
+			visible: true,
+			left,
+			top,
+			commodity,
+			specList
+		};
+	},
+	// 关闭规格弹窗
+	closeSpecPopup() {
+		this.specPopup.visible = false;
+		// 延迟清空数据，等动画完成
+		setTimeout(() => {
+			this.specPopup = {
+				visible: false,
+				left: 0,
+				top: 0,
+				commodity: null,
+				specList: []
+			};
+		}, 300);
+	},
+	// 点击规格项
+	handleSpecClick(spec) {
+		this.commodityClickSaleWay3(this.specPopup.commodity, spec);
+		this.closeSpecPopup();
+	},
+	// 创建分级商品弹窗
+	createMultiLevelView(left, top, parentCommodity, childrenList) {
+		if (!childrenList || childrenList.length < 1) return;
+		
+		this.multiLevelPopup = {
+			visible: true,
+			left,
+			top,
+			parentCommodity,
+			childrenList
+		};
+	},
+	// 关闭分级商品弹窗
+	closeMultiLevelPopup() {
+		this.multiLevelPopup.visible = false;
+		// 延迟清空数据，等动画完成
+		setTimeout(() => {
+			this.multiLevelPopup = {
+				visible: false,
+				left: 0,
+				top: 0,
+				parentCommodity: null,
+				childrenList: []
+			};
+		}, 300);
+	},
+	// 点击分级商品项
+	handleMultiLevelClick(childCommodity) {
+		// 处理分级商品的点击逻辑，类似普通商品
+		this.closeMultiLevelPopup();
+		// 调用 handleClick 处理选中的子商品
+		this.handleClick(childCommodity, childCommodity.id);
+	},
+	handleClick(e, id) {
+		//如果在step2状态下点击新货品，先移除未确定的货品
+		if (!this.step1 && this.editingIndex === this.goodSelect.length - 1) {
+			// 移除最后一个未确定的货品
+			this.goodSelect.splice(this.editingIndex, 1);
+		}
+		
+		// 检查是否为分级商品
+		if (e.isMultiLevel === 1) {
+			uni.createSelectorQuery().selectAll(`#grid-item-${id}`).boundingClientRect(data => {
+				console.log("分级商品弹窗位置:", data);
+				this.createMultiLevelView(data[0].left + data[0].width / 2, data[0].top, e, e.childrenList);
+			}).exec();
+			return; // 显示分级商品弹窗后直接返回
+		}
+		
+		console.log("e",e)
 
-				});
-				this.maskView.addEventListener("click", () => {
+	//1-非定装 2-定装 4-散装
+	if (e.saleWay === 1 || e.saleWay === 2 || e.saleWay === 4) {
+		this.goodSelect.push({
+			key: this.goodSelectKeyCounter++,
+			skuName: e.name, //货品名称
+				referenceAmount: e.price, //单价
+				stockType: e.stockType, //库存类型 
+				quantity: 0,
+				id: e.id,
+				purchaseAssistId: e.purchaseAssistId,
+				saleWay: e.saleWay,
+				commodityId: e.commodityId,
+				extralModel: e.extralModel,
+				fixedTare: e.fixedTare,
+				allweight: 0,
+				allweightSrt: 0,
+				commoditySpec: e.commoditySpec,
+				initWeight: e.initWeight,
+				carweight: 0,
+				money: 0,//物品金额（不含押筐）
+				money2:0,//包含押筐金额
+				index: this.goodSelect.length + 1
+			});
+			// 保存到缓存
+			this.saveGoodSelectToCache();
+			this.showAllweightStr = false;
+			//显示输入价格界面
+			this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
+		} else if (e.saleWay === 3) {
+			uni.createSelectorQuery().selectAll(`#grid-item-${id}`).boundingClientRect(data => {
+				// const { left, top, width, height } = data;
+				console.log("data", data)
+				this.createNativeView(data[0].left + data[0].width / 2, data[0].top, e, e.commoditySpecs)
+			}).exec()
+		}
+	},
 
-					that.actionView.close();
-					that.actionView = null;
-					that.maskView.close();
-					that.maskView = null;
-				});
-				this.maskView.show();
+		commodityClickSaleWay3(e, spec) {
+			//如果在step2状态下点击新货品，先移除未确定的货品
+			if (!this.step1 && this.editingIndex === this.goodSelect.length - 1) {
+				// 移除最后一个未确定的货品
+				this.goodSelect.splice(this.editingIndex, 1);
+		}
+		
+		this.goodSelect.push({
+			key: this.goodSelectKeyCounter++,
+			skuName: e.name,
+			referenceAmount: e.price,
+				stockType: e.stockType,
+				quantity: 0,
+				id: e.id,
+				commodityId: e.commodityId,
+				saleWay: e.saleWay,
+				allweight: 0,
+				allweightSrt: 0,
+				commoditySpec: spec,
+				carweight: 0,
+				money: 0,
+				index: this.goodSelect.length + 1
+			});
+			// 保存到缓存
+			this.saveGoodSelectToCache();
+			this.showAllweightStr = false;
+			this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
+		},
 
-				var zoneHeight = specList.length * 100;
-				var zoneTop = top - 100 < 0 ? 0 : top - 100;
-				zoneTop = zoneTop + zoneHeight > plus.screen.resolutionHeight ? plus.screen.resolutionHeight - zoneHeight :
-					zoneTop;
-				this.actionView = new plus.nativeObj.View("actionView", {
-					backgroundColor: "rgba(255, 255, 255, 0.1)",
-					border: "5px solid #FF0000",
-					borderRadius: "10px",
-					left: left,
-					top: zoneTop,
-					width: "150px",
-					height: zoneHeight + "px"
-				});
-
-
-				for (var i = 0; i < specList.length; i++) {
-					this.actionView.drawRect({
-						color: "#000000", // 边框颜色
-						width: "2px", // 边框宽度
-						radius: "5px" // 圆角半径（关键！）
-					}, {
-						top: i * 100 + "px",
-						left: "0px",
-						width: "150px",
-						height: "100px"
-					});
-					this.actionView.drawRect({
-						color: "#ffffff", // 边框颜色
-						width: "2px", // 边框宽度
-						radius: "5px" // 圆角半径（关键！）
-					}, {
-						top: i * 100 + 2 + "px",
-						left: "2px",
-						width: "146px",
-						height: "96px"
-					});
-
-
-					this.actionView.draw([{
-						tag: 'font',
-						id: 'font' + i,
-						text: specList[i].specName,
-						textStyles: {
-							size: '50px'
-						},
-						// 添加边框样式
-						border: {
-							width: '2px', // 边框宽度
-							style: 'solid', // 边框样式（solid, dashed, dotted）
-							color: '#000000' // 边框颜色（黑色）
-						},
-						position: {
-							top: i * 100 + 25 + 'px',
-							left: '0px',
-							width: '100%',
-							height: '60px'
-						}
-					}]);
-
-				}
-
-				// 添加点击事件
-				this.actionView.addEventListener("click", (e) => {
-					const x = e.clientX;
-					const y = e.clientY;
-					// 判断点击位置
-					for (var i = 0; i < specList.length; i++) {
-						if (x > 0 && x < 150 && y > i * 100 && y < (i + 1) * 100) {
-							that.commodityClickSaleWay3(commodity, specList[i])
-						}
-					}
-
-					that.actionView.close();
-					that.actionView = null;
-					that.maskView.close();
-					that.maskView = null;
-				});
-
-
-				this.actionView.show();
-			},
-			handleClick(e, id) {
-				console.log("e", e)
-				//进入输入重量界面不可添加货品
-				if (!this.step1) return;
-				//1-非定装 2-定装 4-散装
-				if (e.saleWay === 1 || e.saleWay === 2 || e.saleWay === 4) {
-					this.goodSelect.push({
-						key: this.goodSelect.length,
-						skuName: e.name, //货品名称
-						referenceAmount: e.price, //单价
-						stockType: e.stockType, //库存类型 
-						quantity: 0,
-						id: e.id,
-						purchaseAssistId: e.purchaseAssistId,
-						saleWay: e.saleWay,
-						commodityId: e.commodityId,
-						extralModel: e.extralModel,
-						fixedTare: e.fixedTare,
-						allweight: 0,
-						allweightSrt: 0,
-						commoditySpec: e.commoditySpec,
-						initWeight: e.initWeight,
-						carweight: 0,
-						money: 0,//物品金额（不含押筐）
-						money2:0,//包含押筐金额
-						index: this.goodSelect.length + 1
-					});
-					// 保存到缓存
-					this.saveGoodSelectToCache();
-					this.showAllweightStr = false;
-					//显示输入价格界面
-					this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
-				} else if (e.saleWay === 3) {
-					uni.createSelectorQuery().selectAll(`#grid-item-${id}`).boundingClientRect(data => {
-						// const { left, top, width, height } = data;
-						console.log("data", data)
-						this.createNativeView(data[0].left + data[0].width / 2, data[0].top, e, e.commoditySpecs)
-					}).exec()
-				}
-				// }
-				// this.reCountGoodSelect();
-				// }
-				console.log("this.goodSelect",this.goodSelect)
-			},
-
-			commodityClickSaleWay3(e, spec) {
-				this.goodSelect.push({
-					key: this.goodSelect.length,
-					skuName: e.name,
-					referenceAmount: e.price,
-					stockType: e.stockType,
-					quantity: 0,
-					id: e.id,
-					commodityId: e.commodityId,
-					saleWay: e.saleWay,
-					allweight: 0,
-					allweightSrt: 0,
-					commoditySpec: spec,
-					carweight: 0,
-					money: 0,
-					index: this.goodSelect.length + 1
-				});
-				// 保存到缓存
-				this.saveGoodSelectToCache();
-				this.showAllweightStr = false;
-				this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
-			},
-
-			addTemplateGood() {
-				this.goodSelect.push({
-					key: this.goodSelect.length,
-					skuName: "临时物品",
-					referenceAmount: 0,
-					quantity: 1,
-					id: this.generateGUID,
-					allweight: 0,
-					allweightSrt: 0,
-					carweight: 0,
-					money: 0,
-					index: this.goodSelect.length + 1
-				});
-				// 保存到缓存
-				this.saveGoodSelectToCache();
-				this.showAllweightStr = false;
-				this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
-				this.reCountGoodSelect();
-			},
+		addTemplateGood() {
+			//如果在step2状态下点击新货品，先移除未确定的货品
+			if (!this.step1 && this.editingIndex === this.goodSelect.length - 1) {
+				// 移除最后一个未确定的货品
+				this.goodSelect.splice(this.editingIndex, 1);
+		}
+		
+		this.goodSelect.push({
+			key: this.goodSelectKeyCounter++,
+			skuName: "临时物品",
+			referenceAmount: 0,
+				quantity: 1,
+				id: this.generateGUID,
+				allweight: 0,
+				allweightSrt: 0,
+				carweight: 0,
+				money: 0,
+				index: this.goodSelect.length + 1
+			});
+			// 保存到缓存
+			this.saveGoodSelectToCache();
+			this.showAllweightStr = false;
+			this.showStep2(this.goodSelect[this.goodSelect.length - 1], this.goodSelect.length - 1);
+			this.reCountGoodSelect();
+		},
 			cashierAmount() {
 				cashierOrder.cashierOrderCompute(this.cashier).then(res => {
 					const data = res.data
@@ -3814,23 +3287,25 @@
 
 				})
 			},
-			saleHangList() {
-				let that = this;
-				cashierOrder.GetAllGDorder(this.currentCompanyId).then(res => {
-					that.hangListVisible = true;
-					var hangleList = res.data;
-					console.log("hangleList",hangleList);
-					hangleList.forEach((item, index) => {
-						console.log("item.module",item.module);
-						if(item.module){
-							let modelList = JSON.parse(item.module)
-						item.modelInfo = "";
-						modelList.forEach((item2, index2) => {
-							item.modelInfo += item2.name + "x" + item2.mount + "|";
-						})
-						console.log("item",item);
-						}
-					});
+		saleHangList() {
+			let that = this;
+			cashierOrder.GetAllGDorder(this.currentCompanyId).then(res => {
+				that.hangListVisible = true;
+				var hangleList = res.data;
+				console.log("hangleList",hangleList);
+				hangleList.forEach((item, index) => {
+					console.log("item.module",item.module);
+					// 为每个挂单项添加唯一的 uniqueKey
+					item.uniqueKey = item.id || `hang_${Date.now()}_${index}`;
+					if(item.module){
+						let modelList = JSON.parse(item.module)
+					item.modelInfo = "";
+					modelList.forEach((item2, index2) => {
+						item.modelInfo += item2.name + "x" + item2.mount + "|";
+					})
+					console.log("item",item);
+					}
+				});
 
 
 					const grouped = hangleList.reduce((acc, item) => {
@@ -3895,12 +3370,12 @@
 				}
 				
 				// 按库存排序
-				filteredList.sort((a, b) => b.inventory - a.inventory);
-				
-				// 重新组织成rows格式（每行2个商品）
-				for (let i = 0; i < filteredList.length; i += 2) {
-					this.rows.push(filteredList.slice(i, i + 2));
-				}
+			filteredList.sort((a, b) => b.inventory - a.inventory);
+			
+			// 重新组织成rows格式（每行3个商品）
+			for (let i = 0; i < filteredList.length; i += 3) {
+				this.rows.push(filteredList.slice(i, i + 3));
+			}
 			},
 			clearSearch() {
 				this.goodsSearchKeyword = '';
@@ -3930,7 +3405,7 @@
 				this.memberOptions = [];
 				this.memberSearchOptions = [];
 				this.memberSearchKeyword = "";
-				member.memberList(this.currentCompanyId).then(res => {
+				member.GetmemberListByCompanyIdPage({ Id: this.currentCompanyId, pageSize: 1000, currentPage: 1 }).then(res => {
 					this.memberOptions.push({
 						customName: "散客",
 						id: ""
@@ -3939,8 +3414,10 @@
 						customName: "散客",
 						id: ""
 					})
-					this.memberOptions.push(...(res.data || []));
-					this.memberSearchOptions.push(...(res.data || []));
+					// 适配分页结果格式
+					const memberList = res.data.Data || res.data.data || [];
+					this.memberOptions.push(...memberList);
+					this.memberSearchOptions.push(...memberList);
 					this.memberDialogVisible = true
 				}).finally(() => {})
 			},
@@ -3964,21 +3441,33 @@
 					}
 				});
 			},
-			async payTypeDebt() {
-				this.playSystemKeyClickSound();
-				this.payAmount.debt = eval(this.payAmount.total - this.payAmount.BasketOffsetAmount);
-				this.payAmount.actual = 0;
-				this.currentPayWay = 0;
-				//支付方式详情归零
-				this.AccountExpense = {
-					alipayAmount: 0,
-					wxpayAmount: 0,
-					cashAmount: 0,
-					otherAmount: 0
-				}
+		async payTypeDebt() {
+			this.playSystemKeyClickSound();
+			
+			// 检查是否为散客
+			if (!this.currentMember.id || this.currentMember.id === '' || this.currentMember.customName === '散客') {
+				this.flashCustomerInfo();
+				uni.showToast({
+					title: '散客不可以整单下欠',
+					icon: 'none',
+					duration: 2000
+				});
+				return;
+			}
+			
+			this.payAmount.debt = eval(this.payAmount.total - this.payAmount.BasketOffsetAmount);
+			this.payAmount.actual = 0;
+			this.currentPayWay = 0;
+			//支付方式详情归零
+			this.AccountExpense = {
+				alipayAmount: 0,
+				wxpayAmount: 0,
+				cashAmount: 0,
+				otherAmount: 0
+			}
 
-				await this.payTypeConfirm();
-			},
+			await this.payTypeConfirm();
+		},
 
 			//订单发送
 			orderSend() {
@@ -4059,7 +3548,6 @@
 						})
 					}				
 
-				console.log("goodModelList",goodModelList)
 
 				//请求主体
 				var param = {
@@ -4094,10 +3582,14 @@
 					param.Id = this.currentOrderInfo.Id;
 					param.accountCode = this.currentOrderInfo.accountCode;
 				}
-				console.log("param", param)
+
 				cashierOrder.CreateAccount(JSON.stringify(param)).then(res => {
 					if (res.data != null && res.data != "" && res.data == "success") {
 
+						// 保存当前批次信息，用于刷新
+						const currentTabId = that.$refs.goodsPanel?.currentTabId;
+						const currentCommodityType = that.$refs.goodsPanel?.commodityType;
+						
 						//重置新建订单对象	
 						that.resetOrder();
 						that.payTypeDialogVisible = false;
@@ -4112,6 +3604,11 @@
 							}
 							that.popup_paysuccess_show = true;
 						})
+						
+						// 清除当前批次的缓存，在 getCategoryList 完成后会自动重新加载
+						if (that.$refs.goodsPanel && currentTabId && currentCommodityType) {
+							that.$refs.goodsPanel.clearTabCache(currentTabId, currentCommodityType);
+						}
 
 					} else {
 						uni.showToast({
@@ -4121,26 +3618,91 @@
 					}
 				})
 			},
-			async payTypeConfirm() {
-				this.playSystemKeyClickSound();
-				let that = this;
-				if (eval(this.payAmount.total) === 0) {
-					uni.showToast({
-						title: "订单金额必须大于0",
-						icon: "error",
-						duration: 2000
-					});
-					return;
-				} else {
-					if (this.currentMember.id != null && this.currentMember.id != "" && this.memberEventInfo
-						.collectBasketNum > 0) {
-						await this.payBasket_beforePay();
-					}
-					//打开收银界面
-					this.orderSend();
-
-				}
-			},
+	// 处理支付模态框确认事件
+	handlePaymentConfirm(data) {
+		// 更新数据
+		this.payAmount = data.payAmount;
+		this.AccountExpense = data.accountExpense;
+		this.discountAmount = data.discountAmount;
+		this.accountDiscount = data.accountDiscount;
+		// 调用原来的确认方法
+		this.payTypeConfirm();
+	},
+	async payTypeConfirm() {
+		this.playSystemKeyClickSound();
+		let that = this;
+		if (eval(this.payAmount.total) === 0) {
+			uni.showToast({
+				title: "订单金额必须大于0",
+				icon: "error",
+				duration: 2000
+			});
+			return;
+		}
+		
+		// 检查散客是否有下欠金额
+		const debtAmt = parseFloat(this.payAmount.debt) || 0;
+		if ((!this.currentMember.id || this.currentMember.id === '' || this.currentMember.customName === '散客') && debtAmt > 0) {
+			this.flashCustomerInfo();
+			uni.showToast({
+				title: '散客不可以有下欠金额',
+				icon: 'none',
+				duration: 2000
+			});
+			return;
+		}
+		
+		// 验证实付金额计算是否正确
+		const totalAmount = parseFloat(this.payAmount.total) || 0;
+		const actualAmount = parseFloat(this.payAmount.actual) || 0;
+		const debtAmount = parseFloat(this.payAmount.debt) || 0;
+		const basketOffsetAmount = parseFloat(this.payAmount.BasketOffsetAmount) || 0;
+		const discountAmount = parseFloat(this.discountAmount) || 0;
+		
+		let expectedActualAmount;
+		if (this.accountDiscount) {
+			// 优惠模式：实付 = 应付 - 优惠 - 收筐抵扣 - 下欠
+			expectedActualAmount = totalAmount - discountAmount - basketOffsetAmount - debtAmount;
+		} else {
+			// 多收模式：实付 = 应付 + 多收 - 收筐抵扣 - 下欠
+			expectedActualAmount = totalAmount + discountAmount - basketOffsetAmount - debtAmount;
+		}
+		
+	// 允许0.01的误差（避免浮点数精度问题）
+	if (Math.abs(actualAmount - expectedActualAmount) > 0.01) {
+		this.flashActualAmount(); // 触发实付金额闪烁
+		uni.showToast({
+			title: `实付金额计算错误！应为${expectedActualAmount.toFixed(2)}元，当前为${actualAmount.toFixed(2)}元`,
+			icon: "error",
+			duration: 3000
+		});
+			return;
+		}
+		
+		// 检查实付金额与支付方式金额总和是否一致
+		const wxpayAmount = parseFloat(this.AccountExpense.wxpayAmount) || 0;
+		const alipayAmount = parseFloat(this.AccountExpense.alipayAmount) || 0;
+		const cashAmount = parseFloat(this.AccountExpense.cashAmount) || 0;
+		const otherAmount = parseFloat(this.AccountExpense.otherAmount) || 0;
+		const totalPaymentAmount = wxpayAmount + alipayAmount + cashAmount + otherAmount;
+		
+		// 允许0.01的误差（避免浮点数精度问题）
+		if (Math.abs(actualAmount - totalPaymentAmount) > 0.01) {
+			uni.showToast({
+				title: `支付金额不一致！实付${actualAmount.toFixed(2)}元，支付方式总额${totalPaymentAmount.toFixed(2)}元`,
+				icon: "error",
+				duration: 3000
+			});
+			return;
+		}
+		
+		if (this.currentMember.id != null && this.currentMember.id != "" && this.memberEventInfo
+			.collectBasketNum > 0) {
+			await this.payBasket_beforePay();
+		}
+		//打开收银界面
+		this.orderSend();
+	},
 			resetAction() {
 				let that = this;
 				uni.showModal({
@@ -4332,19 +3894,27 @@
 				})
 			},
 
-			downLoadImage(base64) {
-				let that = this;
-				const bitmap = new plus.nativeObj.Bitmap("test");
-				bitmap.loadBase64Data(base64, function() {
-					const url = "_doc/" + new Date().getTime() + ".png"; // url为时间戳命名方式
-					bitmap.save(url, {
-						overwrite: true, // 是否覆盖
-						quality: 10 // 图片清晰度
-					}, (i) => {
-						uni.saveImageToPhotosAlbum({
-							filePath: url,
-							success: function() {
-								that.shareImage(url);
+		downLoadImage(base64) {
+			// #ifdef APP-PLUS
+			let that = this;
+			if (typeof plus === 'undefined') {
+				uni.showToast({
+					title: '此功能仅在 APP 中可用',
+					icon: 'none'
+				});
+				return;
+			}
+			const bitmap = new plus.nativeObj.Bitmap("test");
+			bitmap.loadBase64Data(base64, function() {
+				const url = "_doc/" + new Date().getTime() + ".png"; // url为时间戳命名方式
+				bitmap.save(url, {
+					overwrite: true, // 是否覆盖
+					quality: 10 // 图片清晰度
+				}, (i) => {
+					uni.saveImageToPhotosAlbum({
+						filePath: url,
+						success: function() {
+							that.shareImage(url);
 								uni.showToast({
 									title: '图片保存成功',
 									icon: 'none'
@@ -4366,6 +3936,7 @@
 					})
 					bitmap.clear()
 				});
+			// #endif
 			},
 			shareOrder(id) {
 				cashierOrder.GetCanvasBase64ById(id).then(res => {
@@ -4397,6 +3968,144 @@
 <style lang="scss" scoped>
 	@import "@/common/css/cashier.scss";
 
+	/* 商品网格项样式 */
+	.grid-item {
+		width: 100rpx;
+		height: 100px; /* 固定高度 */
+		padding: 5px;
+		margin-left: 5px;
+		margin-top: 5px;
+		border-radius: 3px;
+		background: #ffffff;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		overflow: hidden; /* 隐藏超出内容 */
+		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
+		
+		/* 商品名称不换行，超出隐藏 */
+		> div:first-child {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		
+		/* 底部信息区域 */
+		> div:last-child {
+			overflow: hidden;
+			flex: 1;
+			min-height: 0;
+			
+			/* 标签行不换行 */
+			> div:first-child {
+				white-space: nowrap;
+				overflow: hidden;
+			}
+			
+			/* 库存行不换行 */
+			> div:last-child {
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+		}
+	
+	}
+	
+	.grid-item-active {
+		border-color: #00aaff;
+		background: #c9eafc;
+		box-shadow: 0 4px 12px rgba(0, 170, 255, 0.3);
+		font-weight: bold;
+	}
+
+	/* 确保整体布局响应式 */
+	.cashier {
+		width: 100%;
+		height: 100%;
+		position: relative;
+	}
+
+	/* 确保左侧商品区域占据正确的空间 */
+	.cashier-goods {
+		.card-body {
+			width: 100%;
+			height: 100%;
+		}
+	}
+
+	/* 确保右侧卡片在 step1 和 step2 切换时保持一致 */
+	.cashier-card {
+		transition: none;
+		
+		.card-body {
+			width: 100%;
+			box-sizing: border-box;
+			
+			/* 确保内部元素不超出容器 */
+			> * {
+				max-width: 100%;
+				box-sizing: border-box;
+			}
+		}
+	}
+
+	/* Step2 输入行的响应式布局 */
+	.cashier-card .card-body > div[style*="display: flex"] {
+		width: 100%;
+		box-sizing: border-box;
+		flex-wrap: wrap;
+		gap: 8rpx;
+	}
+
+	/* 响应式字体大小 - 在小宽度下减小字体 */
+	@media screen and (max-width: 1366px) {
+		.header-cell,
+		.table-cell {
+			font-size: 11rpx;
+		}
+		
+		.name-text {
+			font-size: 12rpx;
+		}
+		
+		.btn-submit {
+			padding: 12px 18px !important;
+			font-size: 16px !important;
+			min-width: 80px !important;
+			height: 45px !important;
+		}
+		
+		.shipping-text {
+			font-size: 14px !important;
+		}
+	}
+	
+	/* 极小屏幕优化 */
+	@media screen and (max-width: 1024px) {
+		.btn-submit {
+			padding: 10px 14px !important;
+			font-size: 14px !important;
+			min-width: 70px !important;
+			height: 40px !important;
+			letter-spacing: 1px !important;
+		}
+		
+		.card-footer {
+			padding: 6px 8px;
+		}
+		
+		.shipping-info {
+			padding: 8px 12px !important;
+			height: 40px !important;
+		}
+		
+		.shipping-text {
+			font-size: 13px !important;
+		}
+	}
+
 	.Numberinput {
 		display: flex;
 		align-items: center;
@@ -4410,6 +4119,13 @@
 		animation: mytreat 1.5s linear infinite;
 	}
 
+	.mybrankmask {
+		width: 100%;
+		max-width: 400rpx;
+		box-sizing: border-box;
+		padding: 0 5rpx;
+	}
+
 	.mybrankmask .MymaskList {
 		font-weight: bold;
 		display: flex;
@@ -4418,7 +4134,8 @@
 		justify-content: space-around;
 		margin-bottom: 5rpx;
 		font-size: 20rpx;
-
+		box-sizing: border-box;
+		gap: 5rpx;
 	}
 
 	.mybrankmask .MymaskList .large {
@@ -4433,7 +4150,8 @@
 
 	.mybrankmask .MymaskList .maskListItem {
 		font-weight: bold;
-		width: 23%;
+		flex: 1;
+		min-width: 0;
 		height: 40rpx;
 		text-align: center;
 		line-height: 40rpx;
@@ -4441,13 +4159,13 @@
 		color: #ffffff;
 		background-color: #5d5d5d;
 		font-size: 25rpx;
+		box-sizing: border-box;
+		transition: all 0.1s ease;
 	}
 
 	.mybrankmask .MymaskList .maskListItem:active {
-		width: 25%;
-		height: 45rpx;
-		margin-top: -3rpx;
-		margin-left: -1%;
+		transform: scale(1.05);
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 	}
 
 	.mybrankmask .MymaskList .maskListItem2 {
@@ -4462,6 +4180,13 @@
 		font-size: 12rpx;
 	}
 
+	.mybrankmask2 {
+		width: 100%;
+		max-width: 400rpx;
+		box-sizing: border-box;
+		padding: 0 5rpx;
+	}
+
 	.mybrankmask2 .MymaskList {
 		display: flex;
 		width: 100%;
@@ -4469,11 +4194,14 @@
 		justify-content: space-around;
 		margin-bottom: 5rpx;
 		font-size: 12rpx;
+		box-sizing: border-box;
+		gap: 5rpx;
 	}
 
 	.mybrankmask2 .MymaskList .maskListItem {
 		font-weight: bold;
-		width: 30%;
+		flex: 1;
+		min-width: 0;
 		height: 40rpx;
 		color: #ffffff;
 		background-color: #5d5d5d;
@@ -4481,13 +4209,13 @@
 		line-height: 40rpx;
 		border-radius: 10rpx;
 		font-size: 30rpx;
+		box-sizing: border-box;
+		transition: all 0.1s ease;
 	}
 
 	.mybrankmask2 .MymaskList .maskListItem:active {
-		width: 32%;
-		height: 45rpx;
-		margin-top: -3rpx;
-		margin-left: -1%;
+		transform: scale(1.05);
+		box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 	}
 
 	.mybrankmask2 .MymaskList .maskListItem2 {
@@ -4527,25 +4255,26 @@
 	.custom-input {
 		font-weight: bold;
 		border: 2px solid #9c9c9c;
-		/* 默认边框颜色 */
 		border-radius: 5px;
-		/* 可选：设置圆角 */
-		padding: 5px;
-		/* 可选：添加内边距 */
+		padding: 5px 8px;
 		height: 55rpx;
-		width: 45%;
-		/* 可选：设置宽度 */
+		min-height: 55rpx;
+		flex: 1;
+		min-width: 0;
+		max-width: 48%;
 		box-sizing: border-box;
-		/* 确保内边距和边框包含在宽度内 */
-		transition: border-color 0.3s;
-		/* 添加过渡效果 */
+		transition: border-color 0.3s, transform 0.2s;
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
 	}
 
 	.input-focused {
-		height: 55rpx;
-		width: 47%;
 		border: 3px solid #31BDEC;
-		/* 聚焦时边框颜色 */
+		transform: scale(1.02);
+		box-shadow: 0 2px 8px rgba(49, 189, 236, 0.2);
 	}
 
 	/* 现代化收银弹窗样式 */
@@ -4581,26 +4310,42 @@
 			}
 		}
 
-		.customer-info-section {
-			margin-bottom: 12rpx;
-			text-align: center;
+	.customer-info-section {
+		margin-bottom: 12rpx;
+		text-align: center;
+		transition: all 0.3s ease;
+		
+		&.flash-red {
+			animation: flashRed 0.5s ease-in-out 2;
+		}
 
-			.customer-badge {
-				display: inline-block;
-				padding: 8rpx 16rpx;
-				border-radius: 16rpx;
-				font-weight: 600;
-				font-size: 24rpx;
-				color: white;
-				box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+	.customer-badge {
+		display: inline-block;
+		padding: 8rpx 16rpx;
+		border-radius: 16rpx;
+		font-weight: 600;
+		font-size: 24rpx;
+		color: white;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+		cursor: pointer;
+		transition: all 0.3s ease;
 
-				&.normal {
-					background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-				}
+		&:hover {
+			transform: translateY(-2rpx);
+			box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
+		}
 
-				&.debt {
-					background: linear-gradient(135deg, #ef4444, #dc2626);
-				}
+		&:active {
+			transform: translateY(0);
+		}
+
+		&.normal {
+			background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+		}
+
+		&.debt {
+			background: linear-gradient(135deg, #ef4444, #dc2626);
+		}
 
 				.customer-name {
 					font-size: 26rpx;
@@ -5076,15 +4821,351 @@
 		font-size: 12rpx;
 	}
 
+	/* 现代简洁风格表格样式 */
+	.modern-table-header {
+		display: flex;
+		align-items: center;
+		background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+		padding: 8rpx 5rpx;
+		box-shadow: 0 2px 8px rgba(24, 144, 255, 0.25);
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.header-cell {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: #ffffff;
+		font-size: 12rpx;
+		font-weight: 600;
+		letter-spacing: 0.3rpx;
+		flex-shrink: 0;
+		padding: 0 2rpx;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		min-width: 0;
+		box-sizing: border-box;
+	}
+
+	.header-name { 
+		flex: 0 0 26%; 
+		min-width: 0; 
+		justify-content: flex-start;
+		padding-left: 4rpx;
+	}
+	.header-quantity { flex: 0 0 12%; min-width: 0; }
+	.header-price { flex: 0 0 13%; min-width: 0; }
+	.header-weight { flex: 0 0 28%; min-width: 0; }
+	.header-subtotal { flex: 0 0 15%; min-width: 0; }
+	.header-action { 
+		flex: 0 0 6%; 
+		min-width: 0;
+		justify-content: center;
+	}
+
+	.modern-table-body {
+		background: #ffffff;
+		border-radius: 0 0 8rpx 8rpx;
+		overflow: hidden;
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.modern-table-row {
+		display: flex;
+		align-items: center;
+		padding: 8rpx 4rpx;
+		border-bottom: 1px solid #f0f0f0;
+		transition: all 0.2s ease;
+		cursor: pointer;
+		width: 100%;
+		min-height: 45rpx;
+		box-sizing: border-box;
+	}
+
+	.modern-table-row:hover {
+		background: linear-gradient(to right, #ffffff 0%, #e6f7ff 100%);
+		transform: translateX(2rpx);
+		box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+	}
+
+	.modern-table-row:last-child {
+		border-bottom: none;
+	}
+
+	.table-cell {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 13rpx;
+		color: #333333;
+		flex-shrink: 0;
+		min-width: 0;
+		overflow: hidden;
+		padding: 0 2rpx;
+		box-sizing: border-box;
+	}
+
+	.cell-name {
+		flex: 0 0 26%;
+		justify-content: flex-start;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 3rpx;
+		padding-left: 4rpx;
+		min-width: 0;
+		overflow: hidden;
+		box-sizing: border-box;
+	}
+
+	.name-text {
+		font-weight: 600;
+		color: #2c3e50;
+		font-size: 13rpx;
+		word-break: break-all;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		width: 100%;
+		line-height: 1.3;
+	}
+
+	.extra-tag {
+		display: inline-block;
+		padding: 1rpx 5rpx;
+		background: linear-gradient(135deg, #ff9c6e 0%, #ff7a45 100%);
+		color: #ffffff;
+		font-size: 9rpx;
+		border-radius: 3rpx;
+		font-weight: 500;
+		letter-spacing: 0.2rpx;
+		white-space: nowrap;
+		box-shadow: 0 1px 4px rgba(255, 122, 69, 0.3);
+	}
+
+	.cell-quantity {
+		flex: 0 0 12%;
+		font-weight: 700;
+		color: #096dd9;
+		font-size: 13rpx;
+		min-width: 0;
+		box-sizing: border-box;
+	}
+
+	.cell-price {
+		flex: 0 0 13%;
+		font-weight: 500;
+		color: #555555;
+		font-size: 12rpx;
+		min-width: 0;
+		box-sizing: border-box;
+	}
+
+	.cell-weight {
+		flex: 0 0 28%;
+		flex-direction: column;
+		gap: 2rpx;
+		min-width: 0;
+		box-sizing: border-box;
+	}
+
+	.weight-main {
+		font-weight: 600;
+		color: #2c3e50;
+		font-size: 13rpx;
+	}
+
+	.weight-detail {
+		font-size: 9rpx;
+		color: #999999;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.cell-subtotal {
+		flex: 0 0 15%;
+		font-weight: 700;
+		background: linear-gradient(135deg, #ff4d4f 0%, #f5222d 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+		font-size: 14rpx;
+		min-width: 0;
+		box-sizing: border-box;
+	}
+
+	.cell-action {
+		flex: 0 0 6%;
+		cursor: pointer;
+		transition: transform 0.2s ease;
+		min-width: 0;
+		justify-content: center;
+		align-items: center;
+		box-sizing: border-box;
+	}
+
+	.cell-action:hover {
+		transform: scale(1.2);
+	}
+
+	/* 空状态样式 */
+	.empty-state {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 60rpx 20rpx;
+		margin-top: 20rpx;
+		width: 100%;
+		box-sizing: border-box;
+	}
+
+	.empty-text {
+		margin-top: 16rpx;
+		font-size: 16rpx;
+		color: #909399;
+		font-weight: 500;
+		text-align: center;
+	}
+
+	.empty-hint {
+		margin-top: 8rpx;
+		font-size: 12rpx;
+		color: #c0c4cc;
+		text-align: center;
+	}
+
+	/* 运费信息样式 */
+	.shipping-info {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		cursor: pointer;
+		padding: 10px 16px;
+		border-radius: 8px;
+		background: linear-gradient(135deg, #ffffff 0%, #e6f7ff 100%);
+		border: 2px solid #1890ff;
+		transition: all 0.2s ease;
+		height: 50px;
+		box-sizing: border-box;
+
+		&:hover {
+			background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%);
+			transform: translateY(-2px);
+			box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+			border-color: #40a9ff;
+		}
+
+		&:active {
+			transform: translateY(0);
+			box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
+		}
+
+		.shipping-text {
+			background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			background-clip: text;
+			font-weight: 600;
+			font-size: 16px;
+			white-space: nowrap;
+		}
+	}
+
+	/* 现代按钮样式 */
+	.modern-btn {
+		border-radius: 8px;
+		font-weight: 600;
+		transition: all 0.3s ease;
+		box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+		cursor: pointer;
+
+		&:hover {
+			transform: translateY(-2px) scale(1.02);
+			box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+		}
+
+		&:active {
+			transform: translateY(0) scale(1);
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		}
+	}
+	
+	/* 挂单按钮特殊样式 */
+	.btn-primary-plain.btn-submit {
+		border: 2px solid #1890ff !important;
+		color: #1890ff !important;
+		font-weight: 600;
+		background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%) !important;
+		
+		&:hover {
+			background: linear-gradient(135deg, #e6f7ff 0%, #bae7ff 100%) !important;
+			border-color: #40a9ff !important;
+			color: #096dd9 !important;
+			box-shadow: 0 6px 20px rgba(24, 144, 255, 0.2);
+		}
+	}
+	
+	/* 结账按钮特殊样式 */
+	.btn-primary.btn-submit {
+		font-weight: 700;
+		background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
+		border: none !important;
+		
+		&:hover {
+			background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
+			box-shadow: 0 6px 20px rgba(24, 144, 255, 0.4);
+		}
+	}
+
+	/* 现代客户按钮样式 */
+	.modern-customer-btn {
+		cursor: pointer;
+		
+		&:hover {
+			transform: translateY(-2px) scale(1.02);
+			filter: brightness(1.1);
+		}
+
+		&:active {
+			transform: translateY(0) scale(1);
+		}
+	}
+	
+	/* 主客户按钮特殊样式 */
+	.main-customer-btn:hover {
+		box-shadow: 0 5px 14px rgba(56, 158, 13, 0.4) !important;
+		filter: brightness(1.15) !important;
+	}
+	
+	/* 动态客户按钮特殊样式 */
+	.dynamic-customer-btn:hover {
+		transform: translateY(-2px) scale(1.02) !important;
+		filter: brightness(1.15) !important;
+	}
+
 
 	.step1-input {
 		font-size: 20rpx;
 		font-weight: bold;
 		text-align: center;
+		width: 100%;
+		/* 占满custom-input的宽度 */
+		display: block;
+		/* 使其成为块级元素 */
 	}
 
 	.currency-label {
-		margin-top: 15rpx
+		position: absolute;
+		/* 绝对定位 */
+		right: 5px;
+		/* 固定在右侧 */
+		bottom: 5px;
+		/* 固定在底部 */
+		font-size: 12rpx;
+		/* 可选：调整字体大小 */
 	}
 
 
@@ -5229,6 +5310,8 @@
 		text-align: center;
 		border-radius: 5rpx;
 		padding: 5rpx;
+		padding-left: 15rpx;
+		padding-right: 15rpx;
 		font-size: 15rpx;
 		font-weight: bold;
 		color: darkgrey;
@@ -5251,6 +5334,8 @@
 		overflow: hidden;
 		box-sizing: border-box;
 		flex-shrink: 0;
+		margin: -8px;
+		padding: 0;
 	}
 
 	.customer-scroll-view ::-webkit-scrollbar {
@@ -5263,6 +5348,8 @@
 		max-width: 100%;
 		box-sizing: border-box;
 		overflow: hidden;
+		padding: 0;
+		margin: 0;
 	}
 
 	/* 商品搜索框样式 */
@@ -5277,27 +5364,71 @@
 		display: flex;
 		align-items: center;
 		gap: 10rpx;
+		width: 100%;
+		box-sizing: border-box;
 	}
 	.search-input-wrapper {
 		position: relative;
 		display: flex;
-		width: 245rpx;
 		margin: 0;
 		margin-top: 2rpx;
 		margin-left: 18rpx;
+		margin-right: 5rpx;
 		margin-bottom: 5rpx;
-		height: 30rpx;
+		height: 25rpx;
 		padding: 2rpx;
 		align-items: center;
 		background: #fff;
-		border: 2px solid #ddd;
-		border-radius: 5px;
+		border-radius: 3px;
 		transition: all 0.3s ease;
+		flex: 1;
+		width: 100%;
+		box-sizing: border-box;
 	}
 
 	.search-input-wrapper:focus-within {
 		border-color: #007bff;
 		box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.25);
+	}
+
+	.search-input {
+		flex: 1;
+		border: none;
+		outline: none;
+		font-size: 14rpx;
+		background: transparent;
+		width: calc(100vw - 438rpx);
+		max-width: 1200rpx;
+		min-width: 200rpx;
+	}
+
+	.search-input::placeholder {
+		color: #999;
+	}
+
+	.clear-btn {
+		position: absolute;
+		right: 5rpx;
+		top: 50%;
+		transform: translateY(-50%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		padding: 2px;
+		flex-shrink: 0;
+	}
+
+	.search-icon {
+		flex-shrink: 0;
+		margin-right: 4px;
+	}
+
+	.vertical-tab {
+		position: absolute;
+		left: 0;
+		top: 0;
+		z-index: 10;
 	}
 
 	.goods-search-input {
@@ -5318,14 +5449,6 @@
 		font-style: italic;
 	}
 
-	.search-icon {
-		position: absolute;
-		right: 15px;
-		color: #6c757d;
-		font-size: 18px;
-		pointer-events: none;
-	}
-
 	.clear-icon {
 		position: absolute;
 		right: 15px;
@@ -5342,291 +5465,376 @@
 		color: #dc3545;
 	}
 	
-	/* 运费弹窗样式 */
-	.shipping-modal-mask {
+	/* 商品加载动画样式 */
+	.loading-container {
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		min-height: 400px;
+		width: 100%;
+	}
+	
+	.loading-spinner {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 20px;
+	}
+	
+	.spinner {
+		width: 60px;
+		height: 60px;
+		border: 4px solid #f0f0f0;
+		border-top: 4px solid #00aaff;
+		border-radius: 50%;
+		animation: spin 1s linear infinite;
+	}
+	
+	@keyframes spin {
+		0% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(360deg);
+		}
+	}
+	
+	.loading-text {
+		font-size: 18px;
+		color: #666;
+		font-weight: 500;
+		letter-spacing: 1px;
+	}
+	
+	/* 规格选择弹窗样式（拆包） - 与分级弹窗保持一致 */
+	.spec-popup-mask {
 		position: fixed;
 		top: 0;
 		left: 0;
-		right: 0;
-		bottom: 0;
-		background-color: rgba(0, 0, 0, 0.5);
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.3);
+		z-index: 9998;
+		animation: fadeIn 0.2s ease-out;
+	}
+	
+	.spec-popup-container {
+		position: fixed;
+		min-width: 250px;
+		max-width: 500px;
+		background-color: #ffffff;
+		border: 3px solid #00aaff;
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+		z-index: 9999;
+		animation: scaleIn 0.2s ease-out;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.spec-popup-content {
+		padding: 5px;
+		overflow-y: auto;
+		max-height: 450px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	
+	.spec-item {
+		min-height: 70px;
+		padding: 12px;
+		border: 3px solid #7e7e7e;
+		border-radius: 8px;
+		background: #ffffff;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	
+	.spec-item:hover {
+		border-color: #00aaff;
+		background: linear-gradient(135deg, rgba(0, 170, 255, 0.05) 0%, rgba(0, 136, 204, 0.05) 100%);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
+	}
+	
+	.spec-item:active {
+		transform: translateY(0);
+		box-shadow: 0 2px 6px rgba(0, 170, 255, 0.3);
+	}
+	
+	.spec-item-name {
+		font-size: 18rpx;
+		font-weight: bold;
+		color: #333;
+		line-height: 1.4;
+		word-break: break-all;
+	}
+	
+	.spec-item-info {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	
+	.spec-item-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+	
+	/* 淡入动画 */
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+	
+/* 缩放动画 */
+@keyframes scaleIn {
+	from {
+		transform: scale(0.8);
+		opacity: 0;
+	}
+	to {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+
+/* 红色闪烁动画 - 用于客户信息区域 */
+@keyframes flashRed {
+	0%, 100% {
+		background-color: transparent;
+	}
+	50% {
+		background-color: rgba(239, 68, 68, 0.5);
+	}
+}
+
+/* 红色闪烁动画 - 用于实付金额输入框 */
+@keyframes flashRedRow {
+	0% {
+		border-color: #ef4444;
+		background-color: rgba(239, 68, 68, 0.1);
+		box-shadow: 0 0 0px rgba(239, 68, 68, 0);
+	}
+	25% {
+		border-color: #ef4444;
+		background-color: rgba(239, 68, 68, 0.3);
+		box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+		transform: scale(1.02);
+	}
+	50% {
+		border-color: #dc2626;
+		background-color: rgba(239, 68, 68, 0.5);
+		box-shadow: 0 0 25px rgba(239, 68, 68, 0.9);
+		transform: scale(1.03);
+	}
+	75% {
+		border-color: #ef4444;
+		background-color: rgba(239, 68, 68, 0.3);
+		box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+		transform: scale(1.02);
+	}
+	100% {
+		border-color: #ef4444;
+		background-color: rgba(239, 68, 68, 0.1);
+		box-shadow: 0 0 0px rgba(239, 68, 68, 0);
+		transform: scale(1);
+	}
+}
+
+/* 应用闪烁动画到输入框 */
+.input-row.flash-red-row {
+	animation: flashRedRow 0.5s ease-in-out 2;
+	border: 2px solid #ef4444 !important;
+}
+	
+	/* 分级商品弹窗样式 */
+	.multilevel-popup-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.3);
+		z-index: 9998;
+		animation: fadeIn 0.2s ease-out;
+	}
+	
+	.multilevel-popup-container {
+		position: fixed;
+		min-width: 250px;
+		max-width: 500px;
+		background-color: #ffffff;
+		border: 3px solid #00aaff;
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+		z-index: 9999;
+		animation: scaleIn 0.2s ease-out;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.multilevel-popup-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 15px 20px;
+		background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
+		border-bottom: 2px solid #0088cc;
+	}
+	
+	.multilevel-popup-title {
+		font-size: 20px;
+		font-weight: bold;
+		color: #ffffff;
+		letter-spacing: 1px;
+	}
+	
+	.multilevel-popup-close {
+		font-size: 24px;
+		font-weight: bold;
+		color: #ffffff;
+		cursor: pointer;
+		width: 30px;
+		height: 30px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		z-index: 9999;
-	}
-
-	.shipping-modal-wrapper {
-		width: 650px;
-		max-width: 90%;
-		max-height: 90vh;
-		overflow: hidden;
-		border-radius: 12px;
-		box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
-	}
-
-	.shipping-modal-container {
-		background: white;
-		overflow: hidden;
-	}
-	
-	.shipping-modal-header {
-		background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
-		padding: 20px 24px;
-		text-align: center;
-		color: white;
+		border-radius: 50%;
+		transition: all 0.2s;
 		
-		.header-icon-wrapper {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			width: 72px;
-			height: 72px;
-			margin: 0 auto 16px;
-			background: rgba(255, 255, 255, 0.2);
-			border-radius: 50%;
+		&:hover {
+			background-color: rgba(255, 255, 255, 0.2);
+			transform: rotate(90deg);
 		}
 		
-		.header-title {
-			display: block;
-			font-size: 30px;
-			font-weight: bold;
-			margin-bottom: 8px;
-		}
-		
-		.header-subtitle {
-			display: block;
-			font-size: 18px;
-			opacity: 0.9;
+		&:active {
+			background-color: rgba(255, 255, 255, 0.3);
 		}
 	}
 	
-	.shipping-modal-content {
-		padding: 32px 28px;
-		
-		.current-shipping-info {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			padding: 16px 20px;
-			background: #f0f9ff;
-			border-left: 4px solid #00aaff;
-			border-radius: 8px;
-			margin-bottom: 24px;
-			
-			.info-label {
-				display: flex;
-				align-items: center;
-				gap: 8px;
-				font-size: 18px;
-				color: #606266;
-			}
-			
-			.info-value {
-				font-size: 24px;
-				font-weight: bold;
-				color: #00aaff;
-			}
-		}
-		
-		.input-wrapper {
-			margin-bottom: 32px;
-			
-			.input-label {
-				display: flex;
-				align-items: center;
-				margin-bottom: 12px;
-				
-				.label-text {
-					font-size: 20px;
-					font-weight: 600;
-					color: #303133;
-				}
-				
-				.label-required {
-					color: #f56c6c;
-					margin-left: 6px;
-					font-size: 22px;
-				}
-			}
-			
-			.input-container {
-				display: flex;
-				align-items: center;
-				padding: 0 20px;
-				background: #fff;
-				border: 3px solid #dcdfe6;
-				border-radius: 10px;
-				transition: all 0.3s ease;
-				position: relative;
-				
-				&:focus-within {
-					border-color: #00aaff;
-					box-shadow: 0 0 0 4px rgba(0, 170, 255, 0.1);
-				}
-				
-				.input-prefix {
-					font-size: 28px;
-					font-weight: bold;
-					color: #909399;
-					margin-right: 6px;
-				}
-
-				.shipping-input {
-					flex: 1;
-					padding: 0px 0px 0px 10px;
-					border: none;
-					font-size: 20rpx;
-					font-weight: bold;
-					color: #303133;
-					outline: none;
-					background: transparent;
-				}
-				
-				.clear-shipping-btn {
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					padding: 4px 8px;
-					margin-left: 12px;
-					background: #f5f7fa;
-					color: #606266;
-					font-size: 18px;
-					font-weight: 600;
-					border: 2px solid #e4e7ed;
-					border-radius: 8px;
-					cursor: pointer;
-					transition: all 0.2s ease;
-					white-space: nowrap;
-					
-					&:hover {
-						background: #ecf5ff;
-						border-color: #b3d8ff;
-						color: #409eff;
-					}
-					
-					&:active {
-						background: #d9ecff;
-						transform: scale(0.96);
-					}
-				}
-			}
-			
-			.input-hint {
-				display: block;
-				margin-top: 10px;
-				font-size: 16px;
-				color: #909399;
-				padding-left: 6px;
-			}
-		}
-		
-		.quick-amount-section {
-			.section-label {
-				display: block;
-				font-size: 18px;
-				font-weight: 600;
-				color: #606266;
-				margin-bottom: 16px;
-			}
-			
-			.quick-amount-buttons {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 14px;
-				
-				.quick-amount-btn {
-					flex: 0 0 calc(25% - 10.5px);
-					padding: 18px 12px;
-					background: #f5f7fa;
-					border: 3px solid #e4e7ed;
-					border-radius: 10px;
-					font-size: 22px;
-					font-weight: bold;
-					color: #606266;
-					cursor: pointer;
-					transition: all 0.2s ease;
-					text-align: center;
-					
-					&:hover {
-						background: #ecf5ff;
-						border-color: #b3d8ff;
-						color: #409eff;
-					}
-					
-					&.active {
-						background: #00aaff;
-						border-color: #00aaff;
-						color: white;
-						transform: scale(1.05);
-					}
-					
-					&:active {
-						transform: scale(0.98);
-					}
-				}
-			}
-		}
-	}
-	
-	.shipping-modal-footer {
+	.multilevel-popup-content {
+		padding: 5px;
+		overflow-y: auto;
+		max-height: 450px;
 		display: flex;
-		gap: 16px;
-		padding: 20px 28px 28px;
-		background: #f8f9fa;
-		border-top: 1px solid #e9ecef;
+		flex-direction: column;
+		gap: 10px;
+	}
+	
+	.multilevel-grid-item {
+		min-height: 70px;
+		padding: 12px;
+		border: 3px solid #7e7e7e;
+		border-radius: 8px;
+		background: #ffffff;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
 		
-		button {
-			flex: 1;
-			height: 60px;
-			border-radius: 10px;
-			font-size: 20px;
-			font-weight: bold;
-			border: none;
-			cursor: pointer;
-			transition: all 0.2s ease;
-			display: flex;
-			align-items: center;
-			justify-content: center;
+		&:hover {
+			border-color: #00aaff;
+			background: #f0f9ff;
+			box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
+			transform: translateX(5px);
 		}
 		
-		.btn-cancel {
-			background: #f5f5f5;
-			color: #606266;
-			
-			&:hover {
-				background: #e9e9e9;
-			}
-			
-			&:active {
-				transform: scale(0.98);
-			}
+		&:active {
+			transform: translateX(5px) scale(0.98);
+			background: #e6f7ff;
 		}
-		
-		.btn-confirm {
-			background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
-			color: white;
-			box-shadow: 0 4px 12px rgba(0, 170, 255, 0.3);
-			
-			&:hover {
-				box-shadow: 0 6px 16px rgba(0, 170, 255, 0.4);
-				transform: translateY(-1px);
-			}
-			
-			&:active {
-				transform: translateY(0) scale(0.98);
-			}
-			
-			&.disabled {
-				background: #c0c4cc;
-				box-shadow: none;
-				cursor: not-allowed;
-				opacity: 0.6;
-				
-				&:hover {
-					transform: none;
-				}
-			}
-		}
+	}
+	
+	.multilevel-item-name {
+		font-size: 18rpx;
+		font-weight: bold;
+		color: #333;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	
+	.multilevel-item-info {
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+		font-size: 14px;
+	}
+	
+	.multilevel-item-tags {
+		display: flex;
+		gap: 5px;
+		flex-wrap: wrap;
+	}
+	
+	.tag {
+		padding: 2px 6px;
+		border-radius: 3px;
+		font-size: 12rpx;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+	
+	.tag-consignment {
+		color: dodgerblue;
+		border: 1px solid dodgerblue;
+		background: rgba(30, 144, 255, 0.1);
+	}
+	
+	.tag-self {
+		color: #792292;
+		border: 1px solid #792292;
+		background: rgba(121, 34, 146, 0.1);
+	}
+	
+	.tag-unfixed {
+		color: #00aa00;
+		border: 1px solid #00aa00;
+		background: rgba(0, 170, 0, 0.1);
+	}
+	
+	.tag-fixed {
+		color: #55aaff;
+		border: 1px solid #55aaff;
+		background: rgba(85, 170, 255, 0.1);
+	}
+	
+	.tag-unpack {
+		color: #dc9300;
+		border: 1px solid #dc9300;
+		background: rgba(220, 147, 0, 0.1);
+	}
+	
+	.tag-bulk {
+		color: #55aaff;
+		border: 1px solid #55aaff;
+		background: rgba(85, 170, 255, 0.1);
+	}
+	
+	.multilevel-item-stock {
+		font-size: 13rpx;
+		font-weight: 600;
+		color: #666;
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		flex-wrap: wrap;
+	}
+	
+	.stock-item {
+		margin-right: 8px;
 	}
 </style>

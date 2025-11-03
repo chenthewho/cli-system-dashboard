@@ -1,19 +1,20 @@
 <template>
 	  <div id="app">
-	    <div class="sidebar">
-	      <Sidebar  @update-content="updateCashierContent" />
+	    <div class="sidebar" v-show="cashierContent !== 'one'">
+	      <Sidebar ref="sidebarRef" @update-content="updateCashierContent" />
 	    </div>
-	    <div class="main-content">
+	    <div class="main-content" :class="{'no-sidebar': cashierContent === 'one'}">
 			<div class="content-area">							
-				<div v-if="cashierContent==='one'">
-					 <Cashier ref="orderRef" />
+				<div v-show="cashierContent==='one'">
+					 <Cashier ref="orderRef" @goToManagement="switchToManagement" />
 				</div>
-		  <order ref="orderRef2"  v-if="cashierContent==='two'" />
-		  <goodIndex ref="goodIndexRef" v-if="cashierContent==='three'"/>
-		  <setting v-if="cashierContent==='six'"/>
-		  <staticPage v-if="cashierContent==='four'"/>
-		  <settlementIndex v-if="cashierContent==='five'"/>
-		  <rotating v-if="cashierContent==='seven'"/>
+		  <order ref="orderRef2"  v-show="cashierContent==='two'" />
+		  <goodIndex ref="goodIndexRef" v-show="cashierContent==='three'"/>
+		  <setting v-show="cashierContent==='six'"/>
+		  <staticPage v-show="cashierContent==='four'"/>
+		  <settlementIndex ref="settlementIndexRef" v-show="cashierContent==='five'"/>
+		  <rotating ref="rotatingRef" v-show="cashierContent==='seven'"/>
+		  <shipperManagement ref="shipperManagementRef" v-show="cashierContent==='eight'"/>
 		  </div>
 	    </div>
 	  </div>
@@ -28,6 +29,7 @@ import setting from '../setting/setting.vue'
 import staticPage from '../static/static.vue'
 import rotating from '../rotating/rotatingIndex.vue'
 import settlementIndex from '../settlement/settlementIndex.vue'
+import shipperManagement from '../shipper/shipperManagement.vue'
 export default {
   components: {
 	  Cashier,
@@ -37,7 +39,8 @@ export default {
 	setting,
 	staticPage,
 	rotating,
-	settlementIndex
+	settlementIndex,
+	shipperManagement
   }, data() {
     return {
       cashierContent: 'one', 
@@ -75,15 +78,43 @@ export default {
 	   refreshallBatch(){
 	   		this.$refs.goodIndexRef.refreshAllBatch();
 	   },
-      updateCashierContent(newContent) {
-		 // this.$refs.orderRef.onLoadMethod();
-        this.cashierContent = newContent; 
-		// if(this.cashierContent==='one'){
-		// 	this.$refs.orderRef.onLoadMethod();
-		// }else if(this.cashierContent==='two'){
-		// 	this.$refs.orderRef2.onshowMethed();
-		// }
-      },
+   updateCashierContent(newContent) {
+     this.cashierContent = newContent;
+	   // 切换到对应页面时刷新数据
+	   this.$nextTick(() => {
+		   if(this.cashierContent === 'one' && this.$refs.orderRef){
+			   this.$refs.orderRef.refreshPage();
+		   } else if(this.cashierContent === 'two' && this.$refs.orderRef2){
+			   this.$refs.orderRef2.onshowMethed();
+		   } else if(this.cashierContent === 'five' && this.$refs.settlementIndexRef){
+			   // 切换到结算页面时刷新tabs组件
+			   setTimeout(() => {
+				   if(this.$refs.settlementIndexRef.refreshTabs){
+					   this.$refs.settlementIndexRef.refreshTabs();
+				   }
+			   }, 200);
+	   } else if(this.cashierContent === 'three' && this.$refs.goodIndexRef){
+		   // 切换到商品管理页面时刷新数据
+		   this.$refs.goodIndexRef.refreshPage();
+	   } else if(this.cashierContent === 'seven' && this.$refs.rotatingRef){
+		   // 切换到轮班页面时刷新数据
+		   this.$refs.rotatingRef.refreshPage();
+	   } else if(this.cashierContent === 'eight' && this.$refs.shipperManagementRef){
+		   // 切换到货主管理页面时刷新数据
+		   console.log('切换到货主管理页面');
+	   }
+	   });
+   },
+	  switchToManagement() {
+		  // 切换到订单页面
+		  this.cashierContent = 'two';
+		  // 更新 sidebar 的激活状态
+		  this.$nextTick(() => {
+			  if (this.$refs.sidebarRef) {
+				  this.$refs.sidebarRef.setActiveItem('two');
+			  }
+		  });
+	  }
     },
 };
 </script>
@@ -107,5 +138,9 @@ export default {
  background-color: gray;
   margin-left: 40rpx; /* 主内容区左边距与侧边栏宽度相同 */
   flex-grow: 1; /* 主内容区占据剩余空间 */
+}
+
+.main-content.no-sidebar {
+  margin-left: 0; /* 当隐藏 sidebar 时，移除左边距 */
 }
 </style>

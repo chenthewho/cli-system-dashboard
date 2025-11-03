@@ -19,5 +19,10 @@ export default {
 	getPurchaseCommodityProfit(commodityId){
 		return http.get(`/PurchaseOrder/getPurchaseCommodityProfit?commodityId=${commodityId}`)
 	},
-	
+	DeletePurchaseOrder(purchaseOrderId){
+		return http.get(`/PurchaseOrder/Delete?purchaseOrderId=${purchaseOrderId}`)
+	},
+	modifyCommodityByPurchaseOrder(data){
+		return http.post(`/PurchaseOrder/ModifyCommodityByPurchaseOrder`,data)
+	}
 }

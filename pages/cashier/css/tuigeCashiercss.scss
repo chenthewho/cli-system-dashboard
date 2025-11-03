@@ -1,16 +1,11 @@
+// 导入主题变量
+@import "@/common/css/theme.scss";
+
 .card-body-empty {
 	flex: 1;
 }
 .vertical-tab{
  width: 70px;	
-}
-.vertical-tab2{
-	width: 50px;	
-	height: 300px;
-	background-color: white;
-	margin-top: 5px;
-	margin-left: 5px;
-	border-radius: 2rpx;;
 }
 .sidebar {
 	width: 60px;
@@ -506,4 +501,216 @@
 
 .slide-up-enter, .slide-up-leave-to {
   transform: translateY(0); /* 进入时从下方滑入，离开时滑出 */
+}
+
+/* ============ Cashier 布局样式 ============ */
+.cashier-row {
+	display: flex;
+	align-items: stretch;
+	height: calc(100vh - 50px);
+	background-color: #f3f4f6;
+	border-radius: 4px;
+	width: 100vw;
+	gap: 6px;
+	position: relative;
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+	overflow: hidden;
+
+	// 左侧商品区域 - 占60%
+	.cashier-goods {
+		flex: 0 0 60%;
+		min-width: 0;
+		position: relative;
+		overflow: hidden;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	// 右侧卡片区域 - 占40%，固定在最右边
+	.cashier-card {
+		flex: 0 0 40%;
+		min-width: 0;
+		position: fixed;
+		right: 0;
+		top: 50px;
+		width: 40vw;
+		height: calc(100vh - 50px);
+		overflow: hidden;
+		background-color: #ffffff;
+		box-sizing: border-box;
+		box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+	}
+
+	.cashier-col {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		width: 100%;
+		box-sizing: border-box;
+				
+		.card-title {
+			height: 40px;
+			min-height: 40px;
+			display: flex;
+			flex-flow: row;
+			justify-content: space-between;
+			align-items: center;
+			background-color: #e3f2fd;
+			padding: 0 8px;
+			overflow: hidden;
+			width: 100%;
+			box-sizing: border-box;
+			flex-shrink: 0;
+		}
+
+		.card-body {
+			text-align: left;
+			flex: 1 1 auto;
+			overflow-y: auto;
+			overflow-x: hidden;
+			display: flex;
+			flex-flow: column;
+			background: #ffffff;
+			width: 100%;
+			box-sizing: border-box;
+			min-height: 0;
+	     }
+
+		.card-sumarry {
+			background: linear-gradient(to right, #ffffff 0%, #f0f8ff 100%);
+			height: 40rpx;
+			min-height: 40rpx;
+			border-top: 3px solid #1890ff;
+			box-shadow: 0 -2px 10px rgba(24, 144, 255, 0.08);
+			width: 100%;
+			box-sizing: border-box;
+			flex-shrink: 0;
+			padding: 0 8px;
+			
+			.detail-list {
+				margin: 0;
+				padding: 0 8px;
+				display: flex;
+				flex-flow: column;
+				justify-content: center;
+				height: 100%;
+				width: 100%;
+				box-sizing: border-box;
+			}
+
+			.detail-item {
+				display: flex;
+				flex-flow: row;
+				justify-content: space-between;
+				align-items: center;
+				font-size: 15rpx;
+				color: #666;
+				width: 100%;
+				box-sizing: border-box;
+
+				&.payable {
+					font-size: 20rpx;
+					color: #000;
+
+					.amount {
+						color: $m-error;
+						font-weight: bold;
+						white-space: nowrap;
+					}
+				}
+			}
+		}
+
+		.card-footer {
+			height: 60rpx;
+			min-height: 60rpx;
+			display: flex;
+			flex-flow: row;
+			justify-content: space-between;
+			align-items: center;
+			background-color: #ffffff;
+			padding: 0 8px;
+			border-top: 1px solid #e9ecef;
+			width: 100%;
+			box-sizing: border-box;
+			flex-shrink: 0;
+		}
+	}
+}
+
+/* 客户按钮样式 */
+.customerbtn {
+	padding: 8rpx 16rpx;
+	margin: 2rpx;
+	cursor: pointer;
+	border-radius: 4px;
+	transition: all 0.3s ease;
+	user-select: none;
+
+	&:hover {
+		opacity: 0.9;
+	}
+
+	&:active {
+		transform: scale(0.98);
+	}
+}
+
+.modern-customer-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 4rpx;
+}
+
+.main-customer-btn {
+	font-weight: 700;
+	min-width: 60px;
+}
+
+/* 确保整体布局响应式 */
+.cashier {
+	width: 100%;
+	height: 100%;
+	position: relative;
+}
+
+// 响应式设计 - 确保在不同屏幕尺寸下都能正常工作
+@media screen and (max-width: 1366px) {
+	.cashier-row {
+		.cashier-goods {
+			flex: 0 0 55%;
+		}
+		
+		.cashier-card {
+			width: 45vw;
+		}
+	}
+}
+
+@media screen and (max-width: 1024px) {
+	.cashier-row {
+		.cashier-goods {
+			flex: 0 0 50%;
+		}
+		
+		.cashier-card {
+			width: 50vw;
+		}
+	}
+}
+
+@media screen and (min-width: 1920px) {
+	.cashier-row {
+		.cashier-goods {
+			flex: 0 0 65%;
+		}
+		
+		.cashier-card {
+			width: 35vw;
+		}
+	}
 }

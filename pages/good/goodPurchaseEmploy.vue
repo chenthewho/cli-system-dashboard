@@ -1,78 +1,20 @@
 <template>
 	<div>
 		<div style="display: flex; width: 100%;">
-			<div style="width: 220rpx; background-color: #ffffff;display: flex;">
-				<div>
-					<div style="display: flex;margin-left: 5rpx;margin-top: 5rpx;line-height: 18rpx;">
-						<div style="align-items: left;">
-							<button
-								style="height: 18rpx;line-height: 18rpx;color:#ffffff;font-weight: bold;background: #dddddd;"
-								@click="back"><uni-icons custom-prefix="iconfont" type="icon-fanhui" size="15"
-									color="#ffffff" style="margin-right: 5px;"></uni-icons>返回</button>
-						</div>
-						<text style="font-size: 15rpx;font-weight: bold;color: #333;margin-left: 10rpx;">选择货品</text>
-					</div>
-					<scroll-view class="scroll-view2" scroll-x style="height:60px;width: 200rpx;margin-top: 10px;">
-						<div style="margin-top: 5rpx;margin-left: 20rpx;">
-							<view :class="{'coach_wrap': true,'coach_wrap_active': activeType == item.name}"
-								v-for="(item, index) in tabList" :key="index" @click="changeTab(item)">
-								{{item.name}}
-							</view>
-
-						</div>
-					</scroll-view>
-					<div style="
-	          width: 205rpx;
-	          height: 30rpx;
-			  margin: 5rpx;
-	          background: grey;
-	          color: white;
-	          line-height: 30rpx;
-	          text-align: center;
-	          border-radius: 4rpx;
-	          cursor: pointer;
-			  font-size: 18rpx;
-	          user-select: none;
-	          font-weight: bold;
-	          " @click="showAddNewGood=true">
-						<uni-icons custom-prefix="iconfont" type="icon-plus-square" size="30" color="#ffffff"
-							style="margin-right: 5px;line-height: 30rpx;"></uni-icons>新增货品
-					</div>
-					<!-- 圆弧边卡片 -->
-					<div>
-						<scroll-view class="scrollArea" scroll-y="true"
-							:style="{ height: scrollHeight + 'px',width:'217rpx',backgroundColor:'#ddd' }">
-							<div
-								style="display: flex; flex-direction: column; gap: 5rpx;background-color: #ddd;height: 100%;">
-								<div style="margin-top: 2rpx;"></div>
-								<div style="display: flex; flex-wrap: wrap; ">
-									<div :id="'grid-item-'+item.id" :class="['clickCard',getCommdityActive(item.id)?'activeCard':'' ]"
-										@click="addCommodity(item)" v-for="item in commodityShowList">
-										<div>
-											<text style="font-size: 15rpx;font-weight: bold;">
-												{{item.commodityName}}
-											</text>
-											<br>
-											<text v-if="item.saleWay===1"
-												style="margin-top: 5rpx; font-size: 10rpx; padding-left: 2rpx;padding-right: 2rpx;color: #31BDEC;border: 1px solid #31BDEC;border-radius: 2rpx;">非定装</text>
-											<text v-if="item.saleWay===2"
-												style="margin-top: 5rpx; font-size: 10rpx; padding-left: 2rpx;padding-right: 2rpx;color: #00aa00;border: 1px solid #00aa00;border-radius: 2rpx;">定装</text>
-											<text v-if="item.saleWay===3"
-												style="margin-top: 5rpx; font-size: 10rpx; padding-left: 2rpx;padding-right: 2rpx;color: #aa55ff;border: 1px solid #aa55ff;border-radius: 2rpx;">定装拆包</text>
-											<text v-if="item.extralModel"
-												style="margin-top: 5rpx;margin-left: 5rpx; font-size: 10rpx; padding-left: 2rpx;padding-right: 2rpx;color: #ff5500;border: 1px solid #ff5500;border-radius: 2rpx;">{{item.extralModel.name}}</text>
-										</div>
-									</div>
-								</div>
-							</div>
-						</scroll-view>
-
-					</div>
-
-				</div>
-				<!-- 垂直线 -->
-				<div style="width: 3rpx; background-color: #ccc; "></div>
-			</div>
+			<!-- 商品选择器组件 -->
+			<GoodsSelector
+				:commodity-list="commodityList"
+				:category-list="tabListOrigin"
+				:selected-ids="selectedCommodityIds"
+				:height="scrollHeight"
+				:show-back-button="true"
+				:show-add-button="true"
+				@back="back"
+				@add-good="showAddNewGood=true"
+				@item-click="addCommodity"
+				@search="handleSearch"
+				@category-change="changeTab"
+			></GoodsSelector>
 			<div style="flex: 1; background-color: #ffffff; text-align: right;">
 				<div
 					style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx; display: flex; justify-content: space-between; align-items: center;">
@@ -80,76 +22,87 @@
 						{{currentShipper.shipperName}} — 采购单
 					</div>
 			<div style="font-size: 15rpx; font-weight: bold;">
-				<button v-if="totalExpense === 0" class="add-expense-btn" @click="showExpenseModal">添加费用</button>
-				<view v-else class="expense-label" @click="showExpenseModal">
-					<text class="expense-label-text">费用：¥{{ totalExpense.toFixed(2) }}</text>
+				<button v-if="expenseList.length === 0" class="add-expense-btn" @click="showExpenseManageModal">添加费用</button>
+				<view v-else class="expense-label" @click="showExpenseManageModal">
+					<text class="expense-label-text">费用({{ expenseList.length }}项)：¥{{ getTotalExpense().toFixed(2) }}</text>
 				</view>
 			</div>
 				</div>
 				<div :style="{marginLeft: '5rpx',marginRight: '5rpx', height: (windowHeight-60)+'px'}">
 				<!-- 表头 -->
-				<!-- 表头 -->
-				<div
-					style="display: flex; background-color: #b9b9b9 ; font-weight: bold; border-bottom: 1px solid #f4f4f4;">
-					<div style="flex: 3; padding: 8px; border-right: 1px solid #f4f4f4; text-align: left;">货品</div>
-					<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: left;">入库数量
+				<div class="table-header">
+					<div style="flex: 3; padding: 10px; text-align: left;">
+						<text style="font-size: 16px; font-weight: bold;">货品</text>
 					</div>
-					<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: left;">入库重量
+					<div style="flex: 2; padding: 10px; text-align: center;">
+						<text style="font-size: 16px; font-weight: bold;">入库数量</text>
 					</div>
-					<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: left;">采购单价
+					<div style="flex: 2; padding: 10px; text-align: center;">
+						<text style="font-size: 16px; font-weight: bold;">入库重量</text>
 					</div>
-					<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: left;">成本单价
+					<div style="flex: 2; padding: 10px; text-align: center;">
+						<text style="font-size: 16px; font-weight: bold;">采购单价</text>
 					</div>
-					<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: left;">入库金额
+					<div style="flex: 2; padding: 10px; text-align: center;">
+						<text style="font-size: 16px; font-weight: bold;">成本单价</text>
 					</div>
-					<div style="width: 40rpx;padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">操作
+					<div style="flex: 2; padding: 10px; text-align: center;">
+						<text style="font-size: 16px; font-weight: bold;">入库金额</text>
+					</div>
+					<div style="width: 40rpx;padding: 10px; text-align: center;">
+						<text style="font-size: 16px; font-weight: bold;">操作</text>
 					</div>
 				</div>
 
 					<scroll-view class="scrollArea" scroll-y="true" :style="{height:scrollHeight2}"
 						:scroll-into-view="targetId">
-						<div style="display: flex; height: 25rpx;" v-for="(item, index) in BatchCommodityList"
+						<div style="display: flex; height: 45rpx; font-size: 18rpx;" v-for="(item, index) in BatchCommodityList"
 							:id="'id-' + index + '-view'" :key="index"
 							:style="{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#f0f0f0' }">
 							<div
-								style="flex: 3; padding: 5px; text-align: left; font-weight: bold; line-height: 20rpx;">
+								style="flex: 3; padding: 8px; text-align: left; font-weight: bold; line-height: 35rpx;">
 
 								<!--商品名称栏-->
-								<view style="display: flex;">
+								<view style="display: flex; align-items: center;">
 									<!--左边-->
-									<view>
+									<view style="font-size: 20px;">
 										{{ item.name }}
 									</view>
 									<!--右边-->
-									<view>
-										<zero-switch @change="SwitchCalcType($event, item)" text-on="数量" text-off="重量"
+									<view v-if="item.saleWay === 1" style="margin-left: 10rpx;">
+										<zero-switch @change="SwitchCalcType($event, item)" text-on="重量" text-off="数量"
 											:show-text="true"></zero-switch>
 									</view>
 								</view>
 
 							</div>
-							<div style="flex: 2; padding: 4px; text-align: left;">
-								<input @click="showKeyBorad(index,1)" inputmode="none" class="input1"
-									v-model="item.initMount" />
-							</div>
-							<div style="flex: 2; padding: 4px; text-align: left;">
-								<input @click="showKeyBorad(index,2)" inputmode="none" class="input1"
-									v-model="item.initWeight" />
-							</div>
-						<div style="flex: 2; padding: 4px; text-align: left;">
-							<input @click="showKeyBorad(index,3)" inputmode="none" class="input1"
-								v-model="item.incomingPrice" />
+						<div style="flex: 2; padding: 8px; text-align: left; display: flex; align-items: center; justify-content: center; gap: 5rpx;">
+							<input @click="showKeyBorad(index,1)" inputmode="none" 
+								:class="['input1', { 'input-active': editingIndex === index && valueType === 1 }]"
+								v-model="item.initMount" />
+							<!-- <text style="font-size: 16px; color: #666; font-weight: 500; min-width: 40rpx;">{{ item.spec ? item.spec.specName : '件' }}</text> -->
 						</div>
-						<div style="flex: 2; padding: 4px; text-align: center; display: flex; align-items: center;">
-							<span style="font-weight: bold; color: #ff6600;font-size: 15rpx;">{{ getCostPrice(item) }}</span>
+						<div style="flex: 2; padding: 8px; text-align: left; display: flex; align-items: center; justify-content: center; gap: 5rpx;">
+							<input @click="showKeyBorad(index,2)" inputmode="none" 
+								:class="['input1', { 'input-active': editingIndex === index && valueType === 2 }]"
+								v-model="item.initWeight" />
 						</div>
-						<div style="flex: 2; padding: 4px; text-align: left;">
-							<input @click="showKeyBorad(index,4)" inputmode="none" class="input1"
-								v-model="item.inboundAmount" />
-						</div>
+					<div style="flex: 2; padding: 8px; text-align: left; display: flex; align-items: center; justify-content: center;">
+						<input @click="showKeyBorad(index,3)" inputmode="none" 
+							:class="['input1', { 'input-active': editingIndex === index && valueType === 3 }]"
+							v-model="item.incomingPrice" />
+					</div>
+					<div style="flex: 2; padding: 8px; text-align: center; display: flex; align-items: center; justify-content: center;">
+						<span style="font-weight: bold; color: #ff6600;font-size: 18rpx;">{{ getCostPrice(item) }}</span>
+					</div>
+					<div style="flex: 2; padding: 8px; text-align: left; display: flex; align-items: center; justify-content: center;">
+						<input @click="showKeyBorad(index,4)" inputmode="none" 
+							:class="['input1', { 'input-active': editingIndex === index && valueType === 4 }]"
+							v-model="item.inboundAmount" />
+					</div>
 							<div
-								style="width: 40rpx; padding: 4px; border-right: 1px solid #f4f4f4; text-align: center; line-height: 20rpx;">
-								<uni-icons custom-prefix="iconfont" type="icon-shanchu" size="20"
+								style="width: 40rpx; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center; line-height: 35rpx; display: flex; align-items: center; justify-content: center;">
+								<uni-icons custom-prefix="iconfont" type="icon-shanchu" size="24"
 									@click="deleteBatchCommdity(index)" color="#aa0000"></uni-icons>
 							</div>
 						</div>
@@ -177,48 +130,48 @@
 						</div>
 					</div>
 					</scroll-view>
-					<!--键盘-->
-					<div v-if="showKeyBoard1">
-						<view class="mybrankmask"
-							:style="{ width: '340rpx', height: '150rpx', backgroundColor: '#ffffff', zIndex: 999, left: 0, bottom: 0 }">
-							<view style="padding: 5rpx;">
-								<view class="MymaskList">
-									<view class="maskListItem" @click="NumberCk(1)">1</view>
-									<view class="maskListItem" @click="NumberCk(2)">2</view>
-									<view class="maskListItem" @click="NumberCk(3)">3</view>
-									<view class="maskListItem " @click="Tuige()"><uni-icons custom-prefix="iconfont"
-											type="icon-tuige" size="30" color="#ffffff"
-											style="margin-right: 5rpx;"></uni-icons>
-									</view>
+				<!--键盘-->
+				<div v-if="showKeyBoard1">
+					<view class="mybrankmask"
+						:style="{ width: '450rpx', height: '200rpx', backgroundColor: '#ffffff', zIndex: 999, left: 0, bottom: 0, boxShadow: '0 -4rpx 20rpx rgba(0,0,0,0.15)' }">
+						<view style="padding: 8rpx;">
+							<view class="MymaskList">
+								<view class="maskListItem" @click="NumberCk(1)">1</view>
+								<view class="maskListItem" @click="NumberCk(2)">2</view>
+								<view class="maskListItem" @click="NumberCk(3)">3</view>
+								<view class="maskListItem " @click="Tuige()"><uni-icons custom-prefix="iconfont"
+										type="icon-tuige" size="35" color="#ffffff"
+										style="margin-right: 5rpx;"></uni-icons>
+								</view>
 
-								</view>
-								<view class="MymaskList">
-									<view class="maskListItem" @click="NumberCk(4)">4</view>
-									<view class="maskListItem" @click="NumberCk(5)">5</view>
-									<view class="maskListItem" @click="NumberCk(6)">6</view>
+							</view>
+							<view class="MymaskList">
+								<view class="maskListItem" @click="NumberCk(4)">4</view>
+								<view class="maskListItem" @click="NumberCk(5)">5</view>
+								<view class="maskListItem" @click="NumberCk(6)">6</view>
 
-									<view class="maskListItem" @click="NumberCk('+')"
-										style="font-size: 25px;color: white;">
-										+</view>
-								</view>
-								<view class="MymaskList">
-									<view class="maskListItem" @click="NumberCk(7)">7</view>
-									<view class="maskListItem" @click="NumberCk(8)">8</view>
-									<view class="maskListItem" @click="NumberCk(9)">9</view>
-									<view class="maskListItem" @click="NumberCk('-')"
-										style="font-size: 25px;color: white;">
-										-</view>
-								</view>
-								<view class="MymaskList">
-									<view class="maskListItem" @click="NumberCk(0)" style="width: 48%;">0</view>
-									<view class="maskListItem" @click="NumberCk('.')">.</view>
-									<view class="maskListItem" style="background-color: #31BDEC;color: white;"
-										@click="hideBorad">确定
-									</view>
+								<view class="maskListItem" @click="NumberCk('+')"
+									style="font-size: 35rpx;color: white;">
+									+</view>
+							</view>
+							<view class="MymaskList">
+								<view class="maskListItem" @click="NumberCk(7)">7</view>
+								<view class="maskListItem" @click="NumberCk(8)">8</view>
+								<view class="maskListItem" @click="NumberCk(9)">9</view>
+								<view class="maskListItem" @click="NumberCk('-')"
+									style="font-size: 35rpx;color: white;">
+									-</view>
+							</view>
+							<view class="MymaskList">
+								<view class="maskListItem" @click="NumberCk(0)" style="width: 48%;">0</view>
+								<view class="maskListItem" @click="NumberCk('.')">.</view>
+								<view class="maskListItem confirm-btn"
+									@click="hideBorad">确定
 								</view>
 							</view>
 						</view>
-					</div>
+					</view>
+				</div>
 				</div>
 
 				<div style="position: fixed;bottom: 0;height: 30rpx;background: #ffffff;width: 100%;"
@@ -234,184 +187,94 @@
 		</div>
 
 
-	<!-- 添加新货品弹窗 -->
-	<view v-if="showAddNewGood" class="znj-add-good-modal-mask" @click="showAddNewGood = false">
-		<view class="znj-add-good-modal-wrapper" @click.stop>
-			<view class="znj-add-good-modal-container">
-				<!-- 标题栏 -->
-				<view class="znj-add-good-modal-header">
-					<text class="znj-add-good-modal-title">添加新货品</text>
-					<view class="znj-add-good-modal-close" @click="showAddNewGood = false; newGoodInfoReset();">
-						<uni-icons type="closeempty" size="24" color="#fff"></uni-icons>
-					</view>
+	<!-- 添加新货品弹窗 - 使用高级组件 -->
+	<AddGoodModalAdvanced 
+		:show="showAddNewGood" 
+		:unitList="unitList" 
+		:categoryList="tabListOrigin"
+		:extralModelList="extralModelList"
+		@close="showAddNewGood = false"
+		@confirm="handleAddNewGood"
+	/>
+
+	<!-- 费用管理弹窗 -->
+	<view v-if="expenseManageModalVisible" class="expense-modal-mask" @click="closeExpenseManageModal">
+		<view class="expense-modal-wrapper" @click.stop>
+			<view class="expense-modal-container">
+				<!-- 标题区域 -->
+				<view class="expense-modal-header">
+					<button class="expense-header-btn cancel" @click="closeExpenseManageModal">
+						<uni-icons type="closeempty" size="20" color="#ffffff"></uni-icons>
+						关闭
+					</button>
+					<text class="header-title">费用管理</text>
+					<button class="expense-header-btn confirm" @click="openAddExpenseModal">
+						<uni-icons type="plusempty" size="20" color="#fff"></uni-icons>
+						添加费用
+					</button>
 				</view>
 				
-				<!-- 内容区域 -->
-				<scroll-view scroll-y="true" class="znj-add-good-modal-body" :style="{ maxHeight: '70vh' }">
-					<view class="znj-add-good-form">
-					<!-- 货品名称 -->
-					<view class="znj-add-good-row">
-						<text class="znj-add-good-label">货品名称：</text>
-						<input class="znj-add-good-input" type="text" placeholder="请输入货品名称"
-							v-model="newGoodInfo.name" />
+				<!-- 费用列表 -->
+				<scroll-view scroll-y class="expense-list-content">
+					<view v-if="expenseList.length === 0" class="empty-expense-hint">
+						<uni-icons type="info" size="60" color="#c0c4cc"></uni-icons>
+						<text class="empty-text">暂无费用，点击右上角添加费用</text>
 					</view>
-					<!-- 计算方式 -->
-					<view class="znj-add-good-row">
-						<text class="znj-add-good-label">计算方式：</text>
-						<view class="znj-add-good-btn-group">
-							<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 1}" @click="changSaleType(1)">按重量</button>
-							<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 2}" @click="changSaleType(2)">按件数</button>
-							<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 3}" @click="changSaleType(3)">按件拆包</button>
-							<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 4}" @click="changSaleType(4)">散装</button>
-						</view>
-					</view>
-					<!-- 单位 -->
-					<view class="znj-add-good-row">
-					<text class="znj-add-good-label">单位：</text>
-					<view class="znj-add-good-unit-group" v-if="newGoodInfo.saleWay != 3">
-						<button v-for="unit in unitList.slice(0, 4)" :key="unit.id" 
-							class="znj-add-good-unit-btn" 
-							:class="{active: newGoodInfo.unit === unit.unitName}" 
-							@click="selectUnit(unit.unitName)">{{ unit.unitName }}</button>
-				</view>
-					<view v-else>
-						<select class="znj-add-good-unit-select" v-model="newGoodInfo.specList[0].specName" @change="updateMainUnit">
-							<option v-for="unit in unitList" :key="unit.id" :value="unit.unitName">{{ unit.unitName }}</option>
-						</select>
-					</view>
-					</view>
-					
-					<!-- 规格相关 -->
-					<div v-if="newGoodInfo.saleWay != 1">
-						<!-- 按件数规格 -->
-						<view class="znj-add-good-row" v-if="newGoodInfo.saleWay == 2">
-							<text class="znj-add-good-label">规格：</text>
-							<div class="znj-add-good-spec-box">
-								<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.unit }} =</span>
-								<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.price" placeholder="" />
-								<span class="znj-add-good-spec-suffix">元</span>
-							</div>
-						</view>
-						<!-- 按件拆包规格 -->
-						<view class="znj-add-good-row" v-if="newGoodInfo.saleWay == 3">
-							<text class="znj-add-good-label">规格一：</text>
-							<div class="znj-add-good-spec-box">
-								<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[0].specName }} =</span>
-								<input class="znj-add-good-spec-input" type="number" v-model="newGoodInfo.specList[0].fixprice" placeholder="" />
-								<span class="znj-add-good-spec-suffix">元</span>
-							</div>
-						</view>
-						<!-- 规格二 -->
-						<view class="znj-add-good-row" v-if="newGoodInfo.specList.length > 1">
-							<text class="znj-add-good-label">规格二：</text>
-							<div class="znj-add-good-spec-box">
-								<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[0].specName }} =</span>
-								<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.specList[1].fixcount" placeholder="" />
-						</div>
-						<select class="znj-add-good-unit-select" v-model="newGoodInfo.specList[1].specName">
-							<option v-for="unit in unitList" :key="unit.id" :value="unit.unitName">{{ unit.unitName }}</option>
-						</select>
-						<div class="znj-add-good-spec-box">
-								<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[1].specName }} =</span>
-								<input class="znj-add-good-spec-input" type="number" v-model="newGoodInfo.specList[1].fixprice" placeholder="" />
-								<span class="znj-add-good-spec-suffix">元</span>
-							</div>
-						</view>
-						<!-- 规格三 -->
-						<view class="znj-add-good-row" v-if="newGoodInfo.specList.length > 2">
-							<text class="znj-add-good-label">规格三：</text>
-							<div class="znj-add-good-spec-box">
-								<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[1].specName }} =</span>
-								<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.specList[2].fixcount" placeholder="" />
-						</div>
-						<select class="znj-add-good-unit-select" v-model="newGoodInfo.specList[2].specName">
-							<option v-for="unit in unitList" :key="unit.id" :value="unit.unitName">{{ unit.unitName }}</option>
-						</select>
-						<div class="znj-add-good-spec-box">
-								<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[2].specName }} =</span>
-								<input class="znj-add-good-spec-input" type="number" v-model="newGoodInfo.specList[2].fixprice" placeholder="" />
-								<span class="znj-add-good-spec-suffix">元</span>
-							</div>
-						</view>
-						<!-- 散装规格 -->
-						<view class="znj-add-good-row" v-if="newGoodInfo.saleWay == 4">
-							<text class="znj-add-good-label">规格：</text>
-							<div class="znj-add-good-spec-box">
-								<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.unit }} =</span>
-								<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.price" placeholder="" />
-								<span class="znj-add-good-spec-suffix">元</span>
-							</div>
-						</view>
-						<!-- 添加规格按钮 -->
-						<div v-if="newGoodInfo.saleWay === 3">
-							<view class="znj-add-good-row" v-if="newGoodInfo.specList.length < 3" style="margin-top: 10rpx;">
-								<text class="znj-add-good-label"></text>
-								<button class="znj-add-good-btn add" @click="addSpec">添加规格</button>
-							</view>
-						</div>
-					</div>
-					
-					<!-- 分割线 -->
-					<view class="znj-add-good-divider"></view>
-					
-					<!-- 单位重量 -->
-					<view class="znj-add-good-row" v-if="newGoodInfo.saleWay === 2">
-						<text class="znj-add-good-label">单位重量：</text>
-						<input class="znj-add-good-input" type="text" v-model="newGoodInfo.initWeight" placeholder="" />
-					</view>
-					
-					<!-- 单位皮重 -->
-					<view class="znj-add-good-row">
-						<text class="znj-add-good-label">单位皮重：</text>
-						<input class="znj-add-good-input" type="text" v-model="newGoodInfo.fixTare" placeholder="" />
-					</view>
-					
-					<!-- 是否显示 -->
-					<view class="znj-add-good-row">
-						<text class="znj-add-good-label">是否显示：</text>
-						<div class="znj-add-good-switch-group">
-							<button class="znj-add-good-switch-btn" :class="{active: newGoodInfo.showToSale === 1}" @click="newGoodInfo.showToSale = 1">是</button>
-							<button class="znj-add-good-switch-btn" :class="{active: newGoodInfo.showToSale === 0}" @click="newGoodInfo.showToSale = 0">否</button>
-						</div>
-					</view>
-					
-					<!-- 选择货品分类 -->
-					<view class="znj-add-good-row">
-						<text class="znj-add-good-label">货品分类：</text>
-						<scroll-view class="scroll-view2" scroll-x style="height:60px;width: 500px;">
-							<div style="margin-top: 5rpx;margin-left: 20rpx;">
-								<view :class="{'coach_wrap': true,'coach_wrap_active': newGoodInfo.classifyId == item.value}"
-									v-for="(item, index) in tabListOrigin" :key="index"
-									@click="selectCategory(item.value)">
-									{{item.name}}
+					<view v-else class="expense-items-wrapper">
+						<view v-for="(expense, index) in expenseList" :key="expense.id" class="expense-item-card">
+							<view class="expense-item-header">
+								<view class="expense-item-title">
+									<text class="expense-type-badge">{{ expense.label }}</text>
+									<text class="expense-amount">¥{{ expense.amount.toFixed(2) }}</text>
 								</view>
-							</div>
-						</scroll-view>
+								<view class="expense-item-actions">
+									<button class="expense-action-btn edit" @click="editExpense(expense)">
+										<uni-icons type="compose" size="16" color="#409eff"></uni-icons>
+									</button>
+									<button class="expense-action-btn delete" @click="deleteExpense(expense.id)">
+										<uni-icons type="trash" size="16" color="#f56c6c"></uni-icons>
+									</button>
+								</view>
+							</view>
+							<view class="expense-item-info">
+								<text class="expense-info-text">
+									{{ getAllocationMethodLabel(expense.allocationType) }}
+								</text>
+							</view>
+						</view>
+						<!-- 总费用汇总 -->
+						<view class="expense-total-summary">
+							<text class="summary-label">总费用：</text>
+							<text class="summary-amount">¥{{ getTotalExpense().toFixed(2) }}</text>
+						</view>
 					</view>
-					<!-- 操作按钮 -->
-					<view class="znj-add-good-btns">
-						<button class="znj-add-good-btn cancel" @click="showAddNewGood = false;newGoodInfoReset();">返回</button>
-						<button class="znj-add-good-btn confirm" @click="addNewGood">添加</button>
-					</view>
-				</view>
 				</scroll-view>
 			</view>
 		</view>
 	</view>
 
-		<!-- 添加费用弹窗 -->
-		<view v-if="expenseModalVisible" class="expense-modal-mask" @click="cancelExpense">
-			<view class="expense-modal-wrapper" @click.stop>
-				<view class="expense-modal-container">
-				<!-- 标题区域 -->
-				<view class="expense-modal-header">
-					<text class="header-title">添加费用</text>
-					<text class="header-subtitle">请输入费用金额并选择均摊方式</text>
-				</view>
-				
-			<!-- 内容区域（可滚动） -->
-			<scroll-view scroll-y="true" class="expense-modal-content" :style="{ maxHeight: '600rpx' }">
-			<view class="expense-modal-content-inner">
+	<!-- 添加/编辑费用弹窗 -->
+	<view v-if="expenseModalVisible" class="expense-modal-mask" @click="cancelExpense">
+		<view class="expense-modal-wrapper" @click.stop>
+			<view class="expense-modal-container">
+			<!-- 标题区域 -->
+			<view class="expense-modal-header">
+				<button class="expense-header-btn cancel" @click="cancelExpense">
+					<uni-icons type="closeempty" size="20" color="#ffffff"></uni-icons>
+					取消
+				</button>
+				<text class="header-title">{{ editingExpenseId ? '编辑费用' : '添加费用' }}</text>
+				<button class="expense-header-btn confirm" @click="confirmExpense" 
+					:class="{ disabled: tempExpenseAmount <= 0 || !selectedAllocationMethod }"
+					:disabled="tempExpenseAmount <= 0 || !selectedAllocationMethod">
+					<uni-icons type="checkmarkempty" size="20" color="#fff"></uni-icons>
+					{{ editingExpenseId ? '保存' : '确认添加' }}
+				</button>
+			</view>
+			
+		<!-- 内容区域（可滚动） -->
+		<scroll-view scroll-y class="expense-modal-content">
+		<view class="expense-modal-content-inner">
 					
 					<!-- 费用金额输入框 -->
 					<view class="input-wrapper">
@@ -483,25 +346,9 @@
 					</view>
 				</view>
 			</scroll-view>
-				
-				<!-- 底部按钮 -->
-					<view class="expense-modal-footer">
-						<button class="btn-cancel" @click="cancelExpense">
-							取消
-						</button>
-					<button 
-						class="btn-confirm" 
-						@click="confirmExpense"
-						:class="{ disabled: tempExpenseAmount < 0 || !selectedAllocationMethod }"
-						:disabled="tempExpenseAmount < 0 || !selectedAllocationMethod"
-					>
-							<uni-icons type="checkmarkempty" size="20" color="#fff" style="margin-right: 4px;"></uni-icons>
-							确认添加
-						</button>
-					</view>
-				</view>
 			</view>
 		</view>
+	</view>
 	
 	<!-- 添加费用类型弹窗 -->
 	<view v-if="addTypeModalVisible" class="add-type-modal-mask" @click="cancelAddType">
@@ -509,7 +356,17 @@
 			<view class="add-type-modal-container">
 				<!-- 标题 -->
 				<view class="add-type-modal-header">
+					<button class="expense-header-btn cancel" @click="cancelAddType">
+						<uni-icons type="closeempty" size="20" color="#ffffff"></uni-icons>
+						取消
+					</button>
 					<text class="header-title">添加费用类型</text>
+					<button class="expense-header-btn confirm" @click="confirmAddType"
+						:class="{ disabled: !newExpenseTypeName || newExpenseTypeName.trim() === '' }"
+						:disabled="!newExpenseTypeName || newExpenseTypeName.trim() === ''">
+						<uni-icons type="checkmarkempty" size="20" color="#fff"></uni-icons>
+						确认
+					</button>
 				</view>
 				
 				<!-- 输入框 -->
@@ -519,26 +376,80 @@
 						<input 
 							type="text"
 							v-model="newExpenseTypeName" 
-							placeholder="请输入费用类型名称"
+							placeholder="请输入费用类型名称（最多10个字）"
 							class="type-name-input"
 							maxlength="10"
 						/>
 					</view>
 				</view>
-				
-				<!-- 底部按钮 -->
-				<view class="add-type-modal-footer">
-					<button class="btn-cancel" @click="cancelAddType">
-						取消
-					</button>
-					<button 
-						class="btn-confirm" 
-						@click="confirmAddType"
-						:class="{ disabled: !newExpenseTypeName || newExpenseTypeName.trim() === '' }"
-						:disabled="!newExpenseTypeName || newExpenseTypeName.trim() === ''"
-					>
-						确认添加
-					</button>
+			</view>
+		</view>
+	</view>
+	
+	<!-- 规格选择弹窗（拆包） -->
+	<div v-if="specPopup.visible" class="spec-popup-mask" @click="closeSpecPopup">
+		<div 
+			class="spec-popup-container" 
+			:style="specPopupStyle"
+			@click.stop
+		>
+			<div class="spec-popup-content">
+				<div 
+					v-for="(spec, index) in specPopup.specList" 
+					:key="index"
+					class="spec-item"
+					@click="handleSpecClick(spec)"
+				>
+					<!-- 商品名称 + 规格名称 -->
+					<div class="spec-item-name">
+						{{ specPopup.commodity.commodityName || specPopup.commodity.name }}-{{ spec.specName }}
+					</div>
+					
+					<!-- 商品信息区域 -->
+					<div class="spec-item-info">
+						<!-- 标签行 -->
+						<div class="spec-item-tags">
+							<div class="tag tag-unpack">拆包</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<!-- 多等级商品选择弹窗 -->
+	<view v-if="multiLevelPopup.visible" class="multilevel-popup-mask" @click="closeMultiLevelPopup">
+		<view 
+			class="multilevel-popup-container" 
+			:style="multiLevelPopupStyle"
+			@click.stop
+		>
+			<view class="multilevel-popup-content">
+				<view 
+					v-for="(child, index) in multiLevelPopup.childrenList" 
+					:key="child.id || index"
+					:id="'multilevel-grid-item-' + child.id"
+					class="multilevel-grid-item"
+					@click="handleMultiLevelClick(child)"
+				>
+					<!-- 商品名称 -->
+					<view class="multilevel-item-name">
+						{{ child.commodityName || child.name }}
+					</view>
+					
+					<!-- 商品信息区域 -->
+					<view class="multilevel-item-info">
+						<!-- 标签行 -->
+						<view class="multilevel-item-tags">
+							<view v-if="child.saleWay == 1" class="tag tag-unfixed">非定</view>
+							<view v-if="child.saleWay == 2" class="tag tag-fixed">
+								定{{ child.initWeight ? child.initWeight : '' }}
+							</view>
+							<view v-if="child.saleWay == 3" class="tag tag-unpack">拆包</view>
+							<view v-if="child.saleWay == 4" class="tag tag-bulk">散</view>
+							<view v-if="child.extralModel" class="tag tag-extra">{{ child.extralModel.name }}</view>
+						</view>
+					</view>
 				</view>
 			</view>
 		</view>
@@ -550,7 +461,16 @@
 	import category from '../../api/goods/category'
 	import labelApi from '../../api/label/labelApi';
 	import batch from '../../api/batch/batch'
+	import AddGoodModalAdvanced from '../../components/AddGoodModal/AddGoodModalAdvanced.vue'
+	import SimpleSelect from '../../components/SimpleSelect/SimpleSelect.vue'
+	import GoodsSelector from '../../components/GoodsSelector/GoodsSelector.vue'
+	
 	export default {
+		components: {
+			AddGoodModalAdvanced,
+			SimpleSelect,
+			GoodsSelector
+		},
 		data() {
 			return {
 				currentTab: 0,
@@ -558,14 +478,11 @@
 				windowHeight: 0,
 				companyId: "",
 				BatchInfo: null,
-				tabList: [],
-				tabListOrigin: [],
-				showAddNewGood: false,
-				activeType: "全部",
-				activeType2Id: "",
-				commodityList: [],
-				commodityShowList: [],
-				valueType: 1,
+			tabList: [],
+			tabListOrigin: [],
+			showAddNewGood: false,
+			commodityList: [],
+			valueType: 1,
 				windowWidth: 0,
 				windowHeight: 0,
 				scrollHeight2: '0px',
@@ -578,9 +495,10 @@
 				maskView: null,
 				editType: "common",
 				BatchCommodityList: [],
-				targetId: "id-0-view",
-				unitList: [], // 单位列表
-			newGoodInfo: {
+			targetId: "id-0-view",
+			unitList: [], // 单位列表
+			extralModelList: [], // 附加物品列表
+		newGoodInfo: {
 				name: "",
 				classifyId: "",
 				saleWay: 1, // 默认按重量
@@ -606,13 +524,15 @@
 						batchCode: '批次编号2',
 					}
 				],
-		// 费用弹窗相关
-		expenseModalVisible: false,
+		// 费用相关
+		expenseList: [], // 费用列表，存储多个费用
+		expenseManageModalVisible: false, // 费用管理弹窗
+		expenseModalVisible: false, // 添加/编辑费用弹窗
 		tempExpenseAmount: 0,
 		selectedAllocationMethod: 4, // 默认选中不均摊
 		lastExpenseAmount: 0, // 上一次的费用金额
 		lastAllocationMethod: 4, // 上一次的均摊方式，默认不均摊
-		totalExpense: 0, // 累计总费用
+		totalExpense: 0, // 累计总费用（计算属性）
 		allocationMethods: [
 			{ value: 2, label: '按数量均摊', icon: '' },
 			{ value: 1, label: '按重量均摊', icon: '' },
@@ -623,9 +543,80 @@
 		expenseTypes: [],
 		selectedExpenseType: 'shipping', // 默认选中运费
 		lastExpenseType: 'shipping', // 上一次选中的费用类型
+		editingExpenseId: null, // 正在编辑的费用ID（null表示新增）
 		// 添加费用类型弹窗相关
 		addTypeModalVisible: false,
-		newExpenseTypeName: ''
+		newExpenseTypeName: '',
+		// 规格弹窗数据（拆包）
+		specPopup: {
+			visible: false,
+			left: 0,
+			top: 0,
+			commodity: null,
+			specList: []
+		},
+		// 多等级商品弹窗
+		multiLevelPopup: {
+			visible: false,
+			left: 0,
+			top: 0,
+			parentCommodity: null,
+			childrenList: []
+		}
+		}
+	},
+	computed: {
+		// 已选商品ID列表
+		selectedCommodityIds() {
+			return this.BatchCommodityList.map(item => item.commodityId);
+		},
+		// 规格弹窗样式（拆包）
+		specPopupStyle() {
+				const { left, top, specList } = this.specPopup;
+				if (!specList || specList.length === 0) {
+					return {};
+				}
+				const itemHeight = 90; // 每项高度
+				const popupHeight = Math.min(specList.length * itemHeight + 10, 450); // 限制最大高度450px
+				
+				// 使用 uni-app 兼容的方式获取屏幕高度
+				const screenHeight = this.windowHeight || uni.getWindowInfo().windowHeight;
+				
+				// 计算最佳位置（避免超出屏幕）
+				let adjustedTop = top - 100 < 0 ? 0 : top - 100;
+				adjustedTop = adjustedTop + popupHeight > screenHeight 
+					? screenHeight - popupHeight - 20
+					: adjustedTop;
+				
+				return {
+					left: left + 'px',
+					top: adjustedTop + 'px'
+				};
+			},
+			// 多等级商品弹窗样式
+			multiLevelPopupStyle() {
+				const { left, top, childrenList } = this.multiLevelPopup;
+				if (!childrenList || childrenList.length === 0) {
+					return {};
+				}
+				const itemHeight = 90; // 每个 grid-item 的高度（包含边距）
+				const popupPadding = 20; // 弹窗内边距
+				const popupHeight = Math.min(childrenList.length * itemHeight + popupPadding * 2, 500); // 最大高度500px
+				
+				// 使用 uni-app 兼容的方式获取屏幕高度
+				const screenHeight = this.windowHeight || uni.getWindowInfo().windowHeight;
+				
+				// 计算最佳位置（避免超出屏幕）
+				let adjustedTop = top - 100 < 0 ? 0 : top - 100;
+				adjustedTop = adjustedTop + popupHeight > screenHeight 
+					? screenHeight - popupHeight - 20
+					: adjustedTop;
+				
+				return {
+					left: left + 'px',
+					top: adjustedTop + 'px',
+					maxHeight: '500px'
+				};
 			}
 		},
 		onLoad(options) {
@@ -643,7 +634,7 @@
 		},
 	mounted() {
 		// 在组件挂载后设置 scrollHeight
-		this.scrollHeight = uni.getWindowInfo().windowHeight - 155;
+		this.scrollHeight = uni.getWindowInfo().windowHeight - 165; // 调整搜索框后的高度
 		this.windowHeight = uni.getWindowInfo().windowHeight;
 		this.companyId = uni.getStorageSync('companyId');
 		this.getAllcommodity();
@@ -654,21 +645,38 @@
 		// 初始化费用类型列表
 		this.getExpenseLabel();
 		this.getCompanyUnit();
+		this.getAllextralModel();
 	},
 		methods: {
-			getCompanyUnit(){
-				let that = this;
-				labelApi.GetCompanyUnit(this.companyId).then(res => {
-					that.unitList = res.data;
-					
-				})
-			},
-			//切换计算方式
-			SwitchCalcType(e, element) {
+		getCompanyUnit(){
+			let that = this;
+			labelApi.GetCompanyUnit(this.companyId).then(res => {
+				that.unitList = res.data;
+				
+			})
+		},
+		// 获取附加物品列表
+		getAllextralModel() {
+			let that = this;
+			that.extralModelList = [{ name: "无", id: "" }];
+			category.getallextralgood(this.companyId).then(res => {
+				console.log("附加物品列表返回数据:", res.data);
+				if (res.data != null) {
+					for (var i = 0; i < res.data.length; i++) {
+						that.extralModelList.push(res.data[i]);
+					}
+					console.log("附加物品列表:", that.extralModelList);
+				}
+			}).catch(err => {
+				console.error("获取附加物品列表失败:", err);
+			});
+		},
+		//切换计算方式
+		SwitchCalcType(e, element) {
 				if (e) {
-					element.calcType = 1;
+					element.calcType = 2;
 				} else {
-					element.calcType = 2
+					element.calcType = 1
 				}
 				this.calcCommodityaddedInboundAmount(element);
 			},
@@ -805,6 +813,13 @@
 				});
 		});
 	},
+	// 处理组件确认添加货品
+	handleAddNewGood(formData) {
+		// 将组件返回的数据赋值给 newGoodInfo
+		this.newGoodInfo = { ...formData };
+		// 调用原有的添加逻辑
+		this.addNewGood();
+	},
 	// 重置新货品信息
 	newGoodInfoReset() {
 		this.newGoodInfo = {
@@ -879,21 +894,17 @@
 		console.log("this.classifyId", classifyId)
 		this.newGoodInfo.classifyId = classifyId;
 	},
-		getCommdityActive(id) {
-			if (this.BatchCommodityList.some(x => x.commodityId === id)) {
-				return true;
-			}
-			return false;
+	changeTab(e) {
+		// 分类切换已由 GoodsSelector 组件内部处理
+		// 这里可以添加额外的分类切换相关逻辑（如果需要）
+		console.log('切换分类:', e.name);
+	},
+		// 搜索处理（由组件触发）
+		handleSearch(keyword) {
+			// 搜索逻辑已在 GoodsSelector 组件内部处理
+			// 这里可以添加额外的搜索相关逻辑（如果需要）
+			console.log('搜索关键词:', keyword);
 		},
-			changeTab(e) {
-				var type = e.name;
-				this.activeType = e.name;
-				if (type == "全部") {
-					this.commodityShowList = this.commodityList
-				} else {
-					this.commodityShowList = this.commodityList.filter(x => x.className == type)
-				}
-			},
 			//键盘数字输入处理
 			NumberCk(val) {
 				let myvalue = "";
@@ -996,20 +1007,23 @@
 					}
 				});
 			},
-			showKeyBorad(index, type) {
-				this.$nextTick(() => {
-					// 确保赋值和 view 的 id 一致
-					this.scrollIntoView = `id-${this.currentNumber}-view`
-				})
-				this.valueType = type;
-				this.editingIndex = index;
-				this.showKeyBoard1 = true;
-				this.scrollHeight2 = this.windowHeight - 210 - 150 + 'px';
-			},
-			hideBorad() {
-				this.scrollHeight2 = this.windowHeight - 150 + 'px';
-				this.showKeyBoard1 = false;
-			},
+	showKeyBorad(index, type) {
+		this.$nextTick(() => {
+			// 确保赋值和 view 的 id 一致
+			this.scrollIntoView = `id-${this.currentNumber}-view`
+		})
+		this.valueType = type;
+		this.editingIndex = index;
+		this.showKeyBoard1 = true;
+		// 键盘高度调整为200rpx
+		this.scrollHeight2 = this.windowHeight - 210 - 200 + 'px';
+	},
+		hideBorad() {
+			this.scrollHeight2 = this.windowHeight - 150 + 'px';
+			this.showKeyBoard1 = false;
+			this.editingIndex = -1;
+			this.valueType = 0;
+		},
 			getLastBatchCommodityList(companyId, shipperId) {
 				batch.GetLastBatchCommodity(companyId, shipperId).then(res => {
 					this.BatchCommodityList = res.data;
@@ -1021,48 +1035,49 @@
 			},
 		//计算添加货品的入库金额 2-按重量计算 1-按数量计算（基于成本单价）
 		calcCommodityaddedInboundAmount(commodityAdded) {
-			// 如果还没保存原始采购单价，先保存
-			if (!commodityAdded.originalIncomingPrice) {
-				commodityAdded.originalIncomingPrice = commodityAdded.incomingPrice || 0;
-			}
+			// 更新原始采购单价
+			commodityAdded.originalIncomingPrice = commodityAdded.incomingPrice || 0;
 			
 			// 获取成本单价（采购单价 + 单位费用）
 			const costPrice = parseFloat(this.getCostPrice(commodityAdded));
 			
 			if (commodityAdded.calcType === 2) {
-				// 按重量计算
+				// 按重量计算：入库金额 = 重量 × 成本单价
 				const weight = parseFloat(commodityAdded.initWeight) || 0;
 				console.log("weight",weight);
 				commodityAdded.inboundAmount = (weight * costPrice).toFixed(1);
 			}
 			if (commodityAdded.calcType === 1) {
-				// 按数量计算
+				// 按数量计算：入库金额 = 数量 × 成本单价
 				const quantity = parseFloat(commodityAdded.initMount) || 0;
 				commodityAdded.inboundAmount = (quantity * costPrice).toFixed(1);
 			}
 		},
-		//计算添加货品的入库单价 2-按重量计算 1-按数量计算（考虑费用）
+		//根据入库金额反推采购单价 2-按重量计算 1-按数量计算（扣除费用分摊）
 		calcCommodityaddedincomingPrice(commodityAdded) {
 			// 计算单位费用
 			let unitExpense = 0;
 			const expenseAllocated = parseFloat(commodityAdded.expenseAllocated) || 0;
+			const inboundAmount = parseFloat(commodityAdded.inboundAmount) || 0;
 			
 			if (commodityAdded.calcType === 2) {
-				// 按重量计算
+				// 按重量计算：采购单价 = (入库金额 / 重量) - 单位费用
 				const weight = parseFloat(commodityAdded.initWeight) || 0;
 				if (weight > 0) {
 					unitExpense = expenseAllocated / weight;
-					// 采购单价 = (入库金额 / 重量) - 单位费用
-					commodityAdded.incomingPrice = ((commodityAdded.inboundAmount / weight) - unitExpense).toFixed(2);
+					commodityAdded.incomingPrice = ((inboundAmount / weight) - unitExpense).toFixed(2);
+					// 更新原始采购单价
+					commodityAdded.originalIncomingPrice = commodityAdded.incomingPrice;
 				}
 			}
 			if (commodityAdded.calcType === 1) {
-				// 按数量计算
+				// 按数量计算：采购单价 = (入库金额 / 数量) - 单位费用
 				const quantity = parseFloat(commodityAdded.initMount) || 0;
 				if (quantity > 0) {
 					unitExpense = expenseAllocated / quantity;
-					// 采购单价 = (入库金额 / 数量) - 单位费用
-					commodityAdded.incomingPrice = ((commodityAdded.inboundAmount / quantity) - unitExpense).toFixed(2);
+					commodityAdded.incomingPrice = ((inboundAmount / quantity) - unitExpense).toFixed(2);
+					// 更新原始采购单价
+					commodityAdded.originalIncomingPrice = commodityAdded.incomingPrice;
 				}
 			}
 		},
@@ -1079,9 +1094,10 @@
 					CommodityList.push({
 						"commodityId": item.commodityId,
 						"calcType": item.calcType,
-						"initMount": 0,
+						"initMount": parseFloat(item.initMount),
 						"initWeight": parseFloat(item.initWeight),
 						"incomingPrice": parseFloat(item.incomingPrice),
+						"costPrice":parseFloat(that.getCostPrice(item)),
 						"inboundAmount": parseFloat(item.inboundAmount),
 						"purchaseInventories": [{
 							"specId": item.spec.id,
@@ -1090,36 +1106,25 @@
 					})
 				})
 
-			console.log("that.selectedExpenseType",that.selectedExpenseType);
-			console.log("that.tempExpenseAmount",that.tempExpenseAmount);
-			console.log("that.selectedAllocationMethod",that.selectedAllocationMethod);
-			console.log("that.totalExpense",that.totalExpense);
-
-			// 构建基本参数
-			var param = {
-				shipperId: that.currentShipper.id,
-				companyId: that.companyId,
-				purchaseEmployList: CommodityList,
-				purchaseExpenseList: []
-			}
-			
-			// 只有在添加了费用时才发送 purchaseOrderCost
-			if (that.totalExpense > 0 && that.selectedExpenseType) {
-				// 获取费用类型的label（名称）
-				const expenseType = that.expenseTypes.find(type => 
-					type.id === that.selectedExpenseType 
-				);
-				
-				if (expenseType) {
-					param.purchaseOrderCost = {
-						"label": expenseType.label, // 使用费用类型的名称
-						"amount": parseFloat(that.totalExpense),
-						"purchaseOrderCostType": that.selectedAllocationMethod
-					};
-					
-					console.log("purchaseOrderCost", param.purchaseOrderCost);
-				}
-			}
+		// 构建费用列表
+		var purchaseExpenseList = [];
+		that.expenseList.forEach(expense => {
+			purchaseExpenseList.push({
+				"label": expense.label, // 费用名称
+				"amount": parseFloat(expense.amount), // 费用金额
+				"purchaseOrderCostType": expense.allocationType // 均摊方式
+			});
+		});
+		
+		// 构建基本参数
+		var param = {
+			shipperId: that.currentShipper.id,
+			companyId: that.companyId,
+			purchaseEmployList: CommodityList,
+			purchaseOrderCostList: purchaseExpenseList
+		}
+		
+		console.log("提交参数", param);
 				if (that.BatchCommodityList.length > 0) {
 					category.CreatePurchaseOrder(JSON.stringify(param)).then(res => {
 						if (res.code == 200) {
@@ -1131,12 +1136,20 @@
 							that.back()
 						} else {
 							uni.showToast({
-								title: '采购失败',
+								title: res.message || '采购失败',
 								icon: 'none',
 								duration: 2000
 							})
 							that.showComfirmBtn = true;
 						}
+					}).catch(error => {
+						console.error('采购订单提交失败:', error);
+						uni.showToast({
+							title: error.message || '网络错误，请稍后重试',
+							icon: 'none',
+							duration: 3000
+						});
+						that.showComfirmBtn = true;
 					})
 				}
 			},
@@ -1160,84 +1173,165 @@
 				});
 
 			},
-			getAllcommodity() {
-				category.GetAllCommidityByCompanyId2(this.companyId).then(res => {
-					this.commodityList = res.data;
-					this.commodityShowList = res.data;
-					this.tabList = [{
-						name: "全部",
-						value: 0
-					}];
-					this.tabListOrigin = [];
-					console.log("res", res.data)
-					this.commodityList.forEach((item, index) => {
-						if (!this.tabList.some(tab => tab.name === item.className)) {
-							this.tabList.push({
-								name: item.className,
-								value: index
-							});
-						};
-						if (!this.tabListOrigin.some(tab => tab.name === item.className)) {
-							this.tabListOrigin.push({
-								name: item.className,
-								value: item.classId
-							});
-						};
-						if (this.tabListOrigin.length > 0) {
-							this.newGoodInfo.classifyId = this.tabListOrigin[0].value;
-						}
-					});
+		getAllcommodity() {
+			category.GetAllCommidityByCompanyId2(this.companyId).then(res => {
+				this.commodityList = res.data;
+				this.tabList = [{
+					name: "全部",
+					value: 0
+				}];
+				this.tabListOrigin = [];
+				console.log("res", res.data)
+				this.commodityList.forEach((item, index) => {
+					if (!this.tabList.some(tab => tab.name === item.className)) {
+						this.tabList.push({
+							name: item.className,
+							value: index
+						});
+					};
+					if (!this.tabListOrigin.some(tab => tab.name === item.className)) {
+						this.tabListOrigin.push({
+							name: item.className,
+							value: item.classId
+						});
+					};
+					if (this.tabListOrigin.length > 0) {
+						this.newGoodInfo.classifyId = this.tabListOrigin[0].value;
+					}
 				});
-			},
-		addCommodity(e) {
-			// if (this.getCommdityActive(e.id)) return;
-			if (e.saleWay === 1 || e.saleWay === 2 || e.saleWay === 4) {
-				var commodityAdded = {
-					id: "",
-					name: e.commodityName,
-					initMount: 0,
-					initWeight: 0,
-					commodityId: e.id,
-					calcType: 1,
-					incomingPrice: e.incomingPrice ? e.incomingPrice : 0,
-					originalIncomingPrice: e.incomingPrice ? e.incomingPrice : 0, // 保存原始采购单价
-					expenseAllocated: 0, // 初始化分摊费用为0
-					inboundAmount: 0
+			});
+		},
+	addCommodity(e) {
+		// if (this.getCommdityActive(e.id)) return;
+		
+		// 处理多等级商品
+		if (e.isMultiLevel === 1) {
+			uni.createSelectorQuery().selectAll(`#grid-item-${e.id}`).boundingClientRect(data => {
+				console.log("多等级商品位置信息:", data);
+				if (data && data.length > 0) {
+					this.createMultiLevelView(data[0].left + data[0].width / 2, data[0].top, e, e.childrenList);
 				}
-				if (e.commoditySpecs.length > 0) {
-					commodityAdded.spec = e.commoditySpecs[0]
-				}
-				this.BatchCommodityList.push(commodityAdded)
+			}).exec()
+			return;
+		}
+		
+		if (e.saleWay === 1 || e.saleWay === 2 || e.saleWay === 4) {
+			var commodityAdded = {
+				id: "",
+				name: e.commodityName,
+				initMount: 0,
+				initWeight: 0,
+				fixWeight:e.initWeight,//单位重量（目前仅用于定装）
+				commodityId: e.id,
+				calcType: e.saleWay === 2?2:1,
+				saleWay: e.saleWay,
+				incomingPrice: e.incomingPrice ? e.incomingPrice : 0,
+				originalIncomingPrice: e.incomingPrice ? e.incomingPrice : 0, // 保存原始采购单价
+				expenseAllocated: 0, // 初始化分摊费用为0
+				inboundAmount: 0
 			}
+			if (e.commoditySpecs.length > 0) {
+				commodityAdded.spec = e.commoditySpecs[0]
+			}
+			this.BatchCommodityList.push(commodityAdded)
+		}
 
-			console.log("e", e)
-			if(e.saleWay === 3){
-				uni.createSelectorQuery().selectAll(`#grid-item-${e.id}`).boundingClientRect(data => {
-						// const { left, top, width, height } = data;
-						console.log("data", data)
-						this.createNativeView(data[0].left + data[0].width / 2, data[0].top, e, e.commoditySpecs)
-					}).exec()
-			}
-		},
-		//用于添加拆包商品
-		addCommodity2(e,spec) {
-			// if (this.getCommdityActive(e.id)) return;
-				var commodityAdded = {
-					id: "",
-					name: e.commodityName,
-					initMount: 0,
-					initWeight: 0,
-					commodityId: e.id,
-					calcType: 1,
-					incomingPrice: e.incomingPrice ? e.incomingPrice : 0,
-					originalIncomingPrice: e.incomingPrice ? e.incomingPrice : 0, // 保存原始采购单价
-					expenseAllocated: 0, // 初始化分摊费用为0
-					inboundAmount: 0
+		// 处理定装拆包
+		if(e.saleWay === 3){
+			uni.createSelectorQuery().selectAll(`#grid-item-${e.id}`).boundingClientRect(data => {
+				console.log("拆包商品位置信息", data)
+				if (data && data.length > 0) {
+					this.createSpecPopup(data[0].left + data[0].width / 2, data[0].top, e, e.commoditySpecs)
 				}
-				commodityAdded.spec =spec
-				this.BatchCommodityList.push(commodityAdded)
-			
-		},
+			}).exec()
+		}
+	},
+	//用于添加拆包商品
+	addCommodity2(e,spec) {
+		// if (this.getCommdityActive(e.id)) return;
+			var commodityAdded = {
+				id: "",
+				name: e.commodityName,
+				initMount: 0,
+				initWeight: 0,
+				fixWeight:e.initWeight,//单位重量（目前仅用于定装）
+				commodityId: e.id,
+				calcType: 1,
+				saleWay: e.saleWay,
+				incomingPrice: e.incomingPrice ? e.incomingPrice : 0,
+				originalIncomingPrice: e.incomingPrice ? e.incomingPrice : 0, // 保存原始采购单价
+				expenseAllocated: 0, // 初始化分摊费用为0
+				inboundAmount: 0
+			}
+			commodityAdded.spec =spec
+			this.BatchCommodityList.push(commodityAdded)
+		
+	},
+	
+	// 创建规格弹窗（拆包）
+	createSpecPopup(left, top, commodity, specList) {
+		if (!specList || specList.length < 1) return;
+		
+		this.specPopup = {
+			visible: true,
+			left,
+			top,
+			commodity,
+			specList
+		};
+	},
+	// 关闭规格弹窗
+	closeSpecPopup() {
+		this.specPopup.visible = false;
+		// 延迟清空数据，等动画完成
+		setTimeout(() => {
+			this.specPopup = {
+				visible: false,
+				left: 0,
+				top: 0,
+				commodity: null,
+				specList: []
+			};
+		}, 300);
+	},
+	// 点击规格项
+	handleSpecClick(spec) {
+		this.addCommodity2(this.specPopup.commodity, spec);
+		this.closeSpecPopup();
+	},
+	
+	// 创建多等级商品弹窗
+	createMultiLevelView(left, top, parentCommodity, childrenList) {
+		if (!childrenList || childrenList.length < 1) return;
+		
+		this.multiLevelPopup = {
+			visible: true,
+			left,
+			top,
+			parentCommodity,
+			childrenList
+		};
+	},
+	// 关闭多等级商品弹窗
+	closeMultiLevelPopup() {
+		this.multiLevelPopup.visible = false;
+		// 延迟清空数据，等动画完成
+		setTimeout(() => {
+			this.multiLevelPopup = {
+				visible: false,
+				left: 0,
+				top: 0,
+				parentCommodity: null,
+				childrenList: []
+			};
+		}, 300);
+	},
+	// 点击多等级商品项
+	handleMultiLevelClick(childCommodity) {
+		this.closeMultiLevelPopup();
+		// 直接使用子商品自身的数据
+		this.addCommodity(childCommodity);
+	},
 		createNativeView(left, top, commodity, specList) {
 				console.log(specList)
 				if (this.actionView || !specList || specList.length < 0) return;
@@ -1340,25 +1434,85 @@
 
 				this.actionView.show();
 			},
-	// 费用弹窗相关方法
-	showExpenseModal() {
+	// 费用管理弹窗方法
+	showExpenseManageModal() {
+		this.expenseManageModalVisible = true;
+		// 如果没有费用，直接打开添加费用弹窗
+		if (this.expenseList.length === 0) {
+			this.$nextTick(() => {
+				this.openAddExpenseModal();
+			});
+		}
+	},
+	closeExpenseManageModal() {
+		this.expenseManageModalVisible = false;
+		// 重新计算所有费用分摊
+		this.recalculateAllExpenses();
+	},
+	// 打开添加费用弹窗
+	openAddExpenseModal() {
+		this.editingExpenseId = null;
 		this.getExpenseLabel();
 		this.expenseModalVisible = true;
 		// 回填上一次的值
-		this.tempExpenseAmount = this.lastExpenseAmount;
-		this.selectedAllocationMethod = this.lastAllocationMethod;
-		this.selectedExpenseType = this.lastExpenseType; // 回填上一次选中的费用类型
+		this.tempExpenseAmount = this.lastExpenseAmount || 0;
+		this.selectedAllocationMethod = this.lastAllocationMethod || 4;
+		this.selectedExpenseType = this.lastExpenseType || (this.expenseTypes.length > 0 ? this.expenseTypes[0].id : '');
+	},
+	// 编辑费用
+	editExpense(expense) {
+		this.editingExpenseId = expense.id;
+		this.getExpenseLabel();
+		this.expenseModalVisible = true;
+		// 回填费用数据
+		this.tempExpenseAmount = expense.amount;
+		this.selectedAllocationMethod = expense.allocationType;
+		this.selectedExpenseType = expense.typeId;
+	},
+	// 删除费用
+	deleteExpense(expenseId) {
+		uni.showModal({
+			title: '确认删除',
+			content: '确定要删除这个费用吗？',
+			success: (res) => {
+				if (res.confirm) {
+					this.expenseList = this.expenseList.filter(item => item.id !== expenseId);
+					uni.showToast({
+						title: '删除成功',
+						icon: 'success',
+						duration: 1500
+					});
+					// 重新计算费用分摊
+					this.recalculateAllExpenses();
+				}
+			}
+		});
 	},
 	cancelExpense() {
 		this.expenseModalVisible = false;
+		this.editingExpenseId = null;
 		this.tempExpenseAmount = 0;
-		this.selectedAllocationMethod = 4; // 重置为默认值（不均摊）
-		// 不重置费用类型，保持上一次确认的值
+		this.selectedAllocationMethod = 4;
+	},
+	// 计算总费用
+	getTotalExpense() {
+		return this.expenseList.reduce((total, expense) => {
+			return total + (parseFloat(expense.amount) || 0);
+		}, 0);
+	},
+	// 获取均摊方式标签
+	getAllocationMethodLabel(value) {
+		const method = this.allocationMethods.find(m => m.value === value);
+		return method ? method.label : '未知方式';
 	},
 	validateExpenseAmount() {
 		if (this.tempExpenseAmount < 0) {
 			this.tempExpenseAmount = 0;
 		}
+	},
+	// 生成UUID（用于费用ID）
+	generateExpenseId() {
+		return 'expense-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
 	},
 	// 添加费用类型弹窗相关方法
 	showAddTypeModal() {
@@ -1485,11 +1639,107 @@
 			}
 		});
 	},
+	// 重新计算所有费用分摊
+	recalculateAllExpenses() {
+		// 先清空所有商品的费用分配
+		this.BatchCommodityList.forEach(item => {
+			item.expenseAllocated = 0;
+		});
+		
+		// 遍历费用列表，累加每个费用的分摊
+		this.expenseList.forEach(expense => {
+			const expenseAmount = parseFloat(expense.amount) || 0;
+			const allocationType = expense.allocationType;
+			
+			// 根据不同的均摊方式处理费用
+			switch(allocationType) {
+				case 2: // 按数量均摊
+					this.allocateExpenseByQuantity(expenseAmount);
+					break;
+				case 1: // 按重量均摊
+					this.allocateExpenseByWeight(expenseAmount);
+					break;
+				case 3: // 按种类均摊
+					this.allocateExpenseByCategory(expenseAmount);
+					break;
+				case 4: // 不均摊
+					// 不均摊不需要分配到商品
+					break;
+			}
+		});
+		
+		// 重新计算所有商品的入库金额（基于成本单价）
+		this.recalculateAllInboundAmount();
+		
+		// 强制更新视图
+		this.$forceUpdate();
+	},
+	// 按数量均摊费用（累加模式）
+	allocateExpenseByQuantity(expenseAmount) {
+		const totalQuantity = this.totalInitInventory();
+		if (totalQuantity === 0) {
+			return;
+		}
+		
+		this.BatchCommodityList.forEach(item => {
+			// 保存原始采购单价（如果还没保存）
+			if (!item.originalIncomingPrice) {
+				item.originalIncomingPrice = item.incomingPrice || 0;
+			}
+			
+			const quantity = parseFloat(item.initMount) || 0;
+			const allocation = (quantity / totalQuantity) * expenseAmount;
+			
+			// 累加费用分摊
+			item.expenseAllocated = (parseFloat(item.expenseAllocated) || 0) + allocation;
+		});
+	},
+	// 按重量均摊费用（累加模式）
+	allocateExpenseByWeight(expenseAmount) {
+		const totalWeight = this.totalInitWeight();
+		if (totalWeight === 0) {
+			return;
+		}
+		
+		this.BatchCommodityList.forEach(item => {
+			// 保存原始采购单价（如果还没保存）
+			if (!item.originalIncomingPrice) {
+				item.originalIncomingPrice = item.incomingPrice || 0;
+			}
+			
+			const weight = parseFloat(item.initWeight) || 0;
+			const allocation = (weight / totalWeight) * expenseAmount;
+			
+			// 累加费用分摊
+			item.expenseAllocated = (parseFloat(item.expenseAllocated) || 0) + allocation;
+		});
+	},
+	// 按种类均摊费用（累加模式）
+	allocateExpenseByCategory(expenseAmount) {
+		const itemCount = this.BatchCommodityList.length;
+		
+		if (itemCount === 0) {
+			return;
+		}
+		
+		// 每个商品分摊相同的费用金额
+		const expensePerItem = expenseAmount / itemCount;
+		
+		this.BatchCommodityList.forEach(item => {
+			// 保存原始采购单价（如果还没保存）
+			if (!item.originalIncomingPrice) {
+				item.originalIncomingPrice = item.incomingPrice || 0;
+			}
+			
+			// 累加费用分摊
+			item.expenseAllocated = (parseFloat(item.expenseAllocated) || 0) + expensePerItem;
+		});
+	},
 confirmExpense() {
-	// 允许费用金额为0
-	if (this.tempExpenseAmount < 0) {
+	// 验证费用金额
+	if (this.tempExpenseAmount <= 0) {
 		uni.showToast({
-			title: '费用金额不能为负数',
+			title: '费用金额必须大于0',
 			icon: 'none',
 			duration: 2000
 		});
@@ -1505,159 +1755,81 @@ confirmExpense() {
 		return;
 	}
 	
+	if (!this.selectedExpenseType) {
+		uni.showToast({
+			title: '请选择费用类型',
+			icon: 'none',
+			duration: 2000
+		});
+		return;
+	}
+	
 	const expenseAmount = parseFloat(this.tempExpenseAmount) || 0;
 	
-	// 直接使用输入的费用金额作为总费用
-	this.totalExpense = expenseAmount;
+	// 获取费用类型的label（名称）
+	const expenseType = this.expenseTypes.find(type => 
+		type.id === this.selectedExpenseType || type.value === this.selectedExpenseType
+	);
+	
+	if (!expenseType) {
+		uni.showToast({
+			title: '费用类型无效',
+			icon: 'none',
+			duration: 2000
+		});
+		return;
+	}
+	
+	if (this.editingExpenseId) {
+		// 编辑模式：更新现有费用
+		const index = this.expenseList.findIndex(item => item.id === this.editingExpenseId);
+		if (index !== -1) {
+			this.expenseList[index] = {
+				id: this.editingExpenseId,
+				label: expenseType.label,
+				amount: expenseAmount,
+				allocationType: this.selectedAllocationMethod,
+				typeId: this.selectedExpenseType
+			};
+			uni.showToast({
+				title: '费用修改成功',
+				icon: 'success',
+				duration: 1500
+			});
+		}
+	} else {
+		// 新增模式：添加新费用
+		const newExpense = {
+			id: this.generateExpenseId(),
+			label: expenseType.label,
+			amount: expenseAmount,
+			allocationType: this.selectedAllocationMethod,
+			typeId: this.selectedExpenseType
+		};
+		
+		this.expenseList.push(newExpense);
+		uni.showToast({
+			title: '费用添加成功',
+			icon: 'success',
+			duration: 1500
+		});
+	}
 	
 	// 保存本次输入的值，供下次打开时回填
 	this.lastExpenseAmount = this.tempExpenseAmount;
 	this.lastAllocationMethod = this.selectedAllocationMethod;
-	this.lastExpenseType = this.selectedExpenseType; // 保存选中的费用类型
+	this.lastExpenseType = this.selectedExpenseType;
 	
-	// 先清空所有商品的费用分配（切换均摊方式时需要重新计算）
-	this.BatchCommodityList.forEach(item => {
-		if (!item.isExpense) {  // 只清空普通商品的费用分配，不清空费用项
-			item.expenseAllocated = 0;
-		}
-	});
+	// 重新计算所有费用分摊
+	this.recalculateAllExpenses();
 	
-	// 移除之前添加的费用项（如果有）
-	this.BatchCommodityList = this.BatchCommodityList.filter(item => !item.isExpense);
-	
-	// 根据不同的均摊方式处理费用
-	switch(this.selectedAllocationMethod) {
-		case 2: // 按数量均摊
-			this.allocateByQuantity(expenseAmount);
-			break;
-		case 1: // 按重量均摊
-			this.allocateByWeight(expenseAmount);
-			break;
-		case 3: // 按种类均摊
-			this.allocateByCategory(expenseAmount);
-			break;
-		case 4: // 不均摊
-			this.addExpenseWithoutAllocation(expenseAmount);
-			break;
-	}
-	
-	// 重新计算所有商品的入库金额（基于成本单价）
-	// 成本单价会自动重新计算：成本单价 = 原始采购单价 + (分摊费用 / 数量或重量)
-	this.recalculateAllInboundAmount();
-	
-	// 强制更新视图，确保成本单价列立即刷新
-	this.$forceUpdate();
-	
+	// 关闭添加/编辑费用弹窗
 	this.expenseModalVisible = false;
+	this.editingExpenseId = null;
 	
-	uni.showToast({
-		title: '费用添加成功',
-		icon: 'success',
-		duration: 2000
-	});
-},
-	allocateByQuantity(expenseAmount) {
-		// 按数量均摊
-		const totalQuantity = this.totalInitInventory();
-		if (totalQuantity === 0) {
-			uni.showToast({
-				title: '总数量为0，无法按数量均摊',
-				icon: 'none',
-				duration: 2000
-			});
-			return;
-		}
-		
-	this.BatchCommodityList.forEach(item => {
-		// 保存原始采购单价（如果还没保存）
-		if (!item.originalIncomingPrice) {
-			item.originalIncomingPrice = item.incomingPrice || 0;
-		}
-		
-		const quantity = parseFloat(item.initMount) || 0;
-		const allocation = (quantity / totalQuantity) * expenseAmount;
-		
-		// 直接赋值，不累加（根据当前费用重新计算）
-		item.expenseAllocated = allocation;
-		
-		// 采购单价不变，保持原始值
-	});
-},
-	allocateByWeight(expenseAmount) {
-		// 按重量均摊
-		const totalWeight = this.totalInitWeight();
-		// if (totalWeight === 0) {
-		// 	uni.showToast({
-		// 		title: '总重量为0，无法按重量均摊',
-		// 		icon: 'none',
-		// 		duration: 2000
-		// 	});
-		// 	return;
-		// }
-		
-	this.BatchCommodityList.forEach(item => {
-		// 保存原始采购单价（如果还没保存）
-		if (!item.originalIncomingPrice) {
-			item.originalIncomingPrice = item.incomingPrice || 0;
-		}
-		
-		const weight = parseFloat(item.initWeight) || 0;
-		const allocation = (weight / totalWeight) * expenseAmount;
-		
-		// 直接赋值，不累加（根据当前费用重新计算）
-		item.expenseAllocated = allocation;
-		
-		// 采购单价不变，保持原始值
-	});
-},
-	allocateByCategory(expenseAmount) {
-		// 按种类均摊 - 根据商品列表长度平均分配
-		const itemCount = this.BatchCommodityList.length;
-		
-		if (itemCount === 0) {
-			uni.showToast({
-				title: '没有商品，无法均摊',
-				icon: 'none',
-				duration: 2000
-			});
-			return;
-		}
-		
-		console.log("this.BatchCommodityList",this.BatchCommodityList);
-
-		// 每个商品分摊相同的费用金额
-		const expensePerItem = expenseAmount / itemCount;
-		
-		this.BatchCommodityList.forEach(item => {
-			// 保存原始采购单价（如果还没保存）
-			if (!item.originalIncomingPrice) {
-				item.originalIncomingPrice = item.incomingPrice || 0;
-			}
-			
-			// 直接赋值，不累加（根据当前费用重新计算）
-			item.expenseAllocated = expensePerItem;
-			
-			// 采购单价不变，保持原始值
-		});
-	},
-		addExpenseWithoutAllocation(expenseAmount) {
-			// // 不均摊，作为单独费用项添加
-			// const expenseItem = {
-			// 	id: "",
-			// 	name: "费用",
-			// 	initMount: 1,
-			// 	initWeight: 0,
-			// 	commodityId: "",
-			// 	calcType: 1,
-			// 	incomingPrice: expenseAmount,
-			// 	originalIncomingPrice: expenseAmount,
-			// 	expenseAllocated: 0,
-			// 	inboundAmount: expenseAmount,
-			// 	isExpense: true  // 标记为费用项
-			// };
-			
-			// this.BatchCommodityList.push(expenseItem);
-		}
+	// 强制更新视图
+	this.$forceUpdate();
+}
 
 		}
 
@@ -1665,88 +1837,93 @@ confirmExpense() {
 </script>
 
 <style lang="scss" scoped>
-	.scroll-view2 {
-		white-space: nowrap;
-	}
-
-	.coach_wrap {
-		padding: 5rpx;
-		background-color: white;
-		font-weight: bold;
-		border: solid 1px dodgerblue;
-		margin-right: 15rpx;
-		display: inline-block;
-		border-radius: 10rpx;
-	}
-
-	.coach_wrap_active {
-		color: white;
-		background-color: dodgerblue;
-	}
-
 	.input1 {
-		background-color: #b9b9b9;
-		height: 20rpx;
-		border-radius: 5rpx;
-		font-size: 15rpx;
+		background: #f5f5f5;
+		height: 28rpx;
+		border-radius: 8rpx;
+		font-size: 18rpx;
 		text-align: center;
-		border: 1px solid black;
+		border: 2px solid #919191;
 		font-weight: bold;
-		color: black;
-		width: 90%;
-
+		color: #5a5a5a;
+		width: 70%;
+		flex: 1;
+		transition: all 0.3s ease;
+		box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+		line-height: 28rpx;
+	}
+	
+	.input-active {
+		background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+		border: 2px solid #2196f3 !important;
+		color: #1565c0 !important;
+		box-shadow: 0 2rpx 8rpx rgba(33, 150, 243, 0.3) !important;
+	}
+	
+	.input1:focus {
+		border-color: #1976d2;
+		box-shadow: 0 0 0 3rpx rgba(33, 150, 243, 0.2);
+		background: #ffffff;
 	}
 
 	.mybrankmask .MymaskList {
 		font-weight: bold;
 		display: flex;
 		width: 100%;
-		height: 30rpx;
+		height: 42rpx;
 		justify-content: space-around;
-		margin-bottom: 5rpx;
-		font-size: 12rpx;
-
+		margin-bottom: 6rpx;
+		font-size: 26rpx;
 	}
 
 	.mybrankmask .MymaskList .large {
 		font-weight: bold;
-		height: 65;
-		/* 设置更高的高度 */
-		line-height: 65rpx;
-		/* 使文本垂直居中 */
+		height: 42rpx;
+		line-height: 42rpx;
 		z-index: 5;
-		font-size: 12rpx;
+		font-size: 26rpx;
 	}
 
 	.mybrankmask .MymaskList .maskListItem {
 		font-weight: bold;
 		width: 23%;
-		height: 30rpx;
+		height: 42rpx;
 		text-align: center;
-		line-height: 30rpx;
-		border-radius: 10rpx;
-		background-color: #a8a8a8;
-		font-size: 12rpx;
-	}
-
-	.clickCard {
-		margin-left: 2rpx;
-		margin-right: 2rpx;
-		width: 104rpx;
-		height: 70rpx;
-		background-color: #ffffff !important;
+		line-height: 42rpx;
 		border-radius: 8rpx;
-		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
-		padding: 10rpx;
-		box-sizing: border-box;
-		text-align: left;
-		font-size: 14rpx;
-		color: #333;
-		margin-bottom: 3rpx;
+		background: #5a5a5a;
+		font-size: 26rpx;
+		color: white;
+		transition: all 0.15s;
+		box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
 	}
-
-	.activeCard {
-		border: 3px solid #007AFF;
+	
+	.mybrankmask .MymaskList .maskListItem:active {
+		opacity: 0.8;
+		transform: scale(0.96);
+		background: #4a4a4a;
+		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.3);
+	}
+	
+	.mybrankmask .MymaskList .confirm-btn {
+		background: #11998e;
+		font-weight: bold;
+	}
+	
+	.mybrankmask .MymaskList .confirm-btn:active {
+		opacity: 0.8;
+		background: #0d7a6f;
+	}
+	
+	/* 表头美化样式 */
+	.table-header {
+		display: flex;
+		background: #2196f3;
+		font-weight: bold;
+		border-bottom: none;
+		color: #ffffff;
+		box-shadow: 0 2rpx 8rpx rgba(33, 150, 243, 0.3);
+		border-radius: 8rpx 8rpx 0 0;
 	}
 
 	.add-expense-btn {
@@ -1788,17 +1965,22 @@ confirmExpense() {
 
 	.total-content {
 		display: flex;
-		height: 25rpx;
-		font-size: 12rpx;
-		border-top: 1px solid gainsboro;
-		border-bottom: 1px solid gainsboro;
+		height: 35rpx;
+		font-size: 16rpx;
+		background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+		border-top: 2px solid #fdcb6e;
+		border-bottom: 2px solid #fdcb6e;
+		box-shadow: 0 2rpx 8rpx rgba(253, 203, 110, 0.3);
+		align-items: center;
 	}
 
 	.total-content-item {
-		padding: 5px;
+		padding: 8px;
 		text-align: left;
 		font-weight: bold;
-		line-height: 20rpx;
+		line-height: 28rpx;
+		color: #d63031;
+		font-size: 15px;
 	}
 
 	/* 费用弹窗样式 */
@@ -1813,6 +1995,148 @@ confirmExpense() {
 		align-items: center;
 		justify-content: center;
 		z-index: 9999;
+	}
+	
+	/* 费用列表内容样式 */
+	.expense-list-content {
+		height: 500px;
+		max-height: 60vh;
+		background: #f5f7fa;
+	}
+	
+	.empty-expense-hint {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 80px 20px;
+		
+		.empty-text {
+			margin-top: 20px;
+			font-size: 16px;
+			color: #909399;
+		}
+	}
+	
+	.expense-items-wrapper {
+		padding: 20px;
+	}
+	
+	.expense-item-card {
+		background: #ffffff;
+		border-radius: 12px;
+		padding: 16px;
+		margin-bottom: 16px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+		transition: all 0.2s ease;
+		
+		&:hover {
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+			transform: translateY(-2px);
+		}
+	}
+	
+	.expense-item-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 12px;
+	}
+	
+	.expense-item-title {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		flex: 1;
+	}
+	
+	.expense-type-badge {
+		display: inline-block;
+		padding: 4px 12px;
+		background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
+		color: white;
+		border-radius: 6px;
+		font-size: 14px;
+		font-weight: 600;
+	}
+	
+	.expense-amount {
+		font-size: 24px;
+		font-weight: bold;
+		color: #ff6b6b;
+	}
+	
+	.expense-item-actions {
+		display: flex;
+		gap: 8px;
+	}
+	
+	.expense-action-btn {
+		width: 36px;
+		height: 36px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		border-radius: 8px;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		padding: 0;
+		
+		&.edit {
+			background: #ecf5ff;
+			
+			&:hover {
+				background: #d9ecff;
+				transform: scale(1.1);
+			}
+		}
+		
+		&.delete {
+			background: #fef0f0;
+			
+			&:hover {
+				background: #fde2e2;
+				transform: scale(1.1);
+			}
+		}
+		
+		&:active {
+			transform: scale(0.95);
+		}
+	}
+	
+	.expense-item-info {
+		padding-top: 12px;
+		border-top: 1px solid #f0f0f0;
+	}
+	
+	.expense-info-text {
+		font-size: 14px;
+		color: #606266;
+	}
+	
+	.expense-total-summary {
+		background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+		border-radius: 12px;
+		padding: 20px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-top: 8px;
+		box-shadow: 0 4px 12px rgba(253, 203, 110, 0.3);
+		
+		.summary-label {
+			font-size: 20px;
+			font-weight: bold;
+			color: #333;
+		}
+		
+		.summary-amount {
+			font-size: 28px;
+			font-weight: bold;
+			color: #d63031;
+		}
 	}
 
 	.expense-modal-wrapper {
@@ -1831,27 +2155,73 @@ confirmExpense() {
 
 	.expense-modal-header {
 		background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
-		padding: 20px 24px;
-		text-align: center;
+		padding: 15px 20px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		color: white;
+		flex-shrink: 0;
 
 		.header-title {
-			display: block;
-			font-size: 30px;
+			font-size: 24px;
 			font-weight: bold;
-			margin-bottom: 8px;
+			color: #ffffff;
+			flex: 1;
+			text-align: center;
 		}
 
-		.header-subtitle {
-			display: block;
-			font-size: 18px;
-			opacity: 0.9;
+		.expense-header-btn {
+			min-width: 90px;
+			height: 40px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			padding: 0 16px;
+			border: 2px solid rgba(255, 255, 255, 0.5);
+			border-radius: 8px;
+			font-size: 16px;
+			font-weight: bold;
+			cursor: pointer;
+			transition: all 0.2s;
+			color: #ffffff;
+			background: rgba(255, 255, 255, 0.1);
+
+			&:hover {
+				background: rgba(255, 255, 255, 0.2);
+				border-color: rgba(255, 255, 255, 0.8);
+			}
+
+			&.confirm {
+				background: rgba(255, 255, 255, 0.2);
+				
+				&.disabled {
+					background: rgba(255, 255, 255, 0.1);
+					opacity: 0.5;
+					cursor: not-allowed;
+					
+					&:hover {
+						background: rgba(255, 255, 255, 0.1);
+						border-color: rgba(255, 255, 255, 0.5);
+					}
+				}
+
+				&:not(.disabled):hover {
+					background: rgba(255, 255, 255, 0.3);
+					transform: translateY(-1px);
+				}
+			}
+
+			&:active:not(.disabled) {
+				transform: scale(0.98);
+			}
 		}
 	}
 
 	.expense-modal-content {
 		// scroll-view样式
-		max-height: 600rpx;
+		height: 500px;
+		max-height: 60vh;
 		
 		.expense-modal-content-inner {
 			padding: 32px 28px;
@@ -2094,67 +2464,6 @@ confirmExpense() {
 			}
 		}
 	}
-
-	.expense-modal-footer {
-		display: flex;
-		gap: 16px;
-		padding: 20px 28px 28px;
-		background: #f8f9fa;
-		border-top: 1px solid #e9ecef;
-
-		button {
-			flex: 1;
-			height: 60px;
-			border-radius: 10px;
-			font-size: 20px;
-			font-weight: bold;
-			border: none;
-			cursor: pointer;
-			transition: all 0.2s ease;
-			display: flex;
-			align-items: center;
-			justify-content: center;
-		}
-
-		.btn-cancel {
-			background: #f5f5f5;
-			color: #606266;
-
-			&:hover {
-				background: #e9e9e9;
-			}
-
-			&:active {
-				transform: scale(0.98);
-			}
-		}
-
-		.btn-confirm {
-			background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
-			color: white;
-			box-shadow: 0 4px 12px rgba(0, 170, 255, 0.3);
-
-			&:hover {
-				box-shadow: 0 6px 16px rgba(0, 170, 255, 0.4);
-				transform: translateY(-1px);
-			}
-
-			&:active {
-				transform: translateY(0) scale(0.98);
-			}
-
-			&.disabled {
-				background: #c0c4cc;
-				box-shadow: none;
-				cursor: not-allowed;
-				opacity: 0.6;
-
-				&:hover {
-					transform: none;
-				}
-			}
-		}
-	}
 	
 	/* 添加费用类型弹窗样式 */
 	.add-type-modal-mask {
@@ -2184,38 +2493,42 @@ confirmExpense() {
 	}
 	
 	.add-type-modal-header {
-		padding: 24px 28px;
+		padding: 15px 20px;
 		background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
 		
 		.header-title {
 			font-size: 24px;
-			font-weight: 600;
+			font-weight: bold;
 			color: #ffffff;
-			display: block;
+			flex: 1;
+			text-align: center;
 		}
 	}
 	
 	.add-type-modal-content {
-		padding: 28px;
+		padding: 40px 32px;
 		
 		.input-wrapper {
 			.input-label-text {
 				display: block;
-				font-size: 16px;
+				font-size: 18px;
 				font-weight: 600;
 				color: #303133;
-				margin-bottom: 12px;
+				margin-bottom: 16px;
 			}
 			
 			.type-name-input {
 				width: 100%;
-				height: 50px;
-				padding: 0 16px;
-				font-size: 16px;
+				height: 56px;
+				padding: 0 20px;
+				font-size: 18px;
 				color: #303133;
 				background: #f5f7fa;
-				border: 2px solid #e4e7ed;
-				border-radius: 8px;
+				border: 3px solid #e4e7ed;
+				border-radius: 10px;
 				box-sizing: border-box;
 				transition: all 0.2s ease;
 				
@@ -2223,58 +2536,7 @@ confirmExpense() {
 					background: #ffffff;
 					border-color: #00aaff;
 					outline: none;
-				}
-			}
-		}
-	}
-	
-	.add-type-modal-footer {
-		display: flex;
-		gap: 16px;
-		padding: 20px 28px 28px;
-		background: #f8f9fa;
-		border-top: 1px solid #e9ecef;
-		
-		button {
-			flex: 1;
-			height: 50px;
-			border: none;
-			border-radius: 8px;
-			font-size: 16px;
-			font-weight: 600;
-			cursor: pointer;
-			transition: all 0.2s ease;
-			
-			&.btn-cancel {
-				background: #ffffff;
-				color: #606266;
-				border: 2px solid #dcdfe6;
-				
-				&:hover {
-					background: #f5f7fa;
-					border-color: #c0c4cc;
-				}
-			}
-			
-			&.btn-confirm {
-				background: linear-gradient(135deg, #00aaff 0%, #0088cc 100%);
-				color: #ffffff;
-				box-shadow: 0 4px 12px rgba(0, 170, 255, 0.3);
-				
-				&:hover {
-					box-shadow: 0 6px 16px rgba(0, 170, 255, 0.4);
-					transform: translateY(-2px);
-				}
-				
-				&.disabled {
-					background: #dcdfe6;
-					color: #909399;
-					cursor: not-allowed;
-					box-shadow: none;
-					
-					&:hover {
-						transform: none;
-					}
+					box-shadow: 0 0 0 4px rgba(0, 170, 255, 0.1);
 				}
 			}
 		}
@@ -2309,7 +2571,8 @@ confirmExpense() {
 		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 		display: flex;
 		flex-direction: column;
-		max-height: 90vh;
+		max-height: 85vh;
+		height: 85vh;
 	}
 	
 	.znj-add-good-modal-header {
@@ -2325,32 +2588,47 @@ confirmExpense() {
 		font-size: 24px;
 		font-weight: bold;
 		color: #ffffff;
+		flex: 1;
+		text-align: center;
 	}
 	
-	.znj-add-good-modal-close {
-		width: 36px;
-		height: 36px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+	.znj-add-good-header-btn {
+		min-width: 80rpx;
+		height: 36rpx;
+		line-height: 36rpx;
+		padding: 0 20rpx;
+		border: 2px solid #ffffff;
+		border-radius: 8rpx;
+		font-size: 16rpx;
+		font-weight: bold;
 		cursor: pointer;
-		border-radius: 50%;
-		transition: background 0.2s;
+		transition: all 0.2s;
+		color: #ffffff;
+		background: transparent;
 	}
 	
-	.znj-add-good-modal-close:hover {
+	.znj-add-good-header-btn.cancel:hover {
 		background: rgba(255, 255, 255, 0.2);
+	}
+	
+	.znj-add-good-header-btn.confirm {
+		background: rgba(255, 255, 255, 0.15);
+	}
+	
+	.znj-add-good-header-btn.confirm:hover {
+		background: rgba(255, 255, 255, 0.3);
 	}
 	
 	.znj-add-good-modal-body {
 		flex: 1;
-		overflow-y: auto;
-		padding: 20px;
+		overflow: hidden;
+		min-height: 0;
 	}
 	.znj-add-good-form {
 		display: flex;
 		flex-direction: column;
 		gap: 20rpx;
+		padding: 20px;
 	}
 	.znj-add-good-row {
 		display: flex;
@@ -2404,52 +2682,25 @@ confirmExpense() {
 		color: #fff;
 		border-color: #1976d2;
 	}
-	.znj-add-good-btns {
-		display: flex;
-		justify-content: flex-end;
-		gap: 24rpx;
-		margin-top: 5rpx;
-		padding-top: 5rpx;
-		border-top: 1px solid #f0f0f0;
-	}
-	.znj-add-good-btn {
-		min-width: 150rpx;
+	.znj-add-good-btn.add {
+		min-width: 120rpx;
 		height: 32rpx;
 		line-height: 32rpx;
-		padding: 0 10rpx;
+		padding: 0 20rpx;
 		border: none;
 		border-radius: 8rpx;
-		font-size: 25rpx;
+		font-size: 15rpx;
 		font-weight: bold;
 		cursor: pointer;
 		transition: all 0.2s;
-		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-	}
-	.znj-add-good-btn.cancel {
-		background: #bdbdbd;
+		background: #07c160;
 		color: #fff;
-	}
-	.znj-add-good-btn.cancel:hover {
-		background: #a0a0a0;
-		transform: translateY(-1px);
-	}
-	.znj-add-good-btn.confirm {
-		background: linear-gradient(135deg, #1976d2, #1565c0);
-		color: #fff;
-	}
-	.znj-add-good-btn.confirm:hover {
-		background: linear-gradient(135deg, #1565c0, #0d47a1);
-		transform: translateY(-1px);
-		box-shadow: 0 4px 8px rgba(25,118,210,0.3);
-	}
-	.znj-add-good-btn.add {
-		background: linear-gradient(135deg, #07c160, #06ae56);
-		color: #fff;
-		min-width: 100rpx;
+		box-shadow: 0 2px 4px rgba(7,193,96,0.2);
 	}
 	.znj-add-good-btn.add:hover {
-		background: linear-gradient(135deg, #06ae56, #059748);
+		background: #06ad56;
 		transform: translateY(-1px);
+		box-shadow: 0 4px 8px rgba(7,193,96,0.3);
 	}
 	
 	/* 单位选择按钮组 */
@@ -2490,6 +2741,28 @@ confirmExpense() {
 
 	.znj-add-good-unit-select:focus {
 		border-color: #07c160;
+	}
+	
+	.znj-add-good-delete-btn {
+		min-width: 60rpx;
+		height: 28rpx;
+		line-height: 28rpx;
+		padding: 0 12rpx;
+		border: 1px solid #ff4d4f;
+		border-radius: 6rpx;
+		font-size: 14rpx;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s;
+		background: #fff;
+		color: #ff4d4f;
+		margin-left: 10rpx;
+	}
+	
+	.znj-add-good-delete-btn:hover {
+		background: #ff4d4f;
+		color: #fff;
+		transform: translateY(-1px);
 	}
 	
 	/* 规格输入框样式 */
@@ -2559,5 +2832,230 @@ confirmExpense() {
 	.znj-add-good-switch-btn.active {
 		background: #07c160;
 		color: #fff;
+	}
+	
+	/* H5规格选择弹窗样式 */
+	/* 规格选择弹窗样式（拆包） - 与分级弹窗保持一致 */
+	.spec-popup-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.3);
+		z-index: 9998;
+		animation: fadeIn 0.2s ease-out;
+	}
+	
+	.spec-popup-container {
+		position: fixed;
+		min-width: 250px;
+		max-width: 500px;
+		background-color: #ffffff;
+		border: 3px solid #00aaff;
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+		z-index: 9999;
+		animation: scaleIn 0.2s ease-out;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.spec-popup-content {
+		padding: 5px;
+		overflow-y: auto;
+		max-height: 450px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	
+	.spec-item {
+		min-height: 70px;
+		padding: 12px;
+		border: 3px solid #7e7e7e;
+		border-radius: 8px;
+		background: #ffffff;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	
+	.spec-item:hover {
+		border-color: #00aaff;
+		background: linear-gradient(135deg, rgba(0, 170, 255, 0.05) 0%, rgba(0, 136, 204, 0.05) 100%);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
+	}
+	
+	.spec-item:active {
+		transform: translateY(0);
+		box-shadow: 0 2px 6px rgba(0, 170, 255, 0.3);
+	}
+	
+	.spec-item-name {
+		font-size: 18rpx;
+		font-weight: bold;
+		color: #333;
+		line-height: 1.4;
+		word-break: break-all;
+	}
+	
+	.spec-item-info {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	
+	.spec-item-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+	
+	/* 多等级商品弹窗样式 */
+	.multilevel-popup-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.3);
+		z-index: 9998;
+		animation: fadeIn 0.2s ease-out;
+	}
+	
+	.multilevel-popup-container {
+		position: fixed;
+		min-width: 250px;
+		max-width: 500px;
+		background-color: #ffffff;
+		border: 3px solid #00aaff;
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+		z-index: 9999;
+		animation: scaleIn 0.2s ease-out;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.multilevel-popup-content {
+		padding: 5px;
+		overflow-y: auto;
+		max-height: 450px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	
+	.multilevel-grid-item {
+		min-height: 70px;
+		padding: 12px;
+		border: 3px solid #7e7e7e;
+		border-radius: 8px;
+		background: #ffffff;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	
+	.multilevel-grid-item:hover {
+		border-color: #00aaff;
+		background: #f0f9ff;
+		box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
+		transform: translateX(5px);
+	}
+	
+	.multilevel-grid-item:active {
+		transform: translateX(5px) scale(0.98);
+		background: #e6f7ff;
+	}
+	
+	.multilevel-item-name {
+		font-size: 18rpx;
+		font-weight: bold;
+		color: #333;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	
+	.multilevel-item-info {
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+		font-size: 14px;
+	}
+	
+	.multilevel-item-tags {
+		display: flex;
+		gap: 5px;
+		flex-wrap: wrap;
+	}
+	
+	.tag {
+		padding: 2px 6px;
+		border-radius: 3px;
+		font-size: 12rpx;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+	
+	.tag-unfixed {
+		color: #31BDEC;
+		border: 1px solid #31BDEC;
+		background: rgba(49, 189, 236, 0.1);
+	}
+	
+	.tag-fixed {
+		color: #00aa00;
+		border: 1px solid #00aa00;
+		background: rgba(0, 170, 0, 0.1);
+	}
+	
+	.tag-unpack {
+		color: #aa55ff;
+		border: 1px solid #aa55ff;
+		background: rgba(170, 85, 255, 0.1);
+	}
+	
+	.tag-bulk {
+		color: #55aaff;
+		border: 1px solid #55aaff;
+		background: rgba(85, 170, 255, 0.1);
+	}
+	
+	.tag-extra {
+		color: #ff5500;
+		border: 1px solid #ff5500;
+		background: rgba(255, 85, 0, 0.1);
+	}
+	
+	/* 淡入动画 */
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+	
+	/* 缩放动画 */
+	@keyframes scaleIn {
+		from {
+			transform: scale(0.8);
+			opacity: 0;
+		}
+		to {
+			transform: scale(1);
+			opacity: 1;
+		}
 	}
 </style>

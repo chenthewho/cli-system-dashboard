@@ -8,6 +8,14 @@
   font-size: 16px;
 }
 
+.icon-jiesuan:before {
+  content: "\e616";
+}
+
+.icon-shouyin1:before {
+  content: "\e617";
+}
+
 .icon-cheng:before {
   content: "\e75a";
 }

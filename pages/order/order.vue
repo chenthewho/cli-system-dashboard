@@ -3,15 +3,25 @@
 		<view class="header">
 			<view class="content-left">
 				<!-- 订单中心的控件 -->
-				<view style="display: flex; align-items: center; gap: 20rpx;"  v-if=" curNow==0">
-					<uni-datetime-picker v-model="dateRange" type="daterange" @change="dateChange"
-						style="font-weight: bold;"><uni-icons custom-prefix="iconfont"
-							type="icon-rili1" size="20" color="#000000"
-							style="font-weight: bold; margin-left: 5rpx;margin-right: 5rpx;text-align: center;justify-items: center;"></uni-icons>日期范围:
-						{{formatDateRange()}}</uni-datetime-picker>
+				<view class="filter-controls-container"  v-if=" curNow==0">
+					<!-- 日期范围选择器 -->
+					<view class="date-picker-wrapper">
+						<uni-datetime-picker v-model="dateRange" type="daterange" @change="dateChange">
+							<view class="date-picker-display">
+								<uni-icons custom-prefix="iconfont" type="icon-rili1" size="16" color="#606266"></uni-icons>
+								<text class="date-label">{{ formatDateRangeLabel() }}</text>
+							</view>
+						</uni-datetime-picker>
+					</view>
+					
+					<!-- 重置日期按钮 -->
+					<view class="reset-date-btn" v-if="dateRange && dateRange.length === 2" @click="resetDateRange">
+						<uni-icons type="refresh" size="14" color="#909399"></uni-icons>
+						<text class="reset-date-text">重置</text>
+					</view>
 					
 					<!-- 原生筛选下拉框 -->
-					<view style="display: flex; align-items: center; gap: 10rpx;">
+					<view class="filter-dropdown-wrapper">
 						<view class="custom-dropdown" @click.stop>
 							<!-- 下拉框触发按钮 -->
 							<view class="dropdown-trigger" @click="toggleDropdown">
@@ -98,7 +108,7 @@
 			return {
 				list: ['订单中心', '客户中心'],
 				curNow: 1,
-				dateRange: [],
+				dateRange: [], // 初始为空，显示"全部"
 				filterType: 'all', // 筛选类型：all(全部), debt(有欠款), sent(已发单), unsent(未发单)
 				showDropdown: false, // 控制下拉菜单显示
 				customerSearchText: '', // 客户搜索文本
@@ -124,9 +134,9 @@
 			}
 		},
 		mounted() {
-			const currentDate = this.getcurrentTime();
-			// 设置默认日期范围：今天到今天
-			this.dateRange = [currentDate, currentDate];
+			// 不再设置默认日期范围，让用户手动选择
+			// const currentDate = this.getcurrentTime();
+			// this.dateRange = [currentDate, currentDate];
 		},
 		methods: {
 			getcurrentTime() {
@@ -144,10 +154,28 @@
 				}
 				return `${this.dateRange[0]} 至 ${this.dateRange[1]}`;
 			},
-			onshowMethed() {
-				this.curNow = 0;
-				this.$refs.OrderMangerIndexVue.refresh();
+			formatDateRangeLabel() {
+				if (!this.dateRange || this.dateRange.length !== 2) {
+					return '全部';
+				}
+				// 格式化日期显示，只显示日期部分
+				const start = this.dateRange[0].split(' ')[0];
+				const end = this.dateRange[1].split(' ')[0];
+				// 如果开始和结束日期相同，只显示一个日期
+				if (start === end) {
+					return start;
+				}
+				return `${start} ~ ${end}`;
 			},
+		onshowMethed() {
+			console.log("onshowMethed2");
+			this.curNow = 0;
+			this.$nextTick(() => {
+				if (this.$refs.OrderMangerIndexVue) {
+					this.$refs.OrderMangerIndexVue.refresh();
+				}
+			});
+		},
 			sectionChange(index) {
 				this.curNow = index;
 				// if (this.curNow === 1) {
@@ -159,7 +187,14 @@
 			dateChange(e) {
 				this.dateRange = e;
 				// 传递范围数据给子组件
-				this.$refs.OrderMangerIndexVue.dateChange(e[0],e[1]);
+				if (e && e.length === 2) {
+					// 如果选择了日期范围，传递具体的日期
+					this.$refs.OrderMangerIndexVue.dateChange(e[0], e[1]);
+				} else {
+					// 如果清空了日期选择，传递空值或全部时间范围
+					// 这里可以传递一个很大的时间范围，或者让子组件处理空值
+					this.$refs.OrderMangerIndexVue.dateChange('', '');
+				}
 			},
 			changeFilter(type) {
 				this.filterType = type;
@@ -244,12 +279,37 @@
 					icon: 'success',
 					duration: 1000
 				});
+			},
+			
+			// 重置日期范围
+			resetDateRange() {
+				this.dateRange = [];
+				// 通知子组件重置日期，加载全部数据
+				if (this.$refs.OrderMangerIndexVue) {
+					this.$refs.OrderMangerIndexVue.dateChange('', '');
+				}
+				uni.showToast({
+					title: '已重置日期',
+					icon: 'success',
+					duration: 1500
+				});
 			}
 		}
 	}
 </script>
 
 <style lang="scss">
+	.content {
+		width: calc(100vw - 40rpx);
+		max-width: calc(100vw - 40rpx);
+		overflow-x: hidden;
+		position: fixed;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		background-color: white;
+	}
+
 	.scrollArea {
 		background-color: darkgrey;
 		height: calc(100vh - 34rpx);
@@ -285,9 +345,12 @@
 		background-color: white;
 		padding: 8rpx;
 		display: flex;
+		align-items: center;
 
 		.content-left {
 			flex: 2;
+			display: flex;
+			align-items: center;
 		}
 
 		.content-right {
@@ -295,6 +358,79 @@
 			display: flex;
 			justify-content: end;
 		}
+	}
+	
+	/* 筛选控件容器 - 左对齐布局 */
+	.filter-controls-container {
+		display: flex;
+		align-items: center;
+		gap: 12rpx;
+	}
+	
+	/* 日期选择器包装 */
+	.date-picker-wrapper {
+		display: inline-flex;
+		align-items: center;
+	}
+	
+	/* 日期选择器显示区域 */
+	.date-picker-display {
+		display: flex;
+		align-items: center;
+		gap: 6rpx;
+		padding: 6rpx 12rpx;
+		background: #fff;
+		border: 1rpx solid #dcdfe6;
+		border-radius: 4rpx;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		height: 32px;
+	}
+	
+	.date-picker-display:hover {
+		background: #f5f7fa;
+		border-color: #c0c4cc;
+	}
+	
+	.date-label {
+		font-size: 14px;
+		color: #606266;
+		font-weight: 500;
+		white-space: nowrap;
+	}
+	
+	/* 重置日期按钮 */
+	.reset-date-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 4rpx;
+		padding: 6rpx 12rpx;
+		height: 32px;
+		background: #fff;
+		border: 1rpx solid #dcdfe6;
+		border-radius: 4rpx;
+		cursor: pointer;
+		transition: all 0.3s ease;
+	}
+	
+	.reset-date-btn:hover {
+		background: #f5f7fa;
+		border-color: #409eff;
+	}
+	
+	.reset-date-text {
+		font-size: 13px;
+		color: #909399;
+	}
+	
+	.reset-date-btn:hover .reset-date-text {
+		color: #409eff;
+	}
+	
+	/* 筛选下拉框包装 */
+	.filter-dropdown-wrapper {
+		display: inline-flex;
+		align-items: center;
 	}
 
 	/* 原生下拉框样式 */
@@ -308,28 +444,29 @@
 		align-items: center;
 		justify-content: space-between;
 		min-width: 120rpx;
-		padding: 8rpx 16rpx;
+		padding: 6rpx 12rpx;
 		background: #fff;
-		border: 2rpx solid #e4e7ed;
-		border-radius: 5px;
+		border: 1rpx solid #dcdfe6;
+		border-radius: 4rpx;
 		cursor: pointer;
 		transition: all 0.3s ease;
-		height: 40px;
+		height: 32px;
 	}
 
 	.dropdown-trigger:hover {
-		border-color: #409eff;
+		background: #f5f7fa;
+		border-color: #c0c4cc;
 	}
 
 	.trigger-text {
-		font-size: 15px;
-		color: #333;
+		font-size: 14px;
+		color: #606266;
 		font-weight: 500;
 	}
 
 	.dropdown-arrow {
-		font-size: 15px;
-		color: #999;
+		font-size: 12px;
+		color: #909399;
 		margin-left: 8rpx;
 		transition: transform 0.3s ease;
 	}
@@ -340,17 +477,17 @@
 
 	.dropdown-menu {
 		position: absolute;
-		top: 100%;
+		top: calc(100% + 4rpx);
 		left: 0;
 		right: 0;
 		background: #fff;
-		border: 2rpx solid #e4e7ed;
-		border-radius: 8rpx;
-		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+		border: 1rpx solid #e4e7ed;
+		border-radius: 4rpx;
+		box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.1);
 		z-index: 999;
-		margin-top: 4rpx;
 		overflow: hidden;
 		animation: dropdown-fade-in 0.3s ease;
+		min-width: 140rpx;
 	}
 
 	@keyframes dropdown-fade-in {
@@ -368,9 +505,9 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 16rpx 20rpx;
+		padding: 10rpx 16rpx;
 		cursor: pointer;
-		transition: background-color 0.3s ease;
+		transition: all 0.2s ease;
 		border-bottom: 1rpx solid #f5f5f5;
 	}
 
@@ -379,29 +516,35 @@
 	}
 
 	.dropdown-item:hover {
-		background-color: #f5f7fa;
+		background: #f5f7fa;
 	}
 
 	.dropdown-item.active {
-		background-color: #ecf5ff;
+		background: #ecf5ff;
 		color: #409eff;
 	}
 
 	.item-text {
-		font-size: 15px;
-		color: inherit;
+		font-size: 13px;
+		color: #606266;
+		font-weight: 400;
+	}
+	
+	.dropdown-item.active .item-text {
+		color: #409eff;
+		font-weight: 500;
 	}
 
 	.check-icon {
-		font-size: 15px;
+		font-size: 14px;
 		color: #409eff;
 		font-weight: bold;
 	}
 
 	.dropdown-divider {
-		height: 2rpx;
+		height: 1rpx;
 		background-color: #e4e7ed;
-		margin: 8rpx 0;
+		margin: 4rpx 0;
 	}
 
 	.reset-item {
@@ -409,16 +552,16 @@
 	}
 
 	.reset-item:hover {
-		background-color: #f0f0f0;
+		background: #f0f0f0;
 	}
 
 	.reset-text {
 		color: #909399;
-		font-style: italic;
+		font-weight: 400;
 	}
 
 	.reset-icon {
-		font-size: 15px;
+		font-size: 14px;
 		color: #909399;
 		font-weight: bold;
 	}

@@ -1,0 +1,63 @@
+{
+  "name": "order-goods-panel",
+  "version": "1.0.0",
+  "description": "订单商品列表组件，用于展示购物车商品、总计金额和操作按钮",
+  "main": "index.js",
+  "types": "types.ts",
+  "files": [
+    "OrderGoodsPanel.vue",
+    "index.js",
+    "types.ts",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "vue",
+    "component",
+    "order",
+    "goods",
+    "cart",
+    "shopping-cart",
+    "cashier",
+    "pos",
+    "retail",
+    "uni-app",
+    "uniapp"
+  ],
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/order-goods-panel.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/order-goods-panel/issues"
+  },
+  "homepage": "https://github.com/yourusername/order-goods-panel#readme",
+  "peerDependencies": {
+    "vue": "^2.6.0 || ^3.0.0"
+  },
+  "devDependencies": {
+    "@vue/test-utils": "^2.0.0",
+    "jest": "^29.0.0",
+    "sass": "^1.50.0",
+    "sass-loader": "^13.0.0",
+    "typescript": "^4.5.0",
+    "vue": "^3.0.0"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint --ext .js,.vue .",
+    "lint:fix": "eslint --ext .js,.vue . --fix"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  }
+}
+

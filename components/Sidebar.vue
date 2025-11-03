@@ -7,14 +7,14 @@
 					mode="aspectFill"
 				></image>
 			</div>
-		<ul style="margin-top: 60rpx;">
-			<li v-for="item in menuItems" :key="item.id">
-				<div @click="changeContent(item.id)" :class="{'active': activeItem === item.id}" class="menu-item" v-if="item.isShow">
-					<uni-icons custom-prefix="iconfont" :type="item.icon" size="30" color="#ffffff"></uni-icons>
-					<span class="bar-text" :class="{'active': activeItem === item.id}">{{ item.text }}</span>
-				</div>
-			</li>
-		</ul>
+	<ul style="margin-top: 60rpx;">
+		<li v-for="item in menuItems" :key="item.id">
+			<div @click="changeContent(item.id)" :class="{'active': activeItem === item.id}" class="menu-item" v-if="item.isShow">
+				<uni-icons custom-prefix="iconfont" :type="item.icon" size="30" color="#ffffff"></uni-icons>
+				<span class="bar-text" :class="{'active': activeItem === item.id}">{{ item.text }}</span>
+			</div>
+		</li>
+	</ul>
 		<ul>
 			<li>
 				<div @click="changeContent('six')" :class="{'active': activeItem === 'six'}" class="menu-item-footer">
@@ -32,10 +32,19 @@
 		data() {
 			return {
 				activeItem: 'one', // 当前选中的菜单项
-				vesionType:uni.getStorageSync("vesionType")??1, // 获取版本类型，默认为1
-				menuItems: [{
+				vesionType:uni.getStorageSync("vesionType")??1, // 获取版本类型，默认为1|| 1-普通版 2-代销 3-自营版 4-满血版
+				menuItems: []
+			};
+		},
+		created(){
+			console.log("Sidebar onShow called");
+			this.vesionType = uni.getStorageSync("vesionType")??1;
+			// 检查版本类型是否有变化
+			console.log("Current vesionType:", this.vesionType);
+			if(this.vesionType === 4){
+				this.menuItems = [{
 						id: 'one',
-						icon: 'icon-shouyin',
+						icon: 'icon-shouyin1',
 						text: '收银',
 						isShow: true
 					},
@@ -52,15 +61,20 @@
 						isShow: true
 					},
 					{
-						id: 'four',
-						icon: 'icon-shouyintongji',
-						text: '报表',
+						id: 'five',
+						icon: 'icon-jiesuan',
+						text: '结算',
 						isShow: true
 					},
 					{
-						id: 'five',
+						id: 'eight',
 						icon: 'icon-huozhuguanli',
-						text: '结算',
+						text: '货主',
+						isShow: true
+					},{
+						id: 'four',
+						icon: 'icon-shouyintongji',
+						text: '报表',
 						isShow: true
 					},
 					{
@@ -69,15 +83,9 @@
 						text: '轮值',
 						isShow: true
 					}
-				]
-			};
-		},
-		created(){
-			console.log("Sidebar onShow called");
-			this.vesionType = uni.getStorageSync("vesionType")??1;
-			// 检查版本类型是否有变化
-			console.log("Current vesionType:", this.vesionType);
-			if(this.vesionType === 2 || this.vesionType === 4){
+					
+				];
+			}else if(this.vesionType === 2 ){
 				this.menuItems = [{
 						id: 'one',
 						icon: 'icon-shouyin',
@@ -95,17 +103,16 @@
 						icon: 'icon-transport',
 						text: '库存',
 						isShow: true
+					},{
+						id: 'five',
+						icon: 'icon-jiesuan',
+						text: '结算',
+						isShow: true
 					},
 					{
 						id: 'four',
 						icon: 'icon-shouyintongji',
 						text: '报表',
-						isShow: true
-					},
-					{
-						id: 'five',
-						icon: 'icon-huozhuguanli',
-						text: '结算',
 						isShow: true
 					},
 					{
@@ -116,7 +123,7 @@
 					}
 				];
 			}
-			else if(this.vesionType === 3 || this.vesionType === 4){
+			else if(this.vesionType === 3 ){
 				this.menuItems = [{
 						id: 'one',
 						icon: 'icon-shouyin',
@@ -161,6 +168,12 @@
 						icon: 'icon-dingdan',
 						text: '订单',
 						isShow: true
+					},
+					{
+						id: 'seven',
+						icon: 'icon-zhiban',
+						text: '轮值',
+						isShow: true
 					}
 				];
 			}
@@ -176,6 +189,10 @@
 			    } catch (e) {
 			        console.error("播放系统按键音失败:", e);
 			    }
+			},
+			// 设置激活的菜单项（用于外部调用）
+			setActiveItem(itemId) {
+				this.activeItem = itemId;
 			},
 			changeContent(content) {
 				this.playSystemKeyClickSound();
@@ -219,7 +236,7 @@
 	}
 
 	.sidebar li {
-		margin: 5rpx 0;
+		margin: 2rpx 0;
 		/* 列表项之间的间距 */
 		display: flex;
 		/* 使用 flexbox 布局 */
@@ -229,8 +246,8 @@
 
 	.menu-item {
 		width: 40rpx;
-		padding-top: 7rpx;
-		padding-bottom: 7rpx;
+		padding-top: 5rpx;
+		padding-bottom: 5rpx;
 		display: flex;
 		/* 使用 flexbox 布局 */
 		flex-direction: column;

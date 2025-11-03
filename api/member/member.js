@@ -22,6 +22,9 @@ export default {
   memberList (id) {
     return http.get(`/Customer/GetAllByCompanyId?Id=${id}`)
   },
+  GetmemberListByCompanyIdPage (params) {
+    return http.get('/Customer/GetAllByCompanyIdPage?Id='+params.Id+'&pageSize='+params.pageSize+'&currentPage='+params.currentPage)
+  },
   memberSearch (searchKey) {
     return http.get(`/merchant/gate/member/search?searchKey=${searchKey}`)
   },

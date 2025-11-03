@@ -1,33 +1,44 @@
 <template>
-  <view class="dropdown-container" :style="containerStyle">
-    <!-- 主按钮 -->
-    <view 
-      class="main-button" 
-      :style="buttonStyle"
-      @click="handleButtonClick"
-    >
-      <view class="button-text" :style="textStyle">
-       操作
-      </view>
-      <view class="dropdown-icon" :style="iconStyle">
-        <view class="sanjiao" :style="triangleStyle">▼</view>
-      </view>
-    </view>
-
-    <!-- 下拉框 -->
+  <view class="dropdown-wrapper">
+    <!-- 蒙板 -->
     <view 
       v-if="showDropdown" 
-      class="dropdown-menu" 
-      :style="menuStyle"
-    >
+      class="dropdown-mask" 
+      @click="closeMask"
+      catchtouchmove="true"
+    ></view>
+    
+    <view class="dropdown-container" :style="containerStyle">
+      <!-- 主按钮 -->
       <view 
-        v-for="(item, index) in options" 
-        :key="index" 
-        class="dropdown-item" 
-        :style="menuItemStyle"
-        @click="selectItem(item)"
+        class="main-button" 
+        :style="buttonStyle"
+        @click.stop="handleButtonClick"
       >
-        {{ item.text }}
+        <view class="button-text" :style="textStyle">
+         操作
+        </view>
+        <view class="dropdown-icon" :style="iconStyle">
+          <view class="sanjiao" :style="triangleStyle">▼</view>
+        </view>
+      </view>
+
+      <!-- 下拉框 -->
+      <view 
+        v-if="showDropdown" 
+        class="dropdown-menu" 
+        :style="menuStyle"
+        @click.stop
+      >
+        <view 
+          v-for="(item, index) in options" 
+          :key="index" 
+          class="dropdown-item" 
+          :style="menuItemStyle"
+          @click="selectItem(item)"
+        >
+          {{ item.text }}
+        </view>
       </view>
     </view>
   </view>
@@ -175,6 +186,9 @@ export default {
     toggleDropdown() {
       this.showDropdown = !this.showDropdown;
     },
+    closeMask() {
+      this.showDropdown = false;
+    },
     selectItem(item) {
       this.selectedValue = item.value;
       this.selectedText = item.text;
@@ -193,9 +207,25 @@ export default {
 </script>
 
 <style scoped>
+.dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 998;
+}
+
 .dropdown-container {
   position: relative;
   display: inline-block;
+  z-index: 999;
 }
 
 .main-button {
@@ -237,7 +267,7 @@ export default {
   border-radius: 8rpx;
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
   margin-top: 8rpx;
-  z-index: 999;
+  z-index: 1000;
   box-sizing: border-box;
   max-height: 400rpx;
   overflow-y: auto;

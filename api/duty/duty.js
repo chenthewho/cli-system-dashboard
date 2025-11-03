@@ -27,5 +27,15 @@ export default {
 	},
 	getReservefundRecordByDutyId(dutyId){
 		return http.get(`/schedule/getReservefundRecordByDutyId?dutyId=${dutyId}`)
+	},
+	AddDutySpendCost(data){
+		return http.post(`/DutySpend/AddDutySpendCost`,data)
+	},
+	getSpendCostByDutyId(dutyId){
+		return http.get(`/DutySpend/getDutySpendCostByDutyId?dutyId=${dutyId}`)
+	},
+	// 根据公司ID和时间范围获取费用支出
+	getDutySpendCostByCompanyIdAndTimeRange(companyId, startTime, endTime){
+		return http.get(`/DutySpend/getDutySpendCostByCompanyIdAndTimeRange?companyId=${companyId}&startTime=${startTime}&endTime=${endTime}`)
 	}
 }

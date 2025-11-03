@@ -5,7 +5,7 @@
  width: 70px;	
 }
 .vertical-tab2{
-	width: 50px;	
+	width: 40px;	
 	height: 300px;
 	background-color: white;
 	margin-top: 5px;
@@ -17,11 +17,15 @@
 }
 .container {
 	background-color: grey;
-  display: flex; /* 使用 flexbox 布局 */
-  overflow: hidden;
+	display: flex;
+	overflow: hidden;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	padding: 0;
 }
 .container2 {
-	background-color: gray;
+	background-color: rgb(158, 158, 158);
   height: calc(100vh - 50px);
   display: flex; /* 使用 flexbox 布局 */
   overflow: hidden;
@@ -178,62 +182,103 @@
 }
 
 .cashier-row {
-	align-items: flex-start !important;
-	height: calc(100% - 80px);
+	display: flex;
+	align-items: stretch;
+	height: calc(100vh - 50px);
 	background-color: #f3f4f6;
 	border-radius: 4px;
-    display: grid;
-	grid-template-columns: 7fr 3fr;
-	   /* 两列，每列占一半宽
-	width: 100%; /* 容器宽度 */
+	width: 100vw;
+	gap: 6px;
+	position: relative;
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+	overflow: hidden;
 
-		.cashier-card {
-			border-left: 1px solid $m-border-color;
-			border-right: 1px solid $m-border-color;
-		}
-		
-		.cashier-goods {
-		}
+	// 左侧商品区域 - 占60%
+	.cashier-goods {
+		flex: 0 0 60%;
+		min-width: 0;
+		position: relative;
+		overflow: hidden;
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	// 右侧卡片区域 - 占40%，固定在最右边
+	.cashier-card {
+		flex: 0 0 40%;
+		min-width: 0;
+		position: fixed;
+		right: 0;
+		top: 50px;
+		width: 40vw;
+		height: calc(100vh - 50px);
+		overflow: hidden;
+		background-color: $m-white-color;
+		box-sizing: border-box;
+		// z-index: 10;
+		box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+	}
 
 	.cashier-col {
 		display: flex;
 		flex-direction: column;
-		height: calc(100vh 
-		- 50px);
+		height: 100%;
+		width: 100%;
+		box-sizing: border-box;
 				
 		.card-title {
 			height: 40px;
+			min-height: 40px;
 			display: flex;
 			flex-flow: row;
 			justify-content: space-between;
 			align-items: center;
 			background-color: $m-primary-light;
-			padding: 0 0px;
+			padding: 0 8px;
+			overflow: hidden;
+			width: 100%;
+			box-sizing: border-box;
+			flex-shrink: 0;
 		}
 
 		.card-body {
 			text-align: left;
-			flex: 1;
-			// border: solid 1px $m-border-color;
+			flex: 1 1 auto;
 			overflow-y: auto;
+			overflow-x: hidden;
 			display: flex;
 			flex-flow: column;
 			background: $m-white-color;
-
+			width: 100%;
+			box-sizing: border-box;
+			min-height: 0;
 	     }
 		 
 		 
 
 		.card-sumarry {
-			background: $m-white-color;
+			background: linear-gradient(to right, #ffffff 0%, #f0f8ff 100%);
 			height: 40rpx;
+			min-height: 40rpx;
+			border-top: 3px solid #1890ff;
+			box-shadow: 0 -2px 10px rgba(24, 144, 255, 0.08);
+			width: 100%;
+			box-sizing: border-box;
+			flex-shrink: 0;
+			padding: 0 8px;
+			
 			.detail-list {
-				margin: 0 5rpx;
+				margin: 0;
+				padding: 0 8px;
 				display: flex;
 				flex-flow: column;
-				justify-content: space-evenly;
+				justify-content: center;
 				height: 100%;
-				
+				width: 100%;
+				box-sizing: border-box;
 			}
 
 			.detail-item {
@@ -241,7 +286,17 @@
 				flex-flow: row;
 				justify-content: space-between;
 				align-items: center;
-				font-weight: 200;
+				font-weight: 600;
+				font-size: 25px;
+				color: #2c3e50;
+				width: 100%;
+				box-sizing: border-box;
+				gap: 10px;
+				
+				> div {
+					white-space: nowrap;
+					overflow: visible;
+				}
 			}
 
 			.preferential {
@@ -251,31 +306,62 @@
 			}
 
 			.payable {
-				.amount span {
-					font-size: 22px;
+				.amount {
+					background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+					-webkit-background-clip: text;
+					-webkit-text-fill-color: transparent;
+					background-clip: text;
+					font-weight: 700;
+					display: flex;
+					align-items: center;
+					white-space: nowrap;
+					
+					span {
+						font-size: 30px;
+						font-weight: 700;
+					}
 				}
 			}
 		}
 
 		.card-footer {
-			height: 50px;
-			bottom: 1%;
+			height: 70px;
+			min-height: 70px;
 			display: flex;
 			flex-flow: row;
-			flex-wrap: wrap;
+			flex-wrap: nowrap;
 			justify-content: space-between;
 			align-items: center;
-			background-color: $m-white-color;
-			z-index: 1;
+			background-color: #ffffff;
+			z-index: 10;
 			border-top: 1px solid $m-border-color;
+			padding: 8px 12px;
+			box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+			width: 100%;
+			box-sizing: border-box;
+			flex-shrink: 0;
 
 			.footer-item {
 				display: flex;
 				flex-flow: row;
 				align-items: center;
+				gap: 12px;
+				flex-shrink: 0;
 
 				.btn-submit {
-					padding: 12px 24px;
+					padding: 14px 24px;
+					font-size: 18px;
+					font-weight: 600;
+					white-space: nowrap;
+					flex-shrink: 0;
+					border-radius: 8px;
+					transition: all 0.3s ease;
+					min-width: 90px;
+					height: 50px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					letter-spacing: 2px;
 				}
 			}
 		}
@@ -318,12 +404,6 @@
 					.expand-total-text {
 						line-height: 26px;
 					}
-
-					.expand-total-btn {
-					}
-				}
-
-				.remark {
 				}
 			}
 
@@ -506,4 +586,41 @@
 
 .slide-up-enter, .slide-up-leave-to {
   transform: translateY(0); /* 进入时从下方滑入，离开时滑出 */
+}
+
+// 响应式设计 - 确保在不同屏幕尺寸下都能正常工作
+@media screen and (max-width: 1366px) {
+	.cashier-row {
+		.cashier-goods {
+			flex: 0 0 55%;
+		}
+		
+		.cashier-card {
+			width: 45vw;
+		}
+	}
+}
+
+@media screen and (max-width: 1024px) {
+	.cashier-row {
+		.cashier-goods {
+			flex: 0 0 50%;
+		}
+		
+		.cashier-card {
+			width: 50vw;
+		}
+	}
+}
+
+@media screen and (min-width: 1920px) {
+	.cashier-row {
+		.cashier-goods {
+			flex: 0 0 65%;
+		}
+		
+		.cashier-card {
+			width: 35vw;
+		}
+	}
 }

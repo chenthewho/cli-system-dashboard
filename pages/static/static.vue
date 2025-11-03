@@ -63,7 +63,7 @@
         </view>
 
         <!-- 利润统计卡片 -->
-        <view class="stat-module profit-module">
+        <view class="stat-module profit-module" v-if="vesionType == 4">
           <view class="module-header">
             <view class="module-icon profit">
               <uni-icons type="wallet" size="20" color="#fff"></uni-icons>
@@ -75,7 +75,7 @@
           </view>
           
           <view class="reports-list">
-            <view class="report-card" @click="enterToEmployTable" v-if="this.vesionType == 3 || this.vesionType == 4">
+            <view class="report-card" @click="enterToEmployTable">
               <view class="report-icon">
                 <uni-icons type="list" size="18" color="#ff9800"></uni-icons>
               </view>
@@ -88,7 +88,7 @@
               </view>
             </view>
             
-            <view class="report-card" @click="enterToAssistTable" v-if="this.vesionType == 2 || this.vesionType == 4">
+            <view class="report-card" @click="enterToAssistTable">
               <view class="report-icon">
                 <uni-icons type="person" size="18" color="#9c27b0"></uni-icons>
               </view>
@@ -104,7 +104,7 @@
         </view>
 
         <!-- 货品统计卡片 -->
-        <view class="stat-module inventory-module">
+        <view class="stat-module inventory-module" v-if="vesionType == 4">
           <view class="module-header">
             <view class="module-icon inventory">
               <uni-icons type="list" size="20" color="#fff"></uni-icons>
@@ -139,7 +139,7 @@
 		    </view>
 		    <view class="module-info">
 		      <text class="module-title">其他统计</text>
-		      <text class="module-count">1 个报表</text>
+		      <text class="module-count">2 个报表</text>
 		    </view>
 		  </view>
 		  
@@ -151,6 +151,19 @@
 		      <view class="report-info">
 		        <text class="report-title">欠条统计表</text>
 		        <text class="report-desc">用户欠条记录数据</text>
+		      </view>
+		      <view class="report-arrow">
+		        <uni-icons type="right" size="12" color="#ccc"></uni-icons>
+		      </view>
+		    </view>
+		    
+		    <view class="report-card" @click="enterToOperaRecordTable">
+		      <view class="report-icon">
+		        <uni-icons type="settings" size="18" color="#ff5722"></uni-icons>
+		      </view>
+		      <view class="report-info">
+		        <text class="report-title">异常操作记录表</text>
+		        <text class="report-desc">系统异常操作日志</text>
 		      </view>
 		      <view class="report-arrow">
 		        <uni-icons type="right" size="12" color="#ccc"></uni-icons>
@@ -231,7 +244,13 @@
 				uni.navigateTo({
 					url: `/pages/table/lousStaticTable`
 				})
-			},	
+			},
+			//进入异常操作记录表
+			enterToOperaRecordTable(){
+				uni.navigateTo({
+					url: `/pages/table/operaRecordTable`
+				})
+			},
 			//进入进销存统计表
 			enterToSaleStaticTable(){
         uni.showToast({
@@ -294,6 +313,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  background: #e8e8e8;
 }
 
 
@@ -314,11 +334,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 40px;
+  padding: 20px 32px;
   background: #ffffff;
   color: #2c3e50;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  border-bottom: 1px solid #e5e5e5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  border-bottom: 2px solid #e0e0e0;
   position: relative;
   z-index: 10;
 }
@@ -389,27 +409,29 @@
   flex: 1;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 30px;
-  padding: 20px;
+  gap: 16px;
+  padding: 16px;
   overflow-y: auto;
   align-items: start;
   width: 100%;
   box-sizing: border-box;
+  background: #e8e8e8;
 }
 
 /* 统计模块 */
 .stat-module {
   background: white;
-  border-radius: 16px;
-  border: 1px solid #e5e5e5;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.12);
   }
 
   &.business-module {
@@ -432,19 +454,21 @@
 .module-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
-  border-bottom: 1px solid #f0f0f0;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 2px solid #f0f0f0;
+  background: linear-gradient(to bottom, #fafafa 0%, #ffffff 100%);
 }
 
 .module-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 
   &.business {
     background: linear-gradient(135deg, #4caf50, #45a049);
@@ -478,21 +502,23 @@
 
 /* 报表列表 */
 .reports-list {
-  padding: 16px 24px 24px;
+  padding: 12px 16px 16px;
 }
 
 .report-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
-  margin-bottom: 12px;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
   background: #f8f9fa;
-  border-radius: 12px;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 
   &::before {
     content: '';
@@ -507,14 +533,16 @@
 
   &:hover {
     background: #e9ecef;
-    transform: translateX(4px);
+    transform: translateX(3px);
+    border-color: rgba(102, 126, 234, 0.5);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 
     &::before {
       left: 100%;
     }
 
     .report-arrow {
-      transform: translateX(4px);
+      transform: translateX(3px);
     }
   }
 
@@ -524,15 +552,16 @@
 }
 
 .report-icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   background: white;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .report-info {

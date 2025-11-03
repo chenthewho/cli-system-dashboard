@@ -1,43 +1,48 @@
 <template>
-	<view class="uni-select-lay" :style="{'z-index':zindex}">
-		<view class="uni-select-lay-select" :class="{'active':active}">
-			<!-- 禁用mask -->
-			<view class="uni-disabled" v-if="disabled"></view>
-			<!-- 禁用mask -->
-			<!-- 清空 -->
-			<!-- <view class="uni-select-lay-input-close" v-if="changevalue!=''&&this.active">
-				<text @click.stop="removevalue"></text>
-			</view> -->
-			<!-- 清空 -->
-			<text type="text" class="uni-select-lay-input" :class="{active:changevalue!=''&&changevalue!=placeholder}"
-				:placeholder="placeholder" 
-				 style="font-weight: bold;color: black;font-size: 15rpx;" :style="{width:textWidth+'rpx'}"  @click="select">{{name}}</text>
-			<view class="uni-select-lay-icon" :class="{disabled:disabled, 'icon-up': direction === 'up'}" @click.stop="select"><text></text></view>
-		</view>
-		<scroll-view class="uni-select-lay-options" :class="{'dropdown-up': direction === 'up'}" :scroll-y="true" v-show="active" @scroll="selectmove"
-			@touchstart="movetouch">
-			<template v-if="!changes">
-				<!-- <view class="uni-select-lay-item" v-if="showplaceholder" :class="{active:value==''}"
-					@click.stop="selectitem(-1,null)">
-					{{placeholder}}
+	<view>
+		<!-- 浅色蒙板 -->
+		<view class="uni-select-lay-mask" v-if="active" :style="{'z-index': 99998}" @click="closeMask"></view>
+		
+		<view class="uni-select-lay" :style="{'z-index': active ? 99999 : zindex}">
+			<view class="uni-select-lay-select" :class="{'active':active}" :style="{height: height, width: width, padding: padding}">
+				<!-- 禁用mask -->
+				<view class="uni-disabled" v-if="disabled"></view>
+				<!-- 禁用mask -->
+				<!-- 清空 -->
+				<!-- <view class="uni-select-lay-input-close" v-if="changevalue!=''&&this.active">
+					<text @click.stop="removevalue"></text>
 				</view> -->
-				<view class="uni-select-lay-item" :class="{active:value==item.id}" v-for="(item,index) in options"
-					:key="index" @click.stop="selectitem(index,item)" style="display: flex; justify-content: space-between; align-items: center;">
-					<text>{{item.label}}</text>
-				</view>
-			</template>
-			<!-- 搜索 -->
-			<template v-else>
-				<template v-if="vlist.length>0">
-					<view class="uni-select-lay-item" :class="{active:value==item[svalue]}"
-						v-for="(item,index) in vlist" :key="index" @click.stop="selectitem(index,item)">{{item[slabel]}}
+				<!-- 清空 -->
+				<text type="text" class="uni-select-lay-input" :class="{active:changevalue!=''&&changevalue!=placeholder}"
+					:placeholder="placeholder" 
+					 style="font-weight: bold;color: black;font-size: 15rpx;" :style="{width:textWidth+'rpx'}"  @click="select">{{name}}</text>
+				<view class="uni-select-lay-icon" :class="{disabled:disabled, 'icon-up': direction === 'up'}" @click.stop="select"><text></text></view>
+			</view>
+			<scroll-view class="uni-select-lay-options" :class="{'dropdown-up': direction === 'up'}" :style="{'z-index': active ? 100000 : zindex + 1}" :scroll-y="true" v-show="active" @scroll="selectmove"
+				@touchstart="movetouch">
+				<template v-if="!changes">
+					<!-- <view class="uni-select-lay-item" v-if="showplaceholder" :class="{active:value==''}"
+						@click.stop="selectitem(-1,null)">
+						{{placeholder}}
+					</view> -->
+					<view class="uni-select-lay-item" :class="{active:value==item.id}" v-for="(item,index) in options"
+						:key="index" @click.stop="selectitem(index,item)" style="display: flex; justify-content: space-between; align-items: center;">
+						<text>{{item.label}}</text>
 					</view>
 				</template>
+				<!-- 搜索 -->
 				<template v-else>
-					<view class="nosearch">{{changesValue}}</view>
+					<template v-if="vlist.length>0">
+						<view class="uni-select-lay-item" :class="{active:value==item[svalue]}"
+							v-for="(item,index) in vlist" :key="index" @click.stop="selectitem(index,item)">{{item[slabel]}}
+						</view>
+					</template>
+					<template v-else>
+						<view class="nosearch">{{changesValue}}</view>
+					</template>
 				</template>
-			</template>
-		</scroll-view>
+			</scroll-view>
+		</view>
 	</view>
 </template>
 
@@ -93,6 +98,31 @@
 				validator: function (value) {
 					return ['down', 'up'].indexOf(value) !== -1
 				}
+			},
+			// 新增：可自定义的高度
+			height: {
+				type: String,
+				default: '36rpx'
+			},
+			// 新增：可自定义的宽度
+			width: {
+				type: String,
+				default: 'auto'
+			},
+			// 新增：可自定义的padding
+			padding: {
+				type: String,
+				default: '0 30px 0 10px'
+			},
+			// 新增：唯一标识符
+			selectId: {
+				type: String,
+				default: ''
+			},
+			// 新增：当前激活的选择框ID
+			activeSelectId: {
+				type: String,
+				default: ''
 			}
 		},
 		data() {
@@ -110,7 +140,6 @@
 			};
 		},
 		mounted() {
-			console.log("prop",this.$props)
 			this.itemcheck();
 		},
 		watch: {
@@ -122,6 +151,15 @@
 			options() {
 				// 此处判断是否有初始value,存在则判断显示文字
 				this.itemcheck();
+			},
+			// 监听激活的选择框ID变化
+			activeSelectId(newId) {
+				// 如果激活的不是当前选择框，则关闭当前选择框
+				if (newId !== this.selectId && this.active) {
+					this.active = false;
+					this.changevalue = this.oldvalue;
+					this.changes = false;
+				}
 			}
 		},
 		methods: {
@@ -143,12 +181,20 @@
 					this.oldvalue = this.changevalue = "";
 				}
 			},
+			//点击蒙板关闭选择框
+			closeMask() {
+				this.active = false;
+				this.changevalue = this.oldvalue;
+				this.changes = false;
+			},
 			//点击组件
 			select() {
 				if (this.disabled) return;
 				this.active = !this.active;
 				if (this.active) {
 					this.changes = false;
+					// 通知父组件当前选择框被打开
+					this.$emit('open', this.selectId);
 				} else {
 					this.changevalue = this.oldvalue;
 				}
@@ -239,9 +285,19 @@
 </script>
 
 <style lang="scss" scoped>
+	/* 浅色蒙板样式 */
+	.uni-select-lay-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(0, 0, 0, 0.3);
+		transition: opacity 0.3s ease;
+	}
+	
 	.uni-select-lay {
 		position: relative;
-		z-index: 999;
 		display: flex;
 
 		.uni-select-input {
@@ -254,7 +310,6 @@
 		.uni-select-lay-select {
 			user-select: none;
 			position: relative;
-			z-index: 3;
 			height: 36rpx;
 			padding: 0 30px 0 10px;
 			box-sizing: border-box;
@@ -424,7 +479,6 @@
 			background: #fff;
 			padding: 5px 0;
 			box-sizing: border-box;
-			z-index: 9;
 
 			&.dropdown-up {
 				top: auto;
@@ -438,6 +492,7 @@
 				line-height: 2.5;
 				transition: .3s;
 				font-size: 14px;
+				text-align: center;
 
 				&.active {
 					background: #007AFF;

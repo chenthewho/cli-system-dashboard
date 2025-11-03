@@ -2,18 +2,32 @@
 	<div class="header">
 		<div class="header-theme" :class="theme">
 			<div class="header-container">
-				<div class="menu-item" style="display: flex;align-items: center;">
-					<span @click="turnToCommonSetting" style="color:black;font-size:20px;font-weight:bold;" >{{currentCompanyName}}</span>
-					<u-icon name="arrow-down" size="16" color="#666" style="margin-left: 8rpx; cursor: pointer;" @click="showCompanySwitcher"></u-icon>
+						<div 
+				v-if="showManageBtn"
+				class="btn btn-manage"
+				@click="goToManagement"
+				style="margin-right: auto; margin-left: 5px;"
+			>
+				<u-icon name="grid-fill" size="18" color="#fff" style="margin-right: 5rpx;"></u-icon>
+				<span>管理</span>
+			</div>
+			<div style="display: flex; align-items: center; justify-content: center; gap: 10rpx;">
+				<div class="menu-item" style="display: flex;align-items: center; gap: 15rpx;">
+					<span @click="turnToCommonSetting" style="color:black;font-size:18rpx;font-weight:bold;" >{{currentCompanyName}}</span>
+					<div @click="showCompanySwitcher" style="display: flex; align-items: center; justify-content: center; padding: 5rpx 5rpx; background-color: #f5f5f5; border-radius: 8rpx; cursor: pointer; border: 1px solid #e0e0e0;">
+						<u-icon name="arrow-down" size="16" color="#666" ></u-icon>
+						<span style="font-size: 14px; color: #666;"></span>
+					</div>
 				</div>
+			</div>
 				<div class="menu-item" v-if="lastOrder" style="margin-right: 5rpx;margin-left: auto;display: flex; align-items: center;justify-content: flex-end;" @click="showLastModel">
 					
-					<span style="margin-right: 5rpx;">
-						<u-icon name="bell-fill" color="#efef00" size="28"></u-icon>
-					</span>
-					<span>上一张订单: {{ lastOrder.accountCode}}</span>
-					<span style="margin-left: 30rpx;">顾客: {{ lastOrder.customName!=null&&lastOrder.customName!=""?lastOrder.customName:"散客"}}</span>
-					<span style="margin-left: 30rpx;">金额: {{ lastOrder.payableAmount}}</span>				
+				<span style="margin-right: 5rpx;">
+					<u-icon name="file-text" color="#2d7a4e" size="28"></u-icon>
+				</span>
+					<span style="color: #2d7a4e;">上一张订单: {{ lastOrder.accountCode}}</span>
+					<span style="margin-left: 25rpx; color: #2d7a4e;">顾客: {{ lastOrder.customName!=null&&lastOrder.customName!=""?lastOrder.customName:"散客"}}</span>
+					<span style="margin-left: 25rpx; color: #2d7a4e;">金额: {{ lastOrder.payableAmount}}</span>				
 				</div>
 				<div class="btn btn-primary-plain btn-submit"
 					style="font-weight: bold;  box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);height: 25rpx;"
@@ -61,6 +75,10 @@
 			lastOrder: {
 				type: Object,
 				default: null
+			},
+			showManageBtn: {
+				type: Boolean,
+				default: false
 			}
 		},
 		data() {
@@ -91,6 +109,9 @@
 		methods: {
 			refresh() {
 				this.currentCompanyName = uni.getStorageSync('companyName');
+			},
+			goToManagement() {
+				this.$emit('goToManagement');
 			},
 			showLastModel(){
 				 this.$emit('showlastOrder');
@@ -132,9 +153,11 @@
 					if (userInfo && userInfo.id) {
 						const res = await uni.$u.http.get(`/Company/GetByUserId?id=${userInfo.id}`);
 						if (res.data && Array.isArray(res.data)) {
+							console.log("res.data",res.data);
 							this.companyList = res.data.map(item => ({
 								id: item.id,
-								name: item.companyName
+								name: item.companyName,
+								vesionType:item.vesionType
 							}));
 						}
 					}
@@ -147,6 +170,7 @@
 				}
 			},
 			switchCompany(company) {
+				console.log("company",company)
 				// 检查是否切换到相同商家
 				const currentCompanyId = uni.getStorageSync('companyId');
 				if (currentCompanyId == company.id) {
@@ -157,6 +181,7 @@
 				// 切换商家
 				uni.setStorageSync('companyId', company.id);
 				uni.setStorageSync('companyName', company.name);
+				uni.setStorageSync('vesionType', company.vesionType);
 				this.currentCompanyName = company.name;
 				this.showCompanyList = false;
 				
@@ -210,7 +235,7 @@
 			flex-wrap: nowrap;
 			align-items: center;
 			justify-content: space-between;
-			padding: 0 32px;
+			padding-left:0px;
 			font-size: 16px;
 			height: 50px;
 		}
@@ -255,6 +280,30 @@
 			display: flex;
 			align-items: center;
 			font-size: 14rpx;
+		}
+	}
+
+	.btn-manage {
+		display: flex;
+		align-items: center;
+		padding: 8rpx 6rpx;
+		background-color: #409EFF;
+		color: white;
+		border-radius: 4rpx;
+		cursor: pointer;
+		font-weight: bold;
+		font-size: 14rpx;
+		transition: all 0.3s;
+		box-shadow: 0 2rpx 5rpx rgba(64, 158, 255, 0.3);
+
+		&:hover {
+			background-color: #66b1ff;
+			transform: translateY(-1rpx);
+			box-shadow: 0 4rpx 8rpx rgba(64, 158, 255, 0.4);
+		}
+
+		&:active {
+			transform: translateY(0);
 		}
 	}
 </style>

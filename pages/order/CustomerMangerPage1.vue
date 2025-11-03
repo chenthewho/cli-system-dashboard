@@ -7,16 +7,23 @@
 				<span class="back-text">返回</span>
 			</view>
 			
+			<!-- 加载中状态 -->
+			<view class="customer-info-card loading-card" v-if="!customerInfo">
+				<view class="loading-content">
+					<text class="loading-text">客户信息加载中...</text>
+				</view>
+			</view>
+			
 			<view class="customer-info-card" v-if="customerInfo" @click="openEditCustomer">
 				<view class="customer-main-info">
 					<view class="customer-name-phone">
 						<view class="name-section">
 							<uni-icons custom-prefix="iconfont" type="icon-kehu" size="16" color="#3b82f6"></uni-icons>
-							<span class="customer-name">{{customerInfo.customName}}</span>
+							<span class="customer-name">{{customerInfo.customName || ''}}</span>
 						</view>
 						<view class="phone-section">
 							<uni-icons custom-prefix="iconfont" type="icon-dianhua" size="14" color="#6b7280"></uni-icons>
-							<span class="customer-phone">{{customerInfo.customPhone}}</span>
+							<span class="customer-phone">{{customerInfo.customPhone || ''}}</span>
 						</view>
 					</view>
 				</view>
@@ -24,11 +31,11 @@
 				<view class="customer-stats-row">
 					<view class="stat-item debt-stat">
 						<span class="stat-label">总欠款</span>
-						<span class="stat-value debt-amount">{{customerInfo.debts}}元</span>
+						<span class="stat-value debt-amount">{{customerInfo.debts || 0}}元</span>
 					</view>
 					<view class="stat-item">
 						<span class="stat-label">总欠筐</span>
-						<span class="stat-value">{{customerInfo.owebasket}}个</span>
+						<span class="stat-value">{{customerInfo.owebasket || 0}}个</span>
 					</view>
 				</view>
 			</view>
@@ -175,42 +182,41 @@
 			</view>
 		</u-modal>
 		
-		<!-- 编辑客户信息弹窗 -->
-		<u-modal title="" class="modern-customer-modal" :show="customerDialogVisible" :closeOnClickOverlay="false"
-			:showConfirmButton="false" :width="600" @close="customerDialogVisible = false">
-			<view class="modal-container">
-				<view class="modal-header">
-					<h3 class="modal-title">客户信息</h3>
-				</view>
+	<!-- 编辑客户信息弹窗 -->
+	<view class="modern-customer-modal" v-if="customerDialogVisible">
+		<div class="modal-container">
+			<div class="modal-header">
+				<h3 class="modal-title">编辑客户信息</h3>
+			</div>
+			
+			<div class="form-container">
+				<div class="form-row">
+					<label class="form-label">客户名称 <text class="required">*</text></label>
+					<input class="form-input" type="text" placeholder="请输入客户名称（必填）" v-model="customerInfo_copy.customName" />
+				</div>
 				
-				<view class="form-container">
-					<view class="form-row">
-						<label class="form-label">客户名称</label>
-						<input class="form-input" type="text" placeholder="请输入客户名称" v-model="customerInfo_copy.customName" />
-					</view>
-					
-					<view class="form-row">
-						<label class="form-label">联系方式</label>
-						<input class="form-input" type="text" placeholder="请输入联系方式" v-model="customerInfo_copy.customPhone" />
-					</view>
-					
-					<view class="form-row">
-						<label class="form-label">车牌号码</label>
-						<input class="form-input" type="text" placeholder="请输入车牌号码" v-model="customerInfo_copy.carNum" />
-					</view>
-					
-					<view class="form-row">
-						<label class="form-label">联系地址</label>
-						<input class="form-input" type="text" placeholder="请输入联系地址" v-model="customerInfo_copy.address" />
-					</view>
-					
-					<view class="form-actions">
-						<button class="form-btn cancel-btn" @click="customerDialogVisible = false">取消</button>
-						<button class="form-btn submit-btn" @click="submit()">确认修改</button>
-					</view>
-				</view>
-			</view>
-		</u-modal>
+				<div class="form-row">
+					<label class="form-label">联系方式 <text class="optional">（选填）</text></label>
+					<input class="form-input" type="text" placeholder="请输入联系方式" v-model="customerInfo_copy.customPhone" />
+				</div>
+				
+				<div class="form-row">
+					<label class="form-label">车牌号码 <text class="optional">（选填）</text></label>
+					<input class="form-input" type="text" placeholder="请输入车牌号码" v-model="customerInfo_copy.carNum" />
+				</div>
+				
+				<div class="form-row">
+					<label class="form-label">联系地址 <text class="optional">（选填）</text></label>
+					<input class="form-input" type="text" placeholder="请输入联系地址" v-model="customerInfo_copy.address" />
+				</div>
+				
+				<div class="form-actions">
+					<button class="form-btn cancel-btn" @click="customerDialogVisible = false">取消</button>
+					<button class="form-btn submit-btn" @click="submit()">确认修改</button>
+				</div>
+			</div>
+		</div>
+	</view>
 
 		<!--还筐弹窗(不抵扣)-->
 		<RepayBasketModel ref="repayBasketModelRef" :basketData="extraModel" @saveBasketOffest="saveBasketOffestMethod"></RepayBasketModel>
@@ -233,128 +239,142 @@
 				<!-- 订单详情抽屉 -->
 				<div class="order-detail-container" v-if="orderDetailVisible && selectedOrder">
 					<!-- 抽屉头部 -->
-					<div class="order-detail-header">
-						<div class="detail-title">
-							<view class="detail-title-icon">
-								<uni-icons custom-prefix="iconfont" type="icon-dingdan" size="20" color="#666"></uni-icons>
-							</view>
-							<text class="detail-title-text">订单详情</text>
-						</div>
-						<view class="close-btn" @tap="closeOrderDetail">
-							<uni-icons type="close" size="35" color="#666"></uni-icons>
+					<view class="detail-header-new">
+						<view class="header-left">
+							<uni-icons type="list" size="18" color="#fff"></uni-icons>
+							<text class="detail-title-new">订单详情</text>
 						</view>
-					</div>
+						<view class="header-right">
+							<view class="close-btn" @tap="closeOrderDetail">
+								<uni-icons type="close" size="24" color="#fff"></uni-icons>
+							</view>
+						</view>
+					</view>
 
-					<!-- 订单概览信息 -->
-					<div class="order-overview">
-						<div class="info-item">
-							<span class="info-label">创建时间:</span>
-							<span class="info-value">{{ selectedOrder.createTime ? selectedOrder.createTime.replace("T", " ") : "" }}</span>
-						</div>
-						<!-- <div class="info-item" v-if="selectedOrder.updateTime">
-							<span class="info-label">修改时间:</span>
-							<span class="info-value">{{ selectedOrder.updateTime ? selectedOrder.updateTime.replace("T", " ") : "" }}</span>
-						</div> -->
-						<div class="info-item">
-							<span class="info-label">订单号:</span>
-							<span class="info-value">{{ selectedOrder.accountCode || "-" }}</span>
-						</div>
-						<div class="info-item">
-							<span class="info-label">顾客:</span>
-							<span class="info-value">{{ selectedOrder.customName || "散客" }}</span>
-						</div>
-						<div class="info-item highlight">
-							<span class="info-label">总计金额:</span>
-							<span class="info-value">¥{{ selectedOrder.payableAmount || 0 }}</span>
-						</div>
-						<div class="info-item" v-if="selectedOrder.basketOffsetAmount">
-							<span class="info-label">押筐抵扣:</span>
-							<span class="info-value">¥{{ selectedOrder.basketOffsetAmount || 0 }}</span>
-						</div>
-						<div class="info-item highlight">
-							<span class="info-label">实付金额:</span>
-							<span class="info-value">¥{{ selectedOrder.actualMoney || 0 }}</span>
-						</div>
-						<div class="info-item debt" v-if="selectedOrder.debt > 0">
-							<span class="info-label">下欠:</span>
-							<span class="info-value">¥{{ selectedOrder.debt }}</span>
-						</div>
-						<div class="info-item">
-							<span class="info-label">订单状态:</span>
-							<span class="info-value" :class="getOrderStatusClass(selectedOrder.status)">{{ getOrderStatusText(selectedOrder.status) }}</span>
-						</div>
-					</div>
-
-					<!-- 商品列表 -->
-					<scroll-view class="product-scroll" :style="{ maxHeight: 'calc(100vh - 300rpx)' }" scroll-y="true" v-if="selectedOrder.modelList && selectedOrder.modelList.length > 0">
-						<div class="product-table">
-							<div class="table-header">
-								<div class="header-cell">货品</div>
-								<div class="header-cell">数量</div>
-								<div class="header-cell">总重</div>
-								<div class="header-cell">皮重</div>
-								<div class="header-cell">单价</div>
-								<div class="header-cell">小计</div>
+					<scroll-view scroll-y="true" style="height: calc(100vh - 115rpx);">
+						<!-- 订单概览信息 -->
+						<div class="order-info-grid-compact">
+							<!-- 第一行 -->
+							<div class="info-row">
+								<div class="info-item-new">
+									<text class="info-value-new info-value-small">{{ selectedOrder.createTime ? selectedOrder.createTime.replace("T", " ") : "" }}</text>
+								</div>
+								<div class="info-item-new">
+									<text class="info-value-new info-value-small">{{ selectedOrder.accountCode || "-" }}</text>
+								</div>
 							</div>
-
-							<div class="table-row" v-for="(item, index) in selectedOrder.modelList" :key="index">
-								<div class="table-cell">{{ item.name }}</div>
-								<div class="table-cell">{{ item.mount }}</div>
-								<div class="table-cell">{{ item.totalWeight }}</div>
-								<div class="table-cell">{{ item.tareWeight }}</div>
-								<div class="table-cell">¥{{ item.referenceAmount }}</div>
-								<div class="table-cell">¥{{ item.subtotal }}</div>
+							
+							<!-- 第二行 -->
+							<div class="info-row">
+								<div class="info-item-new">
+									<text class="info-value-new info-value-small">{{ selectedOrder.customName || "散客" }}</text>
+								</div>
+								<div class="info-item-new">
+									<text class="info-label-new">总计金额:</text>
+									<text class="info-value-new highlight-value">{{ selectedOrder.payableAmount || 0 }}</text>
+								</div>
 							</div>
+							
+							<!-- 第三行 -->
+							<div class="info-row">
+								<div class="info-item-new" v-if="selectedOrder.basketOffsetAmount">
+									<text class="info-label-new">押筐抵扣:</text>
+									<text class="info-value-new">{{ selectedOrder.basketOffsetAmount || 0 }}</text>
+								</div>
+								<div class="info-item-new">
+									<text class="info-label-new">实付金额:</text>
+									<text class="info-value-new highlight-value">{{ selectedOrder.actualMoney || 0 }}</text>
+								</div>
+							</div>
+							
+							<!-- 第四行 - 下欠和状态 -->
+							<div class="info-row">
+								<div class="info-item-new" v-if="selectedOrder.debt > 0">
+									<text class="info-label-new">下欠:</text>
+									<text class="info-value-new debt-value-new">{{ selectedOrder.debt }}</text>
+								</div>
+								<div class="info-item-status" v-if="selectedOrder.status !== 1">
+									<view class="status-container-flex">
+										<view class="status-tag-group">
+											<view class="status-tag status-modified-tag" v-if="selectedOrder.status == 5">
+												<uni-icons type="compose" size="12" color="#31BDEC"></uni-icons>
+												<text class="status-tag-text">已修改</text>
+											</view>
+											<view class="status-tag status-refunded-tag" v-if="selectedOrder.status == 2">
+												<uni-icons type="undo" size="12" color="#F56C6C"></uni-icons>
+												<text class="status-tag-text">退单</text>
+											</view>
+										</view>
+									</view>
+								</div>
+							</div>
+						</div>
+
+						<!-- 商品列表 -->
+						<div class="product-table-container" v-if="selectedOrder.modelList && selectedOrder.modelList.length > 0">
+							<div class="product-table">
+								<div class="table-row table-header-row">
+									<div class="table-header-cell">货品</div>
+									<div class="table-header-cell">数量</div>
+									<div class="table-header-cell">总重</div>
+									<div class="table-header-cell">皮重</div>
+									<div class="table-header-cell">单价</div>
+									<div class="table-header-cell">小计</div>
+								</div>
+
+								<div class="table-row table-body-row" v-for="(item, index) in selectedOrder.modelList" :key="index">
+									<div class="table-cell">{{ item.name }}</div>
+									<div class="table-cell">{{ item.mount }}</div>
+									<div class="table-cell">{{ item.totalWeight }}</div>
+									<div class="table-cell">{{ item.tareWeight }}</div>
+									<div class="table-cell">{{ item.referenceAmount }}</div>
+									<div class="table-cell">{{ item.subtotal }}</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- 无商品数据提示 -->
+						<div v-else class="no-products">
+							<view class="no-products-icon">
+								<uni-icons type="info-filled" size="24" color="#bdc3c7"></uni-icons>
+							</view>
+							<text class="no-products-text">暂无商品信息</text>
 						</div>
 					</scroll-view>
 
-					<!-- 无商品数据提示 -->
-					<div v-else class="no-products">
-						<view class="no-products-icon">
-							<uni-icons type="info-filled" size="24" color="#bdc3c7"></uni-icons>
-						</view>
-						<text class="no-products-text">暂无商品信息</text>
-					</div>
-
 					<!-- 操作按钮区域 -->
-					<view class="order-action-buttons">
-						<view class="button-group left-buttons">
-							<u-button v-if="selectedOrder.status!=2" 
-								class="action-btn modify-btn"
-								type="primary" 
-								@click="modifyOrder" 
-								text="改单">
-							</u-button>
-							<u-button v-if="selectedOrder.status!=2" 
-								class="action-btn refund-btn"
-								type="primary" 
-								@click="refundOrder" 
-								text="退单">
-							</u-button>
-						</view>
-						
-						<view class="button-group center-buttons" v-if="selectedOrder.debt>0">
-							<u-button 
-								class="action-btn repay-btn"
-								type="primary" 
-								text="整单还款" 
-								@click="repayOrder">
-							</u-button>
-						</view>
-					
-						<view class="button-group right-buttons">
-							<u-button 
-								class="action-btn print-btn"
-								type="primary"
-								text="打印" 
-								@click="printOrder">
-							</u-button>
-						</view>
+					<view class="order-action-buttons-compact">
+						<u-button v-if="selectedOrder.status!=2" 
+							class="action-btn-compact modify-btn-new"
+							type="primary" 
+							@click="modifyOrder" 
+							text="改单">
+						</u-button>
+						<u-button v-if="selectedOrder.status!=2" 
+							class="action-btn-compact refund-btn-new"
+							type="primary" 
+							@click="refundOrder" 
+							text="退单">
+						</u-button>
+						<u-button v-if="selectedOrder.debt>0"
+							class="action-btn-compact repay-btn-new"
+							type="primary" 
+							text="整单还款" 
+							@click="repayOrder">
+						</u-button>
+						<u-button 
+							class="action-btn-compact print-btn-new"
+							type="primary"
+							text="打印" 
+							@click="printOrder">
+						</u-button>
 					</view>
 				</div>
 			</view>
 		</view>
 
+		<!-- 隐藏的canvas，用于生成客户账单图片 -->
+		<canvas canvas-id="customerCanvas" style="width: 500px; height: 400px; position: fixed; left: -9999px; top: -9999px;"></canvas>
 
 		</view>
 		
@@ -589,12 +609,137 @@
 				})
 			},
 			GetCustomerClientShareImage(){
-				let that = this;
-				member.GetCustomerClientShareImage(this.customerId).then(res=>{
-					if(res.code==200){
-						that.downLoadImage(res.data);
-					}
-				})
+				// 使用canvas生成客户欠款信息图片
+				this.generateCustomerShareImage();
+			},
+			
+			// 使用canvas生成客户欠款信息封面（简化版）
+			generateCustomerShareImage() {
+				const that = this;
+				const customer = this.customerInfo;
+				
+				if (!customer) {
+					uni.showToast({
+						title: '客户信息加载中',
+						icon: 'none'
+					});
+					return;
+				}
+				
+				// 获取公司信息
+				const companyId = uni.getStorageSync('companyId');
+				const cashierOrder = require('../../api/cashier/cashierOrder').default;
+				cashierOrder.getStoreInfo(companyId).then(res => {
+					const companyInfo = res.data || {};
+					const companyName = companyInfo.name || '店铺名称';
+					
+				// 创建canvas上下文
+				const ctx = uni.createCanvasContext('customerCanvas', this);
+				
+				// 画布尺寸（微信分享封面标准尺寸 5:4 比例）
+				const canvasWidth = 500;
+				const canvasHeight = 400;
+				const padding = 30;
+				
+				// 白色背景
+				ctx.setFillStyle('#FFFFFF');
+				ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+				
+				// 画边框
+				ctx.setStrokeStyle('#3b82f6');
+				ctx.setLineWidth(3);
+				const paddingRect = 8;
+				ctx.strokeRect(paddingRect, paddingRect, canvasWidth - paddingRect * 2, canvasHeight - paddingRect * 2);
+				
+				let y = 40;
+				
+				// 绘制标题（客户名称）
+				ctx.setFillStyle('#1e3a8a');
+				ctx.setFontSize(28);
+				ctx.setTextAlign('center');
+				ctx.fillText(customer.customName || '客户', canvasWidth / 2, y);
+				y += 40;
+				
+				// 公司名称
+				ctx.setFontSize(22);
+				ctx.setFillStyle('#3b82f6');
+				ctx.fillText(companyName, canvasWidth / 2, y);
+				y += 50;
+				
+				// 账单信息卡片（总欠款）
+				const cardPadding = 40;
+				const cardHeight = 90;
+				const cardY = y;
+				
+				// 账单背景框（粉色背景）
+				ctx.setFillStyle('#fef2f2');
+				ctx.fillRect(cardPadding, cardY, canvasWidth - cardPadding * 2, cardHeight);
+				
+				// 账单标签
+				ctx.setFontSize(24);
+				ctx.setFillStyle('#6b7280');
+				ctx.setTextAlign('left');
+				ctx.fillText('账单', cardPadding + 25, cardY + 35);
+				
+				// 账单金额（总欠款，红色）
+				ctx.setFontSize(42);
+				ctx.setFillStyle('#dc2626');
+				ctx.setTextAlign('right');
+				const debtText = `¥${customer.debts || 0}`;
+				ctx.fillText(debtText, canvasWidth - cardPadding - 25, cardY + 58);
+				
+				y += cardHeight + 45;
+				
+				// 账单时间
+				ctx.setFontSize(18);
+				ctx.setFillStyle('#9ca3af');
+				ctx.setTextAlign('center');
+				const now = new Date();
+				const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+				ctx.fillText(`账单日期: ${dateStr}`, canvasWidth / 2, y);
+					
+					// 绘制完成，导出图片
+					ctx.draw(false, () => {
+						setTimeout(() => {
+							uni.canvasToTempFilePath({
+								canvasId: 'customerCanvas',
+								x: 0,
+								y: 0,
+								width: canvasWidth,
+								height: canvasHeight,
+								destWidth: canvasWidth * 2,  // 2倍分辨率
+								destHeight: canvasHeight * 2,
+								fileType: 'png',
+								quality: 1,
+								success: (res) => {
+									console.log('生成客户账单图片成功:', res.tempFilePath);
+									// 直接保存并分享图片
+									that.saveAndShareCustomerImage(res.tempFilePath);
+								},
+								fail: (err) => {
+									console.error('生成图片失败:', err);
+									uni.showToast({
+										title: '生成图片失败',
+										icon: 'none'
+									});
+								}
+							}, that);
+						}, 500);
+					});
+				}).catch(err => {
+					console.error('获取公司信息失败:', err);
+					uni.showToast({
+						title: '获取公司信息失败',
+						icon: 'none'
+					});
+				});
+			},
+			
+			// 直接分享客户账单图片（不保存到相册）
+			saveAndShareCustomerImage(tempFilePath) {
+				const that = this;
+				// 直接分享图片，不保存到相册
+				that.shareCustomerOrder(tempFilePath);
 			},
 			
 			downLoadImage(base64) {
@@ -672,7 +817,7 @@
 					operatorId :userInfo.id,
 					operatorName:userInfo.userName,
 					CompanyId:CompanyId,
-					customerName:this.customerInfo.customName
+					customerName:this.customerInfo ? this.customerInfo.customName : ''
 				}
 				member.RepayDebts(JSON.stringify(param)).then(res=>{
 					if(res.code==200){
@@ -704,7 +849,7 @@
 					operatorId :userInfo.id,
 					operatorName:userInfo.userName,
 					CompanyId:CompanyId,
-					customerName:this.customerInfo.customName
+					customerName:this.customerInfo ? this.customerInfo.customName : ''
 				}
 				member.AddRepayMoney(JSON.stringify(param)).then(res=>{
 					if(res.code==200){
@@ -735,7 +880,7 @@
 					operatorId :userInfo.id,
 					operatorName:userInfo.userName,
 					CompanyId:CompanyId,
-					customerName:this.customerInfo.customName
+					customerName:this.customerInfo ? this.customerInfo.customName : ''
 				}
 				member.RepayBasket(JSON.stringify(param)).then(res=>{
 					if(res.code==200){
@@ -792,6 +937,13 @@
 				})
 			},
 			showBasketModel(){
+				if (!this.customerInfo) {
+					uni.showToast({
+						title: '客户信息加载中',
+						icon: 'none'
+					});
+					return;
+				}
 				// this.payTypeDialogVisible = true;
 				// this.repayBasket = 0;
 				// this.modelType=2;
@@ -800,6 +952,13 @@
 
 			},
 			showPayModel() {
+				if (!this.customerInfo) {
+					uni.showToast({
+						title: '客户信息加载中',
+						icon: 'none'
+					});
+					return;
+				}
 				console.log("showPayModel",this.customerInfo)
 				this.showRepaymentModal = true;
 			},
@@ -904,40 +1063,54 @@
 				
 			},
 			openEditCustomer(){
+				if (!this.customerInfo) {
+					uni.showToast({
+						title: '客户信息加载中',
+						icon: 'none'
+					});
+					return;
+				}
 				this.customerInfo_copy = JSON.parse(JSON.stringify(this.customerInfo));
 				this.customerDialogVisible = true;
 			},
 			submit() {
-				if (this.customerInfo.customName == "" || this.customerInfo.customPhone == "") {
-					uni.showToast({
-						title: '请填写完整信息',
-						icon: 'none'
-					})
-					return;
-				}
-				
-				let currentCompanyId = uni.getStorageSync('companyId');
-				var param = {
-					id: this.customerId,
-					CustomName: this.customerInfo_copy.customName,
-					CustomPhone: this.customerInfo_copy.customPhone,
-					Address: this.customerInfo_copy.address,
-					CarNum :this.customerInfo_copy.carNum,
-					CompanyId: currentCompanyId,
-					Debts: 0,
-					OrderNum: 0,
-					Owebasket: 0
-				}
-				member.memberCreate(param).then(res => {
-					uni.showToast({
-						title: '修改成功',
-						icon: 'none'
-					})
-					this.refreshCustomerInfo();
-					this.customerDialogVisible = false;
-				}).finally(() => {
-			
+			// 只验证客户名称是否为空
+			if (!this.customerInfo_copy.customName || this.customerInfo_copy.customName.trim() == "") {
+				uni.showToast({
+					title: '请输入客户名称',
+					icon: 'none'
 				})
+				return;
+			}
+				
+			let currentCompanyId = uni.getStorageSync('companyId');
+			var param = {
+				id: this.customerId,
+				CustomName: this.customerInfo_copy.customName.trim(),
+				CustomPhone: this.customerInfo_copy.customPhone || "",
+				Address: this.customerInfo_copy.address || "",
+				CarNum: this.customerInfo_copy.carNum || "",
+				CompanyId: currentCompanyId,
+				Debts: 0,
+				OrderNum: 0,
+				Owebasket: 0
+			}
+			member.memberCreate(param).then(res => {
+				uni.showToast({
+					title: '修改成功',
+					icon: 'none'
+				})
+				this.refreshCustomerInfo();
+				this.customerDialogVisible = false;
+			}).catch(err => {
+				uni.showToast({
+					title: '修改失败',
+					icon: 'none'
+				})
+				console.error('修改客户信息失败:', err);
+			}).finally(() => {
+		
+			})
 			}
 
 		}
@@ -946,7 +1119,7 @@
 
 <style lang="scss" scoped>
 	.customer-detail-container {
-		background: darkgray;
+		background: #e8e8e8;
 		height: 100vh;
 		display: flex;
 		flex-direction: column;
@@ -999,6 +1172,28 @@
 			border-color: #3b82f6;
 			box-shadow: 0 4rpx 12rpx rgba(59, 130, 246, 0.1);
 		}
+		
+		&.loading-card {
+			cursor: default;
+			
+			&:hover {
+				border-color: #e2e8f0;
+				box-shadow: none;
+			}
+		}
+	}
+	
+	.loading-content {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 16rpx 0;
+	}
+	
+	.loading-text {
+		font-size: 18rpx;
+		color: #9ca3af;
+		font-weight: 500;
 	}
 
 	.customer-main-info {
@@ -1498,127 +1693,236 @@
 	.order-detail-container {
 		padding: 12rpx;
 		background-color: #fff;
-		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 		height: 100vh;
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
 	}
 
-	.order-detail-header {
+	/* 详情头部样式 */
+	.detail-header-new {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 10rpx;
-		background: linear-gradient(135deg, #e74c3c, #c0392b);
-		color: white;
+		padding: 8rpx 12rpx;
+		background: linear-gradient(135deg, #4A90E2, #357ABD);
 		border-radius: 6rpx;
 		margin-bottom: 10rpx;
+		box-shadow: 0 2rpx 8rpx rgba(74, 144, 226, 0.2);
+		min-height: 40rpx;
 	}
 
-	.detail-title {
+	.header-left {
 		display: flex;
 		align-items: center;
+		gap: 8rpx;
+	}
+
+	.header-right {
+		display: flex;
+		align-items: center;
+		gap: 8rpx;
+	}
+
+	.detail-title-new {
+		font-size: 16rpx;
+		font-weight: 600;
+		color: white;
+	}
+
+	/* 紧凑的订单信息网格 */
+	.order-info-grid-compact {
+		padding: 8rpx;
+		background-color: #f8f9fa;
+		border-radius: 6rpx;
+		margin-bottom: 8rpx;
+	}
+
+	.info-row {
+		display: flex;
+		gap: 15rpx;
+		margin-bottom: 12rpx;
+	}
+
+	/* 紧凑模式下的行间距 */
+	.order-info-grid-compact .info-row {
+		gap: 8rpx;
+		margin-bottom: 6rpx;
+	}
+
+	.info-row:last-child {
+		margin-bottom: 0;
+	}
+
+	.info-item-new {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		background-color: white;
+		padding: 10rpx 12rpx;
+		border-radius: 6rpx;
+		box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+		min-width: 0;
+	}
+
+	/* 紧凑模式下的info-item */
+	.order-info-grid-compact .info-item-new {
+		padding: 6rpx 10rpx;
+		border-radius: 4rpx;
+		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.05);
+	}
+
+	.info-label-new {
+		color: #666;
+		font-size: 14rpx;
+		font-weight: 500;
+		white-space: nowrap;
+		margin-right: 8rpx;
+	}
+
+	.info-value-new {
+		color: #333;
+		font-size: 15rpx;
+		font-weight: 500;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.info-value-small {
+		font-size: 12rpx;
+		color: #666;
+		font-weight: 400;
+	}
+
+	.highlight-value {
+		color: #e74c3c;
+		font-weight: 700;
+	}
+
+	.debt-value-new {
+		color: #e74c3c;
+		font-weight: 700;
+	}
+
+	/* 状态项容器 */
+	.info-item-status {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		background-color: white;
+		padding: 10rpx 12rpx;
+		border-radius: 6rpx;
+		border-left: 3rpx solid #4A90E2;
+		box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+		min-width: 0;
+		width: 100%;
+	}
+
+	/* 紧凑模式下的状态项 */
+	.order-info-grid-compact .info-item-status {
+		padding: 6rpx 10rpx;
+		border-radius: 4rpx;
+		border-left: 2rpx solid #4A90E2;
+		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.05);
+	}
+
+	.status-container-flex {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+	}
+
+	.status-tag-group {
+		display: flex;
 		gap: 6rpx;
 	}
 
-	.detail-title-icon {
-		display: flex;
+	.status-tag {
+		display: inline-flex;
 		align-items: center;
-		justify-content: center;
-		width: 24rpx;
-		height: 24rpx;
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: 50%;
+		gap: 3rpx;
+		padding: 3rpx 8rpx;
+		border-radius: 10rpx;
+		font-size: 12rpx;
+		font-weight: 600;
 	}
 
-	.detail-title-text {
-		font-size: 20rpx;
-		font-weight: bold;
-		color: white;
+	.status-modified-tag {
+		background-color: rgba(49, 189, 236, 0.1);
+		color: #31BDEC;
+		border: 1rpx solid rgba(49, 189, 236, 0.3);
 	}
 
-	.order-overview {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8rpx 12rpx;
-		padding-bottom: 10rpx;
-		border-bottom: 1rpx solid #eee;
-		margin-bottom: 10rpx;
+	.status-refunded-tag {
+		background-color: rgba(245, 108, 108, 0.1);
+		color: #F56C6C;
+		border: 1rpx solid rgba(245, 108, 108, 0.3);
 	}
 
-	.info-item {
-		flex: 1;
-		min-width: 45%;
-		display: flex;
-		font-size: 16rpx;
-		line-height: 1.3;
+	.status-tag-text {
+		font-size: 11rpx;
 	}
 
-	.info-label {
-		color: #666;
-		min-width: 4.5em;
-		margin-right: 6rpx;
-		font-size: 16rpx;
-	}
-
-	.info-value {
-		color: #333;
-		font-weight: normal;
-		font-size: 16rpx;
-	}
-
-	.highlight .info-value {
-		color: #e4393c;
-		font-weight: bold;
-	}
-
-	.debt .info-value {
-		color: darkred;
-		font-weight: bold;
-	}
-
-	.product-scroll {
-		flex: 1;
-		margin-top: 6rpx;
+	/* 产品表格容器 */
+	.product-table-container {
+		width: 100%;
+		margin: 8rpx 0;
+		padding: 0 8rpx;
+		box-sizing: border-box;
 	}
 
 	.product-table {
-		display: table;
 		width: 100%;
-		border-collapse: collapse;
+		background-color: white;
+		overflow: hidden;
+		box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
 	}
 
-	.table-header,
 	.table-row {
-		display: table-row;
+		display: flex;
+		width: 100%;
 	}
 
-	.header-cell,
-	.table-cell {
-		display: table-cell;
-		padding: 6rpx 4rpx;
+	.table-header-row {
+		background: linear-gradient(135deg, #f5f7fa, #e8ebef);
+	}
+
+	.table-body-row {
+		transition: background-color 0.3s ease;
+	}
+
+	.table-body-row:nth-child(even) {
+		background-color: #fafbfc;
+	}
+
+	.table-body-row:hover {
+		background-color: #f0f4f8;
+	}
+
+	.product-table .table-cell,
+	.product-table .table-header-cell {
+		flex: 1;
+		padding: 8rpx 6rpx;
 		text-align: center;
-		border: 1rpx solid #eee;
-		font-size: 14rpx;
-		line-height: 1.2;
-		vertical-align: middle;
+		font-size: 12rpx;
+		line-height: 1.3;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 0;
+		word-break: break-all;
 	}
 
-	.header-cell {
-		background-color: #f5f5f5;
-		font-weight: bold;
-		color: #333;
-		font-size: 15rpx;
+	.table-header-cell {
+		font-weight: 700;
+		color: #2c3e50;
 	}
 
 	.table-cell {
-		background-color: #fff;
-		color: #666;
-	}
-
-	.table-row:nth-child(even) .table-cell {
-		background-color: #fafafa;
+		color: #555;
+		border-bottom: 1rpx solid #f0f0f0;
 	}
 
 	.no-products {
@@ -1637,110 +1941,73 @@
 	.no-products-text {
 		font-size: 16rpx;
 		color: #95a5a6;
-		height: calc(100vh - 60rpx);
 	}
 
-	/* 订单操作按钮样式 */
-	.order-action-buttons {
+	/* 紧凑操作按钮容器 */
+	.order-action-buttons-compact {
 		display: flex;
-		justify-content: space-between;
+		justify-content: space-around;
 		align-items: center;
 		width: 100%;
-		padding: 5rpx 5rpx;
-		margin-top: 10rpx;
-		border-top: 1rpx solid #eee;
-		background: #f8f9fa;
+		padding: 8rpx 8rpx;
+		gap: 8rpx;
+		background-color: #f8f9fa;
+		border-radius: 6rpx;
+		flex-wrap: wrap;
 	}
 
-	.button-group {
-		display: flex;
-		align-items: center;
-		gap: 35rpx;
-	}
-
-	.left-buttons {
+	/* 紧凑模式按钮 */
+	.action-btn-compact {
 		flex: 1;
-		justify-content: flex-start;
-		padding-right: 10rpx;
-	}
-
-	.center-buttons {
-		padding-left: 10rpx;
-		padding-right: 10rpx;
-		flex: 1;
-		justify-content: center;
-	}
-
-	.right-buttons {
-		flex: 1;
-		justify-content: flex-end;
-		padding-left: 10rpx;
-	}
-
-	/* 按钮基础样式 */
-	.action-btn {
-		min-width: 65rpx !important;
-		height: 35rpx !important;
-		font-size: 16rpx !important;
-		font-weight: bold !important;
-		border-radius: 3rpx !important;
-		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.1) !important;
+		min-width: 70rpx !important;
+		height: 32rpx !important;
+		font-size: 13rpx !important;
+		font-weight: 600 !important;
+		border-radius: 5rpx !important;
+		box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.08) !important;
 		transition: all 0.3s ease !important;
-		display: flex !important;
-		align-items: center !important;
-		justify-content: center !important;
-		text-align: center !important;
-		line-height: 1 !important;
+		border: none !important;
 	}
 
-	.action-btn:hover {
+	.action-btn-compact:hover {
 		transform: translateY(-1rpx);
-		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15) !important;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15) !important;
 	}
 
-	/* 改单按钮 */
-	.modify-btn {
-		background: linear-gradient(135deg, #3498db, #2980b9) !important;
-		border-color: #3498db !important;
+	.modify-btn-new {
+		background: linear-gradient(135deg, #31BDEC, #2BA6D0) !important;
 		color: white !important;
 	}
 
-	.modify-btn:hover {
-		background: linear-gradient(135deg, #2980b9, #1f5f8b) !important;
+	.modify-btn-new:hover {
+		background: linear-gradient(135deg, #2BA6D0, #2291B6) !important;
 	}
 
-	/* 退单按钮 */
-	.refund-btn {
-		background: linear-gradient(135deg, #95a5a6, #7f8c8d) !important;
-		border-color: #95a5a6 !important;
+	.refund-btn-new {
+		background: linear-gradient(135deg, #F56C6C, #E05656) !important;
 		color: white !important;
 	}
 
-	.refund-btn:hover {
-		background: linear-gradient(135deg, #7f8c8d, #6c7b7d) !important;
+	.refund-btn-new:hover {
+		background: linear-gradient(135deg, #E05656, #CC4A4A) !important;
 	}
 
-	/* 整单还款按钮 */
-	.repay-btn {
-		background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
-		border-color: #e74c3c !important;
-		color: white !important;
-		min-width: 85rpx !important;
-	}
-
-	.repay-btn:hover {
-		background: linear-gradient(135deg, #c0392b, #a93226) !important;
-	}
-
-	/* 打印按钮 */
-	.print-btn {
-		background: linear-gradient(135deg, #27ae60, #229954) !important;
-		border-color: #27ae60 !important;
+	.repay-btn-new {
+		background: linear-gradient(135deg, #FFA500, #FF8C00) !important;
 		color: white !important;
 	}
 
-	.print-btn:hover {
-		background: linear-gradient(135deg, #229954, #1e8449) !important;
+	.repay-btn-new:hover {
+		background: linear-gradient(135deg, #FF8C00, #E67E00) !important;
+	}
+
+	.print-btn-new {
+		background: linear-gradient(135deg, #67C23A, #5DAF2E) !important;
+		color: white !important;
+	}
+
+	.print-btn-new:hover {
+		background: linear-gradient(135deg, #5DAF2E, #529B28) !important;
 	}
 
 	/* 订单状态样式 */
@@ -1820,22 +2087,29 @@
 
 	/* 客户编辑弹窗样式 */
 	.modern-customer-modal {
+		position: absolute;
+		top: 10%;
+		left: 30%;
+		padding: 10rpx;
+		z-index: 1000;
+		
 		.modal-container {
 			background: white;
-			border-radius: 12rpx;
+			border-radius: 16rpx;
 			overflow: hidden;
+			box-shadow: 0 0 10rpx 0 #9e9e9e;
 		}
 
 		.modal-header {
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
-			padding: 16rpx 20rpx;
+			padding: 10rpx 24rpx;
 			background: linear-gradient(135deg, #3b82f6, #1d4ed8);
 			color: white;
 
 			.modal-title {
-				font-size: 28rpx;
+				font-size: 20rpx;
 				font-weight: 600;
 				margin: 0;
 				color: white;
@@ -1859,61 +2133,85 @@
 			}
 		}
 
-		.form-container {
-			padding: 20rpx;
+	.form-container {
+		padding: 24rpx;
+	}
+
+	.form-row {
+		display: flex;
+		align-items: center;
+		margin-bottom: 20rpx;
+		gap: 16rpx;
+	}
+
+	.form-label {
+		font-size: 15rpx;
+		font-weight: 500;
+		color: #374151;
+		min-width: 90rpx;
+		text-align: right;
+		
+		.required {
+			color: #ef4444;
+			font-weight: 600;
+			margin-left: 2rpx;
 		}
-
-		.form-row {
-			display: flex;
-			align-items: center;
-			margin-bottom: 16rpx;
-			gap: 12rpx;
+		
+		.optional {
+			color: #9ca3af;
+			font-size: 12rpx;
+			font-weight: 400;
+			margin-left: 4rpx;
 		}
+	}
 
-		.form-label {
-			font-size: 20rpx;
-			font-weight: 500;
-			color: #374151;
-			min-width: 100rpx;
-			text-align: right;
+	.form-input {
+		flex: 1;
+		height: 30rpx;
+		padding: 0 16rpx;
+		border: 2rpx solid #e2e8f0;
+		border-radius: 8rpx;
+		font-size: 15rpx;
+		background: #f8fafc;
+		transition: all 0.3s ease;
+
+		&:focus {
+			outline: none;
+			border-color: #3b82f6;
+			background: white;
+			box-shadow: 0 0 0 4rpx rgba(59, 130, 246, 0.1);
 		}
-
-		.form-input {
-			flex: 1;
-			height: 40rpx;
-			padding: 0 12rpx;
-			border: 2rpx solid #e2e8f0;
-			border-radius: 6rpx;
-			font-size: 20rpx;
-			background: #f8fafc;
-			transition: all 0.3s ease;
-
-			&:focus {
-				outline: none;
-				border-color: #3b82f6;
-				background: white;
-			}
+		
+		&::placeholder {
+			color: #9ca3af;
 		}
+	}
 
-		.form-actions {
-			display: flex;
-			justify-content: center;
-			gap: 12rpx;
-			margin-top: 24rpx;
-			padding-top: 16rpx;
-			border-top: 1rpx solid #e2e8f0;
+	.form-actions {
+		display: flex;
+		justify-content: center;
+		gap: 16rpx;
+		margin-top: 32rpx;
+		padding-top: 20rpx;
+		border-top: 1rpx solid #e2e8f0;
+	}
+
+	.form-btn {
+		height: 35rpx;
+		line-height: 35rpx;
+		padding: 0 32rpx;
+		border: none;
+		border-radius: 8rpx;
+		font-size: 20rpx;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+		
+		&:hover {
+			transform: translateY(-2rpx);
+			box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
 		}
-
-		.form-btn {
-			height: 40rpx;
-			line-height: 40rpx;
-			padding: 0 24rpx;
-			border: none;
-			border-radius: 6rpx;
-			font-size: 20rpx;
-			font-weight: 500;
-			cursor: pointer;
-			transition: all 0.3s ease;
 
 			&.cancel-btn {
 				background: #f3f4f6;

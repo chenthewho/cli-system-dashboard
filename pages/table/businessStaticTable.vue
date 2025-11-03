@@ -1,12 +1,12 @@
 <template>
-	<div class="space">
+	<div class="space" :style="{ height: windowHeight + 'px' }">
 		<div class="space-header">
 
 			<div style="flex: 1; display: flex;margin-left: 5rpx;margin-top: 5rpx;line-height: 18rpx;">
 				<div style="align-items: left;">
 					<button
-						style="height: 18rpx;line-height: 18rpx;color:#ffffff;font-weight: bold;background: #dddddd;"
-						@click="back"><uni-icons custom-prefix="iconfont" type="icon-fanhui" size="15" color="#ffffff"
+						style="height: 18rpx;line-height: 18rpx;color:#666666;font-weight: bold;background: #f5f5f5;border: 1px solid #e0e0e0;"
+						@click="back"><uni-icons custom-prefix="iconfont" type="icon-fanhui" size="15" color="#666666"
 							style="margin-right: 5px;"></uni-icons>返回</button>
 				</div>
 				<text class="title">营业统计表</text>
@@ -36,7 +36,8 @@
 		</div>
 		<view class="space-content">
 			<view class="left-side">
-				<!-- 左边内容 -->
+				<!-- 左边内容 - 添加滚动区域 -->
+				<scroll-view scroll-y="true" class="left-side-scroll" :style="{ height: leftScrollHeight + 'px' }">
 				<!-- 卡片1-->
 				<view class="left-side-card1">
 					<view class="card-header">
@@ -57,142 +58,144 @@
 						<view class="card-grid"><text class="left">优惠</text><text class="right">{{ tableStatic.discountAmount }}</text></view>
 					</view>
 				</view>
-				<!-- 卡片2-->
-				<view class="left-side-card2">
-					<view class="card-header">
-						<view class="left">
-							<uni-icons custom-prefix="iconfont" type="icon-zhichu" size="20" color="#00aa7f"
-								style="font-weight: bold; margin-left: 5rpx;margin-right: 5rpx;"></uni-icons>总支出
-						</view>
-						<view class="right">
-							0
-						</view>
+			<!-- 卡片2-->
+			<view class="left-side-card2">
+				<view class="card-header">
+					<view class="left">
+						<uni-icons custom-prefix="iconfont" type="icon-zhichu" size="20" color="#00aa7f"
+							style="font-weight: bold; margin-left: 5rpx;margin-right: 5rpx;"></uni-icons>支出费用
+					</view>
+					<view class="right">
+						{{ totalExpense.toFixed(2) }}
 					</view>
 				</view>
+				<view class="card-body" v-if="expenseList.length > 0">
+					<scroll-view scroll-y="true" class="expense-scroll" style="max-height: 60rpx;">
+						<view class="expense-item" v-for="(item, index) in expenseList" :key="index">
+							<text class="expense-name">{{ item.spendName }}</text>
+							<text class="expense-amount">¥{{ item.spendMoney.toFixed(2) }}</text>
+						</view>
+					</scroll-view>
+				</view>
+			</view>
 
-				<!-- 卡片3-->
-				<view class="left-side-card3">
-					<view class="card-header">
-						<view class="left">
-							<uni-icons custom-prefix="iconfont" type="icon-qitashourudan" size="20" color="#ffaa7f"
-								style="font-weight: bold; margin-left: 5rpx;margin-right: 5rpx;"></uni-icons>其他收入
-						</view>
-						<view class="right">
-							0
-						</view>
+			<!-- 卡片4-->
+			<view class="left-side-card4">
+				<view class="card-header">
+					<view class="left">
+						<uni-icons custom-prefix="iconfont" type="icon-coupons" size="20" color="#e20000"
+							style="font-weight: bold; margin-left: 5rpx;margin-right: 5rpx;"></uni-icons>赊欠统计
+					</view>
+					<view class="right">
+						{{
+							tableStatic.debtMoney
+						}}
 					</view>
 				</view>
+				<view class="card-body">
+					<view class="grid" style="color: darkred;" ><view>待付款</view><view >0</view></view>
+					<view class="grid" style="color: green;"  ><view>还款</view><view>0</view></view>
+				</view>
+			</view>
 
-				<!-- 卡片4-->
-				<view class="left-side-card4">
-					<view class="card-header">
-						<view class="left">
-							<uni-icons custom-prefix="iconfont" type="icon-coupons" size="20" color="#e20000"
-								style="font-weight: bold; margin-left: 5rpx;margin-right: 5rpx;"></uni-icons>新增赊欠
-						</view>
-						<view class="right">
-							{{
-								tableStatic.debtMoney
-							}}
-						</view>
+			<!-- 卡片5 - 其他统计 -->
+			<view class="left-side-card5">
+				<view class="card-header">
+					<view class="left">
+						<uni-icons custom-prefix="iconfont" type="icon-baobiao" size="20" color="#9c27b0"
+							style="font-weight: bold; margin-left: 5rpx;margin-right: 5rpx;"></uni-icons>其他统计
 					</view>
-					<view class="card-body">
-						<view class="grid" style="color: darkred;" ><view>待付款</view><view >0</view></view>
-						<view class="grid" style="color: green;"  ><view>还款</view><view>0</view></view>
+					<view class="right">
+					</view>
+				</view>
+				<view class="card-body card-body-grid">
+					<view class="grid-item" style="border-right: 1px solid #e9ecef; border-bottom: 1px solid #e9ecef;">
+						<view class="grid-item-label" style="color: #e91e63;">报损记录</view>
+						<view class="grid-item-value">{{ tableStatic.lossCount || 0 }}</view>
+					</view>
+					<view class="grid-item" style="border-bottom: 1px solid #e9ecef;">
+						<view class="grid-item-label" style="color: #3f51b5;">盘点记录</view>
+						<view class="grid-item-value">{{ tableStatic.inventoryCount || 0 }}</view>
+					</view>
+					<view class="grid-item" style="border-right: 1px solid #e9ecef;">
+						<view class="grid-item-label" style="color: #4caf50;">盘盈</view>
+						<view class="grid-item-value">{{ tableStatic.profitCount || 0 }}</view>
+					</view>
+					<view class="grid-item">
+						<view class="grid-item-label" style="color: #ff9800;">盘亏</view>
+						<view class="grid-item-value">{{ tableStatic.lossStockCount || 0 }}</view>
 					</view>
 				</view>
 			</view>
+			</scroll-view>
+		</view>
 			<view class="right-side">
 				<!-- 右边内容 -->
 				<view class="right-side-card">
 					<!--顶部tab-->
 					<view class="header">
-
 						<zb-tab :value="1" :data="tabValue" @click-tab="tabChange"></zb-tab>
 					</view>
 
 					<view class="content">
+						<!-- 代销车次表格 -->
 						<view v-if="currentTableTab===1">
-							<view class="step1-table-header">
-								<view style="flex: 2;">
-									车次/创建时间
-								</view>
-								<view style="flex: 1;text-align: center;">
-									状态
-								</view>
-								<view style="flex: 1;text-align: center;">
-									售额
-								</view>
+							<view class="compact-table-header">
+								<view style="flex: 2.2;">货主/车次</view>
+								<view style="flex: 1.5;text-align: center;">创建时间</view>
+								<view style="flex: 0.8;text-align: center;">状态</view>
+								<view style="flex: 1;text-align: right;">售额</view>
 							</view>
 							<view class="step1-table-content">
 								<scroll-view class="step1-table-scrollArea" scroll-y="true"
 									:style="{ height: tableScrollHeight + 'px' }">
-									<view class="step1-table-content-item" v-for="simple in batchProfitSimpleList"
+									<view class="compact-table-row" v-for="simple in batchProfitSimpleList"
 										@click="openAssistDrawer(simple.batchId)">
-										<view style="flex: 2; display: flex;flex-direction: column">
-											<view>
-												{{simple.shipperName}}{{simple.batchCode}}
-											</view>
-											<view style="margin-top: 5rpx;color: #b0b0b0;">
-												{{simple.createTime.replace("T"," ")}}
-											</view>
+										<view style="flex: 2.2; display: flex;flex-direction: column;min-width: 0;">
+											<view class="ellipsis">{{simple.shipperName}}</view>
+											<view class="row-sub-text">{{simple.batchCode}}</view>
 										</view>
-										<view
-											style="flex: 1;display: flex; justify-content: center;align-items: center">
-											<text v-if="simple.saleStatus===1"
-												class="step1-table-content-item-saleStatus"
-												style="--sale-status-color: #00aaff;">
-												在售
-											</text>
-											<text v-if="simple.saleStatus===0"
-												class="step1-table-content-item-saleStatus"
-												style="--sale-status-color: #e74c3c;">
-												停售
-											</text>
-											<text v-if="simple.saleStatus===2"
-												class="step1-table-content-item-saleStatus"
-												style="--sale-status-color: #00b900;">
-												已结算
-											</text>
+									<view style="flex: 1.5;display: flex;flex-direction: column;align-items: center;justify-content: center;">
+										<view class="row-time-date">{{simple.createTime.split('T')[0].substring(5)}}</view>
+										<view class="row-time-hour">{{simple.createTime.split('T')[1] ? simple.createTime.split('T')[1].substring(0,5) : ''}}</view>
+									</view>
+										<view style="flex: 0.8;display: flex; justify-content: center;align-items: center;">
+											<text v-if="simple.saleStatus===1" class="compact-status-tag" 
+												style="--status-color: #00aaff;--status-bg: #e3f2fd;">售罄</text>
+											<text v-if="simple.saleStatus===0" class="compact-status-tag"
+												style="--status-color: #e74c3c;--status-bg: #ffebee;">停售</text>
+											<text v-if="simple.saleStatus===2" class="compact-status-tag"
+												style="--status-color: #00b900;--status-bg: #e8f5e9;">已结算</text>
 										</view>
-										<view
-											style="flex: 1;display: flex; justify-content: center;align-items: center;font-size: 18rpx;">
-											{{simple.cargoAmount}}
+										<view class="row-amount" style="flex: 1;">
+											¥{{simple.cargoAmount}}
 										</view>
 									</view>
 								</scroll-view>
 							</view>
 						</view>
+						
+						<!-- 货品统计表格 -->
 						<view v-if="currentTableTab===3||currentTableTab===2">
-							<view class="step1-table-header">
-								<view style="flex: 2;">
-									货品名称
-								</view>
-								<view style="flex: 1;text-align: center;">
-									已售重量
-								</view>
-								<view style="flex: 1;text-align: center;">
-									货款
-								</view>
+							<view class="compact-table-header">
+								<view style="flex: 2.5;">货品名称</view>
+								<view style="flex: 1.2;text-align: center;">已售重量</view>
+								<view style="flex: 1.2;text-align: right;">货款金额</view>
 							</view>
 							<view class="step1-table-content">
 								<scroll-view class="step1-table-scrollArea" scroll-y="true"
 									:style="{ height: tableScrollHeight + 'px' }">
-									<view class="step1-table-content-item" v-for="item in batchProfitSimpleList"
+									<view class="compact-table-row" v-for="item in batchProfitSimpleList"
 										  @click="(currentTableTab === 2 || currentTableTab === 3) ? openGoodsDrawer(item) : null"
 										  :class="{ 'clickable-item': currentTableTab === 2 || currentTableTab === 3 }">
-										<view style="flex: 2; display: flex;align-items: center">
-											<view>
-												{{item.name}}
-											</view>
+										<view style="flex: 2.5; display: flex;align-items: center;font-weight: 600;min-width: 0;">
+											<view class="ellipsis">{{item.name}}</view>
 										</view>
-										<view
-											style="flex: 1;display: flex; justify-content: center;align-items: center;font-size: 18rpx;">
+										<view class="row-weight" style="flex: 1.2;">
 											{{item.weightSold}}
 										</view>
-										<view
-											style="flex: 1;display: flex; justify-content: center;align-items: center;font-size: 18rpx;">
-											{{item.amountSale}}
+										<view class="row-amount" style="flex: 1.2;">
+											¥{{item.amountSale}}
 										</view>
 									</view>
 								</scroll-view>
@@ -211,140 +214,118 @@
 			<!-- 抽屉内容 -->
 			<view class="drawer-content" :class="{ 'show': showDrawer || showGoodsDrawer }">
 				<slot>
-					<!-- 车次明细抽屉 -->
-					<view v-if="showDrawer">
-						<view class="drawer-content-header">
-							<view >
-								<uni-icons custom-prefix="iconfont" type="icon-guanbi" size="25" color="#ca0000" @click="closeDrawer"
-									style="font-weight: bold;margin-left: 10rpx;margin-right: 10rpx; "></uni-icons>
-								<text>车次明细</text>
-							</view>
-						</view>
-						<view class="drawer-content-header2">
-							<view class="drawer-content-header2-title">
-								货主：{{selectAssistBatchDetail.shipperName}} 车次：{{selectAssistBatchDetail.batchCode}} <text
-									v-if="selectAssistBatchDetail.saleStatus===1" class="drawer-content-header2-status"
-									style="--sale-status-color: #00aaff;">
-									在售
-								</text>
-								<text v-if="selectAssistBatchDetail.saleStatus===0" class="drawer-content-header2-status"
-									style="--sale-status-color: #e74c3c;">
-									停售
-								</text>
-								<text v-if="selectAssistBatchDetail.saleStatus===2" class="drawer-content-header2-status"
-									style="--sale-status-color: #00b900;">
-									已结算
-								</text>
-							</view>
-							<view class="drawer-content-header2-title2">
-								创建时间:  {{selectAssistBatchDetail.createTime}}
-							</view>
-						</view>
-
-						<view class="drawer-content-card">
-							<view class="drawer-content-card-title">
-								销售明细
-							</view>
-							<view class="drawer-content-table-content">
-								<scroll-view class="drawer-content-scrollArea" scroll-y="true" scroll-x="true" >
-								 <table border="1" class="drawer-content-table" >
-								    <thead>
-								      <tr class="drawer-content-table-header" >
-								        <th  class="drawer-content-table-header-grid">货品</th>
-								        <th  class="drawer-content-table-header-grid">销量</th>
-								        <th  class="drawer-content-table-header-grid">均重</th>
-								        <th  class="drawer-content-table-header-grid">均价</th>
-								        <th  class="drawer-content-table-header-grid">货款</th>
-								      </tr>
-								    </thead>
-								    <tbody>
-								      <tr v-for="item in selectAssistBatchDetail.allPurchaseAssistList">
-								        <td  class="drawer-content-table-grid" >{{item.commodityName}}</td>
-								        <td class="drawer-content-table-grid" >{{item.saleMount}}</td>
-								        <td class="drawer-content-table-grid" >---</td>
-								        <td class="drawer-content-table-grid" >{{item.averagePrice}}</td>
-								        <td class="drawer-content-table-grid" >{{item.saleSubTotal}}</td>
-								      </tr>
-								    </tbody>
-									<tbody>
-									  <tr >
-									    <td  class="drawer-content-table-grid" >合计:</td>
-									    <td class="drawer-content-table-grid" ></td>
-									    <td class="drawer-content-table-grid" >---</td>
-									    <td class="drawer-content-table-grid" ></td>
-									    <td class="drawer-content-table-grid" ></td>
-									  </tr>
-									</tbody>
-								  </table>
-								  </scroll-view>
-							</view>
+				<!-- 车次明细抽屉 -->
+				<view v-if="showDrawer">
+					<view class="drawer-header">
+						<view class="drawer-header-left">
+							<uni-icons custom-prefix="iconfont" type="icon-guanbi" size="20" color="#666" @click="closeDrawer"></uni-icons>
+							<text class="drawer-title">车次明细</text>
 						</view>
 					</view>
+					<view class="drawer-info-card">
+						<view class="info-row">
+							<text class="info-label">货主</text>
+							<text class="info-value">{{selectAssistBatchDetail.shipperName}}</text>
+							<text class="info-label" style="margin-left: 20rpx;">车次</text>
+							<text class="info-value">{{selectAssistBatchDetail.batchCode}}</text>
+							<text v-if="selectAssistBatchDetail.saleStatus===1" class="drawer-status-tag" 
+								style="--status-color: #00aaff;--status-bg: #e3f2fd;">在售</text>
+							<text v-if="selectAssistBatchDetail.saleStatus===0" class="drawer-status-tag"
+								style="--status-color: #e74c3c;--status-bg: #ffebee;">停售</text>
+							<text v-if="selectAssistBatchDetail.saleStatus===2" class="drawer-status-tag"
+								style="--status-color: #00b900;--status-bg: #e8f5e9;">已结算</text>
+						</view>
+						<view class="info-row" style="margin-top: 8rpx;">
+							<text class="info-time">{{selectAssistBatchDetail.createTime ? selectAssistBatchDetail.createTime.replace('T', ' ') : ''}}</text>
+						</view>
+					</view>
+
+					<view class="drawer-table-wrapper">
+						<scroll-view class="drawer-scroll-area" scroll-y="true" scroll-x="true">
+							<table class="drawer-table">
+								<thead>
+									<tr class="drawer-thead">
+										<th class="drawer-th">货品</th>
+										<th class="drawer-th">销量</th>
+										<th class="drawer-th">均重</th>
+										<th class="drawer-th">均价</th>
+										<th class="drawer-th">货款</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-for="item in selectAssistBatchDetail.allPurchaseAssistList" class="drawer-tr">
+										<td class="drawer-td drawer-td-name">{{item.commodityName}}</td>
+										<td class="drawer-td">{{item.saleMount}}</td>
+										<td class="drawer-td">-</td>
+										<td class="drawer-td">¥{{item.averagePrice}}</td>
+										<td class="drawer-td drawer-td-amount">¥{{item.saleSubTotal}}</td>
+									</tr>
+								</tbody>
+							</table>
+						</scroll-view>
+					</view>
+				</view>
 					
-					<!-- 货品详情抽屉 -->
-					<view v-if="showGoodsDrawer">
-						<view class="drawer-content-header">
-							<view >
-								<uni-icons custom-prefix="iconfont" type="icon-guanbi" size="25" color="#ca0000" @click="closeGoodsDrawer"
-									style="font-weight: bold;margin-left: 10rpx;margin-right: 10rpx; "></uni-icons>
-								<text>货品详情</text>
-							</view>
-						</view>
-						<view class="drawer-content-header2" v-if="currentGoodsItem">
-							<view class="drawer-content-header2-title">
-								货品名称：{{currentGoodsItem.name}} 
-								<text v-if="currentTableTab === 3" class="drawer-content-header2-status" style="--sale-status-color: #f39c12;">
-									自营
-								</text>
-								<text v-if="currentTableTab === 2" class="drawer-content-header2-status" style="--sale-status-color: #00aaff;">
-									代销
-								</text>
-							</view>
-							<view class="drawer-content-header2-title2">
-								已售重量: {{currentGoodsItem.weightSold}} | 货款总额: ¥{{currentGoodsItem.amountSale}}
-							</view>
-						</view>
-
-						<view class="drawer-content-card">
-							<view class="drawer-content-card-title">
-								订单明细
-							</view>
-							<view class="drawer-content-table-content">
-								<scroll-view class="drawer-content-scrollArea" scroll-y="true" scroll-x="true" 
-											 :style="{ height: (tableScrollHeight) + 'px' }">
-								 <table border="1" class="drawer-content-table" >
-								    <thead>
-								      <tr class="drawer-content-table-header" >
-										<th  class="drawer-content-table-header-grid">时间</th>
-								        <th  class="drawer-content-table-header-grid">数量</th>
-								        <th  class="drawer-content-table-header-grid">重量</th>
-								        <th  class="drawer-content-table-header-grid">单价</th>
-								        <th  class="drawer-content-table-header-grid">小计</th>
-										<th  class="drawer-content-table-header-grid">订单号</th>
-								      </tr>
-								    </thead>
-								    <tbody>
-								      <tr v-for="(goods, index) in goodsList" :key="index">
-										<td class="drawer-content-table-grid" >{{goods.createTime ? goods.createTime.replace("T"," ") : '-'}}</td>
-								        <td class="drawer-content-table-grid" >{{goods.amount || goods.quantity || 0}}</td>
-								        <td class="drawer-content-table-grid" >{{goods.weight || goods.totalWeight || 0}}</td>
-								        <td class="drawer-content-table-grid" >¥{{goods.price || goods.unitPrice || 0}}</td>
-								        <td class="drawer-content-table-grid" >¥{{goods.subtotal || goods.totalAmount || 0}}</td>
-										<td  class="drawer-content-table-grid" >{{goods.orderCode || goods.accountCode || '-'}}</td>
-								      </tr>
-								    </tbody>
-									<tbody v-if="!goodsList || goodsList.length === 0">
-									  <tr>
-									    <td colspan="6" class="drawer-content-table-grid" style="text-align: center; color: #bdc3c7; padding: 40rpx;">
-									      暂无详情记录
-									    </td>
-									  </tr>
-									</tbody>
-								  </table>
-								  </scroll-view>
-							</view>
+				<!-- 货品详情抽屉 -->
+				<view v-if="showGoodsDrawer">
+					<view class="drawer-header">
+						<view class="drawer-header-left">
+							<uni-icons custom-prefix="iconfont" type="icon-guanbi" size="20" color="#666" @click="closeGoodsDrawer"></uni-icons>
+							<text class="drawer-title">货品详情</text>
 						</view>
 					</view>
+					<view class="drawer-info-card" v-if="currentGoodsItem">
+						<view class="info-row">
+							<text class="info-label">货品</text>
+							<text class="info-value">{{currentGoodsItem.name}}</text>
+							<text v-if="currentTableTab === 3" class="drawer-status-tag" 
+								style="--status-color: #f39c12;--status-bg: #fff3e0;">自营</text>
+							<text v-if="currentTableTab === 2" class="drawer-status-tag" 
+								style="--status-color: #00aaff;--status-bg: #e3f2fd;">代销</text>
+						</view>
+						<view class="info-row" style="margin-top: 8rpx;">
+							<text class="info-stat">已售: {{currentGoodsItem.weightSold}}</text>
+							<text class="info-stat" style="margin-left: 20rpx;">货款: ¥{{currentGoodsItem.amountSale}}</text>
+						</view>
+					</view>
+
+					<view class="drawer-table-wrapper">
+						<scroll-view class="drawer-scroll-area" scroll-y="true" scroll-x="true" 
+									 :style="{ height: (tableScrollHeight - 100) + 'px' }">
+							<table class="drawer-table">
+								<thead>
+									<tr class="drawer-thead">
+										<th class="drawer-th">时间</th>
+										<th class="drawer-th">数量</th>
+										<th class="drawer-th">重量</th>
+										<th class="drawer-th">单价</th>
+										<th class="drawer-th">小计</th>
+										<th class="drawer-th">订单号</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr v-for="(goods, index) in goodsList" :key="index" class="drawer-tr">
+										<td class="drawer-td drawer-td-time">{{goods.createTime ? goods.createTime.split('T')[0].substring(5) + ' ' + goods.createTime.split('T')[1].substring(0,5) : '-'}}</td>
+										<td class="drawer-td">{{goods.amount || goods.quantity || 0}}</td>
+										<td class="drawer-td">{{goods.weight || goods.totalWeight || 0}}</td>
+										<td class="drawer-td">¥{{goods.price || goods.unitPrice || 0}}</td>
+										<td class="drawer-td drawer-td-amount">¥{{goods.subtotal || goods.totalAmount || 0}}</td>
+										<td class="drawer-td drawer-td-code">{{goods.orderCode || goods.accountCode || '-'}}</td>
+									</tr>
+								</tbody>
+								<tbody v-if="!goodsList || goodsList.length === 0">
+									<tr>
+										<td colspan="6" class="drawer-td-empty">
+											<view class="empty-state">
+												<text>暂无订单记录</text>
+											</view>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</scroll-view>
+					</view>
+				</view>
 				</slot> <!-- 抽屉内容插槽 -->
 			</view>
 		</view>
@@ -355,6 +336,7 @@
 <script>
 	import letsgofishingTab from '@/components/letsgofishing-Tab/letsgofishing-Tab.vue'
 	import tableApi from '../../api/table/tableApi'
+	import dutyApi from '../../api/duty/duty'
 	export default {
 		data() {
 			return {
@@ -364,8 +346,17 @@
 				currentTab: 1,
 				currentCompanyId: "",
 				tableScrollHeight: 0,
+				windowHeight: 0, // 窗口高度
+				leftScrollHeight: 0, // 左侧滚动区域高度
 				selectAssistBatchDetail: "", //选中的代销批次明细
-				tableStatic: {}, //统计数据
+			tableStatic: {
+			lossCount: 0,        // 报损记录数
+			inventoryCount: 0,   // 盘点记录数
+			profitCount: 0,      // 盘盈记录数
+			lossStockCount: 0    // 盘亏记录数
+		}, //统计数据
+				expenseList: [], // 费用支出列表
+				totalExpense: 0, // 总支出金额
 				dataSelectBeiginTime: "", //选择开始时间
 				dateSelectEndTime: "", //选择结束时间
 				currentTableTab: 1, //右栏选择的表格类型tab
@@ -428,10 +419,30 @@
 			//获取批次利润简略列表
 			this.getAssistProfitSimpleList();
 
-
-			this.tableScrollHeight = uni.getWindowInfo().windowHeight - 220;
+			// 计算高度
+			this.calculateHeight();
 		},
 		methods: {
+			// 计算页面高度
+			calculateHeight() {
+				try {
+					const systemInfo = uni.getWindowInfo();
+					this.windowHeight = systemInfo.windowHeight;
+					// 头部高度约 30rpx，转换为px约为 (30 / 750) * windowWidth
+					// 但为了简单，直接使用固定值，头部实际高度约为 50-60px
+					this.tableScrollHeight = this.windowHeight - 60; // 减去头部高度
+					this.leftScrollHeight = this.windowHeight - 60; // 左侧滚动区域高度
+				} catch (e) {
+					// 降级处理
+					uni.getSystemInfo({
+						success: (res) => {
+							this.windowHeight = res.windowHeight;
+							this.tableScrollHeight = res.windowHeight - 60;
+							this.leftScrollHeight = res.windowHeight - 60;
+						}
+					});
+				}
+			},
 			//获取单个代销批次信息(包含利润计算)
 			getAssistBatchDetail(batchId) {
 				tableApi.GetSingleAssistBatchInfoAndProfit(batchId).then(res => {
@@ -496,29 +507,61 @@
 				// 调用获取数据的方法
 				this.getTableStatic();
 			},
-			//获取统计数据
-			getTableStatic() {
-				const beginTime = `${this.dataSelectBeiginTime} 00:00:00`;
-				const endTime = `${this.dateSelectEndTime} 23:59:59`;
-				tableApi.GetBusinessSummaryStatic(this.currentCompanyId, beginTime, endTime).then(res => {
-					console.log("res", res)
-					this.tableStatic = res.data
+		//获取统计数据
+		getTableStatic() {
+			const beginTime = `${this.dataSelectBeiginTime} 00:00:00`;
+			const endTime = `${this.dateSelectEndTime} 23:59:59`;
+			tableApi.GetBusinessSummaryStatic(this.currentCompanyId, beginTime, endTime).then(res => {
+				console.log("res", res)
+				this.tableStatic = res.data
+			})
+			// 同时获取费用支出数据
+			this.getExpenseData();
+		},
+		
+		// 获取费用支出数据
+		getExpenseData() {
+			const beginTime = `${this.dataSelectBeiginTime} 00:00:00`;
+			const endTime = `${this.dateSelectEndTime} 23:59:59`;
+			
+			dutyApi.getDutySpendCostByCompanyIdAndTimeRange(this.currentCompanyId, beginTime, endTime)
+				.then(res => {
+					if (res.code === 200 && res.data) {
+						// 只保留 spendStatus 为 1（支出）的记录
+						this.expenseList = res.data.filter(item => item.spendStatus === 1);
+						
+						// 计算总支出金额
+						this.totalExpense = this.expenseList.reduce((total, item) => {
+							return total + (item.spendMoney || 0);
+						}, 0);
+					} else {
+						this.expenseList = [];
+						this.totalExpense = 0;
+					}
 				})
-			},
-			tabChange(e) {
-				this.currentTableTab = e.value
-				this.refreshBatchStatic()
-			},
-			//右边货品刷新
-			refreshBatchStatic(){
-				if (this.currentTableTab === 1) {
-					this.getAssistProfitSimpleList()
-				} else if (this.currentTableTab === 3) {
-					this.GetEmployCommodityStatic()
-				}else if(this.currentTableTab === 2){
-					this.getAssistCommodityStatic()
-				}
-			},
+				.catch(error => {
+					console.error('获取费用支出数据失败:', error);
+					this.expenseList = [];
+					this.totalExpense = 0;
+				});
+		},
+		tabChange(e) {
+			this.currentTableTab = e.value
+			this.refreshBatchStatic()
+		},
+		//右边货品刷新
+		refreshBatchStatic(){
+			// 先清空数据，避免显示旧数据
+			this.batchProfitSimpleList = []
+			
+			if (this.currentTableTab === 1) {
+				this.getAssistProfitSimpleList()
+			} else if (this.currentTableTab === 3) {
+				this.GetEmployCommodityStatic()
+			}else if(this.currentTableTab === 2){
+				this.getAssistCommodityStatic()
+			}
+		},
 			//获取批次利润简略列表
 			getAssistProfitSimpleList() {
 				const beginTime = `${this.dataSelectBeiginTime} 00:00:00`;
@@ -625,13 +668,26 @@
 </script>
 
 <style>
+	/* 固定页面，禁止滚动 */
+	page {
+		height: 100%;
+		overflow: hidden;
+	}
+	
+	.space {
+		height: 100%;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+	
 	.space-header {
 		display: flex;
 		flex-direction: row;
 		align-items: center;
 		padding: 10px 15px;
 		background: #ffffff;
-		border-bottom: 1px solid #dddddd;
+		border-bottom: 1px solid #e9ecef;
 		height: 30rpx;
 	}
 
@@ -656,7 +712,7 @@
 	.time-select-card {
 		display: flex;
 		margin-left: auto;
-		background-color: #dddddd;
+		background-color: #f5f5f5;
 		padding: 2rpx;
 		border-radius: 5rpx;
 	}
@@ -666,9 +722,9 @@
 		height: 30rpx;
 		text-align: center;
 		line-height: 30rpx;
-		color: #868686;
+		color: #666666;
 		font-weight: bold;
-		background-color: #dddddd;
+		background-color: #f5f5f5;
 		border-radius: 0;
 		border: 0;
 		font-size: 15rpx;
@@ -687,9 +743,10 @@
 		/* 左右两边分开 */
 		width: 100%;
 		/* 确保容器宽度足够 */
-		background-color: #dddddd;
+		background-color: #f8f9fa;
 		padding: 1rpx;
-		height: calc(100% - 30rpx);
+		flex: 1;
+		overflow: hidden;
 	}
 
 	.left-side {
@@ -697,6 +754,13 @@
 		width: 50%;
 		padding: 2rpx;
 		/* 留一些间隙 */
+		height: 100%;
+		overflow: hidden;
+	}
+	
+	.left-side-scroll {
+		width: 100%;
+		/* height 由动态绑定控制 */
 	}
 
 	.right-side {
@@ -704,12 +768,22 @@
 		width: 50%;
 		/* 留一些间隙 */
 		padding: 2rpx;
+		height: 100%;
+		overflow: hidden;
 	}
 
 	.left-side-card1 {
 		background-color: white;
 		height: 100rpx;
 		border-radius: 10rpx;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+		border: 1px solid rgba(0, 0, 0, 0.05);
+		transition: box-shadow 0.3s ease, transform 0.2s ease;
+	}
+	
+	.left-side-card1:hover {
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+		transform: translateY(-2rpx);
 	}
 
 	.left-side-card1 .card-body{
@@ -720,7 +794,7 @@
 			font-size: 10rpx;
 			margin-top: auto;
 			flex: 1;
-			background-color: rgb(223, 223, 223);
+			background-color: #f5f5f5;
 			border-radius: 5px;
 			margin: 10rpx;
 			padding: 10rpx;
@@ -735,7 +809,7 @@
 		display: flex;
 		align-items: center;
 		padding: 10rpx;
-		border-bottom: 1rpx solid #dddddd;
+		border-bottom: 1rpx solid #e9ecef;
 	}
 
 	.left-side-card1 .card-header .left {
@@ -755,9 +829,18 @@
 
 	.left-side-card2 {
 		background-color: white;
-		height: 100rpx;
+		min-height: 100rpx;
+		max-height: 180rpx;
 		border-radius: 10rpx;
 		margin-top: 3rpx;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+		border: 1px solid rgba(0, 0, 0, 0.05);
+		transition: box-shadow 0.3s ease, transform 0.2s ease;
+	}
+	
+	.left-side-card2:hover {
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+		transform: translateY(-2rpx);
 	}
 
 
@@ -765,7 +848,7 @@
 		display: flex;
 		align-items: center;
 		padding: 10rpx;
-		border-bottom: 1rpx solid #dddddd;
+		border-bottom: 1rpx solid #e9ecef;
 	}
 
 	.left-side-card2 .card-header .left {
@@ -782,12 +865,55 @@
 		font-size: 15rpx;
 		font-weight: bold;
 	}
+	
+	.left-side-card2 .card-body {
+		padding: 5rpx 10rpx;
+	}
+	
+	.expense-scroll {
+		width: 100%;
+	}
+	
+	.expense-item {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 4rpx 8rpx;
+		background-color: #f5f5f5;
+		border-radius: 4rpx;
+		margin-bottom: 4rpx;
+		font-size: 10rpx;
+	}
+	
+	.expense-item:last-child {
+		margin-bottom: 0;
+	}
+	
+	.expense-name {
+		flex: 1;
+		color: #666;
+		font-weight: 500;
+	}
+	
+	.expense-amount {
+		color: #00aa7f;
+		font-weight: bold;
+		margin-left: 10rpx;
+	}
 
 	.left-side-card3 {
 		background-color: white;
 		height: 100rpx;
 		border-radius: 10rpx;
 		margin-top: 3rpx;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+		border: 1px solid rgba(0, 0, 0, 0.05);
+		transition: box-shadow 0.3s ease, transform 0.2s ease;
+	}
+	
+	.left-side-card3:hover {
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+		transform: translateY(-2rpx);
 	}
 
 
@@ -795,7 +921,7 @@
 		display: flex;
 		align-items: center;
 		padding: 10rpx;
-		border-bottom: 1rpx solid #dddddd;
+		border-bottom: 1rpx solid #e9ecef;
 	}
 
 	.left-side-card3 .card-header .left {
@@ -818,6 +944,88 @@
 		height: 100rpx;
 		border-radius: 10rpx;
 		margin-top: 3rpx;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+		border: 1px solid rgba(0, 0, 0, 0.05);
+		transition: box-shadow 0.3s ease, transform 0.2s ease;
+	}
+	
+	.left-side-card4:hover {
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+		transform: translateY(-2rpx);
+	}
+	
+	/* 卡片5 - 其他统计 */
+	.left-side-card5 {
+		background-color: white;
+		height: 160rpx;
+		border-radius: 10rpx;
+		margin-top: 3rpx;
+		margin-bottom: 3rpx;
+		margin-bottom: 5rpx;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+		border: 1px solid rgba(0, 0, 0, 0.05);
+		transition: box-shadow 0.3s ease, transform 0.2s ease;
+	}
+	
+	.left-side-card5:hover {
+		box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.12);
+		transform: translateY(-2rpx);
+	}
+	
+	.left-side-card5 .card-body-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		grid-template-rows: repeat(2, 1fr);
+		height: calc(100% - 40rpx); /* 减去header高度 */
+		overflow: hidden;
+	}
+	
+	.left-side-card5 .grid-item {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: 8rpx;
+		background-color: #fafafa;
+		transition: background-color 0.2s ease;
+	}
+	
+	.left-side-card5 .grid-item:hover {
+		background-color: #f0f0f0;
+	}
+	
+	.left-side-card5 .grid-item-label {
+		font-size: 11rpx;
+		font-weight: 600;
+		margin-bottom: 4rpx;
+	}
+	
+	.left-side-card5 .grid-item-value {
+		font-size: 16rpx;
+		font-weight: bold;
+		color: #333;
+	}
+	
+	.left-side-card5 .card-header {
+		display: flex;
+		align-items: center;
+		padding: 10rpx;
+		border-bottom: 1rpx solid #e9ecef;
+	}
+	
+	.left-side-card5 .card-header .left {
+		flex: 1;
+		color: #888888;
+		font-size: 12rpx;
+		font-weight: bold;
+	}
+	
+	.left-side-card5 .card-header .right {
+		flex: 1;
+		text-align: right;
+		color: #9c27b0;
+		font-size: 15rpx;
+		font-weight: bold;
 	}
 	
 	.left-side-card4 .card-body{
@@ -827,7 +1035,7 @@
 			flex: 1;
 			display: flex;
 			justify-content: space-between;
-			background-color: rgb(223, 223, 223);
+			background-color: #f5f5f5;
 			margin: 10rpx;
 			border-radius: 5px;
 			padding: 15rpx;
@@ -842,7 +1050,7 @@
 		display: flex;
 		align-items: center;
 		padding: 10rpx;
-		border-bottom: 1rpx solid #dddddd;
+		border-bottom: 1rpx solid #e9ecef;
 	}
 
 	.left-side-card4 .card-header .left {
@@ -865,14 +1073,105 @@
 		height: 100rpx;
 		border-radius: 10rpx;
 		height: 100%;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+		border: 1px solid rgba(0, 0, 0, 0.05);
+		transition: box-shadow 0.3s ease;
 	}
 
 	.right-side-card .header {
 		height: 50rpx;
 		padding: 10rpx;
-		border-bottom: 2rpx solid #dddddd;
+		border-bottom: 2rpx solid #e9ecef;
 	}
 
+	/* 紧凑型表格头部 */
+	.compact-table-header {
+		display: flex;
+		padding: 6rpx 8rpx;
+		font-weight: 600;
+		font-size: 14rpx;
+		color: #666;
+		background: #fafafa;
+		border-bottom: 2rpx solid #e0e0e0;
+	}
+	
+	/* 紧凑型表格行 */
+	.compact-table-row {
+		display: flex;
+		padding: 5rpx 8rpx;
+		font-size: 13rpx;
+		color: #333;
+		border-bottom: 1rpx solid #f0f0f0;
+		transition: background-color 0.2s ease;
+		align-items: center;
+		min-height: 40rpx;
+	}
+	
+	.compact-table-row:active {
+		background-color: #f8f8f8;
+	}
+	
+	/* 文本溢出省略 */
+	.ellipsis {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	
+	/* 行子文本 */
+	.row-sub-text {
+		font-size: 11rpx;
+		color: #999;
+		margin-top: 2rpx;
+	}
+	
+	/* 时间显示 */
+	.row-time {
+		font-size: 12rpx;
+		color: #666;
+	}
+	
+	/* 时间日期（两行显示） */
+	.row-time-date {
+		font-size: 13rpx;
+		color: #333;
+		font-weight: 500;
+		line-height: 1.2;
+	}
+	
+	.row-time-hour {
+		font-size: 11rpx;
+		color: #999;
+		margin-top: 2rpx;
+		line-height: 1.2;
+	}
+	
+	/* 紧凑型状态标签 */
+	.compact-status-tag {
+		font-size: 11rpx;
+		font-weight: 600;
+		color: var(--status-color, #666);
+		background: var(--status-bg, #f5f5f5);
+		padding: 2rpx 6rpx;
+		border-radius: 3rpx;
+	}
+	
+	/* 金额显示 */
+	.row-amount {
+		text-align: right;
+		font-weight: 600;
+		font-size: 14rpx;
+		color: #00aaff;
+	}
+	
+	/* 重量显示 */
+	.row-weight {
+		text-align: center;
+		font-size: 13rpx;
+		color: #666;
+	}
+	
+	/* 保留旧样式以防其他地方使用 */
 	.step1-table-header {
 		display: flex;
 		margin: 5rpx;
@@ -896,8 +1195,7 @@
 	.step1-table-content-item-saleStatus {
 		border-radius: 5rpx;
 		color: white;
-		background-color: var(--sale-status-color, #d8d8d8);
-		/* 默认蓝色 */
+		background-color: var(--sale-status-color, #e9ecef);
 		padding: 3rpx;
 	}
 
@@ -942,7 +1240,7 @@
 		width: 75%;
 		/* 抽屉宽度 */
 		height: 100%;
-		background: #cacaca;
+		background: #f5f5f5;
 		box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
 		transition: transform 0.3s ease;
 		pointer-events: auto;
@@ -953,100 +1251,163 @@
 		/* 从右向左滑出 */
 	}
 
-	.drawer-content-header {
-		display: grid;
+	/* 抽屉头部 */
+	.drawer-header {
+		display: flex;
 		align-items: center;
-		height: 30rpx;
-		line-height: 30rpx;
+		justify-content: space-between;
+		padding: 15rpx 20rpx;
+		background: white;
+		border-bottom: 1rpx solid #e5e5e5;
+	}
+	
+	.drawer-header-left {
+		display: flex;
+		align-items: center;
+		gap: 10rpx;
+	}
+	
+	.drawer-title {
+		font-size: 16rpx;
+		font-weight: 600;
+		color: #333;
+	}
+	
+	/* 抽屉信息卡片 */
+	.drawer-info-card {
+		background: white;
+		padding: 15rpx 20rpx;
+		margin: 10rpx;
+		border-radius: 8rpx;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+	}
+	
+	.info-row {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+	
+	.info-label {
 		font-size: 12rpx;
-		font-weight: bold;
-		background-color: white;
-		border-bottom: 1px solid #888888;
+		color: #999;
+		margin-right: 8rpx;
 	}
-
-	.drawer-content-header2 {
-		height: 50rpx;
+	
+	.info-value {
+		font-size: 14rpx;
+		font-weight: 600;
+		color: #333;
+	}
+	
+	.info-time {
+		font-size: 12rpx;
+		color: #999;
+	}
+	
+	.info-stat {
 		font-size: 13rpx;
-		font-weight: bold;
-		background-color: white;
-	}
-
-	.drawer-content-header2-title {
-		padding: 5rpx;
-	}
-
-	.drawer-content-header2-title2 {
-		font-size: 9rpx;
-		margin-left: 5rpx;
-		margin-top: 5rpx;
-		color: grey;
+		color: #666;
 	}
 	
-	.drawer-content-header2-status {
-		font-size: 10rpx;
-		color: white;
-		background-color: var(--sale-status-color, #d8d8d8);
-		margin-left: 5rpx;
-		padding: 2rpx;
-		border-radius: 5rpx;
-	}
-
-	.drawer-content-card {
-		height: 50rpx;
-		font-size: 13rpx;
-		font-weight: bold;
-		background-color: white;
-		margin-top: 20rpx;
-		height: calc(100% - 140rpx);
-	}
-	.drawer-content-card-title {
-		padding: 5rpx;
+	/* 抽屉状态标签 */
+	.drawer-status-tag {
+		font-size: 11rpx;
+		font-weight: 600;
+		color: var(--status-color, #666);
+		background: var(--status-bg, #f5f5f5);
+		padding: 3rpx 10rpx;
+		border-radius: 4rpx;
+		margin-left: 10rpx;
 	}
 	
-
-	
-	.drawer-content-table-content {
-		padding: 10rpx;
+	/* 抽屉表格包装器 */
+	.drawer-table-wrapper {
+		margin: 10rpx;
+		background: white;
+		border-radius: 8rpx;
+		overflow: hidden;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
 	}
 	
-	.drawer-content-scrollArea {
-		width:350rpx;
-		max-height: 400px;
-		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
-		border: 1rpx solid #e9ecef;
-		border-radius: 6rpx;
-	}
-	.drawer-content-table {
+	.drawer-scroll-area {
 		width: 100%;
-		min-width: 600px;
+		overflow: auto;
+	}
+	
+	/* 抽屉表格 */
+	.drawer-table {
+		width: 100%;
+		min-width: 550rpx;
 		border-collapse: collapse;
-		background-color: white;
+		background: white;
 	}
 	
-	.drawer-content-table-header {
-		background-color: #f5f5f5; 
-		font-weight: bold;
-	}
-	
-	.drawer-content-table-header-grid {
-		padding: 12rpx 8rpx; 
-		text-align: center;
-		font-weight: bold;
-		min-width: 80rpx;
-		border-bottom: 2rpx solid #dee2e6;
+	.drawer-thead {
+		background: #fafafa;
 		position: sticky;
 		top: 0;
-		background-color: #f5f5f5;
-		z-index: 1;
+		z-index: 2;
 	}
-	.drawer-content-table-grid {
-		padding: 12rpx 8rpx;
+	
+	.drawer-th {
+		padding: 10rpx 8rpx;
 		text-align: center;
-		font-weight: 500;
-		min-width: 80rpx;
-		border-bottom: 1rpx solid #f0f0f0;
 		font-size: 12rpx;
-		word-break: break-all;
+		font-weight: 600;
+		color: #666;
+		border-bottom: 2rpx solid #e5e5e5;
+		white-space: nowrap;
+	}
+	
+	.drawer-tr {
+		transition: background-color 0.2s ease;
+	}
+	
+	.drawer-tr:hover {
+		background: #fafafa;
+	}
+	
+	.drawer-td {
+		padding: 8rpx 8rpx;
+		text-align: center;
+		font-size: 13rpx;
+		color: #333;
+		border-bottom: 1rpx solid #f0f0f0;
+	}
+	
+	.drawer-td-name {
+		text-align: left;
+		font-weight: 500;
+	}
+	
+	.drawer-td-time {
+		font-size: 12rpx;
+		color: #999;
+	}
+	
+	.drawer-td-amount {
+		font-weight: 600;
+		color: #00aaff;
+	}
+	
+	.drawer-td-code {
+		font-size: 11rpx;
+		color: #999;
+	}
+	
+	.drawer-td-empty {
+		padding: 0;
+		border: none;
+	}
+	
+	.empty-state {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 60rpx 20rpx;
+		color: #bbb;
+		font-size: 13rpx;
 	}
 	
 	/* 可点击项样式 */

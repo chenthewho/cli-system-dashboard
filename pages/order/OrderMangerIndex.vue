@@ -1,179 +1,224 @@
 <template>
 	<view style="background-color:darkgrey;">
 		<view style="height: 1px; background-color: #ccc; box-shadow: 0 2rpx 5rpx rgba(0, 0, 0, 0.2);"></view>
-		<scroll-view class="scrollArea" scroll-y="true" :style="{ height: scrollHeight + 'px' }">
-			<div style="height: 50rpx;" v-if="moduleList.length==0">
-				<div style=" margin-top: 100rpx; text-align: center;">
-					<uni-icons custom-prefix="iconfont" type="icon-zanwudingdan" size="40" color="#4c4c4c"></uni-icons>
-					<div style="margin-top: 10px; color: #4c4c4c;font-weight: bold;">暂无订单</div> <!-- 添加的文字 -->
+		<!-- 左右布局容器 -->
+		<view class="layout-container" :style="{ height: scrollHeight + 'px' }">
+			<!-- 左侧订单列表 -->
+			<scroll-view class="scrollArea left-panel" scroll-y="true" :style="{ height: scrollHeight + 'px' }" 
+				@scrolltolower="loadMore" 
+				lower-threshold="100"
+				@scroll="onScroll">
+				<div style="height: 50rpx;" v-if="moduleList.length==0 && !loading">
+					<div style=" margin-top: 100rpx; text-align: center;">
+						<uni-icons custom-prefix="iconfont" type="icon-zanwudingdan" size="40" color="#4c4c4c"></uni-icons>
+						<div style="margin-top: 10px; color: #4c4c4c;font-weight: bold;">暂无订单</div>
+					</div>
 				</div>
-			</div>
 
-			<view v-for=" item in moduleList" style=" display: flex;font-weight: bold;">
-				<u-checkbox-group placement="column" @change="checkboxChange(item.id)"
-					style=" margin-top: 40px;margin-left: 20px;" v-if="isEdting">
-					<u-checkbox class="checkBox" :key="item.id" label="" :checked="checkboxValue.includes(item.id)" />
-				</u-checkbox-group>
-				<view
-					style="width: 98%; height: 50rpx;background-color:white;margin-left: 5rpx;margin-bottom: 5rpx;margin-top: 5rpx; border-radius: 5px;padding: 5rpx;"
-					:style="{backgroundColor:item.status==2?'#f0f0f0':'white'}"
-					@click="showInfo(item)">
+				<view v-for=" item in moduleList" :key="item.id" style=" display: flex;font-weight: bold;">
+					<u-checkbox-group placement="column" @change="checkboxChange(item.id)"
+						style=" margin-top: 40px;margin-left: 20px;" v-if="isEdting">
+						<u-checkbox class="checkBox" :key="item.id" label="" :checked="checkboxValue.includes(item.id)" />
+					</u-checkbox-group>
 					<view
-						style="display: flex; justify-content: space-between; align-items: center; width: 100%;padding-top: 2rpx;">
-						<view style="flex: 1; text-align: left;padding-right: 5rpx;font-weight: bold;"><uni-icons
-								custom-prefix="iconfont" type="icon-tubiao_guke" size="15" color="#000000"
-								style="margin-right: 5rpx;"></uni-icons>{{item.customName ? item.customName : "散客"}}
-								<text style="color: #31BDEC;font-weight: 500;margin-left: 10rpx;font-size: 13rpx;" v-if="item.status==5">已修改</text>
-								<text style="color:#F56C6C;font-weight: 500;margin-left: 10rpx;font-size: 13rpx;" v-if="item.status==2">退单</text>
-						</view>
-						<view style="flex: 2;text-align: left;padding-left: 5rpx;">
-							时间：{{item.createTime.replace("T"," ")}}
-							<text style="color: white;background-color: #67C23A;padding: 2rpx 8rpx;margin-left: 10rpx;border-radius: 10rpx;font-size: 12rpx;font-weight: 500;" v-if="item.shareNum > 0">已发单</text>
+						class="order-item"
+						:class="{'order-item-selected': selectedOrderId === item.id}"
+						:style="{backgroundColor:item.status==2?'#f5f5f5':'white'}"
+						@click="showInfo(item)">
 						
+						<!-- 状态标签 - 固定在左上角 -->
+					<view class="status-badges">
+						<view class="status-badge status-modified" v-if="item.status==5">
+							<uni-icons type="compose" size="10" color="#fff"></uni-icons>
+							<text class="status-badge-text">已修改</text>
 						</view>
-						<view style="flex: 1;text-align: right;padding-right: 5rpx;position: relative;">
-						
-							<!-- <uni-icons custom-prefix="iconfont"
-								type="icon-xiangmujine" size="15" color="#000000"
-								style="margin-right: 5rpx;"></uni-icons> -->
-								实收(元): {{item.actualMoney}}
-								
-							</view>
+						<view class="status-badge status-refunded" v-if="item.status==2">
+							<uni-icons type="undo" size="10" color="#fff"></uni-icons>
+							<text class="status-badge-text">退单</text>
+						</view>
 					</view>
-					<view
-						style="display: flex; justify-content: space-between; align-items: center; width: 100%;padding-top: 5rpx;">
-						<view style="color: #ccc; text-align: left;padding-left: 5rpx;margin-top: 5rpx;white-space: nowrap;width: 400rpx;text-overflow: ellipsis;overflow: hidden;">{{item.modulestr}}</view>
-						<view
-							style="text-align: right;padding-right: 5rpx;color: white;background-color: red;padding: 5rpx;margin-right: 5rpx;border-radius: 5rpx;"
-							v-if="item.debt>0">下欠: {{item.debt}}</view>
+					
+					<!-- 已发单标签 - 固定在右上角 -->
+					<view class="sent-badge-top" v-if="item.shareNum > 0">
+						<text class="sent-badge">已发单</text>
+					</view>
+					
+					<!-- 第一行：客户名称、时间、实收金额 -->
+					<view class="order-row-first">
+						<view class="customer-info">
+							<uni-icons custom-prefix="iconfont" type="icon-tubiao_guke" size="13" color="#000000"></uni-icons>
+							<text class="customer-name">{{item.customName ? item.customName : "散客"}}</text>
+						</view>
+						<view class="order-time">
+							{{item.createTime.replace("T"," ")}}
+						</view>
+							<view class="actual-money">
+								实收(元): <text class="money-value">{{item.actualMoney}}</text>
+							</view>
+						</view>
+						
+						<!-- 第二行：商品列表和下欠金额 -->
+						<view class="order-row-second">
+							<view class="module-str">{{item.modulestr}}</view>
+							<view class="debt-badge" v-if="item.debt>0">
+								下欠: <text class="debt-value">{{item.debt}}</text>
+							</view>
+						</view>
 					</view>
 				</view>
-			</view>
-		</scroll-view>
-		<view style="height: 41rpx;background-color: lightgray;position: fixed; bottom: 0;width: 100%;">
-			<div class="demo-row" style="height: 80rpx;">
-				<div class="demo-col col-12">
-
-					<div style="display: flex;font-weight: bold;">
-						<div style="display: flex; align-items: center;">
-							<u-icon name="car-fill" size="25"></u-icon>订单数:
-							<text style="margin-left: 5px;font-size: 20px;">{{ moduleList.length }}</text>
-						</div>
-						<div style="display: flex; align-items: center;padding-left: 20rpx;">成交金额:
-							<text style="margin-left: 5px;font-size: 20px;"> {{totalMoney.toFixed(1)}}</text>
-						</div>
-						<div style="display: flex; align-items: center;padding-left: 20rpx;">当日下欠:
-							<text style="margin-left: 5px;font-size: 20px;color: red;"> {{ allDebt.toFixed(1) }}</text>
-						</div>
-						<div style="display: flex; align-items: center;padding-left: 20rpx;">实收金额:
-							<text style="margin-left: 5px;font-size: 20px;color: green;">
-								{{actualMoney.toFixed(1)}}</text>
-						</div>
-					</div>
-				</div>
-			</div>
-
-		</view>
-		<u-modal title="订单详情" :show="showDetail" @close="showDetail = false" :closeOnClickOverlay="true"
-			:showConfirmButton="false" :width="'500rpx'">
-			<div class="slot-content" style="position: relative;">
-				<div class="slot-content" style=" display: flex; flex-wrap: wrap; gap: 10px;font-weight: bold;">
-					<div style="flex: 1; min-width: 200rpx;">创建时间:
-						{{currentOrder.createTime ? currentOrder.createTime.replace("T", " ") : ""}}
-					</div>
-					<div style="flex: 1; min-width: 200rpx;">订单号:
-						{{currentOrder.accountCode ? currentOrder.accountCode : ""}}
-					</div>
-					<div style="flex: 1; min-width: 200rpx;">顾客:
-						{{currentOrder.customName ? currentOrder.customName : "散客"}}
-					</div>
-					<div style="flex: 1; min-width: 200rpx;">总计金额:
-						{{currentOrder.payableAmount }}
-					</div>
-					<div style="flex: 1; min-width: 200rpx;">押筐抵扣:
-						{{currentOrder.basketOffsetAmount }}
-					</div>
-					<div style="flex: 1; min-width: 200rpx;">实付金额:
-						{{currentOrder.actualMoney }}
-					</div>
-					<div style="flex: 1; min-width: 200rpx;color: darkred;" v-if="currentOrder.debt>0">下欠:
-						{{currentOrder.debt}}
-					</div>
-					<div style="flex: 1; min-width: 200rpx;display: flex;" v-if="currentOrder.status !=1" >状态:
-						<text style="color: #31BDEC;font-weight: 500;margin-left: 10rpx;font-size: 13rpx;" v-if="currentOrder.status==5">已修改<text style="background-color: #31BDEC;color: white;padding: 5rpx;border-radius: 5rpx;margin-left: 10rpx;" @click="showHistoryOrder(currentOrder)">查看历史订单</text></text>
-						<text style="color:#F56C6C;font-weight: 500;margin-left: 10rpx;font-size: 13rpx;" v-if="currentOrder.status==2">退单</text>
-					</div>
-				</div>
-				<scroll-view  scroll-y="true"
-					:style="{ height: 150 + 'rpx',marginTop:'5rpx',marginBottom:'5rpx' }">
-				<div class="table">
-					
-					<div class="table-row">
-						<div class="table-header-cell">货品</div>
-						<div class="table-header-cell">数量</div>
-						<div class="table-header-cell">总重</div>
-						<div class="table-header-cell">皮重</div>
-						<div class="table-header-cell">单价</div>
-						<div class="table-header-cell">小计</div>
-					</div>
+				
+				<!-- 加载提示 -->
+				<view style="text-align: center; padding: 20rpx; color: #666;" v-if="loading">
+					<text>加载中...</text>
+				</view>
+				<view style="text-align: center; padding: 20rpx; color: #999;" v-if="!hasMore && moduleList.length > 0">
+					<text>没有更多数据了</text>
+				</view>
+			</scroll-view>
 			
-					<div class="table-row" v-for="item in currentCardInfo" v-if="item.type!=4">
-						<div class="table-cell">{{item.name}}</div>
-						<div class="table-cell">{{item.mount}}</div>
-						<div class="table-cell">{{item.totalWeight}}</div>
-						<div class="table-cell">{{item.tareWeight}}</div>
-						<div class="table-cell">{{item.referenceAmount}}</div>
-						<div class="table-cell">{{item.subtotal}}</div>
-					</div>
+			<!-- 右侧订单详情 -->
+			<view class="right-panel" :style="{ height: scrollHeight + 'px' }">
+				<view v-if="!showDetail" class="empty-detail">
+					<uni-icons type="info-filled" size="60" color="#ccc"></uni-icons>
+					<text style="margin-top: 20rpx; color: #999;">请选择订单查看详情</text>
+				</view>
+				<view v-else class="detail-content">
+					<view class="detail-header-new">
+						<view class="header-left">
+							<uni-icons type="list" size="18" color="#fff"></uni-icons>
+							<text class="detail-title-new">订单详情</text>
+						</view>
+						<view class="header-right">
+							<u-button
+								icon="share-square"
+								type="primary"
+								text="发单" 
+								@click="shareOrder()" 
+								class="share-order-btn"
+								size="small">
+							</u-button>
+						</view>
+					</view>
 					
-				</div>
-				</scroll-view>
-				<view class="order-action-buttons">
-					<view class="button-group left-buttons">
+					<scroll-view scroll-y="true" :style="{ height: (scrollHeight - 115) + 'px' }">
+						<div class="order-info-grid-compact">
+							<!-- 第一行 -->
+							<div class="info-row">
+								<div class="info-item-new">				
+									<text class="info-value-new info-value-small">{{currentOrder.createTime ? currentOrder.createTime.replace("T", " ") : ""}}</text>
+								</div>
+								<div class="info-item-new">
+									<text class="info-value-new info-value-small">{{currentOrder.accountCode ? currentOrder.accountCode : ""}}</text>
+								</div>
+							</div>
+							
+							<!-- 第二行 -->
+							<div class="info-row">
+								<div class="info-item-new">
+									<text class="info-value-new info-value-small">{{currentOrder.customName ? currentOrder.customName : "散客"}}</text>
+								</div>
+								<div class="info-item-new">
+									<text class="info-label-new">总计金额:</text>
+									<text class="info-value-new highlight-value">{{currentOrder.payableAmount}}</text>
+								</div>
+							</div>
+							
+							<!-- 第三行 -->
+							<div class="info-row">
+								<div class="info-item-new">
+									<text class="info-label-new">押筐抵扣:</text>
+									<text class="info-value-new">{{currentOrder.basketOffsetAmount}}</text>
+								</div>
+								<div class="info-item-new">
+									<text class="info-label-new">实付金额:</text>
+									<text class="info-value-new highlight-value">{{currentOrder.actualMoney}}</text>
+								</div>
+							</div>
+							
+							<!-- 第四行 - 下欠和状态 -->
+							<div class="info-row">
+								<div class="info-item-new" v-if="currentOrder.debt>0">
+									<text class="info-label-new">下欠:</text>
+									<text class="info-value-new debt-value-new">{{currentOrder.debt}}</text>
+								</div>
+							<div class="info-item-status" v-if="currentOrder.status !=1">
+								<view class="status-container-flex">
+									<view class="status-tag-group">
+										<view class="status-tag status-modified-tag" v-if="currentOrder.status==5">
+											<uni-icons type="compose" size="12" color="#31BDEC"></uni-icons>
+											<text class="status-tag-text">已修改</text>
+										</view>
+										<view class="status-tag status-refunded-tag" v-if="currentOrder.status==2">
+											<uni-icons type="undo" size="12" color="#F56C6C"></uni-icons>
+											<text class="status-tag-text">退单</text>
+										</view>
+									</view>
+									<u-button 
+										v-if="currentOrder.status==5"
+										class="history-btn-right"
+										type="primary"
+										size="mini"
+										@click="showHistoryOrder(currentOrder)">
+										<uni-icons type="eye" size="12" color="#fff"></uni-icons>
+										<text style="margin-left: 4rpx;">查看历史</text>
+									</u-button>
+								</view>
+							</div>
+							</div>
+						</div>
+						
+						<div class="product-table-container">
+							<div class="product-table">
+								<div class="table-row table-header-row">
+									<div class="table-header-cell">货品</div>
+									<div class="table-header-cell">数量</div>
+									<div class="table-header-cell">总重</div>
+									<div class="table-header-cell">皮重</div>
+									<div class="table-header-cell">单价</div>
+									<div class="table-header-cell">小计</div>
+								</div>
+						
+								<div class="table-row table-body-row" v-for="item in currentCardInfo" v-if="item.type!=4" :key="item.id">
+									<div class="table-cell">{{item.name}}</div>
+									<div class="table-cell">{{item.mount}}</div>
+									<div class="table-cell">{{item.totalWeight}}</div>
+									<div class="table-cell">{{item.tareWeight}}</div>
+									<div class="table-cell">{{item.referenceAmount}}</div>
+									<div class="table-cell">{{item.subtotal}}</div>
+								</div>
+							</div>
+						</div>
+					</scroll-view>
+					
+					<view class="order-action-buttons-compact">
 						<u-button v-if="currentOrder.status!=2" 
-							class="action-btn modify-btn"
+							class="action-btn-compact modify-btn-new"
 							type="primary" 
 							@click="TurnToTuigeCashier" 
 							text="改单">
 						</u-button>
 						<u-button v-if="currentOrder.status!=2" 
-							class="action-btn refund-btn"
+							class="action-btn-compact refund-btn-new"
 							type="primary" 
 							@click="TuigeOrder" 
 							text="退单">
 						</u-button>
-					</view>
-					
-					<view class="button-group center-buttons" v-if="currentOrder.debt>0">
-						<u-button 
-							class="action-btn repay-btn"
+						<u-button v-if="currentOrder.debt>0"
+							class="action-btn-compact repay-btn-new"
 							type="primary" 
 							text="整单还款" 
 							@click="openPayTypeDialogVisible">
 						</u-button>
-					</view>
-				
-					<view class="button-group right-buttons">
 						<u-button 
-							class="action-btn print-btn"
+							class="action-btn-compact print-btn-new"
 							type="primary"
 							text="打印" 
 							@click="printerModel(currentOrder)">
 						</u-button>
 					</view>
 				</view>
-				<u-button
-				icon="share-square"
-					:plain="true"
-					shape="circle" 
-				  type="primary"
-				  text="发单" 
-				  @click="shareOrder()" 
-				  style="position: absolute; top: 0; right: 0;width: 50rpx;">
-				</u-button>
-			
-			</div>
-		</u-modal>
+			</view>
+		</view>
 
 		<u-modal title="整单还款" class="payment" :show="payTypeDialogVisible" :closeOnClickOverlay="true"
 			:showConfirmButton="false" :width="800" @close="payTypeDialogVisible = false">
@@ -330,91 +375,100 @@
 				<!-- 订单详情抽屉 -->
 				<div class="order-detail-container" v-if="showOrderDetailDrawer && orderDetailData">
 					<!-- 抽屉头部 -->
-					<div class="order-detail-header">
-						<div class="detail-title">
-							<view class="detail-title-icon">
-								<uni-icons custom-prefix="iconfont" type="icon-dingdan" size="20" color="#666"></uni-icons>
-							</view>
-							<text class="detail-title-text">订单详情</text>
-						</div>
-						<view class="close-btn" @tap="closeOrderDetailDrawer">
-							<uni-icons type="close" size="35" color="#666"></uni-icons>
+					<view class="detail-header-new2">
+						<view class="header-left">
+							<uni-icons type="list" size="18" color="#fff"></uni-icons>
+							<text class="detail-title-new">历史订单</text>
 						</view>
-					</div>
+						<view class="header-right">
+							<view class="close-btn" @tap="closeOrderDetailDrawer">
+								<uni-icons type="close" size="24" color="#fff"></uni-icons>
+							</view>
+						</view>
+					</view>
 
-					<!-- 订单概览信息 -->
-					<div class="order-overview">
-						<div class="info-item">
-							<span class="info-label">创建时间:</span>
-							<span class="info-value">{{ orderDetailData.createTime ? orderDetailData.createTime.replace("T", " ") : "" }}</span>
-						</div>
-						<div class="info-item" v-if="orderDetailData.updateTime">
-							<span class="info-label">修改时间:</span>
-							<span class="info-value">{{ orderDetailData.updateTime ? orderDetailData.updateTime.replace("T", " ") : "" }}</span>
-						</div>
-						<div class="info-item">
-							<span class="info-label">订单号:</span>
-							<span class="info-value">{{ orderDetailData.accountCode || "-" }}</span>
-						</div>
-						<div class="info-item">
-							<span class="info-label">顾客:</span>
-							<span class="info-value">{{ orderDetailData.customName || "散客" }}</span>
-						</div>
-						<div class="info-item highlight">
-							<span class="info-label">总计金额:</span>
-							<span class="info-value">¥{{ orderDetailData.payableAmount || 0 }}</span>
-						</div>
-						<div class="info-item" v-if="orderDetailData.basketOffsetAmount">
-							<span class="info-label">押筐抵扣:</span>
-							<span class="info-value">¥{{ orderDetailData.basketOffsetAmount || 0 }}</span>
-						</div>
-						<div class="info-item highlight">
-							<span class="info-label">实付金额:</span>
-							<span class="info-value">¥{{ orderDetailData.actualMoney || 0 }}</span>
-						</div>
-					<div class="info-item debt" v-if="orderDetailData.debt > 0">
-						<span class="info-label">下欠:</span>
-						<span class="info-value">¥{{ orderDetailData.debt }}</span>
-					</div>
-					<div class="info-item" v-if="orderDetailData.status !== 1">
-						<span class="info-label">订单状态:</span>
-						<span class="info-value" :class="getOrderStatusClass(orderDetailData.status)">{{ getOrderStatusText(orderDetailData.status) }}</span>
-					</div>
-					</div>
-
-					<!-- 商品列表 -->
-					<scroll-view class="product-scroll" :style="{ maxHeight: (scrollHeight - 200) + 'px' }" scroll-y="true" v-if="orderDetailData.module && orderDetailData.module.length > 0">
-						<div class="product-table">
-							<div class="table-header">
-								<div class="header-cell">货品</div>
-								<div class="header-cell">数量</div>
-								<div class="header-cell">总重</div>
-								<div class="header-cell">皮重</div>
-								<div class="header-cell">单价</div>
-								<div class="header-cell">小计</div>
+					<scroll-view scroll-y="true" :style="{ height: (scrollHeight - 115) + 'px' }">
+						<!-- 订单概览信息 -->
+						<div class="order-info-grid-compact">
+							<!-- 第一行 -->
+							<div class="info-row">
+								<div class="info-item-new">
+									<text class="info-value-new info-value-small">{{ orderDetailData.createTime ? orderDetailData.createTime.replace("T", " ") : "" }}</text>
+								</div>
+								<div class="info-item-new">
+									<text class="info-value-new info-value-small">{{ orderDetailData.accountCode || "-" }}</text>
+								</div>
 							</div>
-
-							<div class="table-row" v-for="(item, index) in orderDetailData.module" :key="index">
-								<div class="table-cell">{{ item.name }}</div>
-								<div class="table-cell">{{ item.mount }}</div>
-								<div class="table-cell">{{ item.totalWeight }}</div>
-								<div class="table-cell">{{ item.tareWeight }}</div>
-								<div class="table-cell">¥{{ item.referenceAmount }}</div>
-								<div class="table-cell">¥{{ item.subtotal }}</div>
+							
+							<!-- 第二行 -->
+							<div class="info-row">
+								<div class="info-item-new">
+									<text class="info-value-new info-value-small">{{ orderDetailData.customName || "散客" }}</text>
+								</div>
+								<div class="info-item-new">
+									<text class="info-label-new">总计金额:</text>
+									<text class="info-value-new highlight-value">{{ orderDetailData.payableAmount || 0 }}</text>
+								</div>
 							</div>
+							
+							<!-- 第三行 -->
+							<div class="info-row">
+								<div class="info-item-new" v-if="orderDetailData.basketOffsetAmount">
+									<text class="info-label-new">押筐抵扣:</text>
+									<text class="info-value-new">{{ orderDetailData.basketOffsetAmount || 0 }}</text>
+								</div>
+								<div class="info-item-new">
+									<text class="info-label-new">实付金额:</text>
+									<text class="info-value-new highlight-value">{{ orderDetailData.actualMoney || 0 }}</text>
+								</div>
+							</div>
+							
+							<!-- 第四行 - 下欠和状态 -->
+							<div class="info-row">
+								<div class="info-item-new" v-if="orderDetailData.debt > 0">
+									<text class="info-label-new">下欠:</text>
+									<text class="info-value-new debt-value-new">{{ orderDetailData.debt }}</text>
+								</div>
+							</div>
+						</div>
+
+						<!-- 商品列表 -->
+						<div class="product-table-container" v-if="orderDetailData.module && orderDetailData.module.length > 0">
+							<div class="product-table">
+								<div class="table-row table-header-row">
+									<div class="table-header-cell">货品</div>
+									<div class="table-header-cell">数量</div>
+									<div class="table-header-cell">总重</div>
+									<div class="table-header-cell">皮重</div>
+									<div class="table-header-cell">单价</div>
+									<div class="table-header-cell">小计</div>
+								</div>
+
+								<div class="table-row table-body-row" v-for="(item, index) in orderDetailData.module" :key="index">
+									<div class="table-cell">{{ item.name }}</div>
+									<div class="table-cell">{{ item.mount }}</div>
+									<div class="table-cell">{{ item.totalWeight }}</div>
+									<div class="table-cell">{{ item.tareWeight }}</div>
+									<div class="table-cell">{{ item.referenceAmount }}</div>
+									<div class="table-cell">{{ item.subtotal }}</div>
+								</div>
+							</div>
+						</div>
+
+						<!-- 无商品数据提示 -->
+						<div v-else class="no-products">
+							<view class="no-products-icon">
+								<uni-icons type="info-filled" size="24" color="#bdc3c7"></uni-icons>
+							</view>
+							<text class="no-products-text">暂无商品信息</text>
 						</div>
 					</scroll-view>
-
-					<!-- 无商品数据提示 -->
-					<div v-else class="no-products">
-						<view class="no-products-icon">
-							<uni-icons type="info-filled" size="24" color="#bdc3c7"></uni-icons>
-						</view>
-						<text class="no-products-text">暂无商品信息</text>
-					</div>
 				</div>
 			</view>
 		</view>
+		
+		<!-- 隐藏的canvas，用于生成订单图片 -->
+		<canvas canvas-id="orderCanvas" style="width: 750px; height: 3000px; position: fixed; left: -9999px; top: -9999px;"></canvas>
 
 	</view>
 
@@ -446,9 +500,6 @@
 				currentCardInfo: [],
 				canvasheight: 0,
 				scrollHeight: 0,
-				allDebt: 0,
-				totalMoney: 0,
-				actualMoney: 0,
 				checkboxValue: [],
 				isEdting: false,
 				memberOptions: [],
@@ -460,6 +511,13 @@
 				currentOriginOrderId: "", // 当前原始订单ID
 				showOrderDetailDrawer: false, // 订单详情抽屉显示状态
 				orderDetailData: null, // 订单详情数据
+				selectedOrderId: null, // 选中的订单ID
+				// 分页相关
+				pageSize: 10, // 每页显示的数据量
+				currentPage: 1, // 当前页码
+				totalCount: 0, // 总数据量
+				hasMore: true, // 是否还有更多数据
+				loading: false, // 是否正在加载
 				payWay: [{
 						label: "微信支付",
 						coin: "weixin-fill",
@@ -496,84 +554,193 @@
 
 		// },
 		mounted() {
-			this.scrollHeight = uni.getWindowInfo().windowHeight - 70;
+			this.scrollHeight = uni.getWindowInfo().windowHeight - 50;
+			console.log("scroll-view 高度:", this.scrollHeight + "px");
 			this.CompanyId = uni.getStorageSync('companyId'); 
-			this.getTodayDateRange();
+			this.getMinTimeToNow();
 			this.refresh();
 		},
 		methods: {
 			refresh(){
-				// 重置统计数据
-				this.allDebt = 0;
-				this.totalMoney = 0;
-				this.actualMoney = 0;
+				// 重置分页和数据
+				this.currentPage = 1;
+				this.hasMore = true;
+				this.moduleList = [];
+				this.originalModuleList = [];
 				
+				// 加载第一页数据
+				this.loadPageData();
+			},
+			
+			// 加载分页数据
+			loadPageData() {
+				if (this.loading) return;
+				
+				this.loading = true;
 				const currentDate = this.getcurrentTime();
 				this.single = currentDate;
-				console.log("this.beginTime",this.beginTime);
-				console.log("this.endTime",this.endTime);
-				cashierOrder.GetAccountByCompanyIdandDateRange(this.CompanyId, this.beginTime, this.endTime).then(res => {
-					this.originalModuleList = res.data;
-					this.originalModuleList.forEach(item => {
-
-						item.modulestr = "";
-						if(item.status!=2){
-							this.allDebt += item.debt;
-						this.totalMoney += item.payableAmount;
-						this.actualMoney += item.actualMoney;
-						}
-						var cardList = JSON.parse(item.module);
-						cardList.forEach(card => {
-							if (card.type === 1 || card.type === 3) {
-								let modulesStr = [];
 				
-								if (card.type === 1 || card.type === 3) {
-									modulesStr.push(card.name + "x" + card.mount);
-								}
+				console.log("加载第" + this.currentPage + "页数据");
+				console.log("this.beginTime", this.beginTime);
+				console.log("this.endTime", this.endTime);
 				
-								item.modulestr = modulesStr.join("|");
-				
-				
-								// item.modulestr += card.name + "x" + card.mount + " | ";
-							}
-				
-						})
-					})
-					this.originalModuleList.sort((a, b) => {
-						return new Date(b.createTime) - new Date(a.createTime); // 升序排序
-					});
+				cashierOrder.GetAccountByCompanyIdandDateRange(
+					this.CompanyId, 
+					this.beginTime, 
+					this.endTime,
+					this.pageSize,
+					this.currentPage
+				).then(res => {
+					console.log("接口返回数据:", res);
 					
-					// 应用当前筛选
-					this.applyFilter();
-				})
+					// 兼容不同的返回格式
+					let newData = [];
+					let totalCount = 0;
+					
+					if (res.code === 200 || res.data) {
+						// 判断返回的数据结构
+						if (Array.isArray(res.data)) {
+							// 如果直接返回数组（旧格式，无分页信息）
+							newData = res.data;
+							totalCount = res.data.length;
+							this.hasMore = false; // 无分页信息时，认为没有更多数据
+						} else if (res.data && typeof res.data === 'object') {
+							// 如果返回对象（新格式，包含分页信息）
+							newData = res.data.data || res.data.list || [];
+							totalCount = res.data.totalCount || res.data.total || res.data.totalElements || 0;
+						}
+						
+						// 处理每条数据
+						if (newData && newData.length > 0) {
+							newData.forEach(item => {
+								item.modulestr = "";
+								if (item.module) {
+									try {
+										var cardList = JSON.parse(item.module);
+										cardList.forEach(card => {
+											if (card.type === 1 || card.type === 3) {
+												let modulesStr = [];
+												if (card.type === 1 || card.type === 3) {
+													modulesStr.push(card.name + "x" + card.mount);
+												}
+												item.modulestr = modulesStr.join("|");
+											}
+										})
+									} catch (e) {
+										console.error("解析module数据失败:", e);
+									}
+								}
+							})
+							
+							// 数据按时间降序排序
+							newData.sort((a, b) => {
+								return new Date(b.createTime) - new Date(a.createTime);
+							});
+							
+							// 追加到原始列表
+							this.originalModuleList = [...this.originalModuleList, ...newData];
+							
+						// 计算是否还有更多数据
+						if (totalCount > 0) {
+							this.hasMore = this.originalModuleList.length < totalCount;
+						} else {
+							// 如果没有总数信息，根据返回的数据量判断
+							this.hasMore = newData.length >= this.pageSize;
+						}
+						
+						console.log("已加载数据:", this.originalModuleList.length, "总数:", totalCount, "是否还有更多:", this.hasMore);
+						} else {
+							this.hasMore = false;
+						}
+						
+						// 应用当前筛选
+						this.applyFilter();
+					} else {
+						this.hasMore = false;
+					}
+				}).catch(err => {
+					console.error("加载数据失败:", err);
+					uni.showToast({
+						title: '加载失败',
+						icon: 'none'
+					});
+					this.hasMore = false;
+				}).finally(() => {
+					this.loading = false;
+				});
 			},
+			
+			// 滚动事件监听（用于调试）
+			onScroll(e) {
+				// 可以通过这个方法监听滚动位置
+				// console.log("滚动中:", e.detail);
+			},
+			
+			// 加载更多数据（滚动到底部时触发）
+			loadMore() {
+				console.log("触发loadMore事件", {
+					hasMore: this.hasMore,
+					loading: this.loading,
+					currentPage: this.currentPage
+				});
+				
+				if (!this.hasMore || this.loading) {
+					console.log("阻止加载:", this.hasMore ? "正在加载中" : "没有更多数据");
+					return;
+				}
+				
+				console.log("开始加载下一页，当前页:", this.currentPage, "下一页:", this.currentPage + 1);
+				this.currentPage++;
+				this.loadPageData();
+			},
+			// 获取从最小时间到当前时间的时间范围
+			getMinTimeToNow() {
+				const now = new Date();
+				
+				// 设置最小时间（可以根据需求修改，这里设置为2020-01-01 00:00:00）
+				const minTime = new Date('2020-01-01 00:00:00');
+				
+				// 格式化成 "YYYY-MM-DD HH:mm:ss"（使用本地时间）
+				const formatDateTime = (date) => {
+					const year = date.getFullYear();
+					const month = String(date.getMonth() + 1).padStart(2, '0');
+					const day = String(date.getDate()).padStart(2, '0');
+					const hours = String(date.getHours()).padStart(2, '0');
+					const minutes = String(date.getMinutes()).padStart(2, '0');
+					const seconds = String(date.getSeconds()).padStart(2, '0');
+					return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+				};
+				
+				this.beginTime = formatDateTime(minTime); // 例如 "2020-01-01 00:00:00"
+				this.endTime = formatDateTime(now);       // 当前时间，例如 "2025-10-15 14:30:25"
+			},
+			
+			// 保留原来的今日时间范围方法（如果需要可以调用）
 			getTodayDateRange() {
-    // 获取当前本地时间
-    const now = new Date();
+				// 获取当前本地时间
+				const now = new Date();
 
-    // 设置当天的 00:00:01 和 23:59:59（本地时间）
-    const todayStart = new Date(now);
-    todayStart.setHours(0, 0, 1, 0); // 设置为 00:00:01
+				// 设置当天的 00:00:01 和 23:59:59（本地时间）
+				const todayStart = new Date(now);
+				todayStart.setHours(0, 0, 1, 0); // 设置为 00:00:01
 
-    const todayEnd = new Date(now);
-    todayEnd.setHours(23, 59, 59, 999); // 设置为 23:59:59
+				const todayEnd = new Date(now);
+				todayEnd.setHours(23, 59, 59, 999); // 设置为 23:59:59
 
-    // 格式化成 "YYYY-MM-DD HH:mm:ss"（使用本地时间）
-    const formatDateTime = (date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    };
+				// 格式化成 "YYYY-MM-DD HH:mm:ss"（使用本地时间）
+				const formatDateTime = (date) => {
+					const year = date.getFullYear();
+					const month = String(date.getMonth() + 1).padStart(2, '0');
+					const day = String(date.getDate()).padStart(2, '0');
+					const hours = String(date.getHours()).padStart(2, '0');
+					const minutes = String(date.getMinutes()).padStart(2, '0');
+					const seconds = String(date.getSeconds()).padStart(2, '0');
+					return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+				};
 
-    this.beginTime = formatDateTime(todayStart); // 例如 "2025-09-26 00:00:01"
-    this.endTime = formatDateTime(todayEnd);    // 例如 "2025-09-26 23:59:59"
-	console.log("this.beginTime",this.beginTime);
-	console.log("this.endTime",this.endTime);
-},
+				this.beginTime = formatDateTime(todayStart); // 例如 "2025-09-26 00:00:01"
+				this.endTime = formatDateTime(todayEnd);    // 例如 "2025-09-26 23:59:59"
+			},
 			openPayTypeDialogVisible() {
 				this.payTypeDialogVisible = true;
 				this.repayMount = this.currentOrder.debt;
@@ -637,7 +804,6 @@
 						});
 						this.payTypeDialogVisible = false;
 						this.refresh();
-						this.showDetail = false;
 					} else {
 						uni.showToast({
 							title: "还款失败",
@@ -648,14 +814,15 @@
 				})
 			},
 			memberChange() {
-				this.showDetail = false;
 				this.memberOptions = [];
-				member.memberList(this.CompanyId).then(res => {
+				member.GetmemberListByCompanyIdPage({ Id: this.CompanyId, pageSize: 10, currentPage: 1 }).then(res => {
 					this.memberOptions.push({
 						customName: "散客",
 						id: ""
 					})
-					this.memberOptions.push(...(res.data || []));
+					// 适配分页结果格式
+					const memberList = res.data.Data || res.data.data || [];
+					this.memberOptions.push(...memberList);
 					this.memberDialogVisible = true
 				}).finally(() => {})
 			},
@@ -677,12 +844,18 @@
 			showInfo(e) {
 				this.showDetail = true;
 				this.currentOrder = e;
+				this.selectedOrderId = e.id; // 设置选中的订单ID
 				this.currentCardInfo = JSON.parse(e.module);
 				this.currentCardInfo=this.currentCardInfo.filter(item => item.type !== 4).sort((a, b) => a.type - b.type);	
 			},
-			dateChange(beginTime,endTime) {
-				this.beginTime = beginTime;
-				this.endTime = endTime;
+			dateChange(beginTime, endTime) {
+				// 如果日期为空，使用最小时间到当前时间的范围
+				if (!beginTime || !endTime) {
+					this.getMinTimeToNow();
+				} else {
+					this.beginTime = beginTime;
+					this.endTime = endTime;
+				}
 				this.refresh();
 			},
 			// 筛选功能相关方法
@@ -717,28 +890,11 @@
 				}
 				
 				this.moduleList = filteredList;
-				
-				// 重新计算统计数据（只计算当前筛选结果）
-				this.recalculateStats();
-			},
-			recalculateStats() {
-				this.allDebt = 0;
-				this.totalMoney = 0;
-				this.actualMoney = 0;
-				
-				this.moduleList.forEach(item => {
-					if(item.status != 2) { // 排除退单
-						this.allDebt += item.debt;
-						this.totalMoney += item.payableAmount;
-						this.actualMoney += item.actualMoney;
-					}
-				});
 			},
 			checkboxChange(e) {
 				this.checkboxValue = [e]
 			},
 			showHistoryOrder(item){
-				this.showDetail = false;
 				// 设置当前原始订单ID和订单ID
 				this.currentOriginOrderId = item.originOrderId || item.id;
 				console.log('显示历史订单，原始订单ID:', this.currentOriginOrderId, '当前订单ID:', item.id);
@@ -799,10 +955,11 @@
 			
 			// 获取订单状态文本
 			getOrderStatusText(status) {
+				console.log("status",status);
 				switch(status) {
 					case 1: return '正常';
 					case 2: return '退单';
-					case 5: return '已修改';
+					case 4: return '已修改';
 					default: return '未知';
 				}
 			},
@@ -937,13 +1094,397 @@
 				const formattedDate = `${year}-${month}-${day}`;
 				return formattedDate;
 			},
-			shareOrder() {
-				cashierOrder.GetCanvasBase64ById(this.currentOrder.id).then(res=>{
-					if(res.code==200){
-						this.downLoadImage(res.data);
-					}
-				})
+		shareOrder() {
+			// 使用canvas生成订单详情图片
+			this.generateOrderImage();
+		},
+		
+	// 使用canvas生成订单详情图片（参照票据样式）
+	generateOrderImage() {
+		const that = this;
+		const order = this.currentOrder;
+		const products = this.currentCardInfo;
+		
+		// 获取公司信息
+		const companyId = uni.getStorageSync('companyId');
+		cashierOrder.getStoreInfo(companyId).then(res => {
+			const companyInfo = res.data || {};
+			const companyName = companyInfo.name || '店铺名称';
+			const companyAddress = companyInfo.address || '地址信息';
+			const companyPhone = companyInfo.phone || '联系电话';
+			
+			// 创建canvas上下文
+			const ctx = uni.createCanvasContext('orderCanvas', this);
+			
+			// 画布尺寸
+			const canvasWidth = 750;
+			const padding = 30;
+			
+			// 判断是否为退款单（欠款大于0或有还筐抵扣）
+			const isRefund = order.debt < 0 || order.basketOffsetAmount > 0;
+			const voucherTitle = isRefund ? '退款凭证' : '付款凭证';
+			
+			// 计算实际高度
+			let y = 40;
+			y += 50; // 标题
+			y += 45; // 副标题
+			y += 55; // 市场名称
+			y += 50; // 客户和票号行
+			y += 45; // 日期
+			y += 30; // 间距
+			
+			// 表格高度计算
+			y += 50; // 表头
+			const productItems = products.filter(m => m.type !== 4);
+			y += productItems.length * 45; // 商品行
+			y += 45; // 合计行
+			
+			// 还筐信息
+			let basketOffsetNum = 0;
+			let basketInfo = '';
+			products.forEach(item => {
+				if (item.type === 4) {
+					basketOffsetNum += parseInt(item.mount || 0);
+					basketInfo += `${item.name}:${item.mount};`;
+				}
+			});
+			if (basketOffsetNum > 0) {
+				y += 45; // 还筐行
+			}
+			
+	y += 30; // 间距
+	y += 50; // 本单合计
+	y += 70; // 本单合计后的间距
+	y += 45; // 实付/实退行
+	y += 30; // 分割线前间距
+	y += 40; // 底部信息
+	y += 100; // logo高度和留白
+	
+	const canvasHeight = y;
+			
+			// 开始绘制
+			y = 0;
+			
+			// 白色背景
+			ctx.setFillStyle('#FFFFFF');
+			ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+			
+			y = 40;
+			
+			// 1. 标题 - 居中
+			ctx.setFillStyle('#000000');
+			ctx.setFontSize(40);
+			ctx.setTextAlign('center');
+			ctx.fillText(voucherTitle, canvasWidth / 2, y);
+			y += 50;
+			
+			// 2. 副标题 - 居中
+			ctx.setFontSize(20);
+			ctx.fillText('广东省食用农产品批发市场销售票据', canvasWidth / 2, y);
+			y += 30;
+			ctx.fillText('(广州江南果菜批发市场)', canvasWidth / 2, y);
+			y += 45;
+			
+			// 3. 市场名称 - 居中加粗
+			ctx.setFontSize(32);
+			ctx.fillText(companyName, canvasWidth / 2, y);
+			y += 55;
+			
+			// 4. 客户和票号 - 左右对齐
+			ctx.setTextAlign('left');
+			ctx.setFontSize(26);
+			ctx.fillText('客户：' + (order.customName || '散客'), padding, y);
+			
+			ctx.setTextAlign('right');
+			ctx.fillText('票号：' + (order.accountCode || ''), canvasWidth - padding, y);
+			y += 45;
+			
+			// 5. 日期 - 右对齐
+			const createTime = order.createTime ? order.createTime.replace('T', ' ').substring(0, 16) : '';
+			ctx.setTextAlign('right');
+			ctx.fillText(createTime, canvasWidth - padding, y);
+			y += 30;
+			
+		// 6. 表格 - 绘制表头
+		const tableX = padding;
+		const tableWidth = canvasWidth - padding * 2;
+		const colWidths = [50, 180, 80, 160, 100, 120]; // #, 货品, 数量, 重量, 单价, 小计 (总和=690)
+			
+			y += 30;
+			const tableStartY = y;
+			
+			// 表头背景
+			ctx.setFillStyle('#F5F5F5');
+			ctx.fillRect(tableX, y - 35, tableWidth, 45);
+			
+		// 表头文字
+		ctx.setFillStyle('#000000');
+		ctx.setFontSize(24);
+		
+		let currentX = tableX;
+		const headers = ['#', '货品', '数量', '重量', '单价', '小计'];
+		headers.forEach((header, index) => {
+			if (index === 0) {
+				// 序号列 - 居中
+				ctx.setTextAlign('center');
+				ctx.fillText(header, currentX + colWidths[index] / 2, y);
+			} else if (index === 1) {
+				// 货品列 - 左对齐
+				ctx.setTextAlign('left');
+				ctx.fillText(header, currentX + 5, y);
+			} else if (index === 5) {
+				// 小计列 - 右对齐
+				ctx.setTextAlign('right');
+				ctx.fillText(header, currentX + colWidths[index] - 10, y);
+			} else {
+				// 其他列 - 居中
+				ctx.setTextAlign('center');
+				ctx.fillText(header, currentX + colWidths[index] / 2, y);
+			}
+			currentX += colWidths[index];
+		});
+		y += 15;
+			
+			// 表头下边框
+			ctx.setStrokeStyle('#000000');
+			ctx.setLineWidth(2);
+			ctx.beginPath();
+			ctx.moveTo(tableX, y);
+			ctx.lineTo(tableX + tableWidth, y);
+			ctx.stroke();
+			y += 35;
+			
+		// 定义统一的金额右对齐位置
+		const amountRightX = tableX + tableWidth - 10;
+		
+		// 7. 绘制商品行
+		let totalAmount = 0;
+		productItems.forEach((item, index) => {
+			const rowY = y;
+			currentX = tableX;
+			
+			ctx.setFillStyle('#000000');
+			ctx.setFontSize(22);
+			ctx.setTextAlign('center');
+			
+			// 序号
+			ctx.fillText((index + 1).toString(), currentX + colWidths[0] / 2, rowY);
+			currentX += colWidths[0];
+			
+			// 货品名称 - 左对齐
+			ctx.setTextAlign('left');
+			ctx.fillText(item.name || '', currentX + 5, rowY);
+			currentX += colWidths[1];
+			
+			// 数量 - 居中
+			ctx.setTextAlign('center');
+			const mountText = item.type === 2 ? item.mount + '' : item.mount + '件';
+			ctx.fillText(mountText, currentX + colWidths[2] / 2, rowY);
+			currentX += colWidths[2];
+			
+			// 重量 - 居中
+			let weightText = '--';
+			if (item.type !== 2) {
+				const totalWeight = parseFloat(item.totalWeight || 0);
+				const tareWeight = parseFloat(item.tareWeight || 0);
+				const netWeight = (totalWeight - tareWeight).toFixed(2);
+				weightText = netWeight + '';
+			}
+			ctx.fillText(weightText, currentX + colWidths[3] / 2, rowY);
+			currentX += colWidths[3];
+			
+			// 单价 - 居中
+			ctx.fillText((item.referenceAmount || 0) + '', currentX + colWidths[4] / 2, rowY);
+			currentX += colWidths[4];
+			
+			// 小计 - 右对齐
+			const subtotal = parseFloat(item.subtotal || 0);
+			totalAmount += subtotal;
+			ctx.setTextAlign('right');
+			ctx.fillText(subtotal.toFixed(0), amountRightX, rowY);
+			
+			y += 45;
+		});
+			
+			// 表格底边框
+			ctx.setStrokeStyle('#000000');
+			ctx.setLineWidth(2);
+			ctx.beginPath();
+			ctx.moveTo(tableX, y - 10);
+			ctx.lineTo(tableX + tableWidth, y - 10);
+			ctx.stroke();
+			
+		// 8. 合计行
+		ctx.setFillStyle('#000000');
+		ctx.setFontSize(28);
+		ctx.setTextAlign('left');
+		ctx.fillText('合计', tableX + 60, y + 25);
+		
+		ctx.setTextAlign('right');
+		ctx.fillText(totalAmount.toFixed(0), amountRightX, y + 25);
+		y += 45;
+		
+		// 9. 还筐信息
+		if (basketOffsetNum > 0) {
+			const basketDate = createTime.substring(5, 10); // MM-DD
+			ctx.setTextAlign('left');
+			ctx.setFontSize(26);
+			ctx.fillText(`${basketDate} 还筐`, tableX + 60, y + 20);
+			
+			ctx.fillText(basketInfo, tableX + 200, y + 20);
+			
+			ctx.setTextAlign('right');
+			ctx.fillText('-' + (order.basketOffsetAmount || 0), amountRightX, y + 20);
+			y += 45;
+		}
+		
+		y += 30;
+		
+		// 10. 本单合计
+		ctx.setStrokeStyle('#000000');
+		ctx.setLineWidth(3);
+		ctx.beginPath();
+		ctx.moveTo(padding, y - 15);
+		ctx.lineTo(canvasWidth - padding, y - 15);
+		ctx.stroke();
+		
+		ctx.setFillStyle('#000000');
+		ctx.setFontSize(32);
+		ctx.setTextAlign('left');
+		ctx.fillText('本单合计：', padding + 20, y + 25);
+		
+		const finalAmount = totalAmount - (order.basketOffsetAmount || 0);
+		ctx.setTextAlign('right');
+		ctx.fillText(finalAmount.toFixed(0), amountRightX, y + 25);
+		y += 70; // 增加间距
+		
+		// 11. 实付/实退金额
+		const paymentType = order.payType === 1 ? '微信' : order.payType === 2 ? '支付宝' : order.payType === 3 ? '现金' : '挂账';
+		const payLabel = finalAmount >= 0 ? '实付：' : '实退：';
+		const payAmount = Math.abs(order.actualMoney || finalAmount);
+		
+		ctx.setTextAlign('right');
+		ctx.setFontSize(28);
+		ctx.fillText(payLabel + payAmount.toFixed(0) + '(' + paymentType + ')', amountRightX, y + 20);
+		y += 45;
+			
+			// 12. 底部分割线
+			ctx.setStrokeStyle('#000000');
+			ctx.setLineWidth(2);
+			ctx.beginPath();
+			ctx.moveTo(padding, y);
+			ctx.lineTo(canvasWidth - padding, y);
+			ctx.stroke();
+			y += 30;
+			
+		// 13. 底部信息
+		ctx.setFillStyle('#333333');
+		ctx.setFontSize(20);
+		ctx.setTextAlign('left');
+		ctx.fillText('地址：' + companyAddress + '，联系电话：' + companyPhone, padding, y + 15);
+		y += 40;
+		
+		// 14. 底部logo
+		const logoPath = '/static/img/orderlogo.png';
+		uni.getImageInfo({
+			src: logoPath,
+			success: (imgInfo) => {
+				// 设置logo显示尺寸（缩小到合适大小）
+				const logoMaxWidth = 200; // 最大宽度
+				const logoMaxHeight = 80; // 最大高度
+				let logoWidth = imgInfo.width;
+				let logoHeight = imgInfo.height;
+				
+				// 按比例缩放
+				if (logoWidth > logoMaxWidth || logoHeight > logoMaxHeight) {
+					const widthRatio = logoMaxWidth / logoWidth;
+					const heightRatio = logoMaxHeight / logoHeight;
+					const ratio = Math.min(widthRatio, heightRatio);
+					logoWidth = logoWidth * ratio;
+					logoHeight = logoHeight * ratio;
+				}
+				
+				// 居中位置
+				const logoX = (canvasWidth - logoWidth) / 2;
+				const logoY = y + 10;
+				
+				// 绘制logo
+				ctx.drawImage(logoPath, logoX, logoY, logoWidth, logoHeight);
+				
+				// 绘制完成，导出图片
+				ctx.draw(false, () => {
+					setTimeout(() => {
+						uni.canvasToTempFilePath({
+							canvasId: 'orderCanvas',
+							x: 0,
+							y: 0,
+							width: canvasWidth,
+							height: canvasHeight,
+							destWidth: canvasWidth * 3,
+							destHeight: canvasHeight * 3,
+							fileType: 'png',
+							quality: 1,
+							success: (res) => {
+								console.log('生成票据图片成功:', res.tempFilePath);
+								that.saveAndShareImage(res.tempFilePath);
+							},
+							fail: (err) => {
+								console.error('生成票据图片失败:', err);
+								uni.showToast({
+									title: '生成图片失败',
+									icon: 'none'
+								});
+							}
+						}, that);
+					}, 500);
+				});
 			},
+			fail: (err) => {
+				console.error('获取logo图片失败:', err);
+				// 即使logo加载失败，也继续导出图片
+				ctx.draw(false, () => {
+					setTimeout(() => {
+						uni.canvasToTempFilePath({
+							canvasId: 'orderCanvas',
+							x: 0,
+							y: 0,
+							width: canvasWidth,
+							height: canvasHeight,
+							destWidth: canvasWidth * 3,
+							destHeight: canvasHeight * 3,
+							fileType: 'png',
+							quality: 1,
+							success: (res) => {
+								console.log('生成票据图片成功:', res.tempFilePath);
+								that.saveAndShareImage(res.tempFilePath);
+							},
+							fail: (err) => {
+								console.error('生成票据图片失败:', err);
+								uni.showToast({
+									title: '生成图片失败',
+									icon: 'none'
+								});
+							}
+						}, that);
+					}, 500);
+				});
+			}
+		});
+		}).catch(err => {
+			console.error('获取公司信息失败:', err);
+			uni.showToast({
+				title: '获取公司信息失败',
+				icon: 'none'
+			});
+		});
+	},
+		
+		// 直接分享图片（不保存到相册）
+		saveAndShareImage(tempFilePath) {
+			const that = this;
+			// 直接分享图片
+			that.shareImage(tempFilePath);
+		},
 			downLoadImage(base64){
 				let that = this;
 			    const bitmap = new plus.nativeObj.Bitmap("test");
@@ -1022,7 +1563,6 @@
 			},
 			TuigeOrder(){
 				let that = this;
-				that.showDetail = false;
 				uni.showModal({
 					title: '提示',
 					content: '您确定要退单吗？',
@@ -1047,7 +1587,6 @@
 							title: '退单成功',
 							icon: 'none'
 						})
-						this.showDetail = false;
 						this.refresh();
 					}
 				})
@@ -1057,6 +1596,617 @@
 </script>
 
 <style lang="scss">
+	/* 左右布局容器 */
+	.layout-container {
+		display: flex;
+		height: 100%;
+		overflow: hidden;
+		position: relative;
+	}
+	
+	/* 左侧订单列表面板 - 固定宽度 */
+	.left-panel {
+		flex: 0 0 50%;
+		width: 50%;
+		min-width: 50%;
+		max-width: 50%;
+		background-color: darkgrey;
+		border-right: 2rpx solid #ccc;
+		overflow-y: auto;
+		overflow-x: hidden;
+		box-sizing: border-box;
+	}
+	
+	/* 右侧订单详情面板 - 固定宽度 */
+	.right-panel {
+		flex: 0 0 50%;
+		width: 50%;
+		min-width: 50%;
+		max-width: 50%;
+		background-color: #f5f5f5;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		box-sizing: border-box;
+	}
+	
+	/* 订单项基础样式 */
+	.order-item {
+		width: 98%;
+		min-height: 40rpx;
+		background-color: white;
+		margin-left: 5rpx;
+		margin-bottom: 4rpx;
+		margin-top: 4rpx;
+		border-radius: 4px;
+		padding: 6rpx 8rpx;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		border: 2rpx solid transparent;
+		position: relative;
+	}
+	
+	/* 状态标签容器 - 固定在左上角 */
+	.status-badges {
+		position: absolute;
+		top: 0;
+		left: 0;
+		display: flex;
+		gap: 5rpx;
+		z-index: 10;
+	}
+	
+	/* 已发单标签容器 - 固定在右上角 */
+	.sent-badge-top {
+		position: absolute;
+		top: 0;
+		right: 0;
+		z-index: 10;
+	}
+	
+	/* 状态标签通用样式 */
+	.status-badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 3rpx;
+		padding: 2rpx 8rpx;
+		border-radius: 0 0 6rpx 0;
+		font-size: 10rpx;
+		font-weight: 600;
+		color: white;
+		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.12);
+		animation: badge-slide-in 0.3s ease;
+	}
+	
+	@keyframes badge-slide-in {
+		from {
+			opacity: 0;
+			transform: translate(-10rpx, -10rpx);
+		}
+		to {
+			opacity: 1;
+			transform: translate(0, 0);
+		}
+	}
+	
+	.status-badge-text {
+		line-height: 1;
+	}
+	
+	/* 已修改标签 */
+	.status-modified {
+		background: linear-gradient(135deg, #31BDEC, #2A9FD6);
+	}
+	
+	/* 退单标签 */
+	.status-refunded {
+		background: linear-gradient(135deg, #F56C6C, #E54D4D);
+	}
+	
+	/* 第一行样式 */
+	.order-row-first {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+		padding-top: 8rpx;
+		margin-bottom: 4rpx;
+	}
+	
+	.customer-info {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		gap: 4rpx;
+		min-width: 0;
+	}
+	
+	.customer-name {
+		font-weight: bold;
+		color: #333;
+		font-size: 13rpx;
+	}
+	
+	.order-time {
+		flex: 2;
+		text-align: left;
+		padding-left: 8rpx;
+		font-size: 12rpx;
+		color: #666;
+		display: flex;
+		align-items: center;
+		gap: 6rpx;
+	}
+	
+	.sent-badge {
+		display: inline-flex;
+		align-items: center;
+		background-color: #67C23A;
+		color: white;
+		padding: 2rpx 6rpx;
+		border-radius: 8rpx;
+		font-size: 10rpx;
+		font-weight: 500;
+		white-space: nowrap;
+	}
+	
+	.actual-money {
+		flex: 1;
+		text-align: right;
+		font-size: 12rpx;
+		color: #666;
+		white-space: nowrap;
+	}
+	
+	.money-value {
+		font-weight: bold;
+		color: #333;
+		font-size: 13rpx;
+	}
+	
+	/* 第二行样式 */
+	.order-row-second {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		width: 100%;
+		gap: 8rpx;
+	}
+	
+	.module-str {
+		flex: 1;
+		color: #999;
+		font-size: 11rpx;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		min-width: 0;
+		max-width: 50%;
+	}
+	
+	.debt-badge {
+		display: inline-flex;
+		align-items: center;
+		background: linear-gradient(135deg, #ff4757, #ff3838);
+		color: white;
+		padding: 3rpx 8rpx;
+		border-radius: 4rpx;
+		font-size: 11rpx;
+		font-weight: 600;
+		white-space: nowrap;
+		box-shadow: 0 2rpx 6rpx rgba(255, 71, 87, 0.3);
+		animation: debt-pulse 2s ease-in-out infinite;
+	}
+	
+	@keyframes debt-pulse {
+		0%, 100% {
+			box-shadow: 0 2rpx 6rpx rgba(255, 71, 87, 0.3);
+		}
+		50% {
+			box-shadow: 0 2rpx 10rpx rgba(255, 71, 87, 0.5);
+		}
+	}
+	
+	.debt-value {
+		font-weight: bold;
+		font-size: 12rpx;
+	}
+	
+	
+	/* 订单项悬停样式 */
+	.order-item:hover {
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+		transform: translateY(-1rpx);
+	}
+	
+	/* 订单项选中样式 */
+	.order-item-selected {
+		border: 2rpx solid #3498db !important;
+		background-color: #e3f2fd !important;
+		box-shadow: 0 2rpx 12rpx rgba(52, 152, 219, 0.3) !important;
+	}
+	
+	/* 空状态样式 */
+	.empty-detail {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		height: 100%;
+		color: #999;
+	}
+	
+	/* 详情内容 */
+	.detail-content {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		background-color: white;
+		padding: 10rpx;
+	}
+	
+	/* 详情头部 */
+	.detail-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 15rpx;
+		background: linear-gradient(135deg, #3498db, #2980b9);
+		border-radius: 8rpx;
+		margin-bottom: 10rpx;
+	}
+	
+	.detail-title {
+		font-size: 28rpx;
+		font-weight: bold;
+		color: white;
+	}
+	
+	/* 新的详情头部样式 */
+	.detail-header-new {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 8rpx 12rpx;
+		background: linear-gradient(135deg, #4A90E2, #357ABD);
+		border-radius: 6rpx;
+		margin-bottom: 10rpx;
+		box-shadow: 0 2rpx 8rpx rgba(74, 144, 226, 0.2);
+		min-height: 40rpx;
+	}
+	
+
+	/* 新的详情头部样式2 */
+	.detail-header-new2 {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 8rpx 12rpx;
+		background: orange;
+		border-radius: 6rpx;
+		margin-bottom: 10rpx;
+		box-shadow: 0 2rpx 8rpx rgba(74, 144, 226, 0.2);
+		min-height: 40rpx;
+	}
+	.header-left {
+		display: flex;
+		align-items: center;
+		gap: 8rpx;
+	}
+	
+	.detail-title-new {
+		font-size: 16rpx;
+		font-weight: bold;
+		color: white;
+		letter-spacing: 0.5rpx;
+	}
+	
+	.header-right {
+		display: flex;
+		align-items: center;
+	}
+	
+	.share-order-btn {
+		min-width: 80rpx !important;
+		height: 28rpx !important;
+		font-size: 13rpx !important;
+		font-weight: 600 !important;
+		background: linear-gradient(135deg, #67C23A, #5DAF2E) !important;
+		border: none !important;
+		border-radius: 4rpx !important;
+		box-shadow: 0 2rpx 4rpx rgba(103, 194, 58, 0.25) !important;
+		transition: all 0.3s ease !important;
+	}
+	
+	.share-order-btn:hover {
+		transform: translateY(-2rpx);
+		box-shadow: 0 4rpx 10rpx rgba(103, 194, 58, 0.4) !important;
+	}
+	
+	/* 订单信息网格布局 */
+	.order-info-grid {
+		padding: 15rpx;
+		background-color: #f8f9fa;
+		border-radius: 8rpx;
+		margin-bottom: 15rpx;
+	}
+	
+	/* 紧凑的订单信息网格 */
+	.order-info-grid-compact {
+		padding: 8rpx;
+		background-color: #f8f9fa;
+		border-radius: 6rpx;
+		margin-bottom: 8rpx;
+	}
+	
+	.info-row {
+		display: flex;
+		gap: 15rpx;
+		margin-bottom: 12rpx;
+	}
+	
+	/* 紧凑模式下的行间距 */
+	.order-info-grid-compact .info-row {
+		gap: 8rpx;
+		margin-bottom: 6rpx;
+	}
+	
+	.info-row:last-child {
+		margin-bottom: 0;
+	}
+	
+	.info-item-new {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		background-color: white;
+		padding: 10rpx 12rpx;
+		border-radius: 6rpx;
+		box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+		min-width: 0;
+	}
+	
+	/* 紧凑模式下的info-item */
+	.order-info-grid-compact .info-item-new {
+		padding: 6rpx 10rpx;
+		border-radius: 4rpx;
+		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.05);
+	}
+	
+	.info-label-new {
+		color: #666;
+		font-size: 14rpx;
+		font-weight: 500;
+		white-space: nowrap;
+		margin-right: 8rpx;
+	}
+	
+	.info-value-new {
+		color: #333;
+		font-size: 14rpx;
+		font-weight: 600;
+		flex: 1;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	
+	/* 缩小的文字样式 */
+	.info-value-small {
+		font-size: 12rpx !important;
+		font-weight: 500 !important;
+	}
+	
+	.highlight-value {
+		color: #E6A23C;
+		font-size: 15rpx;
+		font-weight: bold;
+	}
+	
+	.debt-value-new {
+		color: #F56C6C;
+		font-size: 15rpx;
+		font-weight: bold;
+	}
+	
+	.status-wrapper {
+		display: flex;
+		align-items: center;
+		flex: 1;
+	}
+	
+	/* 状态项容器 */
+	.info-item-status {
+		flex: 1;
+		display: flex;
+		align-items: center;
+		background-color: white;
+		padding: 10rpx 12rpx;
+		border-radius: 6rpx;
+		border-left: 3rpx solid #4A90E2;
+		box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+		min-width: 0;
+		width: 100%;
+	}
+	
+	/* 紧凑模式下的状态项 */
+	.order-info-grid-compact .info-item-status {
+		padding: 6rpx 10rpx;
+		border-radius: 4rpx;
+		border-left: 2rpx solid #4A90E2;
+		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.05);
+	}
+	
+	.status-container {
+		display: flex;
+		align-items: center;
+		gap: 10rpx;
+		flex-wrap: wrap;
+		width: 100%;
+	}
+	
+	/* 左右分布的状态容器 */
+	.status-container-flex {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		width: 100%;
+		flex: 1;
+		gap: 10rpx;
+	}
+	
+	/* 状态标签组 */
+	.status-tag-group {
+		display: flex;
+		align-items: center;
+		gap: 8rpx;
+		flex: 0 0 auto;
+	}
+	
+	/* 状态标签样式 - 更像标签而不是按钮 */
+	.status-tag {
+		display: inline-flex;
+		align-items: center;
+		gap: 4rpx;
+		padding: 4rpx 10rpx;
+		border-radius: 4rpx;
+		font-size: 12rpx;
+		font-weight: 500;
+		border: 1rpx solid;
+		background-color: transparent;
+		white-space: nowrap;
+		transition: all 0.3s ease;
+	}
+	
+	.status-tag-text {
+		line-height: 1;
+	}
+	
+	/* 已修改标签 - 蓝色边框 */
+	.status-modified-tag {
+		color: #31BDEC;
+		border-color: #31BDEC;
+		background-color: rgba(49, 189, 236, 0.08);
+	}
+	
+	/* 退单标签 - 红色边框 */
+	.status-refunded-tag {
+		color: #F56C6C;
+		border-color: #F56C6C;
+		background-color: rgba(245, 108, 108, 0.08);
+	}
+	
+	/* 状态徽章详情页样式 */
+	.status-badge-detail {
+		display: inline-flex;
+		align-items: center;
+		gap: 5rpx;
+		padding: 6rpx 12rpx;
+		border-radius: 6rpx;
+		font-size: 13rpx;
+		font-weight: 600;
+		color: white;
+		box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.15);
+		white-space: nowrap;
+	}
+	
+	.status-text-detail {
+		line-height: 1;
+	}
+	
+	.status-modified-detail {
+		background: linear-gradient(135deg, #31BDEC, #2A9FD6);
+	}
+	
+	.status-refunded-detail {
+		background: linear-gradient(135deg, #F56C6C, #E54D4D);
+	}
+	
+	/* 查看历史按钮 */
+	.history-btn {
+		min-width: 100rpx !important;
+		height: 30rpx !important;
+		font-size: 12rpx !important;
+		font-weight: 600 !important;
+		background: linear-gradient(135deg, #409EFF, #3A8EE6) !important;
+		border: none !important;
+		border-radius: 5rpx !important;
+		box-shadow: 0 2rpx 6rpx rgba(64, 158, 255, 0.3) !important;
+		transition: all 0.3s ease !important;
+		display: inline-flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		gap: 4rpx !important;
+	}
+	
+	.history-btn:hover {
+		transform: translateY(-2rpx);
+		box-shadow: 0 4rpx 10rpx rgba(64, 158, 255, 0.4) !important;
+	}
+	
+	/* 右对齐的查看历史按钮 - 更小更紧凑 */
+	.history-btn-right {
+		width: 90rpx !important;
+		min-width: 90rpx !important;
+		max-width: 90rpx !important;
+		height: 26rpx !important;
+		font-size: 11rpx !important;
+		font-weight: 600 !important;
+		background: linear-gradient(135deg, #409EFF, #3A8EE6) !important;
+		border: none !important;
+		border-radius: 4rpx !important;
+		box-shadow: 0 1rpx 4rpx rgba(64, 158, 255, 0.25) !important;
+		transition: all 0.3s ease !important;
+		display: inline-flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		gap: 3rpx !important;
+		flex-shrink: 0 !important;
+		margin-left: auto !important;
+	}
+	
+	.history-btn-right:hover {
+		transform: translateY(-1rpx);
+		box-shadow: 0 2rpx 8rpx rgba(64, 158, 255, 0.35) !important;
+		background: linear-gradient(135deg, #3A8EE6, #3376C5) !important;
+	}
+	
+	.history-btn-right:active {
+		transform: translateY(0);
+		box-shadow: 0 1rpx 3rpx rgba(64, 158, 255, 0.2) !important;
+	}
+	
+	.status-text-modified {
+		color: #31BDEC;
+		font-size: 13rpx;
+		font-weight: 600;
+		display: flex;
+		align-items: center;
+		gap: 8rpx;
+	}
+	
+	.status-text-refunded {
+		color: #F56C6C;
+		font-size: 13rpx;
+		font-weight: 600;
+	}
+	
+	.history-link {
+		background-color: #31BDEC;
+		color: white;
+		padding: 4rpx 10rpx;
+		border-radius: 4rpx;
+		font-size: 12rpx;
+		cursor: pointer;
+		transition: all 0.3s ease;
+		white-space: nowrap;
+	}
+	
+	.history-link:hover {
+		background-color: #2A9FD6;
+		transform: translateY(-1rpx);
+	}
+	
 	.scrollArea {
 		background-color: darkgrey;
 	}
@@ -1067,10 +2217,9 @@
 		top: 0;
 		left: 0;
 		width: 100%;
+		height: 100vh;
 		pointer-events: none;
 		z-index: 999;
-		margin-top: 50rpx;
-		height: calc(100% - 50rpx);
 	}
 
 	/* 遮罩层 */
@@ -1110,8 +2259,8 @@
 
 	/* 历史订单抽屉样式 */
 	.history-order-container {
-		padding: 20rpx;
-		background-color: #fff;
+		padding: 12rpx;
+		background-color: #e9e9e9;
 		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
 		height: 100%;
 	}
@@ -1120,31 +2269,31 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 15rpx;
-		background: linear-gradient(135deg, #3498db, #2980b9);
+		padding: 8rpx 12rpx;
+		background: orange;
 		color: white;
-		border-radius: 8rpx;
-		margin-bottom: 15rpx;
+		border-radius: 6rpx;
+		margin-bottom: 10rpx;
 	}
 
 	.history-title {
 		display: flex;
 		align-items: center;
-		gap: 10rpx;
+		gap: 6rpx;
 	}
 
 	.history-title-icon {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 30rpx;
-		height: 30rpx;
+		width: 24rpx;
+		height: 24rpx;
 		background: rgba(255, 255, 255, 0.2);
 		border-radius: 50%;
 	}
 
 	.history-title-text {
-		font-size: 24rpx;
+		font-size: 20rpx;
 		font-weight: bold;
 		color: white;
 	}
@@ -1155,7 +2304,7 @@
 	}
 
 	.history-summary-text {
-		font-size: 20rpx;
+		font-size: 18rpx;
 		color: rgba(255, 255, 255, 0.9);
 	}
 
@@ -1164,21 +2313,21 @@
 	}
 
 	.history-order-list {
-		padding-bottom: 20rpx;
+		padding-bottom: 10rpx;
 	}
 
 	.history-order-item {
 		background: white;
-		border-radius: 8rpx;
-		margin-bottom: 15rpx;
-		padding: 15rpx;
-		box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.08);
-		border-left: 3rpx solid #3498db;
-		transition: all 0.3s ease;
+		border-radius: 6rpx;
+		margin-bottom: 8rpx;
+		padding: 10rpx 12rpx;
+		box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
+		border-left: 2rpx solid orange;
+		transition: all 0.2s ease;
 	}
 
 	.history-order-item:hover {
-		box-shadow: 0 3rpx 10rpx rgba(0, 0, 0, 0.12);
+		box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
 		transform: translateY(-1rpx);
 		cursor: pointer;
 	}
@@ -1187,41 +2336,41 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: flex-start;
-		margin-bottom: 12rpx;
+		margin-bottom: 6rpx;
 	}
 
 	.history-order-info {
 		display: flex;
 		flex-direction: column;
-		gap: 6rpx;
+		gap: 4rpx;
 	}
 
 	.history-customer-name {
-		font-size: 24rpx;
+		font-size: 20rpx;
 		font-weight: bold;
 		color: #333;
 	}
 
 	.history-order-time {
-		font-size: 20rpx;
-		color: #666;
+		font-size: 16rpx;
+		color: #999;
 	}
 
 	.history-order-amounts {
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
-		gap: 4rpx;
+		gap: 3rpx;
 	}
 
 	.history-total-amount {
-		font-size: 22rpx;
+		font-size: 18rpx;
 		color: #333;
 		font-weight: bold;
 	}
 
 	.history-debt-amount {
-		font-size: 20rpx;
+		font-size: 16rpx;
 		color: #e74c3c;
 		font-weight: bold;
 	}
@@ -1230,25 +2379,25 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		margin-bottom: 12rpx;
-		padding-top: 12rpx;
-		border-top: 1rpx solid #f0f0f0;
+		margin-bottom: 6rpx;
+		padding-top: 6rpx;
+		border-top: 1rpx solid #f5f5f5;
 	}
 
 	.history-order-code {
 		display: flex;
 		align-items: center;
-		gap: 8rpx;
+		gap: 4rpx;
 	}
 
 	.history-code-label {
-		font-size: 20rpx;
-		color: #666;
+		font-size: 16rpx;
+		color: #999;
 	}
 
 	.history-code-value {
-		font-size: 20rpx;
-		color: #333;
+		font-size: 16rpx;
+		color: #666;
 		font-family: monospace;
 	}
 
@@ -1258,9 +2407,9 @@
 	}
 
 	.history-status-tag {
-		padding: 3rpx 8rpx;
-		border-radius: 10rpx;
-		font-size: 18rpx;
+		padding: 2rpx 6rpx;
+		border-radius: 8rpx;
+		font-size: 14rpx;
 		font-weight: 500;
 		color: white;
 	}
@@ -1282,18 +2431,18 @@
 	}
 
 	.history-status-text {
-		font-size: 18rpx;
+		font-size: 14rpx;
 	}
 
 	.history-order-items {
-		padding-top: 8rpx;
+		padding-top: 6rpx;
 		border-top: 1rpx solid #f8f9fa;
 	}
 
 	.history-items-text {
-		font-size: 20rpx;
-		color: #666;
-		line-height: 1.3;
+		font-size: 16rpx;
+		color: #999;
+		line-height: 1.4;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
 		line-clamp: 2;
@@ -1307,144 +2456,26 @@
 		flex-direction: column;
 		align-items: center;
 		justify-content: center;
-		padding: 60rpx 30rpx;
+		padding: 40rpx 20rpx;
 		text-align: center;
 	}
 
 	.history-empty-icon {
-		margin-bottom: 15rpx;
+		margin-bottom: 10rpx;
 	}
 
 	.history-empty-text {
-		font-size: 24rpx;
-		color: #95a5a6;
-		font-weight: 500;
+		font-size: 18rpx;
+		color: #bdc3c7;
+		font-weight: 400;
 	}
 
 	/* 订单详情抽屉样式 */
 	.order-detail-container {
-		padding: 12rpx;
 		background-color: #fff;
-		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
 		height: 100%;
 		display: flex;
 		flex-direction: column;
-	}
-
-	.order-detail-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 10rpx;
-		background: linear-gradient(135deg, #e74c3c, #c0392b);
-		color: white;
-		border-radius: 6rpx;
-		margin-bottom: 10rpx;
-	}
-
-	.detail-title {
-		display: flex;
-		align-items: center;
-		gap: 6rpx;
-	}
-
-	.detail-title-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 24rpx;
-		height: 24rpx;
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: 50%;
-	}
-
-	.detail-title-text {
-		font-size: 20rpx;
-		font-weight: bold;
-		color: white;
-	}
-
-	.order-overview {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8rpx 12rpx;
-		padding-bottom: 10rpx;
-		border-bottom: 1rpx solid #eee;
-		margin-bottom: 10rpx;
-	}
-
-	.info-item {
-		flex: 1;
-		min-width: 45%;
-		display: flex;
-		font-size: 16rpx;
-		line-height: 1.3;
-	}
-
-	.info-label {
-		color: #666;
-		min-width: 4.5em;
-		margin-right: 6rpx;
-		font-size: 16rpx;
-	}
-
-	.info-value {
-		color: #333;
-		font-weight: normal;
-		font-size: 16rpx;
-	}
-
-	.highlight .info-value {
-		color: #e4393c;
-		font-weight: bold;
-	}
-
-	.debt .info-value {
-		color: darkred;
-		font-weight: bold;
-	}
-
-	.product-scroll {
-		flex: 1;
-		margin-top: 6rpx;
-	}
-
-	.product-table {
-		display: table;
-		width: 100%;
-		border-collapse: collapse;
-	}
-
-	.table-header,
-	.table-row {
-		display: table-row;
-	}
-
-	.header-cell,
-	.table-cell {
-		display: table-cell;
-		padding: 6rpx 4rpx;
-		text-align: center;
-		border: 1rpx solid #eee;
-		font-size: 14rpx;
-		line-height: 1.2;
-		vertical-align: middle;
-	}
-
-	.header-cell {
-		background-color: #f5f5f5;
-		font-weight: bold;
-		color: #333;
-		font-size: 15rpx;
-	}
-
-	.table-cell {
-		background-color: #fff;
-		color: #666;
-	}
-
-	.table-row:nth-child(even) .table-cell {
-		background-color: #fafafa;
 	}
 
 	.no-products {
@@ -1515,6 +2546,78 @@
 		transform: translateY(-1rpx);
 		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15) !important;
 	}
+	
+	/* 新的操作按钮容器 - 自适应布局 */
+	.order-action-buttons-new {
+		display: flex;
+		justify-content: space-around;
+		align-items: center;
+		width: 100%;
+		padding: 12rpx 10rpx;
+		gap: 12rpx;
+		background-color: #f8f9fa;
+		border-radius: 8rpx;
+		flex-wrap: wrap;
+	}
+	
+	/* 紧凑操作按钮容器 */
+	.order-action-buttons-compact {
+		display: flex;
+		justify-content: space-around;
+		align-items: center;
+		width: 100%;
+		padding: 8rpx 8rpx;
+		gap: 8rpx;
+		background-color: #f8f9fa;
+		border-radius: 6rpx;
+		flex-wrap: wrap;
+	}
+	
+	/* 新的按钮基础样式 - 自适应宽度 */
+	.action-btn-new {
+		flex: 1;
+		min-width: 80rpx !important;
+		height: 38rpx !important;
+		font-size: 15rpx !important;
+		font-weight: 600 !important;
+		border-radius: 6rpx !important;
+		box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1) !important;
+		transition: all 0.3s ease !important;
+		border: none !important;
+	}
+	
+	/* 紧凑模式按钮 */
+	.action-btn-compact {
+		flex: 1;
+		min-width: 70rpx !important;
+		height: 32rpx !important;
+		font-size: 13rpx !important;
+		font-weight: 600 !important;
+		border-radius: 5rpx !important;
+		box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.08) !important;
+		transition: all 0.3s ease !important;
+		border: none !important;
+	}
+	
+	.action-btn-new:hover {
+		transform: translateY(-2rpx);
+		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2) !important;
+	}
+	
+	.action-btn-compact:hover {
+		transform: translateY(-1rpx);
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15) !important;
+	}
+	
+	.action-btn-new:active {
+		transform: translateY(0);
+		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.15) !important;
+	}
+	
+	.action-btn-compact:active {
+		transform: translateY(0);
+		box-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1) !important;
+	}
 
 	/* 改单按钮 */
 	.modify-btn {
@@ -1526,6 +2629,16 @@
 	.modify-btn:hover {
 		background: linear-gradient(135deg, #2980b9, #1f5f8b) !important;
 	}
+	
+	/* 新改单按钮 */
+	.modify-btn-new {
+		background: linear-gradient(135deg, #409EFF, #3A8EE6) !important;
+		color: white !important;
+	}
+	
+	.modify-btn-new:hover {
+		background: linear-gradient(135deg, #3A8EE6, #3376C5) !important;
+	}
 
 	/* 退单按钮 */
 	.refund-btn {
@@ -1536,6 +2649,16 @@
 
 	.refund-btn:hover {
 		background: linear-gradient(135deg, #7f8c8d, #6c7b7d) !important;
+	}
+	
+	/* 新退单按钮 */
+	.refund-btn-new {
+		background: linear-gradient(135deg, #909399, #7D7E82) !important;
+		color: white !important;
+	}
+	
+	.refund-btn-new:hover {
+		background: linear-gradient(135deg, #7D7E82, #6A6B6F) !important;
 	}
 
 	/* 整单还款按钮 */
@@ -1549,6 +2672,16 @@
 	.repay-btn:hover {
 		background: linear-gradient(135deg, #c0392b, #a93226) !important;
 	}
+	
+	/* 新整单还款按钮 */
+	.repay-btn-new {
+		background: linear-gradient(135deg, #F56C6C, #E54D4D) !important;
+		color: white !important;
+	}
+	
+	.repay-btn-new:hover {
+		background: linear-gradient(135deg, #E54D4D, #D43838) !important;
+	}
 
 	/* 打印按钮 */
 	.print-btn {
@@ -1559,6 +2692,59 @@
 
 	.print-btn:hover {
 		background: linear-gradient(135deg, #229954, #1e8449) !important;
+	}
+	
+	/* 新打印按钮 */
+	.print-btn-new {
+		background: linear-gradient(135deg, #67C23A, #5DAF2E) !important;
+		color: white !important;
+	}
+	
+	.print-btn-new:hover {
+		background: linear-gradient(135deg, #5DAF2E, #529B28) !important;
+	}
+	
+	/* 产品表格容器 - 自适应宽度 */
+	.product-table-container {
+		width: 100%;
+		margin: 15rpx 0;
+		padding: 0 15rpx;
+		box-sizing: border-box;
+	}
+	
+	/* 紧凑模式下的表格容器 */
+	.order-info-grid-compact ~ .product-table-container {
+		margin: 8rpx 0;
+		padding: 0 8rpx;
+	}
+	
+	.product-table {
+		width: 100%;
+		background-color: white;
+	
+		overflow: hidden;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+	}
+	
+	/* 紧凑模式下的表格 */
+	.order-info-grid-compact ~ .product-table-container .product-table {
+		box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
+	}
+	
+	.table-header-row {
+		background: linear-gradient(135deg, #f5f7fa, #e8ebef);
+	}
+	
+	.table-body-row {
+		transition: background-color 0.3s ease;
+	}
+	
+	.table-body-row:nth-child(even) {
+		background-color: #fafbfc;
+	}
+	
+	.table-body-row:hover {
+		background-color: #ecf5ff;
 	}
 
 	.table {
@@ -1577,6 +2763,17 @@
 	.table-row {
 		display: table-row;
 	}
+	
+	/* 产品表格行样式 - 使用flex布局 */
+	.product-table .table-row {
+		display: flex;
+		width: 100%;
+		border-bottom: 1rpx solid #e4e7ed;
+	}
+	
+	.product-table .table-row:last-child {
+		border-bottom: none;
+	}
 
 	.table-cell {
 		display: table-cell;
@@ -1584,37 +2781,60 @@
 		padding: 8px;
 		text-align: left;
 	}
+	
+	/* 产品表格单元格样式 - flex均分宽度 */
+	.product-table .table-cell,
+	.product-table .table-header-cell {
+		flex: 1;
+		padding: 12rpx 10rpx;
+		text-align: center;
+		font-size: 13rpx;
+		line-height: 1.4;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 0;
+		word-break: break-all;
+	}
+	
+	/* 紧凑模式下的表格单元格 */
+	.order-info-grid-compact ~ .product-table-container .product-table .table-cell,
+	.order-info-grid-compact ~ .product-table-container .product-table .table-header-cell {
+		padding: 8rpx 6rpx;
+		font-size: 12rpx;
+		line-height: 1.3;
+	}
 
 	.table-header-cell {
 		display: table-cell;
-		border: 1px solid #000000;
+		border: 1px solid #dddddd;
 		padding: 8px;
 		text-align: center;
 		font-weight: bold;
 		background-color: #dddddd;
 	}
-
-	.demo-row {
-		display: flex;
-		/* 使用 flexbox 布局 */
-		flex-wrap: wrap;
-		/* 允许换行 */
+	
+	/* 产品表格表头单元格 */
+	.product-table .table-header-cell {
+		font-weight: bold;
+		color: #333;
+		font-size: 14rpx;
+		background: linear-gradient(135deg, #f5f7fa, #e8ebef);
+		
 	}
-
-	.demo-col {
-		padding: 10px;
-		/* 添加内边距 */
+	
+	/* 产品表格数据单元格 */
+	.product-table .table-body-row .table-cell {
+		color: #666;
+		font-weight: 500;
 	}
-
-	/* 根据需要设置列的宽度 */
-	.col-12 {
-		flex: 0 0 60%;
-		/* 占据 50% 的宽度 */
-	}
-
-	.col-6 {
-		flex: 0 0 15%;
-		/* 占据 25% 的宽度 */
+	
+	/* 货品名称列稍微宽一点 */
+	.product-table .table-cell:first-child,
+	.product-table .table-header-cell:first-child {
+		flex: 1.5;
+		font-weight: 600;
+		color: #333;
 	}
 
 	.grid-member-container {

@@ -44,62 +44,75 @@
 			<div :style="{ 'width': '5rpx', 'background-color': '#ccc','height': (windowHeight-65)+'px' }"></div>
 		</div>
 
-		<div style="width: 100%; background-color: #ffffff; text-align: right;">
-			<div
-				style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx; display: flex; justify-content: space-between; align-items: center;">
-				<div style="font-size: 15rpx; font-weight: bold;"><text
-						style="margin-right: 5rpx;">{{currentTabName}}</text>
-				</div>
-				<div style="text-align: right; display: flex;">
-					<button
-						style="height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: orange;color:white;margin-right: 10rpx;"
-						@click="showDeleteGood = !showDeleteGood">编辑</button>
-					<button
-						style="height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: green;color:white;"
-						@click="showAddNewGood = true">添加货品</button>
-				</div>
+		<div style="width: 100%; background-color: #f5f5f5; text-align: right;">
+		<div
+			style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx;margin-top: 5rpx; display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; padding: 0 10rpx; border-radius: 8rpx;">
+			<div style="font-size: 15rpx; font-weight: bold;"><text
+					style="margin-right: 5rpx;">{{currentTabName}}</text>
 			</div>
-			<div style="margin-left: 5rpx;margin-right: 5rpx;">
-				<!-- 表头 -->
-				<div
-					style="display: flex; background-color: #b9b9b9 ; font-weight: bold; border-bottom: 1px solid #f4f4f4;">
-					<div style="flex: 3; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">货品</div>
-					<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">规格</div>
-					<!-- <div style="width: 50rpx;padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">单位</div> -->
-					<div style="width: 50rpx; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;" v-if="showDeleteGood" >操作
-					</div>
-				</div>
-				<scroll-view class="scrollArea" scroll-y="true" :style="{height:scrollHeight}">
-					<!-- 表格内容行 -->
-					<div style="display: flex; border-bottom: 1px solid #ddd;font-weight: bold;" v-for="(item,index) in goodSelect" >
-						<div style="flex: 3; padding: 8px; border-right: 1px solid #ddd; display: flex; justify-content: center; align-items: center;">
-						  <div style="display: flex; align-items: center;">
-							<div style="font-size: 12rpx;">{{item.name}}</div>
-								<text v-if="item.saleWay===1" style="height: 15rpx;line-height: 15rpx; margin-left: 5rpx; font-size: 8rpx; padding-left: 2rpx;padding-right: 2rpx;color: #31BDEC;border: 1px solid #31BDEC;border-radius: 3rpx;">非定装</text>
-								<text v-if="item.saleWay===2" style="height: 15rpx;line-height: 15rpx;margin-left: 5rpx; font-size: 8rpx; padding-left: 2rpx;padding-right: 2rpx;color: #00aa00;border: 1px solid #00aa00;border-radius: 3rpx;">定{{item.initWeight?item.initWeight:''}}</text>
-								<text v-if="item.saleWay===3" style="height: 15rpx;line-height: 15rpx;margin-left: 5rpx; font-size: 8rpx; padding-left: 2rpx;padding-right: 2rpx;color: #aa55ff;border: 1px solid #aa55ff;border-radius: 3rpx;">定装拆包</text>
-								<text v-if="item.saleWay===4" style="height: 15rpx;line-height: 15rpx;margin-left: 5rpx; font-size: 8rpx; padding-left: 2rpx;padding-right: 2rpx;color: #55aaff;border: 1px solid #55aaff;border-radius: 3rpx;">散装</text>
-								<text v-if="item.extralModel" style="height: 15rpx;line-height: 15rpx; font-size: 8rpx;margin-left: 5rpx;  padding-left: 2rpx;padding-right: 2rpx;color: #ff5500;border: 1px solid #ff5500;border-radius: 3rpx;">{{item.extralModel.name}}</text>
-						</div></div>
-						<div
-							style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							{{item.specLabel}}
-							<!-- <input inputmode="none" @click="showKeyBorad(index,2)" class="input1"
-								v-model="item.initWeight" /> -->
+			<div style="text-align: right; display: flex; align-items: center; gap: 10rpx;">
+				<view style="position: relative; display: flex; align-items: center;">
+					<uni-icons type="search" size="14" color="#999" style="position: absolute; left: 6rpx; z-index: 1;"></uni-icons>
+					<input 
+						class="search-input" 
+						type="text" 
+						v-model="searchKeyword" 
+						placeholder="搜索商品" 
+						style="height: 26rpx; line-height: 26rpx; padding-left: 26rpx; padding-right: 10rpx; border: 1rpx solid #e0e0e0; border-radius: 20rpx; font-size: 12rpx; width: 140rpx; background-color: #f5f5f5;" 
+					/>
+				</view>
+				<button
+					style="height: 24rpx;line-height: 24rpx;font-weight: bold;background-color: orange;color:white;border-radius: 4rpx;padding: 0 12rpx;"
+					@click="showDeleteGood = !showDeleteGood">编辑</button>
+			</div>
+		</div>
+			<div style="margin-left: 5rpx;margin-right: 5rpx; overflow: hidden;">
+				<scroll-view class="scrollArea" scroll-y="true" :style="{height:scrollHeight, width: '100%'}">
+					<!-- 宫格布局 -->
+					<div class="goods-grid-container">
+						<!-- 添加货品卡片（始终第一个） -->
+						<div class="grid-item add-item" :style="{ width: gridItemWidth }" @click="showAddNewGood = true">
+							<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 80rpx;">
+								<uni-icons type="plusempty" size="32" color="#07c160"></uni-icons>
+								<div style="margin-top: 8rpx; font-size: 14rpx; color: #07c160; font-weight: bold;">添加货品</div>
+							</div>
 						</div>
-						<!-- <div
-							style="width: 50rpx; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-							<input inputmode="none" @click="showKeyBorad(index,1)" class="input1"
-								v-model="item.price" />
-						</div> -->
-						<div
-							style="width: 50rpx; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;line-height: 20rpx;" v-if="showDeleteGood">
-							<uni-icons custom-prefix="iconfont" @click="deleteItem(item)" type="icon-shanchu" size="20"
-								color="#aa0000"></uni-icons>
+						
+					<!-- 普通商品卡片 -->
+					<div v-for="(item, index) in filteredGoodSelect" :key="item.id || index" 
+						 class="grid-item" 
+						 :style="{ width: gridItemWidth, position: 'relative' }">
+							<!-- 删除按钮 -->
+							<div v-if="showDeleteGood" 
+								class="delete-icon" 
+								@click.stop="deleteItem(item)">
+								<uni-icons type="closeempty" size="16" color="#fff"></uni-icons>
+							</div>
+							
+							<!-- 商品名称 -->
+							<div style="text-align: left; font-weight: bold; font-size: 20rpx; letter-spacing: 1rpx; display: flex;">
+								{{ item.name }}
+							</div>
+							
+							<!-- 标签区域 -->
+							<div style="font-size: 12rpx; margin-top: 6rpx; font-weight: bold; display: flex; flex-direction: column; text-align: left;">
+								<div style="text-align: left; display: flex; flex-wrap: wrap; gap: 4rpx;">
+									<div v-if="item.saleWay===1" class="good-tag" style="color: #31BDEC; border-color: #31BDEC;">非定装</div>
+									<div v-if="item.saleWay===2" class="good-tag" style="color: #00aa00; border-color: #00aa00;">定{{item.initWeight?item.initWeight:''}}</div>
+									<div v-if="item.saleWay===3" class="good-tag" style="color: #aa55ff; border-color: #aa55ff;">拆包</div>
+									<div v-if="item.saleWay===4" class="good-tag" style="color: #55aaff; border-color: #55aaff;">散</div>
+									<div v-if="item.extralModel" class="good-tag" style="color: #ff5500; border-color: #ff5500;">{{item.extralModel.name}}</div>
+								</div>
+								
+								<!-- 规格信息 -->
+								<div style="margin-top: 8rpx; font-size: 11rpx; color: #666;">
+									{{item.specLabel}}
+								</div>
+							</div>
 						</div>
 					</div>
-					<div style=" display: flex;flex-direction: column;align-items: center;">
-						<u-divider class="divider" style=" width: 100%; "></u-divider>
+					<div style="display: flex; flex-direction: column; align-items: center;">
+						<u-divider class="divider" style="width: 100%;"></u-divider>
 					</div>
 				</scroll-view>
 <!-- 				<div style="position: fixed;bottom: 0;height: 30rpx;background: #ffffff;width: 100%;"
@@ -149,119 +162,15 @@
 				</view>
 			</div>
 		</div>
-	<!-- 添加新货品弹窗 -->
-	<view v-if="showAddNewGood" class="znj-add-good-modal-mask" @click="showAddNewGood = false">
-		<view class="znj-add-good-modal-wrapper" @click.stop>
-			<view class="znj-add-good-modal-container">
-				<!-- 标题栏 -->
-				<view class="znj-add-good-modal-header">
-					<text class="znj-add-good-modal-title">添加新货品</text>
-					<view class="znj-add-good-modal-close" @click="showAddNewGood = false; newGoodInfoReset();">
-						<uni-icons type="closeempty" size="24" color="#fff"></uni-icons>
-					</view>
-				</view>
-				
-				<!-- 内容区域 -->
-				<scroll-view scroll-y="true" class="znj-add-good-modal-body" :style="{ maxHeight: '70vh' }">
-					<view class="znj-add-good-form">
-							<!-- 货品名称 -->
-							<view class="znj-add-good-row">
-								<text class="znj-add-good-label">货品名称：</text>
-								<input class="znj-add-good-input" type="text" placeholder="请输入货品名称"
-									v-model="newGoodInfo.name" />
-							</view>
-							<!-- 计算方式 -->
-							<view class="znj-add-good-row">
-								<text class="znj-add-good-label">计算方式：</text>
-								<view class="znj-add-good-btn-group">
-									<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 1}" @click="changSaleType(1)">按重量</button>
-									<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 2}" @click="changSaleType(2)">按件数</button>
-									<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 3}" @click="changSaleType(3)">按件拆包</button>
-									<button class="znj-add-good-type-btn" :class="{active: newGoodInfo.saleWay === 4}" @click="changSaleType(4)">散装</button>
-								</view>
-							</view>
-							<!-- 单位/规格 -->
-							<view class="znj-add-good-row">
-								<text class="znj-add-good-label" v-if="newGoodInfo.saleWay === 2">规格：</text>
-								<text class="znj-add-good-label" v-else-if="newGoodInfo.saleWay === 3">规格一：</text>
-								<text class="znj-add-good-label" v-else>规格：</text>
-								<div v-if="newGoodInfo.saleWay != 3">
-									<selectLayUnit :zindex="1212" :value="newGoodInfo.unit" :name="newGoodInfo.unit" placeholder=" "
-										:options="unit" @selectitem="editCardSpecSelct"></selectLayUnit>
-								</div>
-								<div v-else>
-									<selectLayUnit :zindex="1212" :value="newGoodInfo.specList[0].specName" :name="newGoodInfo.specList[0].specName" placeholder=" "
-										:options="unit" @selectitem="editCardSpecSelct1"></selectLayUnit>
-								</div>
-							</view>
-							<!-- 规格相关 -->
-							<div v-if="newGoodInfo.saleWay != 1 && newGoodInfo.saleWay != 2">
-								<!-- 规格二 -->
-								<view class="znj-add-good-row" v-if="newGoodInfo.specList.length>1">
-									<text class="znj-add-good-label">规格二：</text>
-									<div class="znj-add-good-spec-box">
-										<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[0].specName }} =</span>
-										<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.specList[1].fixcount" placeholder="" />
-									</div>
-									<selectLayUnit :zindex="1211" :value="newGoodInfo.specList[1].specName" :name="newGoodInfo.specList[1].specName" placeholder=" " :textWidth="30"
-										:options="unit" @selectitem="editCardSpecSelct2"></selectLayUnit>
-									<button class="znj-add-good-delete-btn" @click="removeSpec(1)">删除</button>
-								</view>
-								<!-- 规格三 -->
-								<view class="znj-add-good-row" v-if="newGoodInfo.specList.length>2">
-									<text class="znj-add-good-label">规格三：</text>
-									<div class="znj-add-good-spec-box">
-										<span class="znj-add-good-spec-prefix">1 {{ newGoodInfo.specList[1].specName }} =</span>
-										<input class="znj-add-good-spec-input" type="text" v-model="newGoodInfo.specList[2].fixcount" placeholder="" />
-									</div>
-									<selectLayUnit :zindex="1210" :value="newGoodInfo.specList[2].specName" :name="newGoodInfo.specList[2].specName" placeholder=" " :textWidth="30"
-										:options="unit" @selectitem="editCardSpecSelct3"></selectLayUnit>
-									<button class="znj-add-good-delete-btn" @click="removeSpec(2)">删除</button>
-								</view>
-								<!-- 添加规格按钮 -->
-								<div v-if="newGoodInfo.saleWay === 3">
-									<view class="znj-add-good-row" v-if="newGoodInfo.specList.length<3" style="margin-top: 10rpx;">
-										<text class="znj-add-good-label"></text>
-										<button class="znj-add-good-btn add" @click="addSpec" >添加规格</button>
-									</view>
-								</div>
-							</div>
-							<!-- 分割线 -->
-							<view class="znj-add-good-divider"></view>
-							<!-- 附加物品 -->
-							<view class="znj-add-good-row" v-if="newGoodInfo.saleWay == 1">
-								<text class="znj-add-good-label">附加物品：</text>
-								<select-lay :zindex="1211" :value="newGoodInfo.extralModelName" placeholder="请选择项目"
-									:options="extralModelList" @selectitem="editCardExtraModelSelct" slabel="name"></select-lay>
-							</view>
-							<!-- 单位重量 -->
-							<view class="znj-add-good-row" v-if="newGoodInfo.saleWay === 2">
-								<text class="znj-add-good-label">单位重量：</text>
-								<input class="znj-add-good-input" type="text" v-model="newGoodInfo.initWeight" placeholder="" />
-							</view>
-							<!-- 单位皮重 -->
-							<view class="znj-add-good-row">
-								<text class="znj-add-good-label">单位皮重：</text>
-								<input class="znj-add-good-input" type="text" v-model="newGoodInfo.fixTare" placeholder="" />
-							</view>
-							<!-- 是否显示 -->
-							<view class="znj-add-good-row">
-								<text class="znj-add-good-label">是否显示：</text>
-								<div class="znj-add-good-switch-group">
-									<button class="znj-add-good-switch-btn" :class="{active: newGoodInfo.showToSale === 1}" @click="newGoodInfo.showToSale = 1">是</button>
-									<button class="znj-add-good-switch-btn" :class="{active: newGoodInfo.showToSale === 0}" @click="newGoodInfo.showToSale = 0">否</button>
-								</div>
-							</view>
-						<!-- 操作按钮 -->
-						<view class="znj-add-good-btns">
-							<button class="znj-add-good-btn cancel" @click="showAddNewGood = false;newGoodInfoReset();">返回</button>
-							<button class="znj-add-good-btn confirm" @click="saveGood">添加</button>
-						</view>
-					</view>
-				</scroll-view>
-			</view>
-		</view>
-	</view>
+	<!-- 添加新货品弹窗 - 使用组件 -->
+	<AddGoodModalAdvanced
+		:show="showAddNewGood"
+		:unitList="unit"
+		:extralModelList="extralModelList"
+		:currentCategoryId="currentTabId"
+		@close="showAddNewGood = false"
+		@confirm="saveGood"
+	/>
 
 
 	<!-- 添加新分类弹窗 -->
@@ -309,9 +218,12 @@
 	import category from '../../api/goods/category'
 	import selectLayUnit from './component/selectLayUnit'
 	import labelApi from '../../api/label/labelApi';
+	import AddGoodModalAdvanced from '../../components/AddGoodModal/AddGoodModalAdvanced.vue';
+	
 	export default {
 		components: {
-			selectLayUnit
+			selectLayUnit,
+			AddGoodModalAdvanced
 		},
 		data() {
 			return {
@@ -320,48 +232,158 @@
 				currentTabId: "",
 				currentTabName: "",
 				goodSelect: [],
+				searchKeyword: '', // 搜索关键词
 				editingIndex: 0,
 				showKeyBoard1: false,
 				windowWidth: 0,
 				windowHeight: 0,
-				scrollHeight: '0px',
-				valueType: 0,
-				newGoodInfo: {},
-				tempSpuDialogVisible: false,
-				tempSpuSkuName: "",
-				showAddNewGood: false,
-				showDeleteGood:false,
-				extralModelList: [],
-				unit: [{
-						label: "件",
-						value: "件"
-					},
-					{
-							label: "筐",
-							value: "筐"
-						},
-					{
-						label: "包",
-						value: "包"
-					},
-					{
-						label: "个",
-						value: "个"
-					}
-				]
-			}
+			scrollHeight: '0px',
+			valueType: 0,
+			tempSpuDialogVisible: false,
+			tempSpuSkuName: "",
+			showAddNewGood: false,
+			showDeleteGood: false,
+			extralModelList: [],
+			itemsPerRow: 4, // 每行显示的商品数量
+			unit: [{
+					label: "件",
+					value: "件"
+				},
+				{
+					label: "筐",
+					value: "筐"
+				},
+				{
+					label: "包",
+					value: "包"
+				},
+				{
+					label: "个",
+					value: "个"
+				}
+			]
+		}
+	},
+	computed: {
+		// 动态计算宫格项的宽度 - 固定每行4个
+		gridItemWidth() {
+			// 固定每行显示4个商品
+			// 每个宫格占 25%，减去 margin (左右各3rpx) 并留出一些额外空间防止换行
+			return 'calc(25% - 8rpx)';
 		},
-		mounted() {
+		// 过滤后的商品列表
+		filteredGoodSelect() {
+			if (!this.searchKeyword || this.searchKeyword.trim() === '') {
+				return this.goodSelect;
+			}
+			const keyword = this.searchKeyword.toLowerCase().trim();
+			return this.goodSelect.filter(item => {
+				return item.name && item.name.toLowerCase().includes(keyword);
+			});
+		}
+	},
+	mounted() {
 			this.companyId = uni.getStorageSync('companyId');
 			this.getCategoryList();
 			this.initSystem();
-			this.newGoodInfoReset();
 			this.getAllextralModel();
 			this.getCompanyUnit();
 			// this.getallShipper();
 			// this.getAllBatch();
 		},
 		methods: {
+			// 切换原生下拉选择框
+			toggleSelect(type, index, event) {
+				if (this.activeSelect.type === type && this.activeSelect.index === index) {
+					// 如果点击的是已打开的选择框，则关闭
+					this.closeSelect();
+				} else {
+					// 打开新的选择框，并计算位置
+					const query = uni.createSelectorQuery().in(this);
+					query.select(`#select-${type}-${index}`).boundingClientRect();
+					query.exec((res) => {
+						if (res && res[0]) {
+							const rect = res[0];
+							this.activeSelect = {
+								type,
+								index,
+								top: rect.top + rect.height + 2, // 元素底部往下2px
+								left: rect.left,
+								width: rect.width
+							};
+						}
+					});
+				}
+			},
+			// 关闭原生下拉选择框
+			closeSelect() {
+				this.activeSelect = { 
+					type: '', 
+					index: -1,
+					top: 0,
+					left: 0,
+					width: 0
+				};
+			},
+			// 选择包装类型
+			selectPackageType(index, optIndex) {
+				const selectedOption = this.packageTypeOptions[optIndex];
+				// 如果是共库模式，所有等级的包装类型都要统一
+				if (this.newGoodInfo.isShareStock === 1) {
+					this.newGoodInfo.gradeList.forEach((grade) => {
+						grade.packageType = selectedOption.label;
+					});
+				} else {
+					// 非共库模式，只修改当前行
+					this.newGoodInfo.gradeList[index].packageType = selectedOption.label;
+				}
+				this.closeSelect();
+			},
+			// 选择单位
+			selectUnit(index, optIndex) {
+				const selectedUnit = this.unit[optIndex];
+				// 如果是共库模式，所有等级的单位都要统一
+				if (this.newGoodInfo.isShareStock === 1) {
+					this.newGoodInfo.gradeList.forEach((grade) => {
+						grade.countUnit = selectedUnit.value;
+					});
+				} else {
+					// 非共库模式，只修改当前行
+					this.newGoodInfo.gradeList[index].countUnit = selectedUnit.value;
+				}
+				this.closeSelect();
+			},
+			// 关闭添加货品弹窗
+			closeAddGood() {
+				this.closeSelect();
+				this.showAddNewGood = false;
+			},
+			// 设置共用库存
+			setShareStock(value) {
+				this.newGoodInfo.isShareStock = value;
+				// 如果选择共用库存，统一所有分级的单位和包装类型为第一个
+				if (value === 1 && this.newGoodInfo.gradeList.length > 0) {
+					const firstGrade = this.newGoodInfo.gradeList[0];
+					const firstPackageType = firstGrade.packageType;
+					const firstCountUnit = firstGrade.countUnit;
+					
+					// 统一所有分级
+					this.newGoodInfo.gradeList.forEach((grade) => {
+						grade.packageType = firstPackageType;
+						grade.countUnit = firstCountUnit;
+					});
+					
+					uni.showToast({
+						icon: 'success',
+						title: '已统一为第一个分级的类型',
+						duration: 1500,
+					});
+				}
+			},
+			// 处理选择框打开事件
+			handleSelectOpen(selectId) {
+				this.activeSelectId = selectId;
+			},
 			getCompanyUnit(){
 				let that = this;
 				labelApi.GetCompanyUnit(this.companyId).then(res => {
@@ -388,6 +410,7 @@
 				this.newGoodInfo.specList[2].specName = this.unit[e].label;
 			},
 			editCardExtraModelSelct(e){
+				console.log("选择附加物品:", this.extralModelList[e]);
 				this.newGoodInfo.extralModelId = this.extralModelList[e].id;
 				this.newGoodInfo.extralModelName = this.extralModelList[e].name;
 			},
@@ -447,12 +470,12 @@
 				let that = this;
 				that.extralModelList = [{name:"无",id:""}]
 				category.getallextralgood(this.companyId).then(res => {
-
+					console.log("附加物品列表返回数据:", res.data);
 					if (res.data != null) {
 						for(var i = 0 ;i<res.data.length;i++){
 								that.extralModelList.push(res.data[i]);
 						}
-					
+						console.log("附加物品列表:", that.extralModelList);
 					}
 				})
 			},
@@ -460,6 +483,7 @@
 			newGoodInfoReset() {
 				this.newGoodInfo = {
 					name: "",
+					stockType: 1, // 1=自营，2=代卖，默认自营
 					saleWay: 1,
 					unit: "件",
 					specList: [],
@@ -468,7 +492,59 @@
 					fixWeight:0,
 					extralModelId: "",
 					extralModelName: "无",
-					showToSale: 1
+					showToSale: 1,
+					isMultiLevel: 0,
+					isShareStock: 0,
+					multiLevelList: [], // 初始化分级列表数组
+					gradeList: [{
+						packageType: "定装",
+						countUnit: "件",
+						avgWeight: "",
+						gradeName: "",
+						price: ""
+					}]
+				}
+			},
+			// 添加等级
+			addGrade() {
+				this.newGoodInfo.gradeList.push({
+					packageType: "定装",
+					countUnit: "件",
+					avgWeight: "",
+					gradeName: "",
+					price: ""
+				});
+			},
+			// 删除等级
+			removeGrade(index) {
+				if (this.newGoodInfo.gradeList.length > 1) {
+					this.newGoodInfo.gradeList.splice(index, 1);
+				}
+			},
+			// 选择分级单位
+			selectGradeUnit(index, e) {
+				const selectedUnit = this.unit[e].value;
+				// 如果是共库模式，所有等级的单位都要统一
+				if (this.newGoodInfo.isShareStock === 1) {
+					this.newGoodInfo.gradeList.forEach((grade) => {
+						grade.countUnit = selectedUnit;
+					});
+				} else {
+					// 非共库模式，只修改当前行
+					this.newGoodInfo.gradeList[index].countUnit = selectedUnit;
+				}
+			},
+			// 选择分级包装类型
+			selectGradePackageType(index, e) {
+				const selectedPackageType = this.packageTypeOptions[e].value;
+				// 如果是共库模式，所有等级的包装类型都要统一
+				if (this.newGoodInfo.isShareStock === 1) {
+					this.newGoodInfo.gradeList.forEach((grade) => {
+						grade.packageType = selectedPackageType;
+					});
+				} else {
+					// 非共库模式，只修改当前行
+					this.newGoodInfo.gradeList[index].packageType = selectedPackageType;
 				}
 			},
 			tempSpuClose() {
@@ -514,79 +590,152 @@
 					inventory: 1
 				})
 			},
-			//新增商品
-			saveGood() {
-				if(this.newGoodInfo.name===null||this.newGoodInfo.name===""){
-					uni.showToast({
-						icon: 'none',
-						title: '物品名称不能为空',
-						duration: 1200,
-					});
-					return;
-				}
-				
-				let that = this;
-				var CommodityData = [];
-				//添加分类ID
-				that.newGoodInfo.classifyId = that.currentTabId;
-				//需要转换成double,不然发送失败500
-				for (var i = 0; i < that.newGoodInfo.specList.length; i++) {
-					that.newGoodInfo.specList[i].fixcount = parseFloat(that.newGoodInfo.specList[i].fixcount);
-					that.newGoodInfo.specList[i].fixprice = parseFloat(that.newGoodInfo.specList[i].fixprice)
-				}
-				//如果售卖方式等于1-2-4的话需要处理unit
-				if (that.newGoodInfo.saleWay === 1) {
-					that.newGoodInfo.specList.push({
+		// 新增商品 - 接收来自组件的表单数据
+		saveGood(formData) {
+			let that = this;
+			
+			// 包装类型选项（用于转换）
+			const packageTypeOptions = [
+				{ label: "定装", value: "2" },
+				{ label: "非定装", value: "1" },
+				{ label: "散装", value: "4" }
+			];
+			
+			// 需要转换成double,不然发送失败500
+			for (var i = 0; i < formData.specList.length; i++) {
+				formData.specList[i].fixcount = parseFloat(formData.specList[i].fixcount) || 0;
+				formData.specList[i].fixprice = parseFloat(formData.specList[i].fixprice) || 0;
+			}
+			
+			// 如果售卖方式等于1-2-4的话需要处理unit
+			if (formData.saleWay === 1 || formData.saleWay === 2 || formData.saleWay === 4) {
+				formData.specList.push({
+					id: that.generateUUID(),
+					specName: formData.unit,
+					fixcount: 1,
+					fixprice: 0,
+					parentId: "",
+					price: 0
+				});
+			}
+			
+			// 需要转换成double,不然发送失败500
+			formData.price = parseFloat(formData.price) || 0;
+			formData.fixTare = parseFloat(formData.fixTare) || 0;
+			formData.initWeight = formData.initWeight ? parseFloat(formData.initWeight) : 0;
+
+			console.log("保存前的 formData:", formData);
+			console.log("附加物品ID:", formData.extralModelId);
+			console.log("附加物品名称:", formData.extralModelName);
+
+			// 分级的话添加分级
+			if (formData.isMultiLevel == 1) {
+				// 添加分级
+				for (var i = 0; i < formData.gradeList.length; i++) {
+					let grade = formData.gradeList[i];
+					
+					// 将 packageType 转换成对应的 value 值
+					let packageTypeValue = grade.packageType;
+					const packageTypeOption = packageTypeOptions.find(opt => opt.label === grade.packageType || opt.value === grade.packageType);
+					if (packageTypeOption) {
+						packageTypeValue = packageTypeOption.value;
+					}
+
+					let levelModel = {
+						specList: [],
+						multiLevelList: [],
+						classifyId: that.currentTabId,
+						price: grade.price ? parseFloat(grade.price) : 0,
+						name: grade.gradeName,
+						fixTare: parseFloat(formData.fixTare),
+						initWeight: grade.avgWeight ? parseFloat(grade.avgWeight) : 0,
+						isShareStock: formData.isShareStock,
+						stockType: formData.stockType, // 继承父级的库存类型
+						extralModelId: formData.extralModelId, // 继承父级的附加物品ID
+						saleWay: parseInt(packageTypeValue), // 使用转换后的 value
+					};
+
+					levelModel.specList.push({
 						id: that.generateUUID(),
-						specName: that.newGoodInfo.unit,
+						specName: grade.countUnit,
 						fixcount: 1,
 						fixprice: 0,
 						parentId: "",
 						price: 0
-					})
-				}
-				if (that.newGoodInfo.saleWay === 2) {
-					that.newGoodInfo.specList.push({
-						id: that.generateUUID(),
-						specName: that.newGoodInfo.unit,
-						fixcount: 1,
-						fixprice: parseFloat(that.newGoodInfo.price),
-						parentId: "",
-						price: 0
-					})
-				}
-				if (that.newGoodInfo.saleWay === 4) {
-					that.newGoodInfo.specList.push({
-						id: that.generateUUID(),
-						specName: that.newGoodInfo.unit,
-						fixcount: 1,
-						fixprice: parseFloat(that.newGoodInfo.price),
-						parentId: "",
-						price: 0
-					})
-				}
-				
-				//需要转换成double,不然发送失败500
-				that.newGoodInfo.price = parseFloat(that.newGoodInfo.price);
-				that.newGoodInfo.fixTare = parseFloat(that.newGoodInfo.fixTare);
-				that.newGoodInfo.initWeight = parseFloat(that.newGoodInfo.initWeight);
-				category.CommoditySave3(JSON.stringify(that.newGoodInfo)).then(res => {
-					uni.showToast({
-						icon: 'none',
-						title: '添加成功',
-						duration: 1200,
 					});
-					that.showAddNewGood = false;
-					that.newGoodInfoReset();
-				})
-			},
-			deleteItem(e) {
-				const indexToDelete = this.goodSelect.findIndex(item => item.id === e.id);
-				// 如果找到了对应的索引，则删除该项
-				if (indexToDelete !== -1) {
-					this.goodSelect.splice(indexToDelete, 1);
+
+					formData.multiLevelList.push(levelModel);
 				}
-			},
+			}
+
+			category.CommoditySave3(JSON.stringify(formData)).then(res => {
+				uni.showToast({
+					icon: 'none',
+					title: '添加成功',
+					duration: 1200,
+				});
+				that.showAddNewGood = false;
+				// 刷新货品列表
+				that.updateActiveTab(that.currentTabId);
+			}).catch(err => {
+				console.error('保存失败:', err);
+				uni.showToast({
+					icon: 'none',
+					title: '保存失败，请重试',
+					duration: 1200,
+				});
+			});
+		},
+		deleteItem(e) {
+			const that = this;
+			// 调用API删除商品
+			uni.showModal({
+				title: '确认删除',
+				content: '确定要删除该货品吗？',
+				success: (res) => {
+					if (res.confirm) {
+						// 显示加载提示
+						uni.showLoading({
+							title: '删除中...',
+							mask: true
+						});
+						
+						category.DeleteCommodity(e.id).then(response => {
+							uni.hideLoading();
+							
+							// 判断返回结果
+							if (response.data === false || response.data === 'false') {
+								// 删除失败
+								uni.showToast({
+									title: '删除失败，产生过数据的货品不能删除',
+									icon: 'none',
+									duration: 2500
+								});
+							} else {
+								// 删除成功，从列表中移除
+								const indexToDelete = that.goodSelect.findIndex(item => item.id === e.id);
+								if (indexToDelete !== -1) {
+									that.goodSelect.splice(indexToDelete, 1);
+								}
+								uni.showToast({
+									title: '删除成功',
+									icon: 'success',
+									duration: 1500
+								});
+							}
+						}).catch(err => {
+							uni.hideLoading();
+							console.error('删除失败:', err);
+							uni.showToast({
+								title: '删除失败，请稍后重试',
+								icon: 'none',
+								duration: 2000
+							});
+						});
+					}
+				}
+			});
+		},
 			generateGUID() {
 				function s4() {
 					return Math.floor((1 + Math.random()) * 0x10000) // 10000
@@ -646,16 +795,20 @@
 						break;
 				}
 			},
-			initSystem() {
-				let that = this;
-				uni.getSystemInfo({
-					success: function(res) {
-						that.windowWidth = res.windowWidth; // 输出屏幕宽度
-						that.windowHeight = JSON.parse(JSON.stringify(res.windowHeight));
-						that.scrollHeight = res.windowHeight - 150 + 'px';
-					}
-				});
-			},
+		initSystem() {
+			let that = this;
+			uni.getSystemInfo({
+				success: function(res) {
+					that.windowWidth = res.windowWidth; // 输出屏幕宽度
+					that.windowHeight = JSON.parse(JSON.stringify(res.windowHeight));
+					that.scrollHeight = res.windowHeight - 150 + 'px';
+					
+					// 固定每行显示4个商品
+					that.itemsPerRow = 4;
+					console.log('屏幕宽度:', res.windowWidth, '每行显示:', that.itemsPerRow, '个商品');
+				}
+			});
+		},
 			showKeyBorad(index, type) {
 				this.valueType = type;
 				this.editingIndex = index;
@@ -765,6 +918,88 @@
 </script>
 
 <style>
+	/* 宫格容器样式 */
+	.goods-grid-container {
+		display: flex;
+		flex-wrap: wrap;
+		padding: 5rpx 0;
+		width: 100%;
+		box-sizing: border-box;
+		overflow: hidden;
+	}
+	
+	/* 宫格商品卡片样式 */
+	.grid-item {
+		background: #ffffff;
+		border-radius: 12rpx;
+		padding: 12rpx;
+		margin: 3rpx;
+		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+		border: 1px solid #e8e8e8;
+		transition: all 0.2s;
+		cursor: pointer;
+		min-height: 80rpx;
+		box-sizing: border-box;
+	}
+	
+	.grid-item:hover {
+		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+		transform: translateY(-2rpx);
+	}
+	
+	/* 货品标签样式 */
+	.good-tag {
+		padding: 2rpx 6rpx;
+		border: 1px solid;
+		border-radius: 4rpx;
+		font-size: 10rpx;
+		line-height: 16rpx;
+		display: inline-block;
+	}
+	
+	/* 删除图标样式 */
+	.delete-icon {
+		position: absolute;
+		top: 5rpx;
+		right: 5rpx;
+		width: 24rpx;
+		height: 24rpx;
+		background: #ff4444;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		z-index: 10;
+		box-shadow: 0 2rpx 4rpx rgba(255, 68, 68, 0.3);
+	}
+	
+	.delete-icon:hover {
+		background: #cc0000;
+		transform: scale(1.1);
+	}
+	
+	/* 滚动区域样式 */
+	.scrollArea {
+		width: 100%;
+		overflow-x: hidden;
+	}
+	
+	/* 添加货品卡片样式 */
+	.add-item {
+		background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+		border: 2px dashed #07c160;
+		cursor: pointer;
+		transition: all 0.3s;
+	}
+	
+	.add-item:hover {
+		background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+		border-color: #059669;
+		transform: translateY(-2rpx);
+		box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.2);
+	}
+	
 	.btn-show {
 		padding: 5px 15px;
 		margin: 0 5px;
@@ -956,7 +1191,7 @@
 	
 	.znj-add-good-modal-wrapper {
 		width: 90%;
-		max-width: 900px;
+		max-width: 1000px;
 		max-height: 90vh;
 		display: flex;
 		flex-direction: column;
@@ -969,12 +1204,13 @@
 		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 		display: flex;
 		flex-direction: column;
-		max-height: 90vh;
+		max-height: 85vh;
+		height: 85vh;
 	}
 	
 	.znj-add-good-modal-header {
 		background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
-		padding: 20px 24px;
+		padding: 12px 16px;
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
@@ -982,60 +1218,113 @@
 	}
 	
 	.znj-add-good-modal-title {
-		font-size: 24px;
-		font-weight: bold;
+		font-size: 20rpx;
+		font-weight: 600;
 		color: #ffffff;
+		flex: 1;
+		text-align: center;
 	}
 	
-	.znj-add-good-modal-close {
-		width: 36px;
-		height: 36px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
+	.znj-add-good-header-btn {
+		min-width: 60rpx;
+		height: 28rpx;
+		line-height: 28rpx;
+		padding: 0 16rpx;
+		border: 1px solid #ffffff;
+		border-radius: 4rpx;
+		font-size: 22rpx;
+		font-weight: 500;
 		cursor: pointer;
-		border-radius: 50%;
-		transition: background 0.2s;
+		transition: all 0.2s;
+		color: #ffffff;
+		background: transparent;
 	}
 	
-	.znj-add-good-modal-close:hover {
+	.znj-add-good-header-btn.cancel:hover {
 		background: rgba(255, 255, 255, 0.2);
+	}
+	
+	.znj-add-good-header-btn.confirm {
+		background: rgba(255, 255, 255, 0.15);
+	}
+	
+	.znj-add-good-header-btn.confirm:hover {
+		background: rgba(255, 255, 255, 0.3);
 	}
 	
 	.znj-add-good-modal-body {
 		flex: 1;
-		overflow-y: auto;
-		padding: 20px;
+		overflow: hidden;
+		min-height: 0;
 	}
 	.znj-add-good-form {
 		display: flex;
 		flex-direction: column;
-		gap: 20rpx;
+		gap: 0;
+		padding: 16rpx;
 	}
 	.znj-add-good-row {
 		display: flex;
 		align-items: center;
-		gap: 5rpx;
+		gap: 8rpx;
 		margin-bottom: 0rpx;
-		min-height: 25rpx;
+		min-height: 28rpx;
+		justify-content: space-between;
+		padding: 16rpx 12rpx;
+		border-radius: 8rpx;
+		margin-bottom: 12rpx;
+		background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+		border: 1px solid #e9ecef;
+		transition: all 0.2s ease;
+	}
+	
+	.znj-add-good-row:hover {
+		background: linear-gradient(135deg, #e3f2fd 0%, #f8f9fa 100%);
+		border-color: #90caf9;
+		box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+	}
+	
+	.znj-add-good-row:nth-child(even) {
+		background: linear-gradient(135deg, #ffffff 0%, #f1f3f5 100%);
+	}
+	
+	.znj-add-good-row:nth-child(even):hover {
+		background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+		border-color: #81c784;
 	}
 	.znj-add-good-label {
-		width: 120rpx;
-		font-size: 15rpx;
+		width: 150rpx;
+		font-size: 30px;
 		color: #333;
-		text-align: right;
-		font-weight: 500;
+		text-align: left;
+		font-weight: 400;
 		flex-shrink: 0;
 	}
 	.znj-add-good-input {
-		flex: 1;
-		height: 32rpx;
-		border-radius: 8rpx;
-		border: 1px solid #e0e0e0;
-		background: #fafbfc;
-		padding: 0 16rpx;
-		font-size: 15rpx;
+		width: 120rpx;
+		height: 28rpx;
+		border-radius: 4rpx;
+		border: 1px solid #ddd;
+		background: #fff;
+		padding: 0 12rpx;
+		font-size: 25px;
 		transition: border-color 0.2s;
+		flex-shrink: 0;
+	}
+	.znj-add-good-input-name {
+		width: 240rpx;
+		height: 28rpx;
+		border-radius: 4rpx;
+		border: 1px solid #ddd;
+		background: #fff;
+		padding: 0 12rpx;
+		font-size: 25px;
+		transition: border-color 0.2s;
+		flex-shrink: 0;
+	}
+	.znj-add-good-input-name:focus {
+		border-color: #1976d2;
+		outline: none;
 	}
 	.znj-add-good-input:focus {
 		border-color: #1976d2;
@@ -1043,88 +1332,141 @@
 	}
 	.znj-add-good-btn-group {
 		display: flex;
-		gap: 12rpx;
-		flex-wrap: wrap;
+		gap: 8rpx;
+		flex-wrap: nowrap;
+		flex: 1;
 	}
 	.znj-add-good-type-btn {
 		background: #f5f5f5;
-		color: #333;
-		border: 1px solid #e0e0e0;
-		border-radius: 8rpx;
-		padding: 0 15rpx;
-		height: 35rpx;
-		line-height: 35rpx;
-		font-size: 20rpx;
+		color: #666;
+		border: 1px solid #ddd;
+		border-radius: 4rpx;
+		padding: 0 10rpx;
+		height: 28rpx;
+		line-height: 28rpx;
+		font-size: 25px;
 		cursor: pointer;
 		transition: all 0.2s;
-		font-weight: 500;
+		font-weight: 400;
+		flex: 1;
+		white-space: nowrap;
 	}
-	.znj-add-good-type-btn.active, .znj-add-good-type-btn:hover {
+	.znj-add-good-type-btn.active {
 		background: #1976d2;
 		color: #fff;
 		border-color: #1976d2;
+	}
+	.znj-add-good-spec-area {
+		background: #f5f5f5;
+		border: 1px solid #e0e0e0;
+		border-radius: 8rpx;
+		padding: 12rpx;
+		margin-top: 8rpx;
+	}
+	.znj-add-good-grade-area {
+		background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+		border: 2px solid #e3e8ef;
+		border-radius: 12rpx;
+		padding: 16rpx;
+		margin: 12rpx 0;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	}
+	.znj-add-good-grade-title {
+		font-size: 28px;
+		font-weight: bold;
+		color: #1976d2;
+		margin-bottom: 16rpx;
+		padding: 12rpx 16rpx;
+		background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 50%, #90caf9 100%);
+		border-radius: 8rpx;
+		text-align: center;
+		letter-spacing: 2rpx;
+		box-shadow: 0 2px 4px rgba(25, 118, 210, 0.2);
+	}
+	.znj-add-good-grade-list {
+		display: flex;
+		flex-direction: column;
+		gap: 12rpx;
+	}
+	.znj-add-good-grade-item {
+		background: #ffffff;
+		border: 1px solid #ddd;
+		border-radius: 8rpx;
+		padding: 12rpx;
+		box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+	}
+	.znj-add-good-grade-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 12rpx;
+		padding-bottom: 8rpx;
+		border-bottom: 1px solid #e8e8e8;
+	}
+	.znj-add-good-grade-name {
+		font-size: 26rpx;
+		font-weight: bold;
+		color: #333;
 	}
 	.znj-add-good-spec-box {
 		display: flex;
 		align-items: center;
 		border: 1px solid #ddd;
-		border-radius: 8rpx;
+		border-radius: 4rpx;
 		overflow: hidden;
-		height: 32rpx;
-		margin-left: 10rpx;
-		background: #fafbfc;
-		box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		height: 28rpx;
+		background: #fff;
 	}
 	.znj-add-good-spec-prefix, .znj-add-good-spec-suffix {
 		background: #1976d2;
 		color: #fff;
-		font-size: 20rpx;
-		padding: 0 12rpx;
+		font-size: 22rpx;
+		padding: 0 8rpx;
 		height: 100%;
 		display: flex;
 		align-items: center;
-		font-weight: 500;
+		font-weight: 400;
+		white-space: nowrap;
 	}
 	.znj-add-good-spec-suffix {
 		background: #07c160;
 	}
 	.znj-add-good-spec-input {
-		width: 80rpx;
+		width: 60rpx;
 		flex: 1;
-		padding: 0 12rpx;
+		padding: 0 8rpx;
 		border: none;
 		outline: none;
-		font-size: 22rpx;
+		font-size: 24rpx;
 		background: transparent;
 		text-align: center;
 	}
 	.znj-add-good-divider {
 		height: 1px;
-		background: linear-gradient(to right, transparent, #e0e0e0, transparent);
-		margin: 5rpx 0;
+		background: #e8e8e8;
+		margin: 8rpx 0;
 	}
 	.znj-add-good-switch-group {
 		display: flex;
-		width: 120rpx;
-		height: 30rpx;
-		border-radius: 8rpx;
+		width: 100rpx;
+		height: 25rpx;
+		border-radius: 4rpx;
 		overflow: hidden;
 		border: 1px solid #ddd;
-		box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 	}
 	.znj-add-good-switch-btn {
 		flex: 1;
 		border: none;
-		background: transparent;
-		color: #333;
-		font-size: 15rpx;
-		line-height: 30rpx;
+		background: #f5f5f5;
+		color: #666;
+		font-size: 25px;
+		line-height: 25rpx;
 		cursor: pointer;
 		transition: all 0.2s;
-		font-weight: 500;
+		font-weight: 400;
 	}
 	.znj-add-good-switch-btn.active {
-		background: #07c160;
+		background: #1976d2;
 		color: #fff;
 	}
 	.znj-add-good-btns {
@@ -1136,54 +1478,38 @@
 		border-top: 1px solid #f0f0f0;
 	}
 	.znj-add-good-btn {
-		min-width: 150rpx;
-		height: 32rpx;
-		line-height: 32rpx;
-		padding: 0 10rpx;
+		min-width: 100rpx;
+		height: 28rpx;
+		line-height: 28rpx;
+		padding: 0 16rpx;
 		border: none;
-		border-radius: 8rpx;
-		font-size: 25rpx;
-		font-weight: bold;
+		border-radius: 4rpx;
+		font-size: 24px;
+		font-weight: 400;
 		cursor: pointer;
 		transition: all 0.2s;
-		box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 	}
 	.znj-add-good-btn.cancel {
-		background: #bdbdbd;
-		color: #fff;
-	}
-	.znj-add-good-btn.cancel:hover {
-		background: #a0a0a0;
-		transform: translateY(-1px);
+		background: #e0e0e0;
+		color: #666;
 	}
 	.znj-add-good-btn.confirm, .znj-add-good-btn.add {
-		background: linear-gradient(135deg, #1976d2, #1565c0);
+		background: #1976d2;
 		color: #fff;
-	}
-	.znj-add-good-btn.confirm:hover, .znj-add-good-btn.add:hover {
-		background: linear-gradient(135deg, #1565c0, #0d47a1);
-		transform: translateY(-1px);
-		box-shadow: 0 4px 8px rgba(25,118,210,0.3);
 	}
 	.znj-add-good-delete-btn {
 		background: #f44336;
 		color: #fff;
 		border: none;
-		border-radius: 6rpx;
-		padding: 0 12rpx;
+		border-radius: 4rpx;
+		padding: 0 10rpx;
 		height: 28rpx;
 		line-height: 28rpx;
-		font-size: 20rpx;
-		font-weight: 500;
+		font-size: 22px;
+		font-weight: 400;
 		cursor: pointer;
 		transition: all 0.2s;
 		margin-left: 8rpx;
-		box-shadow: 0 2px 4px rgba(244,67,54,0.2);
-	}
-	.znj-add-good-delete-btn:hover {
-		background: #d32f2f;
-		transform: translateY(-1px);
-		box-shadow: 0 4px 8px rgba(244,67,54,0.3);
 	}
 
 	/* 添加新分类弹窗美化样式 */
@@ -1333,5 +1659,339 @@
 		background: linear-gradient(135deg, #1565c0, #0d47a1);
 		transform: translateY(-2rpx);
 		box-shadow: 0 4px 16px rgba(25,118,210,0.4);
+	}
+	
+	/* 分级表格样式 - 简洁紧凑风格 */
+	.znj-grade-table {
+		width: 100%;
+		border: 1px solid #ddd;
+		border-radius: 4rpx;
+		background: #ffffff;
+		margin-top: 8rpx;
+		position: relative;
+	}
+	
+	.znj-grade-table-header {
+		display: flex;
+		background: #f5f5f5;
+		border-bottom: 1px solid #ddd;
+		font-weight: 500;
+		color: #666;
+	}
+	
+	.znj-grade-th {
+		padding: 6rpx 4px;
+		text-align: center;
+		font-size: 20px;
+		border-right: 1px solid #e8e8e8;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.znj-grade-th:last-child {
+		border-right: none;
+	}
+	
+	.znj-grade-th-level {
+		flex: 0 0 50rpx;
+	}
+	
+	.znj-grade-th-package {
+		flex: 0 0 80rpx;
+	}
+	
+	.znj-grade-th-unit {
+		flex: 0 0 80rpx;
+	}
+	
+	.znj-grade-th-weight {
+		flex: 1;
+		min-width: 80rpx;
+	}
+	
+	.znj-grade-th-name {
+		flex: 1;
+		min-width: 110rpx;
+	}
+	
+	.znj-grade-th-price {
+		flex: 0 0 70rpx;
+	}
+	
+	.znj-grade-th-action {
+		flex: 0 0 60rpx;
+	}
+	
+	.znj-grade-table-row {
+		display: flex;
+		border-bottom: 1px solid #f0f0f0;
+		transition: all 0.2s ease;
+		position: relative;
+		background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+		margin-bottom: 8rpx;
+		border-radius: 6rpx;
+		border: 1px solid #e9ecef;
+	}
+	
+	.znj-grade-table-row:nth-child(even) {
+		background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+	}
+	
+	.znj-grade-table-row:last-child {
+		margin-bottom: 0;
+	}
+	
+	.znj-grade-table-row:hover {
+		background: linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%);
+		border-color: #90caf9;
+		box-shadow: 0 2px 6px rgba(33, 150, 243, 0.15);
+		transform: translateX(2px);
+	}
+	
+	.znj-grade-td {
+		padding: 6rpx 4rpx;
+		text-align: center;
+		font-size: 20rpx;
+		border-right: 1px solid #f5f5f5;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+	}
+	
+	.znj-grade-td:last-child {
+		border-right: none;
+	}
+	
+	.znj-grade-td-level {
+		flex: 0 0 50rpx;
+		color: #666;
+		font-weight: 400;
+	}
+	
+	.znj-grade-td-package {
+		flex: 0 0 80rpx;
+	}
+	
+	.znj-grade-td-unit {
+		flex: 0 0 80rpx;
+	}
+	
+	.znj-grade-td-weight {
+		flex: 1;
+		min-width: 85rpx;
+		flex-direction: column;
+		gap: 2rpx;
+	}
+	
+	.znj-grade-td-name {
+		flex: 1;
+		min-width: 115rpx;
+	}
+	
+	.znj-grade-td-price {
+		flex: 0 0 80rpx;
+	}
+	
+	.znj-grade-td-action {
+		flex: 0 0 60rpx;
+	}
+	
+	.znj-grade-input {
+		width: 90%;
+		height: 24rpx;
+		border: 1px solid #e0e0e0;
+		border-radius: 2rpx;
+		padding: 0 6rpx;
+		font-size: 23px;
+		text-align: center;
+		background: #fff;
+		transition: border-color 0.15s;
+	}
+	
+	.znj-grade-input:focus {
+		border-color: #1976d2;
+		outline: none;
+	}
+	
+	.znj-grade-unit-text {
+		font-size: 16rpx;
+		color: #999;
+	}
+	
+	.znj-grade-delete-btn {
+		width: 20rpx;
+		height: 20rpx;
+		background: #ff4444;
+		border: none;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		transition: all 0.15s;
+		padding: 0;
+	}
+	
+	.znj-grade-delete-btn:hover {
+		background: #cc0000;
+	}
+	
+	.znj-add-grade-btn-wrapper {
+		margin-top: 8rpx;
+		padding: 8rpx;
+		border: 1px dashed #07c160;
+		border-radius: 4rpx;
+		background: transparent;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		cursor: pointer;
+		transition: all 0.15s;
+	}
+	
+	.znj-add-grade-btn-wrapper:hover {
+		background: #f9fff9;
+	}
+	
+	.znj-add-grade-btn {
+		background: transparent;
+		border: none;
+		color: #07c160;
+		font-size: 20rpx;
+		font-weight: 400;
+		cursor: pointer;
+		padding: 0;
+	}
+	
+	.znj-extra-fee-wrapper {
+		margin-top: 8rpx;
+		padding: 8rpx 12rpx;
+		background: #fafafa;
+		border: 1px solid #e8e8e8;
+		border-radius: 4rpx;
+		display: flex;
+		align-items: center;
+		gap: 8rpx;
+	}
+	
+	.znj-extra-fee-icon {
+		width: 28rpx;
+		height: 28rpx;
+		background: #f0fff0;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.znj-extra-fee-text {
+		flex: 1;
+		font-size: 20rpx;
+		color: #333;
+		font-weight: 400;
+	}
+	
+	.znj-extra-fee-btn {
+		background: transparent;
+		border: none;
+		color: #666;
+		font-size: 18rpx;
+		padding: 0;
+		cursor: pointer;
+	}
+	
+	/* 原生下拉选择样式 */
+	.native-select-wrapper {
+		position: relative;
+		width: 100%;
+		height: 100%;
+	}
+	
+	.native-select {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 0 6rpx;
+		height: 24rpx;
+		border: 1px solid #e0e0e0;
+		border-radius: 2rpx;
+		background: #fff;
+		cursor: pointer;
+		transition: all 0.15s;
+		font-size: 15rpx;
+		font-weight: bold;
+	}
+	
+	.native-select.active,
+	.native-select:hover {
+		border-color: #1976d2;
+	}
+	
+	.native-select-value {
+		flex: 1;
+		color: #000;
+		text-align: center;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	
+	.native-select-arrow {
+		font-size: 10rpx;
+		color: #999;
+		margin-left: 4rpx;
+		transition: transform 0.2s;
+	}
+	
+	.native-select.active .native-select-arrow {
+		transform: rotate(180deg);
+	}
+	
+	/* 全局下拉选项（fixed定位，提升到外层） */
+	.native-select-options-global {
+		position: fixed;
+		max-height: 200rpx;
+		background: #fff;
+		border: 1px solid #8b8b8b;
+		border-radius: 4rpx;
+		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+		overflow-y: auto;
+		z-index: 100001;
+		padding: 4rpx 0;
+	}
+	
+	.native-select-item {
+		padding: 8rpx 10rpx;
+		font-size: 14px;
+		text-align: center;
+		cursor: pointer;
+		transition: background-color 0.15s;
+		color: #333;
+	}
+	
+	.native-select-item:hover {
+		background-color: #f5f5f5;
+	}
+	
+	.native-select-item.active {
+		background-color: #007AFF;
+		color: #fff;
+	}
+	
+	.native-select-item.active:hover {
+		background-color: #007AFF;
+	}
+	
+	/* 原生下拉选择蒙板 */
+	.native-select-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(0, 0, 0, 0.3);
+		z-index: 100000;
 	}
 </style>

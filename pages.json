@@ -1,13 +1,5 @@
 {
-	// "condition": { //模式配置，仅开发期间生效
-	// 	"current": 0, //当前激活的模式(list 的索引项)
-	// 	"list": [{
-	// 		"name": "test", //模式名称
-	// 		"path": "pages/componentsA/test/test", //启动页面，必选
-	// 		"query": "" //启动参数，在页面的onLoad函数里面得到
-	// 	}]
-	// },
-	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+	"pages": [
 		{
 			"path": "pages/cashier/cashier",
 			"style": {
@@ -19,13 +11,6 @@
 			"path": "pages/cashier/tuigeCashier",
 			"style": {
 				"navigationBarTitleText": "退单",
-				"enablePullDownRefresh": false
-			}
-		},
-		{
-			"path": "pages/cashier/timeCardCashier",
-			"style": {
-				"navigationBarTitleText": "计次核销",
 				"enablePullDownRefresh": false
 			}
 		},
@@ -98,6 +83,20 @@
 				"enablePullDownRefresh": false
 			}
 		},
+		{
+			"path": "pages/good/employInventoryRecord",
+			"style": {
+				"navigationBarTitleText": "库存记录",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/good/relatedOrders",
+			"style": {
+				"navigationBarTitleText": "关联订单",
+				"enablePullDownRefresh": false
+			}
+		},
 		
 		{
 			"path": "pages/good/goodPurchaseEmploy",
@@ -106,13 +105,20 @@
 				"enablePullDownRefresh": false
 			}
 		},
-		{
-			"path": "pages/good/purchaseOrder",
-			"style": {
-				"navigationBarTitleText": "入库单管理",
-				"enablePullDownRefresh": false
-			}
-		},
+	{
+		"path": "pages/good/purchaseOrder",
+		"style": {
+			"navigationBarTitleText": "入库单管理",
+			"enablePullDownRefresh": false
+		}
+	},
+	{
+		"path": "pages/good/purchaseOrderEdit",
+		"style": {
+			"navigationBarTitleText": "编辑采购单",
+			"enablePullDownRefresh": false
+		}
+	},
 		{
 			"path": "pages/setting/operaRecord",
 			"style": {
@@ -127,6 +133,55 @@
 				"enablePullDownRefresh": false
 			}
 		},
+	{
+		"path": "pages/settlement/settlementConfirm",
+		"style": {
+			"navigationBarTitleText": "确认结算",
+			"enablePullDownRefresh": false
+		}
+	},
+	{
+		"path": "pages/settlement/settlementDetail",
+		"style": {
+			"navigationBarTitleText": "结算记录详情",
+			"enablePullDownRefresh": false
+		}
+	},
+	{
+		"path": "pages/settlement/goodSaleDetail",
+		"style": {
+			"navigationBarTitleText": "未结算明细",
+			"enablePullDownRefresh": false
+		}
+	},
+	{
+		"path": "pages/settlement/settlementList",
+		"style": {
+			"navigationBarTitleText": "结算单列表",
+			"enablePullDownRefresh": false
+		}
+	},
+	{
+		"path": "pages/settlement/batchSettlementDetail",
+		"style": {
+			"navigationBarTitleText": "批次结算详情",
+			"enablePullDownRefresh": false
+		}
+	},
+	{
+		"path": "pages/shipper/consignmentShipper",
+		"style": {
+			"navigationBarTitleText": "代卖货主管理",
+			"enablePullDownRefresh": false
+		}
+	},
+	{
+		"path": "pages/shipper/batchList",
+		"style": {
+			"navigationBarTitleText": "全部批次",
+			"enablePullDownRefresh": false
+		}
+	},
 		{
 			"path": "pages/rotating/rotatingIndex",
 			"style": {
@@ -145,6 +200,13 @@
 			"path": "pages/auth/companySelection",
 			"style": {
 				"navigationBarTitleText": "选择商家",
+				"enablePullDownRefresh": false
+			}
+		},
+		{
+			"path": "pages/settlement/settlementDetail",
+			"style": {
+				"navigationBarTitleText": "未付款批次列表",
 				"enablePullDownRefresh": false
 			}
 		},
@@ -211,13 +273,20 @@
 				"enablePullDownRefresh": false
 			}
 		},
-		{
-			"path": "pages/table/dutyStaticTable",
-			"style": {
-				"navigationBarTitleText": "轮值数据统计表",
-				"enablePullDownRefresh": false
-			}
+	{
+		"path": "pages/table/dutyStaticTable",
+		"style": {
+			"navigationBarTitleText": "轮值数据统计表",
+			"enablePullDownRefresh": false
 		}
+	},
+	{
+		"path": "pages/table/operaRecordTable",
+		"style": {
+			"navigationBarTitleText": "异常操作记录表",
+			"enablePullDownRefresh": false
+		}
+	}
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",

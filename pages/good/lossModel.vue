@@ -1,52 +1,17 @@
 <template>
 	<div>
 		<div style="display: flex; width: 100%;">
-			<div style="width: 220rpx; background-color: #ffffff;display: flex;">
-				<div>
-					<div style="display: flex;margin-left: 5rpx;margin-top: 5rpx;line-height: 18rpx;margin-bottom: 10px;">
-						<div style="align-items: left;">
-							<button
-								style="height: 18rpx;line-height: 18rpx;color:#ffffff;font-weight: bold;background: #dddddd;"
-								@click="back"><uni-icons custom-prefix="iconfont" type="icon-fanhui" size="15"
-									color="#ffffff" style="margin-right: 5px;"></uni-icons>返回</button>
-						</div>
-						<text style="font-size: 15rpx;font-weight: bold;color: #333;margin-left: 10rpx;">选择货品</text>
-					</div>
-					<!-- 圆弧边卡片 -->
-					<div>
-						<scroll-view class="scrollArea" scroll-y="true"
-							:style="{ height: scrollHeight + 'px',width:'217rpx',backgroundColor:'#ddd' }">
-							<div
-								style="display: flex; flex-direction: column; gap: 5rpx;background-color: #ddd;height: 100%;">
-								<div style="margin-top: 2rpx;"></div>
-								<div style="display: flex; flex-wrap: wrap; ">
-									<div :class="['clickCard',getCommdityActive(item.id)?'activeCard':'' ]"
-										@click="addCommodity(item)" v-for="item in commodityList">
-										<div>
-											<text style="font-size: 15rpx;font-weight: bold;">
-												{{item.name}}
-											</text>
-											<br>
-											<text v-if="item.saleWay===1"
-												style="margin-top: 5rpx; font-size: 10rpx; padding-left: 2rpx;padding-right: 2rpx;color: #31BDEC;border: 1px solid #31BDEC;border-radius: 2rpx;">非定装</text>
-											<text v-if="item.saleWay===2"
-												style="margin-top: 5rpx; font-size: 10rpx; padding-left: 2rpx;padding-right: 2rpx;color: #00aa00;border: 1px solid #31BDEC;border-radius: 2rpx;">定装</text>
-											<text v-if="item.saleWay===3"
-												style="margin-top: 5rpx; font-size: 10rpx; padding-left: 2rpx;padding-right: 2rpx;color: #aa55ff;border: 1px solid #aa55ff;border-radius: 2rpx;">定装拆包</text>
-											<text v-if="item.extralModel"
-												style="margin-top: 5rpx;margin-left: 5rpx; font-size: 10rpx; padding-left: 2rpx;padding-right: 2rpx;color: #ff5500;border: 1px solid #ff5500;border-radius: 2rpx;">{{item.extralModel.name}}</text>
-										</div>
-									</div>
-								</div>
-							</div>
-						</scroll-view>
-
-					</div>
-
-				</div>
-				<!-- 垂直线 -->
-				<div style="width: 3rpx; background-color: #ccc; "></div>
-			</div>
+			<!-- 商品选择器组件 -->
+			<GoodsSelector
+				:commodity-list="commodityList"
+				:category-list="[]"
+				:selected-ids="selectedCommodityIds"
+				:height="scrollHeight"
+				:show-back-button="true"
+				:show-add-button="false"
+				@back="back"
+				@item-click="addCommodity"
+			></GoodsSelector>
 			<div style="flex: 1; background-color: #ffffff; text-align: right;">
 				<div
 					style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx; display: flex; justify-content: space-between; align-items: center;">
@@ -57,55 +22,47 @@
 				</div>
 				<div :style="{marginLeft: '5rpx',marginRight: '5rpx', height: (windowHeight-60)+'px'}">
 					<!-- 表头 -->
-					<div
-						style="display: flex; background-color: #b9b9b9 ; font-weight: bold; border-bottom: 1px solid #f4f4f4;">
-						<div style="flex: 3; padding: 8px; border-right: 1px solid #f4f4f4; text-align: left;">货品</div>
-						<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: left;">报损数量
+					<div class="table-header">
+						<div style="flex: 3; padding: 10px; text-align: left;">
+							<text style="font-size: 16px; font-weight: bold;">货品</text>
 						</div>
-						<div style="width: 40rpx;padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">操作
+						<div style="flex: 2; padding: 10px; text-align: center;">
+							<text style="font-size: 16px; font-weight: bold;">报损数量</text>
+						</div>
+						<div style="width: 40rpx;padding: 10px; text-align: center;">
+							<text style="font-size: 16px; font-weight: bold;">操作</text>
 						</div>
 					</div>
 
 					<scroll-view class="scrollArea" scroll-y="true" :style="{height:scrollHeight2}"
 						:scroll-into-view="targetId">
-						<div style="display: flex; height: 25rpx;" v-for="(item, index) in LossCommodityList"
+						<div style="display: flex; height: 45rpx; font-size: 18rpx;" v-for="(item, index) in LossCommodityList"
 							:id="'id-' + index + '-view'" :key="index"
 							:style="{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#f0f0f0' }">
 							<div
-								style="flex: 3; padding: 5px; text-align: left; font-weight: bold; line-height: 20rpx;">
+								style="flex: 3; padding: 8px; text-align: left; font-weight: bold; line-height: 35rpx;">
 								{{ item.name }}
 							</div>
-							<div style="flex: 2; padding: 4px; text-align: left;display: flex;">
-								<input @click="showKeyBorad(index,1)" inputmode="none" class="input1"
-									v-model="item.mount" style="flex: 3" />
-								<div style="flex: 1;line-height: 25rpx;text-align: center;">
-									/{{item.spec?item.spec.specName:""}}</div>
+							<div style="flex: 2; padding: 8px; text-align: left; display: flex; align-items: center; justify-content: center; gap: 5rpx;">
+								<input @click="showKeyBorad(index,1)" inputmode="none" 
+									:class="['input1', { 'input-active': editingIndex === index && valueType === 1 }]"
+									v-model="item.mount" />
+								<text style="font-size: 16px; color: #666; font-weight: 500; min-width: 40rpx;">{{item.spec?item.spec.specName:""}}</text>
 							</div>
 							<div
-								style="width: 40rpx; padding: 4px; border-right: 1px solid #f4f4f4; text-align: center; line-height: 20rpx;">
-								<uni-icons custom-prefix="iconfont" type="icon-shanchu" size="20"
+								style="width: 40rpx; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center; line-height: 35rpx; display: flex; align-items: center; justify-content: center;">
+								<uni-icons custom-prefix="iconfont" type="icon-shanchu" size="24"
 									@click="deleteBatchCommdity(index)" color="#aa0000"></uni-icons>
 							</div>
 						</div>
-						<div
-							style="display: flex; height: 25rpx;font-size: 12rpx;border-top: 1px solid gainsboro;border-bottom: 1px solid gainsboro;">
-							<div
-								style="flex: 3; padding: 5px; text-align: left; font-weight: bold; line-height: 20rpx;">
+						<div class="total-content">
+							<div class="total-content-item" style="flex: 3;">
 								总计：
 							</div>
-							<div
-								style="flex: 2; padding: 4px; text-align: center;font-weight: bold; line-height: 20rpx;">
+							<div class="total-content-item" style="flex: 2;">
 								总数：{{totalInitInventory()}}
 							</div>
-							<div
-								style="flex: 2; padding: 4px; text-align: center;font-weight: bold; line-height: 20rpx;">
-								总重：{{totalInitWeight()}}
-							</div>
-							<div style="flex: 2; padding: 4px; text-align: left;font-weight: bold; line-height: 20rpx;">
-
-							</div>
-							<div
-								style="width: 40rpx; padding: 4px; border-right: 1px solid #f4f4f4; text-align: center; line-height: 20rpx;">
+							<div class="total-content-item" style="width: 40rpx;">
 
 							</div>
 						</div>
@@ -113,14 +70,14 @@
 					<!--键盘-->
 					<div v-if="showKeyBoard1">
 						<view class="mybrankmask"
-							:style="{ width: '340rpx', height: '150rpx', backgroundColor: '#ffffff', zIndex: 999, left: 0, bottom: 0 }">
-							<view style="padding: 5rpx;">
+							:style="{ width: '450rpx', height: '200rpx', backgroundColor: '#ffffff', zIndex: 999, left: 0, bottom: 0, boxShadow: '0 -4rpx 20rpx rgba(0,0,0,0.15)' }">
+							<view style="padding: 8rpx;">
 								<view class="MymaskList">
 									<view class="maskListItem" @click="NumberCk(1)">1</view>
 									<view class="maskListItem" @click="NumberCk(2)">2</view>
 									<view class="maskListItem" @click="NumberCk(3)">3</view>
 									<view class="maskListItem " @click="Tuige()"><uni-icons custom-prefix="iconfont"
-											type="icon-tuige" size="30" color="#ffffff"
+											type="icon-tuige" size="35" color="#ffffff"
 											style="margin-right: 5rpx;"></uni-icons>
 									</view>
 
@@ -131,7 +88,7 @@
 									<view class="maskListItem" @click="NumberCk(6)">6</view>
 
 									<view class="maskListItem" @click="NumberCk('+')"
-										style="font-size: 25px;color: white;">
+										style="font-size: 35rpx;color: white;">
 										+</view>
 								</view>
 								<view class="MymaskList">
@@ -139,13 +96,13 @@
 									<view class="maskListItem" @click="NumberCk(8)">8</view>
 									<view class="maskListItem" @click="NumberCk(9)">9</view>
 									<view class="maskListItem" @click="NumberCk('-')"
-										style="font-size: 25px;color: white;">
+										style="font-size: 35rpx;color: white;">
 										-</view>
 								</view>
 								<view class="MymaskList">
 									<view class="maskListItem" @click="NumberCk(0)" style="width: 48%;">0</view>
 									<view class="maskListItem" @click="NumberCk('.')">.</view>
-									<view class="maskListItem" style="background-color: #31BDEC;color: white;"
+									<view class="maskListItem confirm-btn"
 										@click="hideBorad">确定
 									</view>
 								</view>
@@ -165,8 +122,37 @@
 
 
 		</div>
+	
+	<!-- 规格选择弹窗（拆包） -->
+	<div v-if="specPopup.visible" class="spec-popup-mask" @click="closeSpecPopup">
+		<div 
+			class="spec-popup-container" 
+			:style="specPopupStyle"
+			@click.stop
+		>
+			<div class="spec-popup-content">
+				<div 
+					v-for="(spec, index) in specPopup.specList" 
+					:key="index"
+					class="spec-item"
+					@click="handleSpecClick(spec)"
+				>
+					<!-- 商品名称 + 规格名称 -->
+					<div class="spec-item-name">
+						{{ specPopup.commodity.name }}-{{ spec.specName }}
+					</div>
+					
+					<!-- 商品信息区域 -->
+					<div class="spec-item-info">
+						<!-- 标签行 -->
+						<div class="spec-item-tags">
+							<div class="tag tag-unpack">拆包</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
-
 	</div>
 </template>
 
@@ -174,7 +160,12 @@
 	import batch from '../../api/batch/batch'
 	import lossModelApi from '../../api/lossModel/lossModelApi';
 	import purchase from '../../api/purchase/purchase';
+	import GoodsSelector from '../../components/GoodsSelector/GoodsSelector.vue'
+	
 	export default {
+		components: {
+			GoodsSelector
+		},
 		data() {
 			return {
 				scrollHeight: 0,
@@ -186,12 +177,49 @@
 				windowHeight: 0,
 				scrollHeight2: '0px',
 				currentClassId: '',
-				editingIndex: 0,
+				editingIndex: -1,
 				userInfo:null,
 				showKeyBoard1: false,
 				LossCommodityList: [],
 				targetId: "id-0-view",
 				showComfirmBtn: true,
+				// 规格弹窗数据（拆包）
+				specPopup: {
+					visible: false,
+					left: 0,
+					top: 0,
+					commodity: null,
+					specList: []
+				},
+			}
+		},
+		computed: {
+			// 已选商品ID列表
+			selectedCommodityIds() {
+				return this.LossCommodityList.map(item => item.commodityId);
+			},
+			// 规格弹窗样式（拆包）
+			specPopupStyle() {
+				const { left, top, specList } = this.specPopup;
+				if (!specList || specList.length === 0) {
+					return {};
+				}
+				const itemHeight = 90; // 每项高度
+				const popupHeight = Math.min(specList.length * itemHeight + 10, 450); // 限制最大高度450px
+				
+				// 使用 uni-app 兼容的方式获取屏幕高度
+				const screenHeight = this.windowHeight || uni.getWindowInfo().windowHeight;
+				
+				// 计算最佳位置（避免超出屏幕）
+				let adjustedTop = top - 100 < 0 ? 0 : top - 100;
+				adjustedTop = adjustedTop + popupHeight > screenHeight 
+					? screenHeight - popupHeight - 20
+					: adjustedTop;
+				
+				return {
+					left: left + 'px',
+					top: adjustedTop + 'px'
+				};
 			}
 		},
 		onLoad(options) {
@@ -199,7 +227,7 @@
 		},
 		mounted() {
 			// 在组件挂载后设置 scrollHeight
-			this.scrollHeight = uni.getWindowInfo().windowHeight - 55;
+			this.scrollHeight = uni.getWindowInfo().windowHeight - 155;
 			this.windowHeight = uni.getWindowInfo().windowHeight;
 			this.companyId = uni.getStorageSync('companyId');
 			this.userInfo = uni.getStorageSync("userInfo");
@@ -210,19 +238,8 @@
 		methods: {
 			totalInitInventory() {
 				return this.LossCommodityList.reduce((total, item) => {
-					return total + (parseFloat(item.initInventory) || 0);
+					return total + (parseFloat(item.mount) || 0);
 				}, 0);
-			},
-			totalInitWeight() {
-				return this.LossCommodityList.reduce((total, item) => {
-					return total + (parseFloat(item.totalWeight) || 0);
-				}, 0);
-			},
-			getCommdityActive(id) {
-				if (this.LossCommodityList.some(x => x.commodityId === id)) {
-					return true;
-				}
-				return false;
 			},
 			NumberCk(val) {
 				let myvalue = "";
@@ -251,14 +268,18 @@
 						myvalue = this.LossCommodityList[this.editingIndex].mount;
 						break;
 				}
-				if (myvalue == null || myvalue === '' || myvalue === '0') {
+				if (myvalue == null || myvalue === '' || myvalue.toString() === '0') {
 					return;
 				}
 				myvalue = myvalue ? myvalue.toString() : '';
-				myvalue = myvalue.slice(0, -1);
+				if(myvalue.length == 1){
+					myvalue = "0";
+				}else{
+					myvalue = myvalue.slice(0, -1);
+				}
 				switch (this.valueType) {
 					case 1:
-						this.LossCommodityList[this.editingIndex].mount = myvalue === '' ? '0' : myvalue;
+						this.LossCommodityList[this.editingIndex].mount = myvalue;
 						break;
 				}
 			},
@@ -280,11 +301,15 @@
 				this.valueType = type;
 				this.editingIndex = index;
 				this.showKeyBoard1 = true;
-				this.scrollHeight2 = this.windowHeight - 210 - 150 + 'px';
+				// 键盘高度调整为200rpx
+				this.scrollHeight2 = this.windowHeight - 210 - 200 + 'px';
 			},
 			hideBorad() {
 				this.scrollHeight2 = this.windowHeight - 150 + 'px';
 				this.showKeyBoard1 = false;
+				// 清除激活状态
+				this.editingIndex = -1;
+				this.valueType = 0;
 			},
 			saveBatchGood() {
 				let that = this;
@@ -357,6 +382,7 @@
 						this.commodityList.push({
 							id: res.data[i].id,
 							key: i,
+							commodityName: res.data[i].commodityName, // 使用 commodityName 适配 GoodsSelector
 							name: res.data[i].commodityName,
 							price: res.data[i].price,
 							commoditySpecs:res.data[i].commoditySpecs,
@@ -366,26 +392,85 @@
 							initWeight: res.data[i].initWeight,
 							extralModel: res.data[i].extralModel,
 							saleWay: res.data[i].saleWay,
-							outPutPurchaseInventories: res.data[i].outPutPurchaseInventories
+							outPutPurchaseInventories: res.data[i].outPutPurchaseInventories,
+							isMultiLevel: 0 // 不支持多等级
 						})
 					}
 
 				})
 			},
 			addCommodity(e) {
-				if (this.getCommdityActive(e.id)) return;
-				if (e.saleWay === 1 || e.saleWay === 2) {
+				// 检查是否已经添加
+				if (this.LossCommodityList.some(x => x.commodityId === e.id)) return;
+				
+				if (e.saleWay === 1 || e.saleWay === 2 || e.saleWay === 4) {
 					var commodityAdded = {
 						id: "",
 						name: e.name,
 						commodityId: e.id,
-						mount:0
+						mount: 0
 					}
 					if (e.commoditySpecs.length > 0) {
 						commodityAdded.spec = e.commoditySpecs[0]
 					}
 					this.LossCommodityList.push(commodityAdded)
 				}
+				
+				// 处理定装拆包
+				if(e.saleWay === 3){
+					uni.createSelectorQuery().selectAll(`#grid-item-${e.id}`).boundingClientRect(data => {
+						console.log("拆包商品位置信息", data)
+						if (data && data.length > 0) {
+							this.createSpecPopup(data[0].left + data[0].width / 2, data[0].top, e, e.commoditySpecs)
+						}
+					}).exec()
+				}
+			},
+			
+			// 用于添加拆包商品
+			addCommodity2(e, spec) {
+				var commodityAdded = {
+					id: "",
+					name: e.name,
+					commodityId: e.id,
+					mount: 0
+				}
+				commodityAdded.spec = spec
+				this.LossCommodityList.push(commodityAdded)
+			},
+			
+			// 创建规格弹窗（拆包）
+			createSpecPopup(left, top, commodity, specList) {
+				if (!specList || specList.length < 1) return;
+				
+				this.specPopup = {
+					visible: true,
+					left,
+					top,
+					commodity,
+					specList
+				};
+			},
+			
+			// 关闭规格弹窗
+			closeSpecPopup() {
+				this.specPopup.visible = false;
+				// 延迟清空数据，等动画完成
+				setTimeout(() => {
+					this.specPopup = {
+						visible: false,
+						left: 0,
+						top: 0,
+						commodity: null,
+						specList: []
+					};
+				}, 300);
+			},
+			
+			// 点击规格项
+			handleSpecClick(spec) {
+				this.addCommodity2(this.specPopup.commodity, spec);
+				this.closeSpecPopup();
 			}
 		}
 
@@ -405,75 +490,239 @@
 		margin-right: 15rpx;
 		display: inline-block;
 		border-radius: 10rpx;
+		cursor: pointer;
+		transition: all 0.3s ease;
 	}
 
 	.coach_wrap_active {
-		color: white;
-		background-color: dodgerblue;
+		color: white !important;
+		background-color: dodgerblue !important;
+		border-color: dodgerblue !important;
 	}
 
 	.input1 {
-		background-color: #b9b9b9;
-		height: 20rpx;
-		border-radius: 5rpx;
-		font-size: 15rpx;
+		background: #f5f5f5;
+		height: 28rpx;
+		border-radius: 8rpx;
+		font-size: 18rpx;
 		text-align: center;
-		border: 1px solid black;
+		border: 2px solid #919191;
 		font-weight: bold;
-		color: black;
-		width: 90%;
-
+		color: #5a5a5a;
+		width: 70%;
+		flex: 1;
+		transition: all 0.3s ease;
+		box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+		line-height: 28rpx;
+	}
+	
+	.input-active {
+		background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+		border: 2px solid #2196f3 !important;
+		color: #1565c0 !important;
+		box-shadow: 0 2rpx 8rpx rgba(33, 150, 243, 0.3) !important;
+	}
+	
+	.input1:focus {
+		border-color: #1976d2;
+		box-shadow: 0 0 0 3rpx rgba(33, 150, 243, 0.2);
+		background: #ffffff;
 	}
 
 	.mybrankmask .MymaskList {
 		font-weight: bold;
 		display: flex;
 		width: 100%;
-		height: 30rpx;
+		height: 42rpx;
 		justify-content: space-around;
-		margin-bottom: 5rpx;
-		font-size: 12rpx;
-
+		margin-bottom: 6rpx;
+		font-size: 26rpx;
 	}
 
 	.mybrankmask .MymaskList .large {
 		font-weight: bold;
-		height: 65;
-		/* 设置更高的高度 */
-		line-height: 65rpx;
-		/* 使文本垂直居中 */
+		height: 42rpx;
+		line-height: 42rpx;
 		z-index: 5;
-		font-size: 12rpx;
+		font-size: 26rpx;
 	}
 
 	.mybrankmask .MymaskList .maskListItem {
 		font-weight: bold;
 		width: 23%;
-		height: 30rpx;
+		height: 42rpx;
 		text-align: center;
-		line-height: 30rpx;
-		border-radius: 10rpx;
-		background-color: #a8a8a8;
-		font-size: 12rpx;
-	}
-
-	.clickCard {
-		margin-left: 2rpx;
-		margin-right: 2rpx;
-		width: 104rpx;
-		height: 70rpx;
-		background-color: #ffffff !important;
+		line-height: 42rpx;
 		border-radius: 8rpx;
-		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
-		padding: 10rpx;
-		box-sizing: border-box;
-		text-align: left;
-		font-size: 14rpx;
-		color: #333;
-		margin-bottom: 3rpx;
+		background: #5a5a5a;
+		font-size: 26rpx;
+		color: white;
+		transition: all 0.15s;
+		box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
+	}
+	
+	.mybrankmask .MymaskList .maskListItem:active {
+		opacity: 0.8;
+		transform: scale(0.96);
+		background: #4a4a4a;
+		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.3);
+	}
+	
+	.mybrankmask .MymaskList .confirm-btn {
+		background: #11998e;
+		font-weight: bold;
+	}
+	
+	.mybrankmask .MymaskList .confirm-btn:active {
+		opacity: 0.8;
+		background: #0d7a6f;
 	}
 
-	.activeCard {
-		border: 3px solid #007AFF;
+	.total-content {
+		display: flex;
+		height: 35rpx;
+		font-size: 16rpx;
+		background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+		border-top: 2px solid #fdcb6e;
+		border-bottom: 2px solid #fdcb6e;
+		box-shadow: 0 2rpx 8rpx rgba(253, 203, 110, 0.3);
+		align-items: center;
+	}
+
+	.total-content-item {
+		padding: 8px;
+		text-align: left;
+		font-weight: bold;
+		line-height: 28rpx;
+		color: #d63031;
+		font-size: 15px;
+	}
+	
+	/* 表头美化样式 */
+	.table-header {
+		display: flex;
+		background: #2196f3;
+		font-weight: bold;
+		border-bottom: none;
+		color: #ffffff;
+		box-shadow: 0 2rpx 8rpx rgba(33, 150, 243, 0.3);
+		border-radius: 8rpx 8rpx 0 0;
+	}
+
+	/* 规格选择弹窗样式（拆包） */
+	.spec-popup-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.3);
+		z-index: 9998;
+		animation: fadeIn 0.2s ease-out;
+	}
+	
+	.spec-popup-container {
+		position: fixed;
+		min-width: 250px;
+		max-width: 500px;
+		background-color: #ffffff;
+		border: 3px solid #00aaff;
+		border-radius: 12px;
+		overflow: hidden;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+		z-index: 9999;
+		animation: scaleIn 0.2s ease-out;
+		display: flex;
+		flex-direction: column;
+	}
+	
+	.spec-popup-content {
+		padding: 5px;
+		overflow-y: auto;
+		max-height: 450px;
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	
+	.spec-item {
+		min-height: 70px;
+		padding: 12px;
+		border: 3px solid #7e7e7e;
+		border-radius: 8px;
+		background: #ffffff;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	
+	.spec-item:hover {
+		border-color: #00aaff;
+		background: linear-gradient(135deg, rgba(0, 170, 255, 0.05) 0%, rgba(0, 136, 204, 0.05) 100%);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
+	}
+	
+	.spec-item:active {
+		transform: translateY(0);
+		box-shadow: 0 2px 6px rgba(0, 170, 255, 0.3);
+	}
+	
+	.spec-item-name {
+		font-size: 18rpx;
+		font-weight: bold;
+		color: #333;
+		line-height: 1.4;
+		word-break: break-all;
+	}
+	
+	.spec-item-info {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	
+	.spec-item-tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+	}
+	
+	.tag {
+		padding: 2px 6px;
+		border-radius: 3px;
+		font-size: 12rpx;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+	
+	.tag-unpack {
+		color: #dc9300;
+		border: 1px solid #dc9300;
+		background: rgba(220, 147, 0, 0.1);
+	}
+	
+	/* 淡入动画 */
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+	
+	/* 缩放动画 */
+	@keyframes scaleIn {
+		from {
+			transform: scale(0.8);
+			opacity: 0;
+		}
+		to {
+			transform: scale(1);
+			opacity: 1;
+		}
 	}
 </style>

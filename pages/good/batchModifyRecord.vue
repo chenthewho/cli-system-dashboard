@@ -3,30 +3,31 @@
     <!-- 修改记录内容 -->
     <div style="width: 100%; background-color: #ffffff; text-align: right;">
       <!-- 头部信息 -->
-      <div style="height: 50rpx; margin: 10rpx; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10rpx;">
+      <div style="height: 60rpx; margin: 10rpx; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 10rpx 15rpx; border-radius: 8rpx; box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);">
         <div style="display: flex; align-items: center;">
           <!-- 返回按钮 -->
           <button @click="goBack" style="
-            height: 30rpx;
-            line-height: 30rpx;
+            height: 35rpx;
+            line-height: 35rpx;
             font-weight: bold;
-            background-color: #6c757d;
+            background-color: #5a5a5a;
             color: #ffffff;
-            font-size: 12rpx;
-            padding: 0 15rpx;
-            border-radius: 4rpx;
+            font-size: 14rpx;
+            padding: 0 20rpx;
+            border-radius: 6rpx;
             border: none;
             cursor: pointer;
             margin-right: 20rpx;
+            box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
           ">
             ← 返回
           </button>
           
           <!-- 批次信息 -->
-          <div style="font-size: 16rpx; font-weight: bold;" v-if="selectBatch">
+          <div style="font-size: 18rpx; font-weight: bold;" v-if="selectBatch">
             <text style="margin-right: 10rpx; color: #333;">{{selectBatch.shipperName}}</text>
-            <text style="color: #007AFF;">{{selectBatch.batchCode}}</text>
-            <text style="margin-left: 20rpx; font-size: 12rpx; color: #666;">
+            <text style="color: #2196f3;">{{selectBatch.batchCode}}</text>
+            <text style="margin-left: 20rpx; font-size: 14rpx; color: #666;">
               修改记录总计: {{modifyRecords.length}} 条
             </text>
           </div>
@@ -34,7 +35,7 @@
         
         <div style="text-align: right; display: flex;" v-if="selectBatch">
           <button 
-            style="height: 30rpx; line-height: 30rpx; font-weight: bold; background-color: #28a745; color: #ffffff; font-size: 12rpx; padding: 0 15rpx; border-radius: 4rpx; border: none; cursor: pointer;"
+            style="height: 35rpx; line-height: 35rpx; font-weight: bold; background-color: #11998e; color: #ffffff; font-size: 14rpx; padding: 0 20rpx; border-radius: 6rpx; border: none; cursor: pointer; box-shadow: 0 2rpx 4rpx rgba(17, 153, 142, 0.3);"
             @click="refreshRecords">
             🔄 刷新记录
           </button>
@@ -44,49 +45,59 @@
       <!-- 记录列表 -->
       <div style="margin-left: 5rpx; margin-right: 5rpx;">
         <!-- 表头 -->
-        <div style="display: flex; background-color: #b9b9b9; font-weight: bold; border-bottom: 1px solid #f4f4f4;">
-          <div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">修改时间</div>
-          <div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">操作人员</div>
-          <div style="flex: 3; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">商品名称</div>
-          <div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">修改类型</div>
-          <div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">修改前数量</div>
-          <div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">修改后数量</div>
-          <!-- <div style="flex: 2; padding: 8px; text-align: center;">备注</div> -->
+        <div class="table-header">
+          <div style="flex: 2; padding: 10px; text-align: center;">
+            <text style="font-size: 16px; font-weight: bold;">修改时间</text>
+          </div>
+          <div style="flex: 2; padding: 10px; text-align: center;">
+            <text style="font-size: 16px; font-weight: bold;">操作人员</text>
+          </div>
+          <div style="flex: 3; padding: 10px; text-align: center;">
+            <text style="font-size: 16px; font-weight: bold;">商品名称</text>
+          </div>
+          <div style="flex: 2; padding: 10px; text-align: center;">
+            <text style="font-size: 16px; font-weight: bold;">修改类型</text>
+          </div>
+          <div style="flex: 2; padding: 10px; text-align: center;">
+            <text style="font-size: 16px; font-weight: bold;">修改前数量</text>
+          </div>
+          <div style="flex: 2; padding: 10px; text-align: center;">
+            <text style="font-size: 16px; font-weight: bold;">修改后数量</text>
+          </div>
         </div>
 
         <!-- 记录内容 -->
         <scroll-view class="scrollArea" scroll-y="true" :style="{ height: WindowHeight-190 + 'px' }" v-if="modifyRecords.length > 0">
-          <div style="display: flex; border: 1px solid #ddd;" v-for="(record, index) in modifyRecords" :key="index">
-            <div style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center; font-size: 12rpx;">
+          <div style="display: flex; height: 45rpx; font-size: 18rpx;" v-for="(record, index) in modifyRecords" :key="index"
+            :style="{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#f0f0f0' }">
+            <div style="flex: 2; padding: 8px; text-align: center; font-size: 14rpx; display: flex; align-items: center; justify-content: center; line-height: 35rpx;">
               {{ formatDateTime(record.createTime) }}
             </div>
-            <div style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center; font-weight: bold;">
+            <div style="flex: 2; padding: 8px; text-align: center; font-weight: bold; display: flex; align-items: center; justify-content: center; line-height: 35rpx;">
               {{ record.operatorName || '' }}
             </div>
-            <div style="flex: 3; padding: 8px; border-right: 1px solid #ddd; text-align: center; font-weight: bold;">
+            <div style="flex: 3; padding: 8px; text-align: center; font-weight: bold; font-size: 20px; display: flex; align-items: center; justify-content: center; line-height: 35rpx;">
               {{ record.commodityName }}
             </div>
-            <div style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center;">
+            <div style="flex: 2; padding: 8px; text-align: center; display: flex; align-items: center; justify-content: center; line-height: 35rpx;">
               <span :style="{
-                padding: '2rpx 8rpx',
-                borderRadius: '4rpx',
-                fontSize: '10rpx',
+                padding: '4rpx 12rpx',
+                borderRadius: '6rpx',
+                fontSize: '12rpx',
                 fontWeight: 'bold',
                 color: 'white',
-                backgroundColor: getModifyTypeColor(record.operaType)
+                backgroundColor: getModifyTypeColor(record.operaType),
+                boxShadow: '0 2rpx 4rpx rgba(0, 0, 0, 0.2)'
               }">
                 {{ getModifyTypeText(record.operaType) }}
               </span>
             </div>
-            <div style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center; font-weight: bold;">
+            <div style="flex: 2; padding: 8px; text-align: center; font-weight: bold; display: flex; align-items: center; justify-content: center; line-height: 35rpx;">
               {{ record.beforeQuantity }}{{ record.specName }}
             </div>
-            <div style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center; font-weight: bold;">
+            <div style="flex: 2; padding: 8px; text-align: center; font-weight: bold; display: flex; align-items: center; justify-content: center; line-height: 35rpx;">
               {{ record.afterQuantity }}{{ record.specName }}
             </div>
-            <!-- <div style="flex: 2; padding: 8px; text-align: center; font-size: 12rpx;">
-              {{ record.remark || '-' }}
-            </div> -->
           </div>
         </scroll-view>
 
@@ -288,6 +299,18 @@ export default {
 
 /* 表格行悬停效果 */
 .scrollArea > div:hover {
-  background-color: #f8f9fa !important;
+  background-color: #e3f2fd !important;
+  transition: background-color 0.2s;
+}
+
+/* 表头样式 - 与 batchGoodManger.vue 一致 */
+.table-header {
+  display: flex;
+  background: #2196f3;
+  font-weight: bold;
+  border-bottom: none;
+  color: #ffffff;
+  box-shadow: 0 2rpx 8rpx rgba(33, 150, 243, 0.3);
+  border-radius: 8rpx 8rpx 0 0;
 }
 </style>

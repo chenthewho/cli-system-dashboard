@@ -1,21 +1,24 @@
 <template>
-	<view :style="{ 'display': 'flex', 'width': '100%', 'height': (windowHeight - 65) + 'px' }">
-		<div style="width: 120rpx; background-color: #ffffff;display: flex;">
-			<div>
+	<view :style="{ 'display': 'flex', 'width': '100%', 'height': (windowHeight - 65) + 'px', 'overflow': 'hidden' }">
+		<div style="width: 160rpx; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); display: flex; flex-direction: column; overflow: hidden; box-shadow: 2rpx 0 8rpx rgba(0, 0, 0, 0.08);">
+			<scroll-view scroll-y style="flex: 1; width: 100%;">
 				<!-- 圆弧边卡片 -->
-				<div style="display: flex; flex-direction: column; gap: 5rpx;">
+				<div v-if="categoryList.length > 0" style="display: flex; flex-direction: column; gap: 5rpx; padding: 5rpx 0;">
 					<div @click="exchangeTab(item)" v-for="item in categoryList" :key="item.id" :style="{
 						marginLeft: '5rpx',
-						marginRight: '5rpx',
-						width: '100rpx',
-						backgroundColor: currentTabId === item.id ? '#62d860' : '#ffffff', // 浅绿色或白色
+						marginRight: '3rpx',
+						width: '120rpx',
+						background: currentTabId === item.id ? 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)' : '#ffffff',
 						borderRadius: '12rpx',
-						boxShadow: '0 4rpx 12rpx rgba(0, 0, 0, 0.1)',
+						boxShadow: currentTabId === item.id ? '0 4rpx 12rpx rgba(76, 175, 80, 0.3)' : '0 2rpx 8rpx rgba(0, 0, 0, 0.08)',
 						padding: '10rpx',
 						boxSizing: 'border-box',
 						textAlign: 'left',
 						fontSize: '14rpx',
-						color: '#333'
+						color: currentTabId === item.id ? '#ffffff' : '#333',
+						border: currentTabId === item.id ? '2rpx solid #4caf50' : '1rpx solid #e0e0e0',
+						transform: currentTabId === item.id ? 'scale(1.02)' : 'scale(1)',
+						transition: 'all 0.3s ease'
 					}">
 						<div>
 							<text style="font-size: 15rpx; font-weight: bold;">
@@ -24,147 +27,145 @@
 						</div>
 					</div>
 				</div>
-			</div>
-			<!-- 垂直线 -->
-			<div :style="{ 'width': '5rpx', 'background-color': '#ccc', 'height': (windowHeight - 65) + 'px' }"></div>
+				<!-- 分类为空时的提示 -->
+				<div v-else class="empty-state">
+					<div class="empty-icon">📦</div>
+					<div class="empty-text">暂无分类</div>
+					<div class="empty-hint">请先添加分类</div>
+				</div>
+			</scroll-view>
 		</div>
+		<!-- 垂直分隔线 -->
+		<div style="width: 3rpx; background: '#ccc'"></div>
 
-		<div style="width: 100%; background-color: #ffffff; text-align: right;">
-			<div
-				style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx; display: flex; justify-content: space-between; align-items: center;">
-				<div style="font-size: 15rpx; font-weight: bold;"><text
-						style="margin-right: 5rpx;">{{ currentTabName }}</text>
-				</div>
-				<div style="text-align: right;display: flex;">
-					<button
-						style="height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: orange;color: #ffffff;"
-						@click="purchaseAddshow = true">采购入库</button>
-					<button
-						style="height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: darkgray;color: #ffffff;margin-left: 20rpx;"
-						@click="enterTopurchaseOrder">入库单</button>
-					<!-- <button
-							style="height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: darkgray;color: #ffffff;margin-left: 10rpx;margin-right: 10rpx;"
-							@click="enterTolossModel">报损操作</button> -->
-					<view style="margin-right: 10rpx;margin-left: 10rpx;">
-						<DropdownButton :options="operatorBtnoptions" :fontSize="12" :menuFontSize="10"
-							:defaultValue="操作" :width="70" :height="20" :iconPosition="-5" @change="operabtnChange">
-						</DropdownButton>
-					</view>
+		<div style="width: 100%; background-color: #ffffff; display: flex; flex-direction: column; overflow: hidden;">
+			<!-- 按钮栏 - 固定 -->
+		<div
+			style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
+			<div style="font-size: 15rpx; font-weight: bold;"><text
+					style="margin-right: 5rpx;">{{ currentTabName }}</text>
+			</div>
+			<!-- 搜索框 -->
+			<div class="search-box">
+				<uni-icons type="search" size="14" color="#999"></uni-icons>
+				<input 
+					class="search-input" 
+					v-model="searchKeyword" 
+					placeholder="搜索货品"
+					@input="handleSearch"
+					placeholder-class="search-placeholder"
+				/>
+				<uni-icons 
+					v-if="searchKeyword" 
+					type="clear" 
+					size="14" 
+					color="#999"
+					@click="clearSearch"
+					style="cursor: pointer;"
+				></uni-icons>
+			</div>
+			<div style="text-align: right;display: flex;">
+				<button
+					style="height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: orange;color: #ffffff;"
+					@click="purchaseAddshow = true">采购入库</button>
+				<button
+					style="height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: darkgray;color: #ffffff;margin-left: 20rpx;"
+					@click="enterTopurchaseOrder">入库单</button>
+				<!-- <button
+						style="height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: darkgray;color: #ffffff;margin-left: 10rpx;margin-right: 10rpx;"
+						@click="enterTolossModel">报损操作</button> -->
+				<view style="margin-right: 10rpx;margin-left: 10rpx;">
+					<DropdownButton :options="operatorBtnoptions" :fontSize="12" :menuFontSize="10"
+						:defaultValue="操作" :width="70" :height="20" :iconPosition="-5" @change="operabtnChange">
+					</DropdownButton>
+				</view>
+			</div>
+		</div>
+			<!-- 表头 - 固定 -->
+			<div class="table-container" style="flex-shrink: 0;">
+				<div class="table-header">
+					<div class="table-cell header-cell" style="flex: 3;">货品</div>
+					<div class="table-cell header-cell last-cell" style="flex: 2;">库存</div>
 				</div>
 			</div>
-			<div style="margin-left: 5rpx;margin-right: 5rpx;">
-				<!-- 表头 -->
-				<div
-					style="display: flex; background-color: #b9b9b9 ; font-weight: bold; border-bottom: 1px solid #f4f4f4;">
-					<div style="flex: 3; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">货品</div>
-					<!-- <div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">价格</div> -->
-					<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">剩余库存</div>
-				</div>
-			</div>
-			<scroll-view class="scrollArea" scroll-y="true" :style="{ height: scrollHeight }">
-				<!-- 表格内容行 -->
-				<div style="display: flex;flex-direction: row;  border-bottom: 1px solid #ddd; cursor:pointer;"
-					v-for="(item, index) in goodSelect" @click="showGoodsDetail(item)">
-					<div
-						style="flex: 3; display: flex; padding: 8px;justify-content: center;  align-items: center; border-right: 1px solid #ddd; text-align: center;font-weight: bold;line-height: 20rpx;">
-						<div style="font-size: 15rpx;">{{ item.name }}</div>
-						<text v-if="item.saleWay === 1"
-							style="height: 15rpx;line-height: 15rpx; margin-left: 5rpx; font-size: 8rpx; padding-left: 2rpx;padding-right: 2rpx;color: #31BDEC;border: 1px solid #31BDEC;border-radius: 3rpx;">非定装</text>
-						<text v-if="item.saleWay === 2"
-							style="height: 15rpx;line-height: 15rpx;margin-left: 5rpx; font-size: 8rpx; padding-left: 2rpx;padding-right: 2rpx;color: #00aa00;border: 1px solid #00aa00;border-radius: 3rpx;">定装</text>
-						<text v-if="item.saleWay === 3"
-							style="height: 15rpx;line-height: 15rpx;margin-left: 5rpx; font-size: 8rpx; padding-left: 2rpx;padding-right: 2rpx;color: #aa55ff;border: 1px solid #aa55ff;border-radius: 3rpx;">定装拆包</text>
-						<text v-if="item.saleWay === 4"
-							style="height: 15rpx;line-height: 15rpx;margin-left: 5rpx; font-size: 8rpx; padding-left: 2rpx;padding-right: 2rpx;color: #55aaff;border: 1px solid #55aaff;border-radius: 3rpx;">散装</text>
-						<text v-if="item.extralModel"
-							style="height: 15rpx;line-height: 15rpx; font-size: 8rpx;margin-left: 5rpx;  padding-left: 2rpx;padding-right: 2rpx;color: #ff5500;border: 1px solid #ff5500;border-radius: 3rpx;">{{ item.extralModel.name }}</text>
-					</div>
-					<!-- <div
-						style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-						<div></div>
-					</div> -->
-					<div
-						style="flex: 2;display: flex;line-height: 20rpx; padding: 8px;justify-content: center;  border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
-						<div v-for="(item2, index2) in item.outPutPurchaseInventories" style="display: flex;">
-
-							<div>{{ item2.mount }}</div>
-							<text style="margin-right:5rpx">{{ item2.specName }}</text>
-							<text style="margin-right:5rpx"
-								v-if="index2 != item.outPutPurchaseInventories.length - 1">|</text>
+			<!-- 滚动内容区 - 自动填充剩余空间 -->
+			<scroll-view class="scrollArea" scroll-y="true" style="flex: 1; overflow-y: auto;">
+				<!-- 商品列表 -->
+				<div v-if="goodSelect.length > 0">
+					<!-- 表格内容行 -->
+					<div class="table-row" v-for="(item, index) in goodSelect" :key="index" >
+						<div class="table-cell goods-cell" style="flex: 3;" @click="showGoodsDetail(item)">
+							<div class="goods-name">{{ item.name }}</div>
+							<div v-if="item.isMultiLevel==0">
+							<text v-if="item.saleWay === 1" class="goods-tag tag-blue">非定装</text>
+							<text v-if="item.saleWay === 2" class="goods-tag tag-green">定装</text>
+							<text v-if="item.saleWay === 3" class="goods-tag tag-purple">定装拆包</text>
+							<text v-if="item.saleWay === 4" class="goods-tag tag-light-blue">散装</text>
+						</div>
+						<div v-if="item.isMultiLevel==1">
+							<text class="goods-tag tag-orange">多规格</text>
+						</div>
+							
+						</div>
+						<div class="table-cell inventory-cell last-cell" style="flex: 2;" @click="showInventoryRecord(item)">
+							<div v-for="(item2, index2) in item.outPutPurchaseInventories" :key="index2" class="inventory-item">
+								<text>{{ item2.mount }}</text>
+								<text>{{ item2.specName }}</text>
+								<text v-if="index2 != item.outPutPurchaseInventories.length - 1" class="separator">|</text>
+							</div>
 						</div>
 					</div>
-
 				</div>
-				<div style=" display: flex;flex-direction: column;align-items: center;">
-					<u-divider class="divider" style=" width: 100%; "></u-divider>
-					<!-- <u-icon name="plus-circle-fill" color="#00aa00" size="28" class="icon"
-							@click="showAddNewGood = true"></u-icon> -->
+				<!-- 商品为空时的提示 -->
+				<div v-else class="goods-empty-state">
+					<div class="empty-icon">📦</div>
+					<div class="empty-text">暂无商品</div>
+					<div class="empty-hint">该分类下还没有商品</div>
 				</div>
 			</scroll-view>
 
 		</div>
 
 
-		<u-modal title="" :show="purchaseAddshow" @close="purchaseAddshow = false" :closeOnClickOverlay="false"
-			:showConfirmButton="false" width="900px">
-			<div style="
-	    padding: 10rpx;
-	    display: flex;
-	    flex-direction: column;
-	    width: 900px;
-	    background-color: #ffffff;
-	">
-				<div
-					style="position: relative; height: 30rpx; width: 100%; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-					<div style="font-size: 15rpx;font-weight: bold;">采购货主</div>
-					<div style="position: absolute;right: -25px;top: -25px;">
-						<uni-icons custom-prefix="iconfont" type="icon-icon-cross-squre" size="25"
-							@click="purchaseAddshow = false" color="#aa0000"></uni-icons>
+	<!-- 采购货主弹窗 -->
+	<div class="znj-modal-overlay" v-if="purchaseAddshow" @click="purchaseAddshow = false">
+		<div class="znj-batch-modal" @click.stop>
+			<div class="znj-batch-modal-header">
+				<span>采购货主</span>
+				<uni-icons custom-prefix="iconfont" type="icon-icon-cross-squre" size="32"
+					@click="purchaseAddshow = false" color="#ffffff" class="znj-batch-modal-close"></uni-icons>
+			</div>
+			<div class="znj-batch-modal-body">
+				<div class="znj-batch-modal-left">
+					<div style="display: flex; flex-direction: column;" v-if="shipperSelected != null">
+						<div class="znj-batch-modal-label">选中货主：</div>
+						<input v-model="shipperSelected.shipperName" disabled="true"
+							class="znj-batch-modal-input"></input>
 					</div>
+					<div class="znj-batch-modal-copy">
+						<u-switch v-model="copyLastBatch" @click="copyLastBatch = !copyLastBatch" style="margin-right: 10rpx;" />
+						是否复制上一次货品
+					</div>
+					<button class="znj-batch-modal-btn" @click="purchaseEnter">下一步</button>
 				</div>
-				<div class="containerAddBatch">
-					<div class="leftAddBatch">
-						<div style="font-weight: bold;width: 80%;" v-if="shipperSelected != null">
-							<div style="font-weight: bold;">选中货主：</div>
-							<u--input fontSize="25" border="surround" v-model="shipperSelected.shipperName"
-								disabled="true" style="margin-top: 10rpx;"></u--input>
-						</div>
-						<div style="display: flex; line-height: 20rpx;margin-top: 10rpx;font-weight: bold"><u-switch
-								v-model="copyLastBatch" @click="copyLastBatch = !copyLastBatch"
-								style="margin-right: 10rpx;"></u-switch> 是否复制上一次货品</div>
-						<button
-							style="margin-bottom: 10rpx; background-color: green;font-size: 15rpx;height: 25rpx;line-height: 25rpx;font-weight: bold;color: white;margin-top: 50rpx;letter-spacing: 15rpx;"
-							@click="purchaseEnter">下一步</button>
+				<div class="znj-batch-modal-right">
+					<div class="znj-batch-modal-label-row">
+						<span>选择货主：</span>
+						<button class="znj-batch-modal-add-shipper-btn" @click="ShipperAddshow = true">新增货主</button>
 					</div>
-					<div class="rightAddBatch">
-						<div
-							style="height: 15rpx; width: 100%; font-weight: bold; display: flex; justify-content: space-between; align-items: center;">
-							<div style="margin-left: 10rpx;font-weight: bold;">选择货主：</div>
-							<div>
-								<button @click="ShipperAddshow = true"
-									style="width: 80rpx;height: 20rpx;line-height: 20rpx;background-color: #909090;color: #ffffff;font-weight: bold;">新增货主</button>
+					<div class="znj-batch-modal-shipper-list">
+						<scroll-view class="znj-batch-modal-scroll" scroll-y="true">
+							<div v-for="(item, index) in shipperList" :key="item.id"
+								:class="['znj-batch-modal-shipper-item', {selected: shipperSelected && shipperSelected.id === item.id}]"
+								@click="shipperSelected = item">
+								{{ (index+1) + '. ' + item.shipperName }}
 							</div>
-						</div>
-						<div class="tab-content">
-							<scroll-view class="scrollArea" scroll-y="true"
-								style="width: 150rpx; height: 140rpx;border: 1px solid #aaaaaa;">
-								<div id="tab1" class="tab-panel" v-if="shipperList.length > 0"
-									v-for="(item, index) in shipperList" :key="item.id"
-									style="width: 150rpx;color: #333;">
-									<h2 :class="{ 'selected': shipperSelected.id === item.id }"
-										@click="shipperSelected = item">
-										<uni-icons custom-prefix="iconfont" type="icon-youjiantou" size="25"
-											color="#333" style="margin-right: 5rpx;"></uni-icons>
-										{{ (index + 1) + ". " + item.shipperName }}
-									</h2>
-								</div>
-							</scroll-view>
-						</div>
+						</scroll-view>
 					</div>
 				</div>
 			</div>
-
-		   </u-modal>
+		</div>
+	</div>
 		   <u-modal title="单据详情" :show="billDetailModalShow" @close="billDetailModalShow = false" :closeOnClickOverlay="true" :showConfirmButton="false" width="600px">
 			   <div v-if="currentBillDetail" class="bill-detail-modal">
 				   <div class="bill-detail-header">
@@ -193,92 +194,99 @@
 				   </div>
 			   </div>
 		   </u-modal>
-		<u-modal title="新增货主" :show="ShipperAddshow" @close="ShipperAddshow = false" :closeOnClickOverlay="false"
-			:showConfirmButton="false" width="200rpx">
-			<view class="addShipper-content">
-				<u--input placeholder="货主名称" border="surround" v-model="shipperAddedName" clearable></u--input>
-				<u--input placeholder="货主电话" border="surround" v-model="shipperPhone" clearable
-					style="margin-top: 10rpx;"></u--input>
-				<div style="display: flex;margin-top: 10rpx;">
-					<button
-						style="width: 50rpx;height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: #909090;color: #ffffff;"
-						@click="ShipperAddshow = false"> 返回</button>
-					<button
-						style="width: 50rpx;height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: #0073ac;color: #ffffff;"
-						@click="AddShipper"> 添加</button>
-				</div>
-			</view>
-		</u-modal>
-		   <u-modal title="货品详情" :show="goodsDetailModalShow" @close="goodsDetailModalShow = false;" :closeOnClickOverlay="true" :showConfirmButton="false" width="720px">
-			   <div v-if="currentGoodsDetail" class="goods-detail-modal beauty-modal">
-				   <div class="goods-header beauty-header">
-					   <div class="goods-title beauty-title">{{ currentGoodsDetail.name }}
-						   <span v-if="currentGoodsDetail.saleWay === 1" class="tag tag-blue">非定装</span>
-						   <span v-else-if="currentGoodsDetail.saleWay === 2" class="tag tag-green">定装</span>
-						   <span v-else-if="currentGoodsDetail.saleWay === 3" class="tag tag-purple">定装拆包</span>
-						   <span v-else-if="currentGoodsDetail.saleWay === 4" class="tag tag-cyan">散装</span>
-					   </div>
-					   <div class="goods-subtitle beauty-subtitle">分类：{{ currentGoodsDetail.classifyName || '未分类' }}</div>
-				   </div>
-				   <div class="beauty-section">
-					   <div class="beauty-row">
-						   <div class="beauty-card">
-							   <div class="beauty-label">价格</div>
-							   <div class="beauty-value">{{ currentGoodsDetail.price }}</div>
-						   </div>
-						   <div class="beauty-card">
-							   <div class="beauty-label">初始重量</div>
-							   <div class="beauty-value">{{ currentGoodsDetail.initWeight }}</div>
-						   </div>
-						   <div class="beauty-card">
-							   <div class="beauty-label">单位</div>
-							   <div class="beauty-value">{{ currentGoodsDetail.unit }}</div>
-						   </div>
-						   <div class="beauty-card">
-							   <div class="beauty-label">总利润</div>
-							   <div class="beauty-value beauty-profit">{{ formatProfit(currentGoodsDetail.totalProfit) }}</div>
-						   </div>
-					   </div>
-					   <div class="beauty-row">
-						   <div class="beauty-card" style="flex:2;">
-							   <div class="beauty-label">规格</div>
-							   <div class="beauty-value">
-								   <span v-if="currentGoodsDetail.specList && currentGoodsDetail.specList.length">
-									   <span v-for="(spec, idx) in currentGoodsDetail.specList" :key="idx" class="beauty-chip">{{ spec.specName }}</span>
-								   </span>
-								   <span v-else>无</span>
-							   </div>
-						   </div>
-					   </div>
-					   <div class="beauty-row">
-						<div class="beauty-card beauty-bill-card">
-							<div class="beauty-label">绑定单据</div>
-							<div class="beauty-value beauty-bill-list">
-								<template v-if="currentGoodsDetail.allPrintModules && currentGoodsDetail.allPrintModules.length">
-									<scroll-view scroll-y class="bill-list-scroll-vertical" style="max-height:180px;overflow-y:auto;">
-										<div v-for="(mod, idx) in currentGoodsDetail.allPrintModules" :key="mod.id" class="beauty-bill-item improved-bill-item bill-list-scroll-item-vertical" @click="showBillDetail(mod)" style="margin-bottom:10px;">
-											<div class="bill-row-main">
-												<span class="beauty-bill-customer">{{ mod.customName || '无' }}</span>
-											</div>
-											<div class="bill-row-info">
-												<span class="beauty-bill-money">应收：<b>{{ mod.payableAmount }}</b></span>
-												<span class="beauty-bill-money">实收：<b>{{ mod.actualMoney }}</b></span>
-												<span class="beauty-bill-profit">利润：<b>{{ formatProfit(mod.totalProfit) }}</b></span>
-											</div>
-											<div class="bill-row-footer">
-												<span class="bill-date">{{ mod.createTime.replace("T"," ") }}</span>
-												<span class="bill-payway">{{ billPaywayText(mod.payway) }}</span>
-											</div>
-										</div>
-									</scroll-view>
-								</template>
-								<span v-else>无</span>
-							</div>
-						</div>
-					   </div>
-				   </div>
-			   </div>
-		   </u-modal>
+	<!-- 新增货主弹窗 -->
+	<u-modal title="新增货主" :show="ShipperAddshow" @close="ShipperAddshow = false" :closeOnClickOverlay="false"
+		:showConfirmButton="false" width="500rpx">
+		<div class="znj-shipper-modal">
+			<u--input placeholder="货主名称" border="surround" v-model="shipperAddedName" clearable class="znj-shipper-modal-input" />
+			<u--input placeholder="货主电话" border="surround" v-model="shipperPhone" clearable class="znj-shipper-modal-input" />
+			<div class="znj-shipper-modal-btns">
+				<button class="znj-shipper-modal-btn cancel" @click="ShipperAddshow = false">返回</button>
+				<button class="znj-shipper-modal-btn confirm" @click="AddShipper">添加</button>
+			</div>
+		</div>
+	</u-modal>
+		   <!-- 原生货品详情弹窗 -->
+		   <view v-if="goodsDetailModalShow" class="goods-detail-overlay" @click="goodsDetailModalShow = false">
+			   <view class="goods-detail-container" @click.stop>
+				   <view v-if="currentGoodsDetail" class="goods-detail-content">
+					   <!-- 头部 -->
+					   <view class="goods-detail-header">
+						   <view class="goods-detail-title">
+							   <text class="goods-name-text">{{ currentGoodsDetail.name }}</text>
+							   <text v-if="currentGoodsDetail.saleWay === 1" class="sale-tag tag-blue">非定装</text>
+							   <text v-else-if="currentGoodsDetail.saleWay === 2" class="sale-tag tag-green">定装</text>
+							   <text v-else-if="currentGoodsDetail.saleWay === 3" class="sale-tag tag-purple">定装拆包</text>
+							   <text v-else-if="currentGoodsDetail.saleWay === 4" class="sale-tag tag-cyan">散装</text>
+						   </view>
+						   <view class="goods-detail-close" @click="goodsDetailModalShow = false">
+							   <text class="close-icon">✕</text>
+						   </view>
+					   </view>
+					   
+					   <view class="goods-detail-subtitle">
+						   分类：{{ currentGoodsDetail.classifyName || '未分类' }}
+					   </view>
+					   
+				   <!-- 主要利润展示 -->
+				   <view class="profit-section">
+					   <view class="profit-card" :class="currentGoodsDetail.totalProfit >= 0 ? 'main-profit' : 'main-profit-negative'">
+						   <view class="profit-label">总利润</view>
+						   <view class="profit-value">¥{{ formatProfit(currentGoodsDetail.totalProfit) }}</view>
+					   </view>
+					   <view class="profit-card" :class="(currentGoodsDetail.monthProfit || 0) >= 0 ? 'month-profit' : 'month-profit-negative'">
+						   <view class="profit-label">近一个月毛利</view>
+						   <view class="profit-value">¥{{ formatProfit(currentGoodsDetail.monthProfit || 0) }}</view>
+					   </view>
+				   </view>
+					   
+					   <!-- 商品信息 -->
+					   <view class="info-section">
+						   <view class="info-section-title">商品信息</view>
+						   <view class="info-grid">
+							   <view class="info-item">
+								   <text class="info-label">初始单价</text>
+								   <text class="info-value">¥{{ currentGoodsDetail.price }}</text>
+							   </view>
+							   <view class="info-item">
+								   <text class="info-label">单位</text>
+								   <text class="info-value">{{ currentGoodsDetail.unit }}</text>
+							   </view>
+							   <view class="info-item">
+								   <text class="info-label">初始重量</text>
+								   <text class="info-value">{{ currentGoodsDetail.initWeight }}</text>
+							   </view>
+							   <view class="info-item full-width">
+								   <text class="info-label">规格</text>
+								   <view class="info-value spec-list">
+									   <text v-if="currentGoodsDetail.specList && currentGoodsDetail.specList.length" 
+										   v-for="(spec, idx) in currentGoodsDetail.specList" 
+										   :key="idx" 
+										   class="spec-chip">
+										   {{ spec.specName }}
+									   </text>
+									   <text v-else class="empty-text">无</text>
+								   </view>
+							   </view>
+						   </view>
+					   </view>
+					   
+				   <!-- 关联订单 -->
+				   <view class="bill-section">
+					   <view class="bill-section-title">关联订单</view>
+					   <view class="bill-count-card" @click="goToRelatedOrders">
+						   <view class="bill-count-content">
+							   <text class="bill-count-number">{{ currentGoodsDetail.allPrintModules ? currentGoodsDetail.allPrintModules.length : 0 }}</text>
+							   <text class="bill-count-label">张订单</text>
+						   </view>
+						   <view class="bill-count-arrow">
+							   <text class="arrow-icon">></text>
+						   </view>
+					   </view>
+				   </view>
+				   </view>
+			   </view>
+		   </view>
 
 		   <!-- 单据详情弹窗 -->
 		   <u-modal title="单据详情" :show="billDetailModalShow" @close="billDetailModalShow = false" :closeOnClickOverlay="true" :showConfirmButton="false" width="600px">
@@ -319,11 +327,13 @@ import DropdownButton from '../../components/DropdownButton/DropdownButton.vue'
 export default {
 	data() {
 		return {
-			companyId: "",
-			categoryList: [],
-			currentTabId: "",
-			currentTabName: "",
-			goodSelect: [],
+		companyId: "",
+		categoryList: [],
+		currentTabId: "",
+		currentTabName: "",
+		goodSelect: [],
+		searchKeyword: "", // 搜索关键词
+		allGoodsList: [], // 保存所有货品列表
 			editingIndex: 0,
 			showKeyBoard1: false,
 			windowWidth: 0,
@@ -368,6 +378,24 @@ export default {
 		// this.getAllBatch();
 	},
 	methods: {
+		// 搜索货品
+		handleSearch() {
+			if (!this.searchKeyword.trim()) {
+				// 如果搜索关键词为空，恢复显示所有货品
+				this.goodSelect = [...this.allGoodsList];
+				return;
+			}
+			
+			const keyword = this.searchKeyword.toLowerCase().trim();
+			this.goodSelect = this.allGoodsList.filter(item => {
+				return item.name && item.name.toLowerCase().includes(keyword);
+			});
+		},
+		// 清除搜索
+		clearSearch() {
+			this.searchKeyword = "";
+			this.goodSelect = [...this.allGoodsList];
+		},
 		formatProfit(val) {
 			if (val === null || val === undefined || isNaN(val)) return '0.00';
 			return Number(val).toFixed(2);
@@ -375,6 +403,31 @@ export default {
 		showBillDetail(bill) {
 			this.currentBillDetail = bill;
 			this.billDetailModalShow = true;
+		},
+		// 跳转到单据详情页面
+		goToBillDetail(bill) {
+			// 关闭货品详情弹窗
+			this.goodsDetailModalShow = false;
+			// 跳转到订单管理页面，并传递单据ID
+			uni.navigateTo({
+				url: `/pages/order/order?billId=${bill.id}`
+			});
+		},
+		// 跳转到关联订单列表页面
+		goToRelatedOrders() {
+			if (!this.currentGoodsDetail || !this.currentGoodsDetail.allPrintModules || this.currentGoodsDetail.allPrintModules.length === 0) {
+				uni.showToast({
+					title: '暂无关联订单',
+					icon: 'none'
+				});
+				return;
+			}
+			// 关闭货品详情弹窗
+			this.goodsDetailModalShow = false;
+			// 跳转到关联订单页面
+			uni.navigateTo({
+				url: `/pages/good/relatedOrders?commodityId=${this.currentGoodsDetail.id}&goodsName=${encodeURIComponent(this.currentGoodsDetail.name)}`
+			});
 		},
 		billPaywayText(val) {
 			if(val===1) return '现金';
@@ -389,6 +442,12 @@ export default {
 				this.currentGoodsDetail = res.data;
 				console.log(this.currentGoodsDetail);
 				this.goodsDetailModalShow = true;
+			})
+		},
+		// 查看库存记录
+		showInventoryRecord(item) {
+			uni.navigateTo({
+				url: `/pages/good/employInventoryRecord?commodityId=${item.id}&goodsName=${encodeURIComponent(item.name)}`
 			})
 		},
 		operabtnChange(e) {
@@ -410,7 +469,7 @@ export default {
 				success: (res) => {
 					this.windowWidth = res.windowWidth;
 					this.windowHeight = res.windowHeight;
-					this.scrollHeight = (this.windowHeight - 100) + 'px';
+					this.scrollHeight = (this.windowHeight - 110) + 'px';
 				}
 			})
 		},
@@ -702,22 +761,27 @@ export default {
 				for (let i = 0; i < res.data.length; i += 2) {
 					this.rows.push(res.data.slice(i, i + 2));
 				}
-				this.goodSelect = [];
-				for (let i = 0; i < res.data.length; i++) {
-					this.goodSelect.push({
-						id: res.data[i].id,
-						key: i,
-						name: res.data[i].commodityName,
-						price: res.data[i].price,
-						inventory: res.data[i].initMount - res.data[i].saleMount,
-						type: 0,
-						unit: res.data[i].unit,
-						initWeight: res.data[i].initWeight,
-						extralModel: res.data[i].extralModel,
-						saleWay: res.data[i].saleWay,
-						outPutPurchaseInventories: res.data[i].outPutPurchaseInventories
-					})
-				}
+			this.goodSelect = [];
+			for (let i = 0; i < res.data.length; i++) {
+				this.goodSelect.push({
+					id: res.data[i].id,
+					key: i,
+					name: res.data[i].commodityName,
+					price: res.data[i].price,
+					inventory: res.data[i].initMount - res.data[i].saleMount,
+					type: 0,
+					isMultiLevel: res.data[i].isMultiLevel,
+					unit: res.data[i].unit,
+					initWeight: res.data[i].initWeight,
+					extralModel: res.data[i].extralModel,
+					saleWay: res.data[i].saleWay,
+					outPutPurchaseInventories: res.data[i].outPutPurchaseInventories
+				})
+			}
+			// 保存所有货品列表副本，用于搜索
+			this.allGoodsList = [...this.goodSelect];
+			// 清空搜索关键词
+			this.searchKeyword = "";
 
 			})
 		},
@@ -734,6 +798,44 @@ export default {
 </script>
 
 <style>
+/* 搜索框样式 */
+.search-box {
+	display: flex;
+	align-items: center;
+	background: #f5f5f5;
+	border-radius: 10rpx;
+	padding: 0rpx 12rpx;
+	margin: 0 10rpx;
+	flex: 0 0 auto;
+	min-width: 100rpx;
+	max-width: 200rpx;
+	border: 1rpx solid #e5e5e5;
+	transition: all 0.3s ease;
+}
+
+.search-box:focus-within {
+	background: #fff;
+	border-color: #4caf50;
+	box-shadow: 0 2rpx 8rpx rgba(76, 175, 80, 0.15);
+}
+
+.search-input {
+	flex: 1;
+	border: none;
+	background: transparent;
+	font-size: 13rpx;
+	color: #333;
+	margin: 0 8rpx;
+	outline: none;
+	height: 22rpx;
+	line-height: 22rpx;
+}
+
+.search-placeholder {
+	color: #999;
+	font-size: 12rpx;
+}
+
 .btn-show {
 	padding: 5px 15px;
 	margin: 0 5px;
@@ -903,6 +1005,179 @@ h2.selected {
 	display: flex;
 	flex-direction: column;
 	width: 200rpx;
+}
+
+/* 遮罩层样式 */
+.znj-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+/* 只影响这两个弹窗 */
+.znj-batch-modal {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  width: 600rpx;
+  box-sizing: border-box;
+  position: relative;
+}
+.znj-batch-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  font-size: 15rpx;
+  font-weight: bold;
+  margin-bottom: 15rpx;
+  padding: 20px 24px;
+  color: #ffffff;
+}
+.znj-batch-modal-close {
+  cursor: pointer;
+}
+.znj-batch-modal-body {
+  display: flex;
+  gap: 32rpx;
+  padding: 20rpx;
+}
+.znj-batch-modal-left, .znj-batch-modal-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+.znj-batch-modal-label {
+  font-size: 15rpx;
+  font-weight: 500;
+  margin-bottom: 8rpx;
+}
+.znj-batch-modal-input {
+  margin-bottom: 16rpx;
+  padding: 5rpx;
+  height: 20rpx;
+  border-radius: 5rpx;
+  font-size: 20rpx;
+  line-height: 15rpx;
+  border: 1px solid #ccc;
+  background-color: #ddd;
+}
+.znj-batch-modal-copy {
+  display: flex;
+  align-items: center;
+  font-size: 15rpx;
+  margin-bottom: 32rpx;
+}
+.znj-batch-modal-btn {
+  background: linear-gradient(90deg, #4caf50, #43a047);
+  color: #fff;
+  border: none;
+  border-radius: 8rpx;
+  font-size: 15rpx;
+  font-weight: bold;
+  padding: 0 50rpx;
+  height: 50rpx;
+  line-height: 50rpx;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.znj-batch-modal-btn:hover {
+  background: linear-gradient(90deg, #43a047, #388e3c);
+}
+.znj-batch-modal-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15rpx;
+  font-weight: 500;
+}
+.znj-batch-modal-add-shipper-btn {
+  background: #0073ac;
+  color: #fff;
+  border: none;
+  border-radius: 8rpx;
+  font-size: 15rpx;
+  padding: 0 15rpx;
+  cursor: pointer;
+}
+.znj-batch-modal-shipper-list {
+  margin-top: 16rpx;
+}
+.znj-batch-modal-scroll {
+  max-height: 200rpx;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 8rpx;
+  padding: 8rpx;
+  background: #fafbfc;
+}
+.znj-batch-modal-shipper-item {
+  padding: 12rpx 8rpx;
+  border-radius: 6rpx;
+  font-size: 15rpx;
+  color: #333;
+  display: flex;
+  align-items: center;
+  margin-bottom: 8rpx;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.znj-batch-modal-shipper-item.selected, .znj-batch-modal-shipper-item:hover {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.znj-shipper-modal {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  padding: 32rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 24rpx;
+  width: 100%;
+}
+.znj-shipper-modal-input {
+  font-size: 26rpx;
+  padding: 12rpx;
+}
+.znj-shipper-modal-btns {
+  display: flex;
+  justify-content: space-between;
+  gap: 24rpx;
+  margin-top: 16rpx;
+}
+.znj-shipper-modal-btn {
+  flex: 1;
+  border: none;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.znj-shipper-modal-btn.cancel {
+  background: #bdbdbd;
+  color: #fff;
+  height: 50rpx;
+  line-height: 50rpx;
+}
+.znj-shipper-modal-btn.confirm {
+  background: #0073ac;
+  color: #fff;
+  height: 50rpx;
+  line-height: 50rpx;
+}
+.znj-shipper-modal-btn.confirm:hover {
+  background: #005f8c;
 }
 
 .detail-btn {
@@ -1193,6 +1468,472 @@ h2.selected {
 	min-width: 0;
 	max-width: 100%;
 	display: block;
-	vertical-align: top;
+}
+
+/* 分类为空的样式 - 上下左右居中，适配窄栏宽度(120rpx) */
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	min-height: 150rpx;
+	padding: 20rpx 10rpx;
+}
+
+.empty-icon {
+	font-size: 35rpx;
+	margin-bottom: 8rpx;
+	opacity: 0.5;
+}
+
+.empty-text {
+	font-size: 14rpx;
+	font-weight: bold;
+	color: #666;
+	margin-bottom: 4rpx;
+	text-align: center;
+}
+
+.empty-hint {
+	font-size: 11rpx;
+	color: #999;
+	text-align: center;
+	line-height: 1.3;
+}
+
+/* 商品为空的样式 */
+.goods-empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	min-height: 180rpx;
+	padding: 30rpx 20rpx;
+}
+
+.goods-empty-state .empty-icon {
+	font-size: 40rpx;
+	margin-bottom: 10rpx;
+	opacity: 0.5;
+}
+
+.goods-empty-state .empty-text {
+	font-size: 16rpx;
+	font-weight: bold;
+	color: #666;
+	margin-bottom: 6rpx;
+}
+
+.goods-empty-state .empty-hint {
+	font-size: 13rpx;
+	color: #999;
+	text-align: center;
+}
+
+/* 简洁风格表格样式 */
+.table-container {
+  margin: 0 5rpx 5rpx 5rpx;
+  border-radius: 8rpx 8rpx 0 0;
+  overflow: hidden;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.table-header {
+  display: flex;
+  background: linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%);
+  border-bottom: 2rpx solid #90caf9;
+}
+
+.table-cell {
+  padding: 12rpx 10rpx;
+  text-align: center;
+  font-size: 13rpx;
+  border-right: 1rpx solid #d0d0d0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-cell.last-cell {
+  border-right: none;
+}
+
+.header-cell {
+  padding: 8rpx 8rpx;
+  font-weight: 600;
+  color: #1976d2;
+  font-size: 13rpx;
+  border-right: 1rpx solid #90caf9;
+}
+
+.header-cell.last-cell {
+  border-right: none;
+}
+
+.table-row {
+  display: flex;
+  background-color: #ffffff;
+  border-bottom: 1rpx solid #e0e0e0;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+  margin: 0 5rpx;
+  border-left: 1rpx solid #e0e0e0;
+  border-right: 1rpx solid #e0e0e0;
+}
+
+.table-row:hover {
+  background-color: #f8f9fa;
+}
+
+.table-row .table-cell {
+  font-weight: 500;
+  color: #333;
+  font-size: 13rpx;
+}
+
+.goods-cell {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 5rpx;
+}
+
+.goods-name {
+  font-size: 15rpx;
+  font-weight: 600;
+}
+
+.goods-tag {
+  height: 15rpx;
+  line-height: 15rpx;
+  font-size: 8rpx;
+  padding: 0 2rpx;
+  border-radius: 3rpx;
+  border: 1rpx solid;
+  display: inline-block;
+}
+
+.tag-blue {
+  color: #31BDEC;
+  border-color: #31BDEC;
+}
+
+.tag-green {
+  color: #00aa00;
+  border-color: #00aa00;
+}
+
+.tag-purple {
+  color: #aa55ff;
+  border-color: #aa55ff;
+}
+
+.tag-light-blue {
+  color: #55aaff;
+  border-color: #55aaff;
+}
+
+.tag-orange {
+  color: #ff5500;
+  border-color: #ff5500;
+}
+
+.inventory-cell {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 5rpx;
+}
+
+.inventory-item {
+  display: flex;
+  align-items: center;
+  gap: 3rpx;
+}
+
+.separator {
+  margin: 0 3rpx;
+  color: #999;
+}
+
+.divider-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  padding: 0 5rpx;
+}
+
+.divider {
+  width: 100%;
+}
+
+/* 原生货品详情弹窗样式 */
+.goods-detail-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: rgba(0, 0, 0, 0.5);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 9999;
+}
+
+.goods-detail-container {
+	width: 90%;
+	max-width: 700rpx;
+	max-height: 85vh;
+	background-color: #ffffff;
+	border-radius: 12rpx;
+	overflow: hidden;
+	box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.2);
+}
+
+.goods-detail-content {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	overflow-y: auto;
+	padding: 20rpx;
+}
+
+/* 头部 */
+.goods-detail-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: 8rpx;
+	padding-bottom: 12rpx;
+	border-bottom: 2rpx solid #f0f0f0;
+}
+
+.goods-detail-title {
+	display: flex;
+	align-items: center;
+	gap: 8rpx;
+	flex-wrap: wrap;
+	flex: 1;
+}
+
+.goods-name-text {
+	font-size: 18rpx;
+	font-weight: 700;
+	color: #333;
+}
+
+.sale-tag {
+	font-size: 10rpx;
+	padding: 2rpx 6rpx;
+	border-radius: 6rpx;
+	font-weight: 500;
+}
+
+.goods-detail-close {
+	width: 32rpx;
+	height: 32rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #f5f5f5;
+	border-radius: 50%;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.close-icon {
+	font-size: 16rpx;
+	color: #666;
+	font-weight: bold;
+}
+
+.goods-detail-subtitle {
+	font-size: 13rpx;
+	color: #666;
+	margin-bottom: 16rpx;
+}
+
+/* 利润区域 */
+.profit-section {
+	display: flex;
+	gap: 12rpx;
+	margin-bottom: 20rpx;
+}
+
+.profit-card {
+	flex: 1;
+	padding: 16rpx;
+	border-radius: 8rpx;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 8rpx;
+}
+
+.main-profit {
+	background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+}
+
+.main-profit-negative {
+	background: linear-gradient(135deg, #e53935 0%, #c62828 100%);
+}
+
+.month-profit {
+	background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%);
+}
+
+.month-profit-negative {
+	background: linear-gradient(135deg, #fb8c00 0%, #ef6c00 100%);
+}
+
+.profit-label {
+	font-size: 12rpx;
+	color: rgba(255, 255, 255, 0.9);
+	font-weight: 500;
+}
+
+.profit-value {
+	font-size: 24rpx;
+	font-weight: 700;
+	color: #ffffff;
+}
+
+/* 信息区域 */
+.info-section {
+	margin-bottom: 20rpx;
+}
+
+.info-section-title {
+	font-size: 14rpx;
+	font-weight: 600;
+	color: #333;
+	margin-bottom: 12rpx;
+	padding-left: 8rpx;
+	border-left: 3rpx solid #1e88e5;
+}
+
+.info-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 12rpx;
+}
+
+.info-item {
+	background-color: #f8f9fa;
+	padding: 12rpx;
+	border-radius: 8rpx;
+	display: flex;
+	flex-direction: column;
+	gap: 6rpx;
+	border: 1rpx solid #e9ecef;
+}
+
+.info-item.full-width {
+	grid-column: 1 / -1;
+}
+
+.info-label {
+	font-size: 11rpx;
+	color: #999;
+	font-weight: 500;
+}
+
+.info-value {
+	font-size: 14rpx;
+	color: #333;
+	font-weight: 600;
+}
+
+.spec-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6rpx;
+}
+
+.spec-chip {
+	display: inline-block;
+	padding: 4rpx 10rpx;
+	background-color: #e8f5e9;
+	color: #2e7d32;
+	border-radius: 6rpx;
+	font-size: 12rpx;
+	font-weight: 500;
+}
+
+.empty-text {
+	color: #ccc;
+	font-size: 13rpx;
+}
+
+/* 绑定单据区域 */
+.bill-section {
+	margin-bottom: 10rpx;
+}
+
+.bill-section-title {
+	font-size: 14rpx;
+	font-weight: 600;
+	color: #333;
+	margin-bottom: 12rpx;
+	padding-left: 8rpx;
+	border-left: 3rpx solid #43a047;
+}
+
+.bill-count-card {
+	background: #f8f9fa;
+	border-radius: 8rpx;
+	padding: 5rpx;
+	padding-left: 20rpx;
+	padding-right: 20rpx;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	border: 1rpx solid transparent;
+}
+
+.bill-count-card:hover {
+	border-color: #1e88e5;
+	box-shadow: 0 4rpx 12rpx rgba(30, 136, 229, 0.2);
+	transform: translateY(-2rpx);
+}
+
+.bill-count-content {
+	display: flex;
+	align-items: baseline;
+	gap: 8rpx;
+}
+
+.bill-count-number {
+	font-size: 32rpx;
+	font-weight: 700;
+	color: #1565c0;
+}
+
+.bill-count-label {
+	font-size: 14rpx;
+	color: #1976d2;
+	font-weight: 500;
+}
+
+.bill-count-arrow {
+	width: 30rpx;
+	height: 30rpx;
+	background-color: transparent;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.arrow-icon {
+	font-size: 16rpx;
+	color: #666363;
+	font-weight: bold;
 }
 </style>

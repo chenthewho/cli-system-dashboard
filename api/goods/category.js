@@ -94,7 +94,13 @@ export default {
 	CreatePurchaseOrder(data){
 		return http.post(`/PurchaseOrder/CreatePurchaseOrder`,data)
 	},
+	UpdatePurchaseOrder(data){
+		return http.post(`/PurchaseOrder/UpdatePurchaseOrder`,data)
+	},
 	BulkInsertPurchaseAssist(data){
 		return http.post(`/Batch/BulkInsertPurchaseAssist`,data)
+	},
+	DeleteCommodity(id){
+		return http.get(`/Commodity/DeleteCommodity?id=${id}`)
 	}
 }

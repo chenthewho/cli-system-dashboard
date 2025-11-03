@@ -37,8 +37,8 @@ export default {
 	getOrderBycompanyIdandDate(companyId,time){
 		return http.get(`/Order/GetOrderDTOByDate?Id=${companyId}&dateTime=${time}`)
 	},
-	GetAccountByCompanyIdandDateRange(companyId,startDate,endDate){
-		return http.get(`/Order/GetAccountByCompanyIdandDateRange?Id=${companyId}&startTime=${startDate}&endTime=${endDate}`) 
+	GetAccountByCompanyIdandDateRange(companyId,startDate,endDate,pageSize,currentPage){
+		return http.get(`/Order/GetAccountByCompanyIdandDateRange?Id=${companyId}&startTime=${startDate}&endTime=${endDate}&pageSize=${pageSize}&currentPage=${currentPage}`) 
 	},
 	getOrderBycompanyIdandMonth(companyId,time){
 		return http.get(`/Order/GetOrderByMonth?Id=${companyId}&dateTime=${time}`)

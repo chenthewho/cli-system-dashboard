@@ -1,39 +1,43 @@
 <template>
-	<div :style="{'display': 'flex', 'height': (WindowHeight-65)+'px',width:'100%' }">
-		<div style="width: 120rpx; background-color: #ffffff;display: flex;">
-			<div>
-				<div @click="BatchAddshow = true" style="
-	          width: 108rpx;
-	          height: 30rpx;
-			  margin: 5rpx;
-	          background: linear-gradient(90deg, #0055ff 0%, #4facfe 100%);
-	          color: white;
-	          line-height: 30rpx;
-	          text-align: center;
-	          border-radius: 4rpx;
-	          cursor: pointer;
-			  font-size: 18rpx;
-	          user-select: none;
-	          font-weight: 600;
-	          ">
-					新增批次
-				</div>
-				<!-- 圆弧边卡片 -->
-				<div style="display: flex; flex-direction: column; gap: 5rpx;">
-					<scroll-view class="scrollArea" scroll-y="true" :style="{ height: WindowHeight-150 + 'px' }">
-						<div v-for="item in batchList" @click="exchangeBatch(item)" :key="item.id" :style="{
-	       marginLeft: '10rpx',
-		   marginTop:'5px',
-	       width: '100rpx',
-	       backgroundColor: selectBatch.id === item.id ? '#00aaff' : '#ffffff', // 浅绿色或白色
-	       borderRadius: '12rpx',
-	       boxShadow: '0 4rpx 12rpx rgba(0, 0, 0, 0.1)',
-	       padding: '10rpx',
-	       boxSizing: 'border-box',
-	       textAlign: 'left',
-	       fontSize: '14rpx',
-	       color: selectBatch.id === item.id ? '#ffffff' : '#000000'
-	     }">
+	<div :style="{'display': 'flex', 'height': (WindowHeight-65)+'px',width:'100%', 'overflow': 'hidden' }">
+		<div style="width: 160rpx; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); display: flex; flex-direction: column; overflow: hidden; box-shadow: 2rpx 0 8rpx rgba(0, 0, 0, 0.08);">
+		<!-- 新增批次按钮 -->
+		<div @click="BatchAddshow = true" style="
+          width: 120rpx;
+          height: 30rpx;
+		  margin: 5rpx 5rpx 8rpx 5rpx;
+          background: linear-gradient(90deg, #0055ff 0%, #4facfe 100%);
+          color: white;
+          line-height: 30rpx;
+          text-align: center;
+          border-radius: 8rpx;
+          cursor: pointer;
+		  font-size: 16rpx;
+          user-select: none;
+          font-weight: 600;
+		  box-shadow: 0 2rpx 8rpx rgba(0, 85, 255, 0.3);
+		  flex-shrink: 0;
+          ">
+			新增批次
+		</div>
+			<!-- 批次列表滚动区 -->
+			<scroll-view class="scrollArea" scroll-y="true" :style="{ height: (WindowHeight - 120) + 'px', width: '100%' }">
+				<div style="display: flex; flex-direction: column; gap: 5rpx; padding: 0 5rpx 5rpx 5rpx;">
+				<div v-for="item in batchList" @click="exchangeBatch(item)" :key="item.id" :style="{
+       width: '120rpx',
+       background: selectBatch.id === item.id ? 'linear-gradient(135deg, #2196F3 0%, #1976D2 100%)' : '#ffffff',
+       borderRadius: '8rpx',
+       boxShadow: selectBatch.id === item.id ? '0 4rpx 12rpx rgba(33, 150, 243, 0.35)' : '0 2rpx 8rpx rgba(0, 0, 0, 0.08)',
+       padding: '10rpx',
+       boxSizing: 'border-box',
+       textAlign: 'left',
+       fontSize: '14rpx',
+       color: selectBatch.id === item.id ? '#ffffff' : '#333',
+	   border: selectBatch.id === item.id ? '2rpx solid #2196F3' : '1rpx solid #e0e0e0',
+	   transform: selectBatch.id === item.id ? 'scale(1.02)' : 'scale(1)',
+	   transition: 'all 0.3s ease',
+	   cursor: 'pointer'
+     }">
 							<div>
 								<text style="font-size: 15rpx; font-weight: bold;">
 									{{ item.shipperName }}
@@ -44,26 +48,25 @@
 								</text>
 							</div>
 						</div>
-					</scroll-view>
-				</div>
-			</div>
-			<!-- 垂直线 -->
-			<div style="width: 5rpx; background-color: #ccc; "></div>
+					</div>
+			</scroll-view>
 		</div>
-		<div style="width: 100%;; background-color: #ffffff; text-align: right;">
+		<!-- 垂直分隔线 -->
+		<div style="width: 3rpx; background: #ccc; flex-shrink: 0;"></div>
+		<div style="width: 100%; background-color: #ffffff; text-align: right; overflow: hidden;">
 			<div
 				style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx; display: flex; justify-content: space-between; align-items: center;">
 				<div style="font-size: 15rpx; font-weight: bold;" v-if="selectBatch"><text
 						style="margin-right: 5rpx;">{{selectBatch.shipperName}}</text><text>{{selectBatch.batchCode}}</text>
-					<text v-if="selectBatch.saleStatus===2"
-						style="font-size: 10rpx; border: 1px solid green; border-radius: 4rpx; color: green; margin-left: 5rpx;">已结算</text>
+				<text v-if="selectBatch.saleStatus===2"
+					style="font-size: 10rpx; border: 1px solid green; border-radius: 6rpx; color: green; margin-left: 5rpx;">已结算</text>
 					<text
 						style="margin-left: 50rpx;font-size: 10rpx;">创建时间:{{(selectBatch.createTime).replace("T"," ")}}</text>
 				</div>
 				<div style="text-align: right;display: flex;" v-if="selectBatch">
-					<button v-if="selectBatch.saleStatus===1"
-						style="margin-right: 20rpx; height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: darkred;color: #ffffff;"
-						@click="setSaleStatus(0)">售罄</button>
+				<button v-if="selectBatch.saleStatus===1"
+					style="margin-right: 20rpx; height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: darkred;color: #ffffff;"
+					@click="confirmSaleOut">售罄</button>
 					<button v-if="selectBatch.saleStatus===0||selectBatch.saleStatus===2"
 						style="margin-right: 20rpx; height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: dodgerblue;color: #ffffff;"
 						@click="setSaleStatus(1)">开售</button>
@@ -78,48 +81,42 @@
 						@click="turnToBatchGood">库存操作</button> -->
 				</div>
 			</div>
-			<div style="margin-left: 5rpx;margin-right: 5rpx;">
+			<div class="table-container">
 				<!-- 表头 -->
-				<div
-					style="display: flex; background-color: #b9b9b9 ; font-weight: bold; border-bottom: 1px solid #f4f4f4;">
-					<div style="flex: 3; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">货品</div>
-					<div style="flex: 2; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center;">已售数量</div>
-					<div style="flex: 2; padding: 8px; text-align: center;border-right: 1px solid #f4f4f4; ">已售重量 / 入库重量
-					</div>
-					<div style="flex: 2; padding: 8px; text-align: center;">剩余库存 / 入库数量</div>
+				<div class="table-header">
+					<div class="table-cell header-cell" style="flex: 2;">货品</div>
+					<div class="table-cell header-cell" style="flex: 2;">已售数量</div>
+					<div class="table-cell header-cell" style="flex: 2;">已售重量 / 入库重量</div>
+					<div class="table-cell header-cell last-cell" style="flex: 2;">剩余库存 / 入库数量</div>
 				</div>
 				<scroll-view class="scrollArea" scroll-y="true" :style="{ height: WindowHeight-170 + 'px' }" v-if="BatchCommodityList.length>0">
 					<!-- 表格内容行 -->
-					<div style="display: flex; border: 1px solid #ddd;" v-for="item in BatchCommodityList">
-						<div
-							style="flex: 3; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
+					<div class="table-row" v-for="(item, index) in BatchCommodityList" :key="index">
+						<div class="table-cell" style="flex: 2;">
 							{{item.commodityName}}
 						</div>
-
-						<div
-							style="flex: 2; padding: 8px; border-right: 1px solid #ddd; text-align: center;font-weight: bold;">
+						<div class="table-cell" style="flex: 2;">
 							{{item.saleMountStr===""?0:item.saleMountStr}}
 						</div>
-						<div
-							style="flex: 2; padding: 8px; text-align: center;font-weight: bold;border-right: 1px solid #ddd;">
+						<div class="table-cell" style="flex: 2;">
 							( {{item.saleWeight}} ) / {{item.initWeight}}
 						</div>
-						<div style="flex: 2; padding: 8px;  text-align: center;font-weight: bold;">
+						<div class="table-cell last-cell" style="flex: 2;">
 							( {{item.inventMountStr}} ) / {{item.initMountStr}}
 						</div>
 					</div>
-					<div style="display: flex; border: 1px solid #ddd;">
-						<div style="flex: 3; padding: 8px;text-align: center;font-weight: bold;">
-							总计：
+					<!-- 总计行 -->
+					<div class="table-row total-row">
+						<div class="table-cell" style="flex: 2;">
+							总计
 						</div>
-
-						<div style="flex: 2; padding: 8px;  text-align: center;font-weight: bold;">
+						<div class="table-cell" style="flex: 2;">
 							{{totalInventorySold()}}
 						</div>
-						<div style="flex: 2; padding: 8px; text-align: center;font-weight: bold;">
+						<div class="table-cell" style="flex: 2;">
 							( {{totalWeightSold()}} ) / {{totalInitWeight() }}
 						</div>
-						<div style="flex: 2; padding: 8px;  text-align: center;font-weight: bold;">
+						<div class="table-cell last-cell" style="flex: 2;">
 							( {{totalInventory()}} ) / {{totalInitInventory()}}
 						</div>
 					</div>
@@ -166,12 +163,10 @@
               <div v-for="(item, index) in shipperList" :key="item.id"
                 :class="['znj-batch-modal-shipper-item', {selected: shipperSelectedId === item.id}]">
                 <div style="display: flex; align-items: center; flex: 1;" @click="changAddedBatchCode(item.id)">
-                  <uni-icons custom-prefix="iconfont" type="icon-youjiantou" size="25"
-                    color="#333" style="margin-right: 5rpx;" />
                   {{ (index+1) + '. ' + item.shipperName }}
                 </div>
                 <button class="znj-batch-edit-shipper-btn" @click.stop="editShipper(item)" 
-                  style="margin-left: 10rpx; padding: 5rpx 10rpx; background-color: #409EFF; color: white; border: none; border-radius: 5rpx; font-size: 12rpx;">
+                  style="margin-left: 10rpx; padding: 5rpx 10rpx; background-color: #409EFF; color: white; border: none; border-radius: 6rpx; font-size: 12rpx;">
                   编辑
                 </button>
               </div>
@@ -244,24 +239,48 @@
 				},{
 					text: "记录",
 					value: 3
-				}]
-			}
-		},
-		onShow() {
+			}]
+		}
+	},
+	// onShow() {
+	// 	console.log("onShow 触发了")
+	// 	// 检查是否需要刷新
+	// 	var refresh_batch = uni.getStorageSync("refresh_batch");
+	// 	if (refresh_batch != null && refresh_batch != "") {
+	// 		console.log("需要刷新批次:", refresh_batch)
+	// 		this.getAllBatch();
+	// 		// 延迟一下确保批次列表已加载
+	// 		setTimeout(() => {
+	// 			this.getBatchCommodityList(refresh_batch);
+	// 		}, 100);
+	// 		uni.removeStorageSync("refresh_batch")
+	// 	}
+	// },
+	// onLoad() {
+	// 	console.log("onLoad 触发了")
+	// },
+	mounted() {
+		this.companyId = uni.getStorageSync('companyId');
+		this.getallShipper();
+		this.getAllBatch();
+		this.WindowHeight = uni.getWindowInfo().windowHeight;
+		
+		// 监听刷新事件
+		uni.$on('refreshBatch', (batchId) => {
+			console.log("收到刷新事件:", batchId)
 			this.getAllBatch();
-			var refresh_batch = uni.getStorageInfoSync("refresh_batch");
-			if (refresh_batch != null) {
-				this.getBatchCommodityList(refresh_batch);
-				uni.removeStorageSync("refresh_batch")
+			if (batchId) {
+				setTimeout(() => {
+					this.getBatchCommodityList(batchId);
+				}, 100);
 			}
-		},
-		mounted() {
-			this.companyId = uni.getStorageSync('companyId');
-			this.getallShipper();
-			this.getAllBatch();
-			this.WindowHeight = uni.getWindowInfo().windowHeight;
-		},
-		methods: {
+		});
+	},
+	beforeDestroy() {
+		// 移除事件监听
+		uni.$off('refreshBatch');
+	},
+	methods: {
 
 			operabtnChange(e) {
 				if (e.value === 1) {
@@ -363,24 +382,38 @@
 				}
 				return true;
 			},
-			setSaleStatus(info) {
-				var newBatch = JSON.parse(JSON.stringify(this.selectBatch))
-				newBatch.saleStatus = info;
-				category.UpdateBatchStatus(newBatch).then(res => {
-					if (res.code === 200) {
-						uni.showToast({
-							title: '操作成功',
-							icon: 'none'
-						});
-						this.selectBatch.saleStatus = info;
-					} else {
-						uni.showToast({
-							title: '操作失败',
-							icon: 'none'
-						});
+		// 确认售罄
+		confirmSaleOut() {
+			uni.showModal({
+				title: '确认售罄',
+				content: '确定要将该批次标记为售罄吗？',
+				confirmText: '确定',
+				cancelText: '取消',
+				success: (res) => {
+					if (res.confirm) {
+						this.setSaleStatus(0);
 					}
-				})
-			},
+				}
+			});
+		},
+		setSaleStatus(info) {
+			var newBatch = JSON.parse(JSON.stringify(this.selectBatch))
+			newBatch.saleStatus = info;
+			category.UpdateBatchStatus(newBatch).then(res => {
+				if (res.code === 200) {
+					uni.showToast({
+						title: '操作成功',
+						icon: 'none'
+					});
+					this.selectBatch.saleStatus = info;
+				} else {
+					uni.showToast({
+						title: '操作失败',
+						icon: 'none'
+					});
+				}
+			})
+		},
 			exchangeBatch(item) {
 				this.selectBatch = item;
 				this.getBatchCommodityList(item.id);
@@ -416,37 +449,34 @@
 					ShipperId: this.shipperSelectedId,
 					BatchCode: this.batshNewCode
 				}
-				category.CreateBatch(JSON.stringify(param)).then(res => {
-					if (res.code == 200) {
-						uni.showToast({
-							title: '创建成功',
-							icon: 'none'
-						});
-						const data = encodeURIComponent(JSON.stringify(res.data));
+				// category.CreateBatch(JSON.stringify(param)).then(res => {
+				// 	if (res.code == 200) {
+				// 		uni.showToast({
+				// 			title: '创建成功',
+				// 			icon: 'none'
+				// 		});
+						// 获取选中供应商的名称
+						const selectedShipper = this.shipperList.find(s => s.id === this.shipperSelectedId);
+						const shipperName = selectedShipper ? selectedShipper.shipperName : '';
+						
 						this.BatchAddshow = false;
 						if (this.copyLastBatch == true) {
 							uni.navigateTo({
-								url: `/pages/good/batchGoodManger?Batch=${data}&&edit=copyLast`
+								url: `/pages/good/batchGoodManger?shipperId=${this.shipperSelectedId}&BatchCode=${this.batshNewCode}&shipperName=${encodeURIComponent(shipperName)}&edit=copyLast`
 							})
 						} else {
 							uni.navigateTo({
-								url: `/pages/good/batchGoodManger?Batch=${data}&&edit=common`
+								url: `/pages/good/batchGoodManger?shipperId=${this.shipperSelectedId}&BatchCode=${this.batshNewCode}&shipperName=${encodeURIComponent(shipperName)}&edit=common`
 							})
 						}
 
-					} else {
-						uni.showToast({
-							title: '创建失败',
-							icon: 'none'
-						});
-					}
-				})
-			},
-			turnToBatchGood() {
-				const data = encodeURIComponent(JSON.stringify(this.selectBatch));
-				uni.navigateTo({
-					url: `/pages/good/batchGoodManger?Batch=${data}&&edit=common`
-				})
+					// } else {
+					// 	uni.showToast({
+					// 		title: '创建失败',
+					// 		icon: 'none'
+					// 	});
+					// }
+				// })
 			},
 			changAddedBatchCode(id) {
 				this.shipperSelectedId = id;
@@ -461,17 +491,24 @@
 					}
 				})
 			},
-			getAllBatch() {
-				category.GetAllBatch(this.companyId).then(res => {
-					this.batchList = res.data.sort((a, b) => {
-						return new Date(b.createTime) - new Date(a.createTime);
-					});
-					if (this.batchList.length > 0) {
-						this.selectBatch = this.batchList[0];
-						this.getBatchCommodityList(this.selectBatch.id);
-					}
-				})
-			},
+		getAllBatch() {
+			category.GetAllBatch(this.companyId).then(res => {
+				res.data.forEach(item => {
+					item.createTime = item.createTime.replace("T", " ");
+				});
+				console.log("res.data", res.data)
+				// 筛选 salestatus 等于 -1 的批次
+				const filteredData = res.data.filter(item => item.saleStatus === 1);
+
+				this.batchList = filteredData.sort((a, b) => {
+					return new Date(b.createTime) - new Date(a.createTime);
+				});
+				if (this.batchList.length > 0) {
+					this.selectBatch = this.batchList[0];
+					this.getBatchCommodityList(this.selectBatch.id);
+				}
+			})
+		},
 			AddShipper() {
 				if (this.shipperAddedName == null || this.shipperAddedName == "") return;
 				var data = {
@@ -538,7 +575,7 @@
 		background-color: #f0f0f0;
 		padding: 20px;
 		box-sizing: border-box;
-		border-radius: 5rpx;
+		border-radius: 8rpx;
 	}
 
 	.rightAddBatch {
@@ -587,7 +624,7 @@
 		border-bottom: 1px solid gray;
 		/* 默认无下划线 */
 		padding: 5rpx;
-		border-radius: 5rpx;
+		border-radius: 6rpx;
 	}
 
 	h2.selected {
@@ -596,7 +633,7 @@
 		background-color: #cacaca;
 		/* 蓝色背景框，可以根据需求调整 */
 		padding: 5rpx;
-		border-radius: 5rpx;
+		border-radius: 6rpx;
 	}
 
 	.addShipper-content {
@@ -620,7 +657,7 @@
 /* 只影响这两个弹窗 */
 .znj-batch-modal {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 12rpx;
   box-shadow: 0 8px 32px rgba(0,0,0,0.12);
   width: 600rpx;
   box-sizing: border-box;
@@ -660,7 +697,7 @@
   margin-bottom: 16rpx;
   padding: 5rpx;
   height: 20rpx;
-  border-radius: 5rpx;
+  border-radius: 6rpx;
   font-size: 20rpx;
   line-height: 15rpx;
   border: 1px solid #ccc;
@@ -711,7 +748,7 @@
   max-height: 200rpx;
   overflow-y: auto;
   border: 1px solid #eee;
-  border-radius: 8rpx;
+  border-radius: 6rpx;
   padding: 8rpx;
   background: #fafbfc;
 }
@@ -733,7 +770,7 @@
 
 .znj-shipper-modal {
   background: #fff;
-  border-radius: 16px;
+  border-radius: 12rpx;
   box-shadow: 0 8px 32px rgba(0,0,0,0.12);
   padding: 32rpx 24rpx;
   display: flex;
@@ -775,5 +812,79 @@
 }
 .znj-shipper-modal-btn.confirm:hover {
   background: #005f8c;
+}
+
+/* 简洁风格表格样式 */
+.table-container {
+  margin: 0 5rpx;
+  border-radius: 8rpx;
+  overflow: hidden;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.table-header {
+  display: flex;
+  background: linear-gradient(180deg, #e3f2fd 0%, #bbdefb 100%);
+  border-bottom: 2rpx solid #90caf9;
+}
+
+.table-cell {
+  padding: 12rpx 10rpx;
+  text-align: center;
+  font-size: 13rpx;
+  border-right: 1rpx solid #d0d0d0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.table-cell.last-cell {
+  border-right: none;
+}
+
+.header-cell {
+  padding: 8rpx 8rpx;
+  font-weight: 600;
+  color: #1976d2;
+  font-size: 13rpx;
+  border-right: 1rpx solid #90caf9;
+}
+
+.header-cell.last-cell {
+  border-right: none;
+}
+
+.table-row {
+  display: flex;
+  background-color: #ffffff;
+  border-bottom: 2rpx solid #e0e0e0;
+  transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+  background-color: #f8f9fa;
+}
+
+.table-row .table-cell {
+  font-weight: 500;
+  color: #333;
+  font-size: 13rpx;
+}
+
+.total-row {
+  background: linear-gradient(180deg, #fff3e0 0%, #ffe0b2 100%);
+  font-weight: 600;
+  border-top: 2rpx solid #ff9800;
+  border-bottom: none;
+}
+
+.total-row:hover {
+  background: linear-gradient(180deg, #ffe0b2 0%, #ffd180 100%);
+}
+
+.total-row .table-cell {
+  color: #e65100;
+  font-weight: 600;
+  font-size: 14rpx;
 }
 </style>
