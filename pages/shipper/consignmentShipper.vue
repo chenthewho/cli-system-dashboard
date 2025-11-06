@@ -55,13 +55,10 @@
 				<text>暂无代销货主数据</text>
 			</view>
 		</scroll-view>
-
-		<!-- 加载中遮罩 -->
-		<u-loading-page :loading="initialLoading" loading-text="加载中..."></u-loading-page>
-		
+	
 	<!-- 货主详情抽屉 -->
 	<!-- 遮罩层 -->
-	<view v-if="showDetailDrawer" class="drawer-mask" @click="closeDetailDrawer"></view>
+	<view class="drawer-mask" :class="{ 'show': showDetailDrawer }" @click="closeDetailDrawer"></view>
 	
 	<!-- 抽屉主体 -->
 	<view class="detail-drawer" :class="{ 'show': showDetailDrawer }">
@@ -267,37 +264,39 @@
 		},
 		methods: {
 			// 加载数据
-			async loadData(isRefresh = false) {
-				if (this.loading) return;
-				
-				console.log("loadData",this.companyId,this.pageSize,this.currentPage);
+		async loadData(isRefresh = false) {
+			if (this.loading) return;
+			
+			console.log("loadData",this.companyId,this.pageSize,this.currentPage);
 
-				if (isRefresh) {
-					this.currentPage = 1;
-					this.shipperList = [];
-					this.hasMore = true;
-				}
+			if (isRefresh) {
+				this.currentPage = 1;
+				// 不要立即清空列表，等新数据加载完成后再替换
+				// this.shipperList = [];
+				this.hasMore = true;
+			}
+			
+			// this.loading = true;
+			if (this.currentPage === 1) {
+				this.initialLoading = true;
+			}
+			
+			try {
+				const res = await shipperApi.getByCompanyIdAssistShipperManger(
+					this.companyId,
+					this.pageSize,
+					this.currentPage
+				);
 				
-				this.loading = true;
-				if (this.currentPage === 1) {
-					this.initialLoading = true;
-				}
-				
-				try {
-					const res = await shipperApi.getByCompanyIdAssistShipperManger(
-						this.companyId,
-						this.pageSize,
-						this.currentPage
-					);
+				if (res.code === 200 && res.data) {
+					const newList = res.data.shipperList || [];
 					
-					if (res.code === 200 && res.data) {
-						const newList = res.data.shipperList || [];
-						
-						if (isRefresh) {
-							this.shipperList = newList;
-						} else {
-							this.shipperList = [...this.shipperList, ...newList];
-						}
+					if (isRefresh) {
+						// 刷新时直接替换整个列表，避免闪烁
+						this.shipperList = newList;
+					} else {
+						this.shipperList = [...this.shipperList, ...newList];
+					}
 						
 						this.totalCount = res.data.totalCount || 0;
 						this.totalUnpaid = res.data.totalUnPaid || 0;
@@ -674,7 +673,7 @@
 			
 			.shipper-name {
 				flex: 1;
-				font-size: 20rpx;
+				font-size: 16rpx;
 				font-weight: 500;
 				color: #333;
 			}
@@ -686,12 +685,12 @@
 				justify-content: flex-start;
 				
 				.unpaid-label {
-					font-size: 20rpx;
+					font-size: 16rpx;
 					color: #999;
 				}
 				
 				.unpaid-amount {
-					font-size: 20rpx;
+					font-size: 16rpx;
 					font-weight: bold;
 					color: #ff6b00;
 					margin-left: 8rpx;
@@ -703,7 +702,7 @@
 				align-items: center;
 				
 				.detail-btn {
-					font-size: 18rpx;
+					font-size: 16rpx;
 					color: #00aa00;
 					margin-right: 4rpx;
 				}
@@ -714,7 +713,7 @@
 			text-align: center;
 			padding: 15rpx;
 			color: #999;
-			font-size: 18rpx;
+			font-size: 16rpx;
 		}
 		
 		.empty-state {
@@ -734,25 +733,34 @@
 		bottom: 0;
 		background-color: rgba(0, 0, 0, 0.5);
 		z-index: 999;
-		transition: opacity 0.3s;
+		opacity: 0;
+		transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		pointer-events: none;
+		
+		&.show {
+			opacity: 1;
+			pointer-events: auto;
+		}
 	}
 	
 	// 详情抽屉样式
 	.detail-drawer {
 		position: fixed;
 		top: 0;
-		right: -50%;
+		right: 0;
 		width: 50%;
 		height: 100vh;
 		background-color: #f5f5f5;
 		display: flex;
 		flex-direction: column;
 		z-index: 1000;
-		transition: right 0.3s ease;
+		transform: translateX(100%);
+		transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		box-shadow: -2rpx 0 8rpx rgba(0, 0, 0, 0.15);
+		will-change: transform;
 		
 		&.show {
-			right: 0;
+			transform: translateX(0);
 		}
 		
 		.loading-container {

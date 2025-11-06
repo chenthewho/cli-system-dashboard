@@ -400,18 +400,18 @@ export default {
 }
 
 .batch-code {
-	font-size: 16px;
+	font-size: 20rpx;
 	font-weight: 600;
 	color: #333;
 }
 
 .batch-time {
-	font-size: 12px;
+	font-size: 14rpx;
 	color: #999;
 }
 
 .batch-settle-time {
-	font-size: 12px;
+	font-size: 14rpx;
 	color: #666;
 }
 
@@ -430,13 +430,13 @@ export default {
 }
 
 .finance-label {
-	font-size: 11px;
+	font-size: 14rpx;
 	color: #999;
 	margin-bottom: 4px;
 }
 
 .finance-value {
-	font-size: 13px;
+	font-size: 16rpx;
 	font-weight: 600;
 	color: #333;
 }

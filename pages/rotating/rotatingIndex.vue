@@ -1,7 +1,7 @@
 <template>
 	<view class="rotating-container" :style="{ height: windowHeight + 'px', overflow: 'hidden', overflowX: 'hidden' }">
 		<!-- 顶部固定头部 -->
-		<view class="header-toolbar">
+		<view class="header-toolbar" :style="{ width: windowWidth + 'px' }">
 			<!-- 左侧用户信息 -->
 			<view class="header-left">
 				<text class="header-username" v-if="currentData.dutyInfo">{{ currentData.dutyInfo.userName }}</text>
@@ -200,60 +200,68 @@
 						<view class="payment-content">
 						<!-- 第一行：微信 + 支付宝 -->
 						<view class="payment-row">
-							<!-- 微信支付 -->
-							<view class="payment-item wechat-pay" @click="showExpenseAccout(1)">
-								<view class="payment-header">
-									<view class="payment-icon-wrapper">
-										<u-icon class="payment-icon" :size="28" name="weixin-fill"
-											color="white"></u-icon>
-										<text class="payment-label">微信</text>
-									</view>
-								</view>
-								<view class="payment-amount" v-if="currentData.accountExpense">
-									{{ currentData.accountExpense.wxpayAmount }}
+						<!-- 微信支付 -->
+						<view class="payment-item wechat-pay" @click="showExpenseAccout(1)">
+							<view class="payment-header">
+								<view class="payment-icon-wrapper">
+									<u-icon class="payment-icon" :size="28" name="weixin-fill"
+										color="white"></u-icon>
+									<text class="payment-label">微信</text>
 								</view>
 							</view>
-							<!-- 支付宝 -->
-							<view class="payment-item alipay-pay" @click="showExpenseAccout(2)">
-								<view class="payment-header">
-									<view class="payment-icon-wrapper">
-										<u-icon class="payment-icon" :size="28" name="zhifubao" color="white"></u-icon>
-										<text class="payment-label">支付宝</text>
-									</view>
-								</view>
-								<view class="payment-amount" v-if="currentData.accountExpense">
-									{{ currentData.accountExpense.alipayAmount }}
+							<view class="payment-amount" 
+								:class="getAmountFontClass(currentData.accountExpense ? currentData.accountExpense.wxpayAmount : '0')"
+								v-if="currentData.accountExpense">
+								{{ currentData.accountExpense.wxpayAmount }}
+							</view>
+						</view>
+						<!-- 支付宝 -->
+						<view class="payment-item alipay-pay" @click="showExpenseAccout(2)">
+							<view class="payment-header">
+								<view class="payment-icon-wrapper">
+									<u-icon class="payment-icon" :size="28" name="zhifubao" color="white"></u-icon>
+									<text class="payment-label">支付宝</text>
 								</view>
 							</view>
+							<view class="payment-amount" 
+								:class="getAmountFontClass(currentData.accountExpense ? currentData.accountExpense.alipayAmount : '0')"
+								v-if="currentData.accountExpense">
+								{{ currentData.accountExpense.alipayAmount }}
+							</view>
+						</view>
 						</view>
 						<!-- 第二行：现金 + 其他 -->
 						<view class="payment-row">
-							<!-- 现金支付 -->
-							<view class="payment-item cash-pay" @click="showExpenseAccout(3)">
-								<view class="payment-header">
-									<view class="payment-icon-wrapper">
-										<u-icon class="payment-icon" :size="28" name="red-packet-fill"
-											color="white"></u-icon>
-										<text class="payment-label">现金</text>
-									</view>
-								</view>
-								<view class="payment-amount" v-if="currentData.accountExpense">
-									{{ currentData.accountExpense.cashAmount }}
+						<!-- 现金支付 -->
+						<view class="payment-item cash-pay" @click="showExpenseAccout(3)">
+							<view class="payment-header">
+								<view class="payment-icon-wrapper">
+									<u-icon class="payment-icon" :size="28" name="red-packet-fill"
+										color="white"></u-icon>
+									<text class="payment-label">现金</text>
 								</view>
 							</view>
-							<!-- 其他支付 -->
-							<view class="payment-item other-pay" @click="showExpenseAccout(4)">
-								<view class="payment-header">
-									<view class="payment-icon-wrapper">
-										<u-icon class="payment-icon" :size="28" name="coupon-fill"
-											color="white"></u-icon>
-										<text class="payment-label">其他</text>
-									</view>
-								</view>
-								<view class="payment-amount" v-if="currentData">
-									{{ getOtherPaymentAmount() }}
+							<view class="payment-amount" 
+								:class="getAmountFontClass(currentData.accountExpense ? currentData.accountExpense.cashAmount : '0')"
+								v-if="currentData.accountExpense">
+								{{ currentData.accountExpense.cashAmount }}
+							</view>
+						</view>
+						<!-- 其他支付 -->
+						<view class="payment-item other-pay" @click="showExpenseAccout(4)">
+							<view class="payment-header">
+								<view class="payment-icon-wrapper">
+									<u-icon class="payment-icon" :size="28" name="coupon-fill"
+										color="white"></u-icon>
+									<text class="payment-label">其他</text>
 								</view>
 							</view>
+							<view class="payment-amount" 
+								:class="getAmountFontClass(getOtherPaymentAmount())"
+								v-if="currentData">
+								{{ getOtherPaymentAmount() }}
+							</view>
+						</view>
 						</view>
 						</view>
 					</view>
@@ -285,17 +293,19 @@
 			<view class="card5-content" v-if="currentData">
 				<scroll-view class="orders-scroll-area" scroll-x="false" scroll-y="true"
 					:style="{ height: (windowHeight - 377 - 60) + 'px' }">
-						<view class="order-item" v-for="order in filteredOrderList" :key="order.id"
-							@click="openAssistDrawer(order)">
-							<view class="order-left">
-								<text class="customer-name">{{ order.customName }}</text>
-								<text class="order-time">{{ order.createTime.replace("T", " ") }}</text>
-							</view>
-							<view class="order-right">
+					<view class="order-item" v-for="order in filteredOrderList" :key="order.id"
+						@click="openAssistDrawer(order)">
+						<view class="order-row-top">
+							<text class="customer-name">{{ order.customName }}</text>
+							<view class="order-amount">
 								<text v-if="order.debt <= 0" class="amount-paid">￥{{ order.actualMoney }}</text>
 								<text v-if="order.debt > 0" class="amount-pending">待付：￥{{ order.debt }}</text>
 							</view>
 						</view>
+						<view class="order-row-bottom">
+							<text class="order-time">{{ order.createTime.replace("T", " ") }}</text>
+						</view>
+					</view>
 					</scroll-view>
 				</view>
 			</view>
@@ -1482,7 +1492,7 @@ onPaymentChange(value) {
 		getSystemheight() {
 			const windowInfo = uni.getWindowInfo();
 			this.windowHeight = windowInfo.windowHeight;
-			this.windowWidth = windowInfo.windowWidth;
+			this.windowWidth = windowInfo.windowWidth - uni.upx2px(40);
 			this.calculateWidths();
 		},
 		
@@ -1496,7 +1506,7 @@ onPaymentChange(value) {
 			const contentWidth = this.windowWidth - (padding * 2);
 			
 			// 左侧面板占 2/3，右侧面板占 1/3
-			this.leftPanelWidth = Math.floor((contentWidth - gap) * 2/ 3)-50;
+			this.leftPanelWidth = Math.floor((contentWidth - gap) * 2/ 3);
 			this.rightPanelWidth = Math.floor((contentWidth - gap) * 1 / 3);
 			
 			// 卡片宽度 = 左侧面板宽度（卡片本身会通过 100% 来填充）
@@ -1941,12 +1951,27 @@ onPaymentChange(value) {
 			}
 		},
 		// 计算其他支付金额（包含备用金）
-		getOtherPaymentAmount() {
-			if (!this.currentData) return 0;
-			const otherAmount = parseFloat(this.currentData.accountExpense?.otherAmount) || 0;
-			const reserveAmount = parseFloat(this.currentData.reservefund) || 0;
-			return (otherAmount + reserveAmount).toFixed(0);
-		},
+	getOtherPaymentAmount() {
+		if (!this.currentData) return 0;
+		const otherAmount = parseFloat(this.currentData.accountExpense?.otherAmount) || 0;
+		const reserveAmount = parseFloat(this.currentData.reservefund) || 0;
+		return (otherAmount + reserveAmount).toFixed(0);
+	},
+	
+	// 根据金额长度返回字体大小类名
+	getAmountFontClass(amount) {
+		const amountStr = String(amount);
+		const length = amountStr.length;
+		
+		if (length > 10) {
+			return 'font-size-xs';  // 超长
+		} else if (length > 7) {
+			return 'font-size-sm';  // 长
+		} else if (length > 5) {
+			return 'font-size-md';  // 中等
+		}
+		return '';  // 默认大小
+	},
 
 		// 还筐详情相关方法
 		showBasketDetail(basket) {
@@ -2039,13 +2064,6 @@ onPaymentChange(value) {
 </script>
 
 <style lang="scss" scoped>
-// 页面级别固定
-page {
-	overflow-x: hidden !important;
-	width: 100%;
-	max-width: 100vw;
-	position: relative;
-}
 
 // 全局防止横向滚动
 view, scroll-view {
@@ -2058,8 +2076,6 @@ view, scroll-view {
 	background-color: gainsboro;
 	overflow: hidden !important;
 	overflow-x: hidden !important;
-	width: 100vw;
-	max-width: 100vw;
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	position: relative;
 	box-sizing: border-box;
@@ -2067,24 +2083,25 @@ view, scroll-view {
 
 // 顶部工具栏
 .header-toolbar {
-	top: 0;
-	left: 0;
-	right: 0;
 	height: 70px;
 	background-color: white;
 	z-index: 999;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 0 20rpx;
+	padding: 0 5rpx;
 	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 	border-bottom: 1px solid #e5e5e5;
+	box-sizing: border-box;
+	overflow: hidden;
+	flex-shrink: 0;
 }
 
 // 左侧用户信息
 .header-left {
 	flex: 1;
 	display: flex;
+	align-items:flex-start;
 	flex-direction: column;
 	gap: 2rpx;
 }
@@ -2105,8 +2122,8 @@ view, scroll-view {
 .header-center {
 	flex: 2;
 	display: flex;
-	justify-content: center;
-	align-items: center;
+	justify-content: left;
+	align-items:flex-start;
 	gap: 20rpx;
 	min-width: 0;
 }
@@ -2590,8 +2607,10 @@ view, scroll-view {
 	display: flex;
 	justify-content: space-between;
 	margin: 2rpx;
-	gap: 3rpx;
+	gap: 6rpx;
 	flex: 1;
+	height: 0;
+	min-height: 0;
 }
 
 .payment-item {
@@ -2605,10 +2624,11 @@ view, scroll-view {
 	justify-content: center;
 	align-items: center;
 	height: 100%;
-	min-height: 50rpx;
 	box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.1);
 	border: 1rpx solid rgba(255, 255, 255, 0.2);
 	cursor: pointer;
+	box-sizing: border-box;
+	min-width: 0;
 	
 	&:active {
 		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15), 0 1rpx 3rpx rgba(0, 0, 0, 0.1);
@@ -2675,6 +2695,20 @@ view, scroll-view {
 	font-weight: 600;
 	text-align: center;
 	width: 100%;
+	word-break: break-all;
+	line-height: 1.2;
+	
+	&.font-size-md {
+		font-size: 17rpx;
+	}
+	
+	&.font-size-sm {
+		font-size: 14rpx;
+	}
+	
+	&.font-size-xs {
+		font-size: 12rpx;
+	}
 }
 
 // 订单数据卡片
@@ -2722,10 +2756,12 @@ view, scroll-view {
 	border: 1rpx solid rgba(0, 0, 0, 0.04);
 	margin-bottom: 4rpx;
 	display: flex;
+	flex-direction: column;
 	padding: 8rpx 10rpx;
 	background: #f5f5f5;
 	box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
 	cursor: pointer;
+	gap: 4rpx;
 	
 	&:active {
 		background: #ececec;
@@ -2734,30 +2770,31 @@ view, scroll-view {
 	}
 }
 
-.order-left {
-	flex: 1;
+.order-row-top {
 	display: flex;
-	flex-direction: column;
-	gap: 3rpx;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.order-row-bottom {
+	display: flex;
 }
 
 .customer-name {
 	font-size: 13rpx;
 	font-weight: 600;
 	color: #1e293b;
+	flex: 1;
+}
+
+.order-amount {
+	display: flex;
+	align-items: center;
 }
 
 .order-time {
 	font-size: 11rpx;
 	color: #6b7280;
-}
-
-.order-right {
-	flex: 1;
-	text-align: right;
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
 }
 
 .amount-paid {

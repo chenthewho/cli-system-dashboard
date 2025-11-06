@@ -225,8 +225,12 @@ export default {
 		const field = fieldMap[focusIndex];
 		if (!field) return;
 
+		// 散装模式下，总重字段使用 allweightSrt
+		const isScatterMode = this.editingCard.saleWay === 4;
+		const actualField = (focusIndex === 3 && isScatterMode) ? 'allweightSrt' : field;
+
 		// 从数据模型读取当前值
-		let currentValue = String(this.editingCard[field] || '0');
+		let currentValue = String(this.editingCard[actualField] || '0');
 
 		// 快速验证：小数点重复检查
 		if (val === '.' && currentValue.includes('.')) {
@@ -255,11 +259,11 @@ export default {
 			
 			// 拼接运算符
 			const newValue = currentValue + val;
-			this.editingCard[field] = newValue;
+			this.editingCard[actualField] = newValue;
 			
-			// allweightSrt 特殊处理
-			if (focusIndex === 3) {
-				this.editingCard.allweightSrt = (this.editingCard.allweightSrt || '0') + val;
+			// 非散装模式下，同步更新 allweightSrt（用于显示表达式）
+			if (focusIndex === 3 && !isScatterMode) {
+				this.editingCard.allweightSrt = newValue;
 			}
 			return;
 		}
@@ -271,12 +275,11 @@ export default {
 		const newValue = String(txt) + val;
 
 		// ===【关键】立即更新数据模型，触发 Vue 响应式更新===
-		this.editingCard[field] = newValue;
+		this.editingCard[actualField] = newValue;
 
-		// allweightSrt 特殊处理
-		if (focusIndex === 3) {
-			const allweightSrt = this.editingCard.allweightSrt || '0';
-			this.editingCard.allweightSrt = allweightSrt.toString() === '0' ? val : allweightSrt + val;
+		// 非散装模式下，同步更新 allweightSrt（用于显示表达式）
+		if (focusIndex === 3 && !isScatterMode) {
+			this.editingCard.allweightSrt = newValue;
 		}
 
 		// 【优化】只延迟复杂计算
@@ -319,40 +322,40 @@ export default {
 		}
 	},
 
-		Tuige() {
-			// 取消复杂计算定时器
-			if (this.inputBuffer.timer) {
-				clearTimeout(this.inputBuffer.timer);
-			}
+	Tuige() {
+		// 取消复杂计算定时器
+		if (this.inputBuffer.timer) {
+			clearTimeout(this.inputBuffer.timer);
+		}
 
-			const focusIndex = this.custominputFocusIndex;
-			const fieldMap = ['', 'quantity', 'referenceAmount', 'allweight', 'carweight'];
-			const field = fieldMap[focusIndex];
-			if (!field) return;
+		const focusIndex = this.custominputFocusIndex;
+		const fieldMap = ['', 'quantity', 'referenceAmount', 'allweight', 'carweight'];
+		const field = fieldMap[focusIndex];
+		if (!field) return;
 
-			// 从数据模型读取当前值
-			let currentValue = String(this.editingCard[field] || '0');
+		// 散装模式下，总重字段使用 allweightSrt
+		const isScatterMode = this.editingCard.saleWay === 4;
+		const actualField = (focusIndex === 3 && isScatterMode) ? 'allweightSrt' : field;
 
-			// 如果当前值为空或为零，直接返回
-			if (currentValue === '' || currentValue === '0') {
-				return;
-			}
+		// 从数据模型读取当前值
+		let currentValue = String(this.editingCard[actualField] || '0');
 
-			// 回退一个字符
-			let newValue = currentValue.slice(0, -1);
-			newValue = newValue === '' ? '0' : newValue;
+		// 如果当前值为空或为零，直接返回
+		if (currentValue === '' || currentValue === '0') {
+			return;
+		}
 
-			// 立即更新数据模型
-			this.editingCard[field] = newValue;
+		// 回退一个字符
+		let newValue = currentValue.slice(0, -1);
+		newValue = newValue === '' ? '0' : newValue;
 
-			// 散装模式总重特殊处理
-			if (focusIndex === 3) {
-				let srt = this.editingCard.allweightSrt;
-				if (srt != null && srt !== '') {
-					srt = srt.toString().slice(0, -1);
-					this.editingCard.allweightSrt = srt === '' ? '0' : srt;
-				}
-			}
+		// 立即更新数据模型
+		this.editingCard[actualField] = newValue;
+
+		// 非散装模式下，同步更新 allweightSrt
+		if (focusIndex === 3 && !isScatterMode) {
+			this.editingCard.allweightSrt = newValue;
+		}
 
 			// 延迟复杂计算
 			if (focusIndex === 1 && this.fixedTareWeight.action === true) {
@@ -405,27 +408,33 @@ export default {
 			this.custominputFocusIndex = index;
 		},
 
-		confirm() {
-			// 安全计算表达式
-			const safeEval = expr => {
-				try {
-					return new Function('return ' + expr)();
-				} catch (e) {
-					return parseFloat(expr) || 0;
-				}
-			};
+	confirm() {
+		// 安全计算表达式
+		const safeEval = expr => {
+			try {
+				return new Function('return ' + expr)();
+			} catch (e) {
+				return parseFloat(expr) || 0;
+			}
+		};
 
-			// 计算表达式
-			Object.assign(this.editingCard, {
-				quantity: safeEval(this.editingCard.quantity),
-				referenceAmount: safeEval(this.editingCard.referenceAmount),
-				allweight: safeEval(this.editingCard.allweight),
-				carweight: safeEval(this.editingCard.carweight)
-			});
+		// 散装模式下，将 allweightSrt 的计算结果赋值给 allweight
+		const isScatterMode = this.editingCard.saleWay === 4;
+		if (isScatterMode && this.editingCard.allweightSrt) {
+			this.editingCard.allweight = safeEval(this.editingCard.allweightSrt);
+		}
 
-			// 触发父组件事件
-			this.$emit('confirm', this.editingCard);
-		},
+		// 计算表达式
+		Object.assign(this.editingCard, {
+			quantity: safeEval(this.editingCard.quantity),
+			referenceAmount: safeEval(this.editingCard.referenceAmount),
+			allweight: safeEval(this.editingCard.allweight),
+			carweight: safeEval(this.editingCard.carweight)
+		});
+
+		// 触发父组件事件
+		this.$emit('confirm', this.editingCard);
+	},
 
 		// 处理押筐选择
 		handleExtraModelSelect(e) {

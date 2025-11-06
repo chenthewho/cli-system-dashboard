@@ -608,132 +608,183 @@
 					console.log("that.extraModel", that.extraModel)
 				})
 			},
-			GetCustomerClientShareImage(){
-				// 使用canvas生成客户欠款信息图片
-				this.generateCustomerShareImage();
-			},
-			
-			// 使用canvas生成客户欠款信息封面（简化版）
-			generateCustomerShareImage() {
-				const that = this;
-				const customer = this.customerInfo;
-				
-				if (!customer) {
-					uni.showToast({
-						title: '客户信息加载中',
-						icon: 'none'
-					});
-					return;
+		GetCustomerClientShareImage(){
+			// 使用canvas生成客户欠款信息图片
+			this.generateCustomerShareImage();
+		},
+		
+		// 使用canvas生成客户欠款信息封面（简化版）
+		generateCustomerShareImage() {
+		const that = this;
+		const customer = this.customerInfo;
+		
+		if (!customer) {
+			uni.showToast({
+				title: '客户信息加载中',
+				icon: 'none'
+			});
+			return;
+		}
+		
+		// 判断是全选、没选还是部分选择
+		const isAllOrNone = this.checkboxValue.length === 0 || this.checkboxValue.length === this.moduleList.length;
+		
+		// 计算金额
+		let totalDebt = 0;  // 总欠款
+		let totalAmount = 0;  // 总金额（实收金额）
+		
+		if (isAllOrNone) {
+			// 全选或没选：按全部订单计算
+			this.moduleList.forEach(order => {
+				totalDebt += (order.debt || 0);
+				totalAmount += (order.actualMoney || 0);
+			});
+		} else {
+			// 部分选择：按选中的订单计算
+			this.moduleList.forEach(order => {
+				if (this.checkboxValue.includes(order.id)) {
+					totalDebt += (order.debt || 0);
+					totalAmount += (order.actualMoney || 0);
 				}
-				
-				// 获取公司信息
-				const companyId = uni.getStorageSync('companyId');
-				const cashierOrder = require('../../api/cashier/cashierOrder').default;
-				cashierOrder.getStoreInfo(companyId).then(res => {
-					const companyInfo = res.data || {};
-					const companyName = companyInfo.name || '店铺名称';
-					
-				// 创建canvas上下文
-				const ctx = uni.createCanvasContext('customerCanvas', this);
-				
-				// 画布尺寸（微信分享封面标准尺寸 5:4 比例）
-				const canvasWidth = 500;
-				const canvasHeight = 400;
-				const padding = 30;
-				
-				// 白色背景
-				ctx.setFillStyle('#FFFFFF');
-				ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-				
-				// 画边框
-				ctx.setStrokeStyle('#3b82f6');
-				ctx.setLineWidth(3);
-				const paddingRect = 8;
-				ctx.strokeRect(paddingRect, paddingRect, canvasWidth - paddingRect * 2, canvasHeight - paddingRect * 2);
-				
-				let y = 40;
-				
-				// 绘制标题（客户名称）
-				ctx.setFillStyle('#1e3a8a');
-				ctx.setFontSize(28);
-				ctx.setTextAlign('center');
-				ctx.fillText(customer.customName || '客户', canvasWidth / 2, y);
-				y += 40;
-				
-				// 公司名称
-				ctx.setFontSize(22);
-				ctx.setFillStyle('#3b82f6');
-				ctx.fillText(companyName, canvasWidth / 2, y);
-				y += 50;
-				
-				// 账单信息卡片（总欠款）
-				const cardPadding = 40;
-				const cardHeight = 90;
-				const cardY = y;
-				
-				// 账单背景框（粉色背景）
-				ctx.setFillStyle('#fef2f2');
-				ctx.fillRect(cardPadding, cardY, canvasWidth - cardPadding * 2, cardHeight);
-				
-				// 账单标签
-				ctx.setFontSize(24);
-				ctx.setFillStyle('#6b7280');
-				ctx.setTextAlign('left');
-				ctx.fillText('账单', cardPadding + 25, cardY + 35);
-				
-				// 账单金额（总欠款，红色）
-				ctx.setFontSize(42);
-				ctx.setFillStyle('#dc2626');
-				ctx.setTextAlign('right');
-				const debtText = `¥${customer.debts || 0}`;
-				ctx.fillText(debtText, canvasWidth - cardPadding - 25, cardY + 58);
-				
-				y += cardHeight + 45;
-				
-				// 账单时间
-				ctx.setFontSize(18);
-				ctx.setFillStyle('#9ca3af');
-				ctx.setTextAlign('center');
-				const now = new Date();
-				const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-				ctx.fillText(`账单日期: ${dateStr}`, canvasWidth / 2, y);
-					
-					// 绘制完成，导出图片
-					ctx.draw(false, () => {
-						setTimeout(() => {
-							uni.canvasToTempFilePath({
-								canvasId: 'customerCanvas',
-								x: 0,
-								y: 0,
-								width: canvasWidth,
-								height: canvasHeight,
-								destWidth: canvasWidth * 2,  // 2倍分辨率
-								destHeight: canvasHeight * 2,
-								fileType: 'png',
-								quality: 1,
-								success: (res) => {
-									console.log('生成客户账单图片成功:', res.tempFilePath);
-									// 直接保存并分享图片
-									that.saveAndShareCustomerImage(res.tempFilePath);
-								},
-								fail: (err) => {
-									console.error('生成图片失败:', err);
-									uni.showToast({
-										title: '生成图片失败',
-										icon: 'none'
-									});
-								}
-							}, that);
-						}, 500);
-					});
-				}).catch(err => {
-					console.error('获取公司信息失败:', err);
-					uni.showToast({
-						title: '获取公司信息失败',
-						icon: 'none'
-					});
-				});
-			},
+			});
+		}
+		
+		// 确定显示内容和颜色
+		let displayAmount = 0;
+		let displayColor = '';
+		
+		if (totalDebt > 0) {
+			// 有欠款：显示欠款金额，红色
+			displayAmount = totalDebt;
+			displayColor = '#FF0000';  // 红色
+		} else {
+			// 没有欠款：显示总订单金额，蓝色
+			displayAmount = totalAmount;
+			displayColor = '#3b82f6';  // 蓝色
+		}
+		
+		// 右上角标签
+		const scopeLabel = isAllOrNone ? '全部' : `已选${this.checkboxValue.length}单`;
+		
+		// 创建canvas上下文
+		const ctx = uni.createCanvasContext('customerCanvas', this);
+		
+		// 画布尺寸
+		const canvasWidth = 600;
+		const canvasHeight = 350;
+		const padding = 40;
+		
+		// 白色背景
+		ctx.setFillStyle('#FFFFFF');
+		ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+		
+		// 顶部蓝色渐变区域
+		const gradient = ctx.createLinearGradient(0, 0, canvasWidth, 0);
+		gradient.addColorStop(0, '#3b82f6');
+		gradient.addColorStop(1, '#2563eb');
+		ctx.setFillStyle(gradient);
+		ctx.fillRect(0, 0, canvasWidth, 8);
+		
+		let y = 60;
+		
+		// 左上角：账单图标 + 客户档案编号/名称
+		// 绘制账单图标
+		const iconSize = 40; // 图标大小
+		const iconPath = '/static/img/zhangdan.png';
+		ctx.drawImage(iconPath, padding, y - iconSize + 5, iconSize, iconSize);
+		
+		// 绘制客户名称（图标右侧）
+		ctx.setFillStyle('#333333');
+		ctx.setFontSize(32);
+		ctx.setTextAlign('left');
+		const customerLabel = customer.customName || '未命名客户';
+		ctx.fillText(customerLabel, padding + iconSize + 10, y);
+		
+		// 右上角：范围标签
+		ctx.setFillStyle('#999999');
+		ctx.setFontSize(28);
+		ctx.setTextAlign('right');
+		ctx.fillText(scopeLabel, canvasWidth/2 + padding, y);
+		
+		y += 120;
+		
+		// 中间大号金额（根据是否有欠款设置颜色）
+		ctx.setFillStyle(displayColor);
+		ctx.setFontSize(88);
+		ctx.setTextAlign('left');
+		ctx.font = 'bold 88px sans-serif';
+		// 金额格式化：保留一位小数，如果是.0则不显示小数部分
+		const amountText = displayAmount % 1 === 0 ? `${displayAmount}` : `${displayAmount.toFixed(1)}`;
+		ctx.fillText(amountText, padding, y);
+		
+		// 金额单位"元"
+		const amountWidth = ctx.measureText(amountText).width || (amountText.length * 50);
+		ctx.setFontSize(32);
+		ctx.setFillStyle(displayColor);
+		ctx.fillText('元', padding + amountWidth + 10, y);
+		
+		y += 60;
+		
+		// 日期范围 - 根据订单时间计算
+		ctx.setFillStyle('#666666');
+		ctx.setFontSize(28);
+		ctx.setTextAlign('left');
+		
+		// 获取需要统计的订单列表
+		let ordersForDate = [];
+		if (isAllOrNone) {
+			ordersForDate = this.moduleList;
+		} else {
+			ordersForDate = this.moduleList.filter(order => this.checkboxValue.includes(order.id));
+		}
+		
+		// 找出最早和最晚的订单日期
+		let startDate = '';
+		let endDate = '';
+		if (ordersForDate.length > 0) {
+			const dates = ordersForDate.map(order => new Date(order.createTime)).sort((a, b) => a - b);
+			const earliestDate = dates[0];
+			const latestDate = dates[dates.length - 1];
+			
+			startDate = `${earliestDate.getFullYear()}.${String(earliestDate.getMonth() + 1).padStart(2, '0')}.${String(earliestDate.getDate()).padStart(2, '0')}`;
+			endDate = `${latestDate.getFullYear()}.${String(latestDate.getMonth() + 1).padStart(2, '0')}.${String(latestDate.getDate()).padStart(2, '0')}`;
+		} else {
+			// 没有订单时显示当前日期
+			const now = new Date();
+			startDate = endDate = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`;
+		}
+		
+		const dateRangeText = `${startDate}-${endDate}`;
+		ctx.fillText(dateRangeText, padding, y);
+		
+		// 绘制完成，导出图片
+		ctx.draw(false, () => {
+			setTimeout(() => {
+				uni.canvasToTempFilePath({
+					canvasId: 'customerCanvas',
+					x: 0,
+					y: 0,
+					width: canvasWidth,
+					height: canvasHeight,
+					destWidth: canvasWidth * 2,  // 2倍分辨率
+					destHeight: canvasHeight * 2,
+					fileType: 'png',
+					quality: 1,
+					success: (res) => {
+						// 直接保存并分享图片
+						that.saveAndShareCustomerImage(res.tempFilePath);
+					},
+					fail: (err) => {
+						console.error('生成图片失败:', err);
+						uni.showToast({
+							title: '生成图片失败',
+							icon: 'none'
+						});
+					}
+				}, that);
+			}, 500);
+		});
+		},
 			
 			// 直接分享客户账单图片（不保存到相册）
 			saveAndShareCustomerImage(tempFilePath) {
@@ -777,29 +828,44 @@
 					bitmap.clear()
 				});
 			},
-			shareCustomerOrder(url) {
-				var currentCompanyName = uni.getStorageSync('companyName');
-				let that = this;
-				uni.share({
-				    provider: 'weixin',
-				    scene: "WXSceneSession",
-				    type: 5,
-					title: currentCompanyName,
-					imageUrl: url,
-				    miniProgram: {
-				        id: 'gh_9a0864956648',
-				        path: `/pages/companyOrder/index?customerId=${that.customerId}`,
-				        type: 0,
-				        webUrl: 'http://uniapp.dcloud.io'
-				    },
-				    success: ret => {
-				        console.log(JSON.stringify(ret));
-				    },
-					fail: ret => {
-				        console.log(JSON.stringify(ret));
-				    },
-				});
-			},
+		shareCustomerOrder(url) {
+			var currentCompanyName = uni.getStorageSync('companyName');
+			let that = this;
+			
+			// 判断是全选/没选还是部分选择
+			const isAllOrNone = this.checkboxValue.length === 0 || this.checkboxValue.length === this.moduleList.length;
+			
+			// 根据选中状态构造不同的路径
+			let sharePath = '';
+			if (isAllOrNone) {
+				// 全选或没选：使用客户ID路径
+				sharePath = `/pages/companyOrder/index?customerId=${that.customerId}`;
+			} else {
+				// 部分选择：使用订单ID列表路径
+				const idList = this.checkboxValue.join(',');
+				sharePath = `/pages/companyOrder/orderSelectView?idList=${idList}`;
+			}
+			
+			uni.share({
+			    provider: 'weixin',
+			    scene: "WXSceneSession",
+			    type: 5,
+				title: currentCompanyName,
+				imageUrl: url,
+			    miniProgram: {
+			        id: 'gh_9a0864956648',
+			        path: sharePath,
+			        type: 0,
+			        webUrl: 'http://uniapp.dcloud.io'
+			    },
+			    success: ret => {
+			        console.log(JSON.stringify(ret));
+			    },
+				fail: ret => {
+			        console.log(JSON.stringify(ret));
+			    },
+			});
+		},
 			payTypeConfirm(){
 				var moduleSelect = [];
 				this.moduleList.forEach(item => {

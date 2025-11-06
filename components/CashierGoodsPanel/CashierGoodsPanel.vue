@@ -6,7 +6,7 @@
 		</div>
 		<div style="flex-wrap: wrap;padding-top: 0;">
 			
-			<view style="display: flex; align-items: center; position: relative; width: 100%;margin-left: 42rpx; " >
+			<view style="display: flex; align-items: center; position: relative; width: 100%;margin-left: 45rpx; " >
 				<view class="search-container" style="width: calc(100% - 45px); max-width: 100%;">
 					<view class="search-input-wrapper">
 						<uni-icons type="search" size="18" color="#999" class="search-icon"></uni-icons>
@@ -29,7 +29,7 @@
 			</view>
 
 			<scroll-view class="scrollArea" scroll-y="true"
-				:style="{ height: scrollHeight + 'px',marginLeft: '42rpx'}">
+				:style="{ height: scrollHeight + 'px',marginLeft: '45rpx'}">
 				
 				<!-- 加载中提示 -->
 				<div v-if="isLoading" class="loading-container">
@@ -77,14 +77,16 @@
 			</scroll-view>
 		</div>
 		
-		<!--模糊查询字体列(词云列)-->
-		<div class="vertical-tab2" v-if="rows.length>0"
-			:style="{ height: (scrollHeight-10) + 'px',position:'absolute',right:'4px',top:'47px' }">
+	<!--模糊查询字体列(词云列)-->
+	<div class="vertical-tab2" v-if="rows.length>0"
+		:style="{ height: (scrollHeight) + 'px',position:'absolute',right:'4px',top:'40px' }">
+		<scroll-view scroll-y="true" :style="{ height: '100%' }">
 			<div class="key-word" :class="{ 'key-word-active': currentKeyWord === item }"
 				v-for="item in keyWordList" @click="handleKeyWordClick(item)">
 				<span v-for="char in item">{{ char }}</span>
 			</div>
-		</div>
+		</scroll-view>
+	</div>
 	</div>
 </template>
 
@@ -431,6 +433,7 @@ export default {
 				stockType: 1, // 1-自营
 				saleWay: data.saleWay,
 				commodityId: data.commodityId,
+				extralModel: data.extralModel,
 				outPutPurchaseInventories: data.outPutPurchaseInventories,
 				unit: data.unit,
 				initWeight: data.initWeight,
@@ -476,7 +479,7 @@ export default {
 			try {
 				console.log('[loadSelfOperatedGoods] 开始加载自营商品:', classId);
 				const res = await Purchase.GetEmployCommidityByClassId(classId);
-
+				
 				res.data.forEach((item, index) => {
 					// 处理商品规格
 					this.processCommoditySpec(item, 'commoditySpecs');
@@ -779,7 +782,7 @@ export default {
 	outline: none;
 	font-size: 15px;
 	background: transparent;
-	width: calc(100vw - 433rpx);
+	width: calc(100vw - 435rpx);
 	max-width: 1200rpx;
 	min-width: 200rpx;
 }
@@ -808,8 +811,8 @@ export default {
 
 /* 商品网格项样式 */
 .grid-item {
-	width: 100rpx;
-	height: 100px; /* 固定高度 */
+	width: 96rpx;
+	height: 90px; /* 固定高度 */
 	padding: 5px;
 	margin-left: 5px;
 	margin-bottom: 5px;

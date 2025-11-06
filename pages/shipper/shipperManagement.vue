@@ -35,28 +35,28 @@
 			consignmentShipper,
 			selfOperatedShipper
 		},
-		data() {
-			return {
-				currentTab: 0, // 0-代销货主, 1-自营货主
-				vesionType: 1
-			}
-		},
-		created() {
-			this.vesionType = uni.getStorageSync("vesionType") ?? 1;
-		},
-		methods: {
-			tabChange(index) {
-				this.currentTab = index;
-				// 切换标签时刷新对应页面数据
-				this.$nextTick(() => {
-					if(index === 0 && this.$refs.consignmentRef) {
-						this.$refs.consignmentRef.loadData(true);
-					} else if(index === 1 && this.$refs.selfOperatedRef) {
-						this.$refs.selfOperatedRef.loadData(true);
-					}
-				});
-			}
+	data() {
+		return {
+			currentTab: 0, // 0-代销货主, 1-自营货主
+			vesionType: 1
 		}
+	},
+	created() {
+		this.vesionType = uni.getStorageSync("vesionType") ?? 1;
+	},
+	methods: {
+		tabChange(index) {
+			this.currentTab = index;
+			// 每次切换都刷新数据，但不会闪烁（因为子组件已优化）
+			this.$nextTick(() => {
+				if(index === 0 && this.$refs.consignmentRef) {
+					this.$refs.consignmentRef.loadData(true);
+				} else if(index === 1 && this.$refs.selfOperatedRef) {
+					this.$refs.selfOperatedRef.loadData(true);
+				}
+			});
+		}
+	}
 	}
 </script>
 
