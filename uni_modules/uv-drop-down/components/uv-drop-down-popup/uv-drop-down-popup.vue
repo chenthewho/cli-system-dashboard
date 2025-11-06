@@ -103,7 +103,7 @@
 					const color = this.currentDropItem.color;
 					const activeColor = this.currentDropItem.activeColor;
 					if (active) {
-						return activeColor ? activeColor : '#3c9cff';
+						return activeColor ? activeColor : '#3e79f3';
 					}
 					return color ? color : '#333';
 				}

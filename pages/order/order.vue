@@ -300,18 +300,10 @@
 
 <style lang="scss">
 	.content {
-		width: calc(100vw - 40rpx);
-		max-width: calc(100vw - 40rpx);
-		overflow-x: hidden;
-		position: fixed;
-		right: 0;
-		top: 0;
-		bottom: 0;
-		background-color: white;
+		width: 100%;
 	}
 
 	.scrollArea {
-		background-color: darkgrey;
 		height: calc(100vh - 34rpx);
 
 	}

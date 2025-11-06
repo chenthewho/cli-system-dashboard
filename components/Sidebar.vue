@@ -1,325 +1,346 @@
 <template>
-	<div class="sidebar">
-			<div class="logo-container" @click="onLogoClick">
-				<image 
-					class="logo-image" 
-					src="/static/img/logo-transparent.png" 
-					mode="aspectFill"
-				></image>
-			</div>
-	<ul style="margin-top: 60rpx;">
-		<li v-for="item in menuItems" :key="item.id">
-			<div @click="changeContent(item.id)" :class="{'active': activeItem === item.id}" class="menu-item" v-if="item.isShow">
-				<uni-icons custom-prefix="iconfont" :type="item.icon" size="30" color="#ffffff"></uni-icons>
-				<span class="bar-text" :class="{'active': activeItem === item.id}">{{ item.text }}</span>
-			</div>
-		</li>
-	</ul>
-		<ul>
-			<li>
-				<div @click="changeContent('six')" :class="{'active': activeItem === 'six'}" class="menu-item-footer">
-					<uni-icons custom-prefix="iconfont" type="icon-shezhi" size="30" color="#ffffff"></uni-icons>
-					<span class="bar-text" :class="{'active': activeItem === 'six'}" >设置</span>
-				</div>
-			</li>
-		</ul>
-	</div>
+  <div class="sidebar-box">
+    <div class="logo-container" @click="onLogoClick">
+      <image class="logo-image" src="/static/img/logo-transparent.png" mode="aspectFill"></image>
+    </div>
+    <ul class="menu-list">
+      <li v-for="item in menuItems" :key="item.id">
+        <div
+          @click="changeContent(item.id)"
+          :class="{ active: activeItem === item.id }"
+          class="menu-item"
+          v-if="item.isShow"
+        >
+          <image 
+            class="menu-icon" 
+            :src="`/static/img/tabbar/${activeItem === item.id ? item.icon : item.iconAct}`"
+            mode="aspectFit"
+          />
+          <span class="bar-text" :class="{ active: activeItem === item.id }">{{ item.text }}</span>
+        </div>
+      </li>
+    </ul>
+    <ul>
+      <li>
+        <div @click="changeContent('six')" :class="{ active: activeItem === 'six' }" class="menu-item-footer">
+					<image 
+            class="setting-icon" 
+            src="/static/img/tabbar/setting.png"
+            mode="aspectFit"
+          />
+          <span class="bar-text" :class="{ active: activeItem === 'six' }">设置</span>
+        </div>
+      </li>
+    </ul>
+  </div>
 </template>
 
 <script>
-	export default {
-		name: 'Sidebar',
-		data() {
-			return {
-				activeItem: 'one', // 当前选中的菜单项
-				vesionType:uni.getStorageSync("vesionType")??1, // 获取版本类型，默认为1|| 1-普通版 2-代销 3-自营版 4-满血版
-				menuItems: []
-			};
-		},
-		created(){
-			console.log("Sidebar onShow called");
-			this.vesionType = uni.getStorageSync("vesionType")??1;
-			// 检查版本类型是否有变化
-			console.log("Current vesionType:", this.vesionType);
-			if(this.vesionType === 4){
-				this.menuItems = [{
-						id: 'one',
-						icon: 'icon-shouyin1',
-						text: '收银',
-						isShow: true
-					},
-					{
-						id: 'two',
-						icon: 'icon-dingdan',
-						text: '订单',
-						isShow: true
-					},
-					{
-						id: 'three',
-						icon: 'icon-transport',
-						text: '库存',
-						isShow: true
-					},
-					{
-						id: 'five',
-						icon: 'icon-jiesuan',
-						text: '结算',
-						isShow: true
-					},
-					{
-						id: 'eight',
-						icon: 'icon-huozhuguanli',
-						text: '货主',
-						isShow: true
-					},{
-						id: 'four',
-						icon: 'icon-shouyintongji',
-						text: '报表',
-						isShow: true
-					},
-					{
-						id: 'seven',
-						icon: 'icon-zhiban',
-						text: '轮值',
-						isShow: true
-					}
-					
-				];
-			}else if(this.vesionType === 2 ){
-				this.menuItems = [{
-						id: 'one',
-						icon: 'icon-shouyin',
-						text: '收银',
-						isShow: true
-					},
-					{
-						id: 'two',
-						icon: 'icon-dingdan',
-						text: '订单',
-						isShow: true
-					},
-					{
-						id: 'three',
-						icon: 'icon-transport',
-						text: '库存',
-						isShow: true
-					},{
-						id: 'five',
-						icon: 'icon-jiesuan',
-						text: '结算',
-						isShow: true
-					},
-					{
-						id: 'four',
-						icon: 'icon-shouyintongji',
-						text: '报表',
-						isShow: true
-					},
-					{
-						id: 'seven',
-						icon: 'icon-zhiban',
-						text: '轮值',
-						isShow: true
-					}
-				];
-			}
-			else if(this.vesionType === 3 ){
-				this.menuItems = [{
-						id: 'one',
-						icon: 'icon-shouyin',
-						text: '收银',
-						isShow: true
-					},
-					{
-						id: 'two',
-						icon: 'icon-dingdan',
-						text: '订单',
-						isShow: true
-					},
-					{
-						id: 'three',
-						icon: 'icon-transport',
-						text: '库存',
-						isShow: true
-					},
-					{
-						id: 'four',
-						icon: 'icon-shouyintongji',
-						text: '报表',
-						isShow: true
-					},
-					{
-						id: 'seven',
-						icon: 'icon-zhiban',
-						text: '轮值',
-						isShow: true
-					}
-				];
-			}
-			else if(this.vesionType === 1){
-				this.menuItems = [{
-						id: 'one',
-						icon: 'icon-shouyin',
-						text: '收银',
-						isShow: true
-					},
-					{
-						id: 'two',
-						icon: 'icon-dingdan',
-						text: '订单',
-						isShow: true
-					},
-					{
-						id: 'seven',
-						icon: 'icon-zhiban',
-						text: '轮值',
-						isShow: true
-					}
-				];
-			}
-  		},
-		methods: {
-			playSystemKeyClickSound() {
-			    try {
-			        var Context = plus.android.importClass("android.content.Context");
-			        var AudioManager = plus.android.importClass("android.media.AudioManager");
-			        var main = plus.android.runtimeMainActivity();
-			        var audioManager = main.getSystemService(Context.AUDIO_SERVICE);
-			        audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK);
-			    } catch (e) {
-			        console.error("播放系统按键音失败:", e);
-			    }
-			},
-			// 设置激活的菜单项（用于外部调用）
-			setActiveItem(itemId) {
-				this.activeItem = itemId;
-			},
-			changeContent(content) {
-				this.playSystemKeyClickSound();
-				this.activeItem = content; // 更新当前选中的菜单项
-				this.$emit('update-content', content); // 触发事件并传递内容
-			},
-			onLogoClick() {
-				this.playSystemKeyClickSound();
-				// 点击logo返回收银页面
-				this.activeItem = 'one';
-				this.$emit('update-content', 'one');
-				// 可以添加一个提示
-				uni.showToast({
-					title: '智农佳收银系统',
-					icon: 'none',
-					duration: 1500
-				});
-			}
-		}
-	};
+export default {
+  name: 'Sidebar',
+  data() {
+    return {
+      activeItem: 'one', // 当前选中的菜单项
+      vesionType: uni.getStorageSync('vesionType') ?? 1, // 获取版本类型，默认为1|| 1-普通版 2-代销 3-自营版 4-满血版
+      menuItems: [],
+    }
+  },
+  created() {
+    console.log('Sidebar onShow called')
+    this.vesionType = uni.getStorageSync('vesionType') ?? 1
+    // 检查版本类型是否有变化
+    console.log('Current vesionType:', this.vesionType)
+    if (this.vesionType === 4) {
+      this.menuItems = [
+        {
+          id: 'one',
+          icon: 'shouying.png',
+					iconAct: 'shouying-act.png',
+          text: '收银',
+          isShow: true,
+        },
+        {
+          id: 'two',
+          icon: 'order.png',
+					iconAct: 'order-act.png',
+          text: '订单',
+          isShow: true,
+        },
+        {
+          id: 'three',
+          icon: 'kucun.png',
+					iconAct: 'kucun-act.png',
+          text: '库存',
+          isShow: true,
+        },
+        {
+          id: 'five',
+          icon: 'count.png',
+					iconAct: 'count-act.png',
+          text: '结算',
+          isShow: true,
+        },
+        {
+          id: 'eight',
+          icon: 'huozhu.png',
+					iconAct: 'huozhu-act.png',
+          text: '货主',
+          isShow: true,
+        },
+        {
+          id: 'four',
+          icon: 'data.png',
+					iconAct: 'data-act.png',
+          text: '报表',
+          isShow: true,
+        },
+        {
+          id: 'seven',
+          icon: 'work-time.png',
+					iconAct: 'work-time-act.png',
+          text: '轮值',
+          isShow: true,
+        },
+      ]
+    } else if (this.vesionType === 2) {
+      this.menuItems = [
+        {
+          id: 'one',
+          icon: 'shouying.png',
+					iconAct: 'shouying-act.png',
+          text: '收银',
+          isShow: true,
+        },
+        {
+          id: 'two',
+          icon: 'order.png',
+					iconAct: 'order-act.png',
+          text: '订单',
+          isShow: true,
+        },
+        {
+          id: 'three',
+          icon: 'kucun.png',
+					iconAct: 'kucun-act.png',
+          text: '库存',
+          isShow: true,
+        },
+        {
+          id: 'five',
+          icon: 'count.png',
+					iconAct: 'count-act.png',
+          text: '结算',
+          isShow: true,
+        },
+        {
+          id: 'four',
+          icon: 'data.png',
+					iconAct: 'data-act.png',
+          text: '报表',
+          isShow: true,
+        },
+        {
+          id: 'seven',
+          icon: 'work-time.png',
+					iconAct: 'work-time-act.png',
+          text: '轮值',
+          isShow: true,
+        },
+      ]
+    } else if (this.vesionType === 3) {
+      this.menuItems = [
+        {
+          id: 'one',
+          icon: 'shouying.png',
+					iconAct: 'shouying-act.png',
+          text: '收银',
+          isShow: true,
+        },
+        {
+          id: 'two',
+          icon: 'order.png',
+					iconAct: 'order-act.png',
+          text: '订单',
+          isShow: true,
+        },
+        {
+          id: 'three',
+          icon: 'kucun.png',
+					iconAct: 'kucun-act.png',
+          text: '库存',
+          isShow: true,
+        },
+        {
+          id: 'four',
+          icon: 'data.png',
+					iconAct: 'data-act.png',
+          text: '报表',
+          isShow: true,
+        },
+        {
+          id: 'seven',
+          icon: 'work-time.png',
+					iconAct: 'work-time-act.png',
+          text: '轮值',
+          isShow: true,
+        },
+      ]
+    } else if (this.vesionType === 1) {
+      this.menuItems = [
+        {
+          id: 'one',
+          icon: 'shouying.png',
+					iconAct: 'shouying-act.png',
+          text: '收银',
+          isShow: true,
+        },
+        {
+          id: 'two',
+          icon: 'order.png',
+					iconAct: 'order-act.png',
+          text: '订单',
+          isShow: true,
+        },
+        {
+          id: 'seven',
+          icon: 'work-time.png',
+					iconAct: 'work-time-act.png',
+          text: '轮值',
+          isShow: true,
+        },
+      ]
+    }
+  },
+  methods: {
+    playSystemKeyClickSound() {
+      try {
+        var Context = plus.android.importClass('android.content.Context')
+        var AudioManager = plus.android.importClass('android.media.AudioManager')
+        var main = plus.android.runtimeMainActivity()
+        var audioManager = main.getSystemService(Context.AUDIO_SERVICE)
+        audioManager.playSoundEffect(AudioManager.FX_KEY_CLICK)
+      } catch (e) {
+        console.error('播放系统按键音失败:', e)
+      }
+    },
+    // 设置激活的菜单项（用于外部调用）
+    setActiveItem(itemId) {
+      this.activeItem = itemId
+    },
+    changeContent(content) {
+      this.playSystemKeyClickSound()
+      this.activeItem = content // 更新当前选中的菜单项
+      this.$emit('update-content', content) // 触发事件并传递内容
+    },
+    onLogoClick() {
+      this.playSystemKeyClickSound()
+      // 点击logo返回收银页面
+      this.activeItem = 'one'
+      this.$emit('update-content', 'one')
+      // 可以添加一个提示
+      uni.showToast({
+        title: '智农佳收银系统',
+        icon: 'none',
+        duration: 1500,
+      })
+    },
+  },
+}
 </script>
 
-<style scoped>
-	.bar-coin {
-		margin-bottom: 5rpx;
-	}
+<style scoped lang="scss">
+.bar-coin {
+  margin-bottom: 5rpx;
+}
 
-	.sidebar {
-		width: 40rpx;
-		/* 设置导航栏宽度 */
-		background-color: #4A90E2;
-		/* 背景颜色 */
-		/* 阴影效果 */
-	}
+.sidebar-box {
+  width: 50rpx;
+	height: 100vh;
+	z-index: 10;
+  background-color: #3e79f3;
 
-	.sidebar ul {
-		list-style-type: none;
-		/* 去掉列表样式 */
-		padding: 0;
-		/* 去掉内边距 */
-	}
+  ul {
+    list-style-type: none;
+    padding: 0;
+  }
 
-	.sidebar li {
-		margin: 2rpx 0;
-		/* 列表项之间的间距 */
+  li {
+    margin: 2rpx 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .menu-list {
 		display: flex;
-		/* 使用 flexbox 布局 */
-		align-items: center;
-		/* 垂直居中对齐 */
-	}
-
-	.menu-item {
-		width: 40rpx;
-		padding-top: 5rpx;
-		padding-bottom: 5rpx;
-		display: flex;
-		/* 使用 flexbox 布局 */
 		flex-direction: column;
-		/* 垂直排列 */
-		align-items: center;
-		/* 水平居中对齐 */
-		transition: background-color 0.3s;
-		/* 添加过渡效果 */
-		border-radius: 5rpx;
-	}
+		justify-content: center;
+  }
 
-	.menu-item-footer {
-		position: fixed;
-		bottom: 0;
-		width: 40rpx;
-		padding-top: 5rpx;
-		padding-bottom: 5rpx;
-		display: flex;
-		/* 使用 flexbox 布局 */
-		flex-direction: column;
-		/* 垂直排列 */
-		align-items: center;
-		/* 水平居中对齐 */
-		transition: background-color 0.3s;
-		/* 添加过渡效果 */
-		border-top: 2rpx solid #707070;
-	}
+  .menu-item {
+    width: 100%;
+    padding-top: 5rpx;
+    padding-bottom: 5rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background-color 0.3s;
+		margin-bottom: 8rpx;
 
-	.menu-item.active {
-		background-color: #00aa00;
-		/* 选中时的背景色 */
-	}
+    &.active {
+      background-color: #ffffff;
+    }
 
-	.menu-item-footer.active {
-		background-color: #00aa00;
-		/* 选中时的背景色 */
-	}
-	.bar-text{
-		font-weight: bold;
-	}
+    .menu-icon {
+      width: 22rpx;
+      height: 22rpx;
+    }
+  }
 
-	.bar-text.active{
-		color:white;
-	}
+  .menu-item-footer {
+    position: fixed;
+    bottom: 0;
+    width: 50rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background-color 0.3s;
+    border-top: 1rpx solid #ffffff59;
+		margin-bottom: 10rpx;
+		padding-top: 10rpx;
+		.setting-icon {
+			width: 22rpx;
+			height: 22rpx;
+		}
 
+    &.active {
+      background-color: #00aa00;
+    }
+  }
 
-	.logo-container {
-		width: 50px;
-		height: 50px;
-		border-radius: 10px;
-		overflow: hidden;
-		background-color: transparent;
+  .bar-text {
+    font-weight: bold;
+		color: white;
+		margin-top: 4rpx;
+
+    &.active {
+      color: $zn-font-color-leve1;
+    }
+  }
+
+  .logo-container {
+		position: relative;
 		display: flex;
 		justify-content: center;
-		align-items: center;
-		transition: all 0.3s ease;
-		cursor: pointer;
-		position: fixed;
-		left:5px;
-		top: 5px;
-	}
+		top: 20px;
+    width: 50rpx;
+    height: 130px;
 
-	.logo-container:hover {
-		transform: scale(1.05);
-		box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.2);
-	}
-
-	.logo-image {
-		width: 100%;
-		height: 100%;
-		border-radius: 50%;
-		object-fit: cover;
-	}
-			
+    .logo-image {
+      width: 40rpx;
+      height: 40rpx;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
+}
 </style>

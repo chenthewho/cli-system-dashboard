@@ -273,7 +273,6 @@
 	}
 
 	.scrollArea {
-		background-color: darkgrey;
 		height: calc(100vh - 60rpx);
 	}
 </style>

@@ -10,7 +10,7 @@ $u-border-color: #dadbde;
 $u-bg-color: #f3f4f6;
 $u-disabled-color: #c8c9cc;
 
-$u-primary: #3c9cff;
+$u-primary: #3e79f3;
 $u-primary-dark: #398ade;
 $u-primary-disabled: #9acafc;
 $u-primary-light: #ecf5ff;
@@ -37,8 +37,8 @@ $u-info-light: #f4f4f5;
 
 // scss混入，为了少写几行#ifndef
 @mixin flex($direction: row) {
-	/* #ifndef APP-NVUE */
-	display: flex;
-	/* #endif */
-	flex-direction: $direction;
+  /* #ifndef APP-NVUE */
+  display: flex;
+  /* #endif */
+  flex-direction: $direction;
 }

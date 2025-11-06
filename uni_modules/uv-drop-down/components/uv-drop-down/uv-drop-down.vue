@@ -56,7 +56,7 @@
 			},
 			textActiveColor: {
 				type: String,
-				default: '#3c9cff'
+				default: '#3e79f3'
 			},
 			extraIcon: {
 				type: Object,
@@ -74,7 +74,7 @@
 					return {
 						name: 'arrow-up',
 						size: '30rpx',
-						color: '#3c9cff'
+						color: '#3e79f3'
 					}
 				}
 			}
