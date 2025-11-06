@@ -190,6 +190,13 @@ export default {
 			handler(newVal) {
 				this.editingCard = JSON.parse(JSON.stringify(newVal));
 				console.log("this.editingCard",this.editingCard);
+				if (this.editingCard.saleWay === 1 || this.editingCard.saleWay === 4) {
+					// 非定装和散装：默认聚焦总重（index 3）
+					this.custominputFocusedMethod(3);
+				} else {
+					// 定装：默认聚焦数量（index 1）
+					this.custominputFocusedMethod(1);
+				}
 			},
 			deep: true,
 			immediate: true
@@ -453,7 +460,7 @@ export default {
 			}
 			
 			// 通知父组件押筐选择变化
-			this.$emit('extra-model-select', this.editingCard.extralModel);
+			// this.$emit('extra-model-select', this.editingCard.extralModel);
 		}
 	}
 };

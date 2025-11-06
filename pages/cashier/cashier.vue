@@ -2714,6 +2714,7 @@ changeMember(e) {
 		handleExtraModelSelect(extralModel) {
 			// 更新 editingCard 的押筐模型
 			this.editingCard.extralModel = extralModel;
+			console.log("this.editingCard",this.editingCard);
 			
 			// 同步到 goodSelect 数组
 			this.goodSelect[this.editingIndex] = this.editingCard;
@@ -3189,15 +3190,23 @@ changeMember(e) {
 			},
 			deleteGDorder(item) {
 				console.log("item",item)
-				uni.showModal({
-					title: '删除挂单',
-					content: `您确定要删除挂单吗？`,
-					success: (res) => {
-						if (res.confirm) {
-							// 调用删除挂单API
-							this.performDeleteGDorder(item);
+				// 先关闭挂单中心弹窗，确保删除提示显示在最前面
+				this.hangListVisible = false;
+				// 使用 $nextTick 确保弹窗关闭后再显示删除确认提示
+				this.$nextTick(() => {
+					uni.showModal({
+						title: '删除挂单',
+						content: `您确定要删除挂单吗？`,
+						success: (res) => {
+							if (res.confirm) {
+								// 调用删除挂单API
+								this.performDeleteGDorder(item);
+							} else {
+								// 如果用户取消删除，重新打开挂单中心
+								this.saleHangList();
+							}
 						}
-					}
+					});
 				});
 			},
 			async performDeleteGDorder(item) {
