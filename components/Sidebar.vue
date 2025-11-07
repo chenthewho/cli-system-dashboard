@@ -254,7 +254,7 @@ export default {
 }
 
 .sidebar-box {
-  width: 50rpx;
+  width: 40rpx;
 	height: 100vh;
 	z-index: 10;
   background-color: #3e79f3;
@@ -278,28 +278,29 @@ export default {
 
   .menu-item {
     width: 100%;
-    padding-top: 5rpx;
-    padding-bottom: 5rpx;
+    padding-top: 2rpx;
+    padding-bottom: 2rpx;
     display: flex;
     flex-direction: column;
     align-items: center;
     transition: background-color 0.3s;
-		margin-bottom: 8rpx;
+		margin-bottom: 10rpx;
+    border-radius: 6rpx;
 
     &.active {
       background-color: #ffffff;
     }
 
     .menu-icon {
-      width: 22rpx;
-      height: 22rpx;
+      width: 20rpx;
+      height: 20rpx;
     }
   }
 
   .menu-item-footer {
     position: fixed;
     bottom: 0;
-    width: 50rpx;
+    width: 40rpx;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -308,8 +309,8 @@ export default {
 		margin-bottom: 10rpx;
 		padding-top: 10rpx;
 		.setting-icon {
-			width: 22rpx;
-			height: 22rpx;
+			width: 20rpx;
+			height: 20rpx;
 		}
 
     &.active {
@@ -318,9 +319,10 @@ export default {
   }
 
   .bar-text {
-    font-weight: bold;
+    // font-weight: bold;
 		color: white;
-		margin-top: 4rpx;
+		margin-top: 2rpx;
+    font-size: 9rpx;
 
     &.active {
       color: $zn-font-color-leve1;
@@ -332,7 +334,7 @@ export default {
 		display: flex;
 		justify-content: center;
 		top: 20px;
-    width: 50rpx;
+    width: 40rpx;
     height: 130px;
 
     .logo-image {

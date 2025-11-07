@@ -9,7 +9,7 @@
       :showManageBtn="true"
       :lastOrder="lastOrder"
     ></default-header>
-    <div class="container">
+    <div class="container" @click="closeKeyBoard">
       <div class="cashier" @click="closeKeyBoard">
         <div class="cashier-row">
           <div class="cashier-col cashier-goods">
@@ -35,40 +35,14 @@
                   scroll-x="true"
                   :show-scrollbar="false"
                   :scroll-left="scrollLeft"
-                  style="white-space: nowrap; padding: 2px 0; flex: 1; overflow: hidden"
                   class="customer-scroll-view"
                 >
-                  <view style="display: inline-flex; align-items: center; gap: 0; margin: 0; padding: 0">
+                  <view class="customer-scroll-content">
                     <!-- 主客户按钮（散客/当前客户） -->
                     <div
                       class="customerbtn modern-customer-btn main-customer-btn"
                       @click="activateMainCustomer"
-                      :style="{
-                        borderRadius: '0 0px 0px 0',
-                        fontSize: '16px',
-                        boxShadow: isMainCustomerActive
-                          ? mainCustomerData.member.debts > 0
-                            ? '0 3px 10px rgba(245, 34, 45, 0.3)'
-                            : '0 3px 10px rgba(56, 158, 13, 0.3)'
-                          : '0 2px 6px rgba(0, 0, 0, 0.1)',
-                        color: 'white',
-                        background:
-                          mainCustomerData.member.debts > 0 ? '#ff4d4f' : isMainCustomerActive ? '#389e0d' : '#8c8c8c',
-                        height: '100%',
-                        paddingLeft: '16rpx',
-                        paddingRight: '16rpx',
-                        paddingTop: '10rpx',
-                        fontWeight: '700',
-                        letterSpacing: '1rpx',
-                        paddingBottom: '10rpx',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        flexShrink: 0,
-                        transition: 'all 0.3s ease',
-                        border: 'none',
-                        marginLeft: '0',
-                        marginRight: '1px',
-                      }"
+                      :style="mainCustomerButtonStyle"
                     >
                       {{ mainCustomerData.member.customName ? mainCustomerData.member.customName : '散客' }}
                     </div>
@@ -78,44 +52,18 @@
                       v-for="(customerBtn, index) in customerButtons"
                       :key="`customer_btn_${customerBtn.id}`"
                       class="customerbtn modern-customer-btn dynamic-customer-btn"
-                      :style="{
-                        borderRadius: '6px',
-                        fontSize: '15px',
-                        boxShadow: customerBtn.isActive
-                          ? '0 3px 10px rgba(56, 158, 13, 0.3)'
-                          : '0 2px 6px rgba(0, 0, 0, 0.1)',
-                        color: '#ffffff',
-                        background: customerBtn.isActive ? '#389e0d' : '#8c8c8c',
-                        height: '100%',
-                        paddingLeft: '12rpx',
-                        paddingRight: '8rpx',
-                        paddingTop: '10rpx',
-                        fontWeight: '600',
-                        letterSpacing: '0.5rpx',
-                        paddingBottom: '10rpx',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        flexShrink: 0,
-                        position: 'relative',
-                        border: 'none',
-                        transition: 'all 0.3s ease',
-                        marginRight: '1px',
-                      }"
+                      :style="getDynamicCustomerStyle(customerBtn)"
                     >
-                      <div
-                        @click="switchToCustomerByIndex(index)"
-                        style="display: flex; align-items: center; gap: 6rpx"
-                      >
+                      <div @click="switchToCustomerByIndex(index)" class="customer-btn-main">
                         {{ customerBtn.name }}
-                        <text v-if="customerBtn.goodsCount > 0" style="font-size: 11px; display: flex; color: #ffffff"
+                        <text
+                          v-if="customerBtn.goodsCount > 0"
+                          class="customer-btn-count"
                           >|{{ customerBtn.goodsCount }}件</text
                         >
                       </div>
-                      <div
-                        @click.stop="deleteCustomerByIndex(index)"
-                        style="display: flex; align-items: center; margin-left: 8rpx; cursor: pointer; padding: 2rpx"
-                      >
-                        <uni-icons type="close" size="18" color="#ffffff" style="opacity: 0.9"></uni-icons>
+                      <div @click.stop="deleteCustomerByIndex(index)" class="customer-btn-remove">
+                        <uni-icons type="close" size="18" color="#ffffff" class="customer-btn-remove-icon"></uni-icons>
                       </div>
                     </div>
 
@@ -123,37 +71,12 @@
                     <div
                       class="add-customer-btn"
                       @click="addNewCustomerButton"
-                      :style="{
-                        borderRadius: '50%',
-                        fontSize: '14px',
-                        color: 'transparent',
-                        background: 'transparent',
-                        width: '32px',
-                        height: '32px',
-                        fontWeight: '700',
-                        minWidth: '32px',
-                        minHeight: '32px',
-                        paddingTop: '0',
-                        paddingBottom: '0',
-                        paddingLeft: '0',
-                        paddingRight: '0',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        flexShrink: 0,
-                        transition: 'all 0.3s ease',
-                        border: 'none',
-                        marginLeft: '2px',
-                      }"
                       title="添加客户"
                     >
                       <uni-icons type="plus" size="30" color="#ff7043"></uni-icons>
                     </div>
                   </view>
                 </scroll-view>
-
-                <div style="display: flex"></div>
               </div>
               <OrderGoodsPanel
                 :goodsList="goodSelect"
@@ -318,20 +241,17 @@
             :showConfirmButton="false"
             :width="'600rpx'"
           >
-            <div style="display: flex; height: 350rpx; border: 1px solid #ccc; width: 600rpx">
+            <div class="hang-modal-container">
               <!-- 左边订单列表 -->
-              <div
-                class="slot-content"
-                style="flex: 1; overflow-y: auto; border-right: 1px solid #eee; padding: 10rpx; height: 325rpx"
-              >
+              <div class="slot-content hang-order-list">
                 <view class="grid-member-container">
-                  <view v-for="(group, index) in hangList" :key="group.date" class="group-container">
-                    <view class="group-title" style="font-weight: bold; margin-bottom: 10rpx; font-size: 20rpx">
+                  <view v-for="group in hangList" :key="group.date" class="group-container">
+                    <view class="group-title hang-order-group-title">
                       {{ group.date }}
                     </view>
                     <view
                       class="grid-member-item2"
-                      v-for="(item, idx) in group.items"
+                      v-for="item in group.items"
                       :key="item.uniqueKey"
                       @click="selectGDorder(item)"
                       :style="{
@@ -345,28 +265,11 @@
                       }"
                     >
                       <text>{{ item.key }}</text>
-                      <div
-                        style="
-                          padding: 2rpx;
-                          font-size: 10rpx;
-                          display: flex;
-                          justify-content: space-between;
-                          align-items: center;
-                        "
-                      >
+                      <div class="hang-order-item-header">
                         <div>{{ item.createTime.replace('T', ' ') }}</div>
                         <div>{{ item.customName }}</div>
                       </div>
-                      <div
-                        style="
-                          margin-top: 5rpx;
-                          font-size: 10rpx;
-                          white-space: nowrap;
-                          width: 250rpx;
-                          text-overflow: ellipsis;
-                          overflow: hidden;
-                        "
-                      >
+                      <div class="hang-order-model-info">
                         {{ item.modelInfo }}
                       </div>
                     </view>
@@ -375,11 +278,11 @@
               </div>
 
               <!-- 右边订单详情 -->
-              <div class="order-detail" style="flex: 1; position: relative">
+              <div class="order-detail hang-order-detail">
                 <template v-if="orderGDSelect">
-                  <view class="table" style="border: 1px solid #ccc">
+                  <view class="table hang-order-table">
                     <!-- 表头 -->
-                    <view class="table-row header" style="background-color: #cecece; font-weight: bold">
+                    <view class="table-row header hang-order-header">
                       <view class="table-cell2">名称</view>
                       <view class="table-cell2">单价</view>
                       <view class="table-cell2">总重</view>
@@ -388,12 +291,7 @@
                     </view>
 
                     <!-- 表格内容示例 -->
-                    <view
-                      class="table-row"
-                      v-for="(item, index) in orderGDSelect.modelList"
-                      :key="index"
-                      style="overflow-y: auto"
-                    >
+                    <view class="table-row hang-order-row" v-for="(item, index) in orderGDSelect.modelList" :key="index">
                       <view class="table-cell2">{{ item.name }}</view>
                       <view class="table-cell2">{{ item.referenceAmount }}</view>
                       <view class="table-cell2">{{ item.totalWeight }}</view>
@@ -402,59 +300,14 @@
                     </view>
                   </view>
                 </template>
-                <div
-                  style="
-                    position: absolute;
-                    bottom: 0;
-                    height: 35rpx;
-                    border-top: 1px solid #ccc;
-                    width: 100%;
-                    display: flex;
-                  "
-                >
-                  <button
-                    @click="deleteGDorder(orderGDSelect)"
-                    style="
-                      width: 70rpx;
-                      font-weight: bold;
-                      color: #ffffff;
-                      background: gainsboro;
-                      height: 25rpx;
-                      line-height: 25rpx;
-                      font-size: 12rpx;
-                      margin-top: 5rpx;
-                    "
-                  >
+                <div class="hang-order-actions">
+                  <button @click="deleteGDorder(orderGDSelect)" class="hang-order-btn hang-order-btn--delete">
                     删除
                   </button>
-                  <button
-                    style="
-                      width: 70rpx;
-                      font-weight: bold;
-                      color: #ffffff;
-                      background: orange;
-                      height: 25rpx;
-                      line-height: 25rpx;
-                      font-size: 12rpx;
-                      margin-top: 5rpx;
-                    "
-                    @click="printerGDModel(orderGDSelect)"
-                  >
+                  <button @click="printerGDModel(orderGDSelect)" class="hang-order-btn hang-order-btn--print">
                     打印挂单
                   </button>
-                  <button
-                    @click="hangOrderParse(orderGDSelect)"
-                    style="
-                      width: 70rpx;
-                      font-weight: bold;
-                      color: #ffffff;
-                      background: #00aaff;
-                      height: 25rpx;
-                      line-height: 25rpx;
-                      font-size: 12rpx;
-                      margin-top: 5rpx;
-                    "
-                  >
+                  <button @click="hangOrderParse(orderGDSelect)" class="hang-order-btn hang-order-btn--parse">
                     取挂单
                   </button>
                 </div>
@@ -501,32 +354,32 @@
         :width="500"
         @close="inputModelVisible = false"
       >
-        <view style="border-radius: 10rpx">
-          <div style="display: flex">
-            <div>
-              <image src="/static/img/paySuccess.png" style="width: 120px; height: 100px; margin-right: 5rpx"></image>
+        <view class="success-modal-card">
+          <div class="success-modal-content">
+            <div class="success-modal-image">
+              <image src="/static/img/paySuccess.png" class="success-modal-illustration"></image>
             </div>
-            <div style="margin-left: 5rpx; margin-top: 10px">
-              <div style="font-size: 15rpx; font-weight: bold">下单成功</div>
+            <div class="success-modal-info">
+              <div class="success-modal-title">下单成功</div>
               <br />
-              <div style="font-size: 15rpx; font-weight: bold" v-if="lastOrder">
+              <div class="success-modal-subtitle" v-if="lastOrder">
                 订单金额：{{ lastOrder.payableAmount - lastOrder.basketOffsetAmount }} 元
               </div>
             </div>
           </div>
-          <div style="display: flex; margin-top: 20px">
-            <button style="background-color: orange; color: white; font-weight: bold" @click="paysuccessOrder(1)">
+          <div class="success-modal-actions">
+            <button class="success-modal-btn success-modal-btn--print" @click="paysuccessOrder(1)">
               <uni-icons
                 custom-prefix="iconfont"
                 type="icon-dayin"
                 size="20"
                 color="#ffffff"
-                style="margin-right: 5rpx"
+                class="success-modal-icon"
               ></uni-icons
               >打印
             </button>
             <button
-              style="background-color: dodgerblue; color: white; font-weight: bold; margin-left: 50px"
+              class="success-modal-btn success-modal-btn--share"
               @click="paysuccessOrder(2)"
             >
               <uni-icons
@@ -534,12 +387,12 @@
                 type="icon-zhuanfa"
                 size="20"
                 color="#ffffff"
-                style="margin-right: 5rpx"
+                class="success-modal-icon"
               ></uni-icons
               >发单
             </button>
             <button
-              style="background-color: green; color: white; font-weight: bold; margin-left: 50px"
+              class="success-modal-btn success-modal-btn--continue"
               @click="paysuccessOrder(3)"
             >
               <uni-icons
@@ -547,7 +400,7 @@
                 type="icon-kaidan"
                 size="20"
                 color="#ffffff"
-                style="margin-right: 5rpx"
+                class="success-modal-icon"
               ></uni-icons
               >继续开单
             </button>
@@ -661,7 +514,6 @@
 </template>
 
 <script>
-import Sidebar from '@/components/Sidebar.vue'
 import VerticalTab from '@/components/VerticalTab.vue'
 import GoodEditKeyboard from '@/components/GoodEditKeyboard.vue'
 import PaymentModal from '@/components/PaymentModal.vue'
@@ -694,7 +546,6 @@ import ShippingModal from '@/components/ShippingModal.vue'
 export default {
   name: 'Cashier',
   components: {
-    Sidebar,
     VerticalTab,
     GoodEditKeyboard,
     MyNumberInputVue,
@@ -933,6 +784,20 @@ export default {
     }
   },
   computed: {
+    mainCustomerButtonStyle() {
+      const debts = Number(this.mainCustomerData?.member?.debts || 0)
+      const isActive = this.isMainCustomerActive
+      const hasDebt = debts > 0
+
+      const activeShadow = hasDebt
+        ? '0 3px 10px rgba(245, 34, 45, 0.3)'
+        : '0 3px 10px rgba(56, 158, 13, 0.3)'
+
+      return {
+        boxShadow: isActive ? activeShadow : '0 2px 6px rgba(0, 0, 0, 0.1)',
+        background: hasDebt ? '#ff4d4f' : isActive ? '#389e0d' : '#8c8c8c',
+      }
+    },
     smartRoundButtonText() {
       // 强制依赖这些响应式数据，确保更新
       const total = parseFloat(String(this.payAmount.total)) || 0
@@ -1109,6 +974,15 @@ export default {
       // 刷新 VerticalTab 组件
       if (this.$refs.verticalTabRef) {
         this.$refs.verticalTabRef.refresh()
+      }
+    },
+    getDynamicCustomerStyle(customerBtn) {
+      const isActive = !!customerBtn?.isActive
+      return {
+        boxShadow: isActive
+          ? '0 3px 10px rgba(56, 158, 13, 0.3)'
+          : '0 2px 6px rgba(0, 0, 0, 0.1)',
+        background: isActive ? '#389e0d' : '#8c8c8c',
       }
     },
     // 切换到管理页面（订单）
@@ -5003,6 +4877,178 @@ export default {
   /* 背景颜色 */
 }
 
+.hang-modal-container {
+  display: flex;
+  height: 350rpx;
+  border: 1px solid #ccc;
+  width: 600rpx;
+}
+
+.hang-order-list {
+  flex: 1;
+  overflow-y: auto;
+  border-right: 1px solid #eee;
+  padding: 10rpx;
+  height: 325rpx;
+}
+
+.hang-order-detail {
+  flex: 1;
+  position: relative;
+}
+
+.hang-order-table {
+  border: 1px solid #ccc;
+}
+
+.hang-order-header {
+  background-color: #cecece;
+  font-weight: bold;
+}
+
+.hang-order-row {
+  overflow-y: auto;
+}
+
+.hang-order-actions {
+  position: absolute;
+  bottom: 0;
+  height: 35rpx;
+  border-top: 1px solid #ccc;
+  width: 100%;
+  display: flex;
+  gap: 6rpx;
+  padding: 4rpx 0;
+}
+
+.hang-order-btn {
+  width: 70rpx;
+  font-weight: bold;
+  color: #ffffff;
+  height: 25rpx;
+  line-height: 25rpx;
+  font-size: 12rpx;
+  margin-top: 1rpx;
+  border: none;
+  border-radius: 4rpx;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.hang-order-btn:hover {
+  filter: brightness(1.05);
+}
+
+.hang-order-btn--delete {
+  background: gainsboro;
+}
+
+.hang-order-btn--print {
+  background: orange;
+}
+
+.hang-order-btn--parse {
+  background: #00aaff;
+}
+
+.hang-order-model-info {
+  margin-top: 5rpx;
+  font-size: 10rpx;
+  white-space: nowrap;
+  width: 250rpx;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.hang-order-group-title {
+  font-weight: bold;
+  margin-bottom: 10rpx;
+  font-size: 20rpx;
+}
+
+.hang-order-item-header {
+  padding: 2rpx;
+  font-size: 10rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.success-modal-card {
+  border-radius: 10rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.success-modal-content {
+  display: flex;
+  align-items: center;
+}
+
+.success-modal-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.success-modal-illustration {
+  width: 120px;
+  height: 100px;
+  margin-right: 5rpx;
+}
+
+.success-modal-info {
+  margin-left: 5rpx;
+  margin-top: 10px;
+}
+
+.success-modal-title,
+.success-modal-subtitle {
+  font-size: 15rpx;
+  font-weight: bold;
+}
+
+.success-modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 50px;
+}
+
+.success-modal-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18rpx;
+  height: 32rpx;
+  border: none;
+  border-radius: 6rpx;
+  font-weight: bold;
+  color: #ffffff;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.success-modal-btn:hover {
+  filter: brightness(1.05);
+}
+
+.success-modal-btn--print {
+  background-color: orange;
+}
+
+.success-modal-btn--share {
+  background-color: dodgerblue;
+}
+
+.success-modal-btn--continue {
+  background-color: green;
+}
+
+.success-modal-icon {
+  margin-right: 5rpx;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -5359,6 +5405,82 @@ export default {
   }
 }
 
+.main-customer-btn {
+  border: none;
+  border-radius: 0;
+  font-size: 16px;
+  color: #ffffff;
+  height: 100%;
+  padding: 10rpx 16rpx;
+  font-weight: 700;
+  letter-spacing: 1rpx;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  margin: 0 1px 0 0;
+}
+
+.dynamic-customer-btn {
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  color: #ffffff;
+  height: 100%;
+  padding: 10rpx 8rpx 10rpx 12rpx;
+  font-weight: 600;
+  letter-spacing: 0.5rpx;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  position: relative;
+  transition: all 0.3s ease;
+  margin-right: 1px;
+}
+
+.customer-btn-main {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.customer-btn-count {
+  font-size: 11px;
+  display: flex;
+  color: #ffffff;
+}
+
+.customer-btn-remove {
+  display: flex;
+  align-items: center;
+  margin-left: 8rpx;
+  cursor: pointer;
+  padding: 2rpx;
+}
+
+.customer-btn-remove-icon {
+  opacity: 0.9;
+}
+
+.add-customer-btn {
+  border: none;
+  border-radius: 50%;
+  color: transparent;
+  background: transparent;
+  width: 32px;
+  height: 32px;
+  font-weight: 700;
+  min-width: 32px;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  margin-left: 2px;
+}
+
 /* 主客户按钮特殊样式 */
 .main-customer-btn:hover {
   box-shadow: 0 5px 14px rgba(56, 158, 13, 0.4) !important;
@@ -5554,11 +5676,21 @@ export default {
   box-sizing: border-box;
   flex-shrink: 0;
   margin: -8px;
-  padding: 0;
+  padding: 2px 0;
+  flex: 1;
 }
 
 .customer-scroll-view ::-webkit-scrollbar {
   display: none;
+}
+
+.customer-scroll-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  white-space: nowrap;
 }
 
 /* 确保父容器也不会超出宽度 */

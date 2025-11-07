@@ -1589,6 +1589,7 @@
 		width: 50%;
 		min-width: 50%;
 		max-width: 50%;
+		padding-left: 10rpx;
 		overflow-y: auto;
 		overflow-x: hidden;
 		box-sizing: border-box;
