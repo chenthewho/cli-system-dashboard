@@ -111,7 +111,7 @@
 		</div>
 
 		<!-- 键盘 -->
-		<view class="mybrankmask" :style="{ width: '100%', maxWidth: '450rpx', height: '195rpx', zIndex: 999, left: 0, bottom: 0, marginTop:'0rpx', margin: '0 auto 0' }">
+		<view class="mybrankmask" :style="{ width: '100%', maxWidth: '450rpx', height: '195rpx',left: 0, bottom: 0, marginTop:'0rpx', margin: '0 auto 0' }">
 			<view style="padding: 8rpx;">
 				<view class="MymaskList">
 					<view class="maskListItem" @click="NumberCk(1)">1</view>
@@ -214,7 +214,7 @@ export default {
 			}
 		});
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.inputBuffer.timer) {
 			clearTimeout(this.inputBuffer.timer);
 		}

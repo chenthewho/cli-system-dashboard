@@ -1,33 +1,16 @@
 <template>
-  <div>
-    <default-header
-      ref="headerInfo"
-      theme="light"
-      @showlastOrder="showLastOrder"
-      @showHangList="saleHangList"
-      @goToManagement="goToManagement"
-      :showManageBtn="true"
-      :lastOrder="lastOrder"
-    ></default-header>
-    <div class="container" @click="closeKeyBoard">
-      <div class="cashier" @click="closeKeyBoard">
-        <div class="cashier-row">
-          <div class="cashier-col cashier-goods">
-            <div class="card-body">
-              <!-- 货品选择面板组件 -->
-              <CashierGoodsPanel
-                ref="goodsPanel"
-                :selectedGoodsIds="goodSelect.map(item => item.id)"
-                :height="windowHeight"
-                :vesionType="vesionType"
-                :companyId="currentCompanyId"
-                @tab-changed="handleTabChanged"
-                @item-click="handleClick"
-                @category-updated="handleCategoryUpdated"
-              />
-            </div>
-          </div>
-          <div v-if="step1" class="cashier-card">
+  <div class="cashier-box">
+    <default-header ref="headerInfo" theme="light" @showlastOrder="showLastOrder" @showHangList="saleHangList"
+      @goToManagement="goToManagement" :showManageBtn="true" :lastOrder="lastOrder"></default-header>
+    <div class="cashier-container">
+      <div class="left-space">
+        <!-- 货品选择面板组件 -->
+        <CashierGoodsPanel ref="goodsPanel" :selectedGoodsIds="goodSelect.map(item => item.id)" :height="windowHeight"
+          :vesionType="vesionType" :companyId="currentCompanyId" @tab-changed="handleTabChanged"
+          @item-click="handleClick" @category-updated="handleCategoryUpdated" />
+      </div>
+      <div class="right-space">
+        <div v-if="step1" class="cashier-card">
             <div class="cashier-col">
               <div class="card-title">
                 <!-- 可滑动的客户管理区域 -->
@@ -341,19 +324,12 @@
             @print="printerModel"
             @share="shareOrder(lastOrder.id)"
           />
-        </div>
+
       </div>
 
       <!--下单成功弹窗-->
-      <u-modal
-        title=" "
-        class="payment"
-        :show="popup_paysuccess_show"
-        :closeOnClickOverlay="true"
-        :showConfirmButton="false"
-        :width="500"
-        @close="inputModelVisible = false"
-      >
+      <u-modal title=" " class="payment" :show="popup_paysuccess_show" :closeOnClickOverlay="true"
+        :showConfirmButton="false" :width="500" @close="inputModelVisible = false">
         <view class="success-modal-card">
           <div class="success-modal-content">
             <div class="success-modal-image">
@@ -369,40 +345,16 @@
           </div>
           <div class="success-modal-actions">
             <button class="success-modal-btn success-modal-btn--print" @click="paysuccessOrder(1)">
-              <uni-icons
-                custom-prefix="iconfont"
-                type="icon-dayin"
-                size="20"
-                color="#ffffff"
-                class="success-modal-icon"
-              ></uni-icons
-              >打印
+              <uni-icons custom-prefix="iconfont" type="icon-dayin" size="20" color="#ffffff"
+                class="success-modal-icon"></uni-icons>打印
             </button>
-            <button
-              class="success-modal-btn success-modal-btn--share"
-              @click="paysuccessOrder(2)"
-            >
-              <uni-icons
-                custom-prefix="iconfont"
-                type="icon-zhuanfa"
-                size="20"
-                color="#ffffff"
-                class="success-modal-icon"
-              ></uni-icons
-              >发单
+            <button class="success-modal-btn success-modal-btn--share" @click="paysuccessOrder(2)">
+              <uni-icons custom-prefix="iconfont" type="icon-zhuanfa" size="20" color="#ffffff"
+                class="success-modal-icon"></uni-icons>发单
             </button>
-            <button
-              class="success-modal-btn success-modal-btn--continue"
-              @click="paysuccessOrder(3)"
-            >
-              <uni-icons
-                custom-prefix="iconfont"
-                type="icon-kaidan"
-                size="20"
-                color="#ffffff"
-                class="success-modal-icon"
-              ></uni-icons
-              >继续开单
+            <button class="success-modal-btn success-modal-btn--continue" @click="paysuccessOrder(3)">
+              <uni-icons custom-prefix="iconfont" type="icon-kaidan" size="20" color="#ffffff"
+                class="success-modal-icon"></uni-icons>继续开单
             </button>
           </div>
         </view>
@@ -413,32 +365,20 @@
       <!--还筐弹窗(不抵扣)-->
       <RepayBasketModel ref="repayBasketModelRef" :basketData="extraModel"></RepayBasketModel>
       <!--还款弹窗-->
-      <RepayModal
-        :visible="showRepaymentModal"
-        :customerInfo="repayCustomerData"
-        @confirm="handleRepaymentConfirm"
-        @close="showRepaymentModal = false"
-      >
+      <RepayModal :visible="showRepaymentModal" :customerInfo="repayCustomerData" @confirm="handleRepaymentConfirm"
+        @close="showRepaymentModal = false">
       </RepayModal>
 
       <!-- 运费弹窗 -->
-      <ShippingModal
-        :visible="shippingModalVisible"
-        :initialValue="cashier.shippingFee"
-        @close="shippingModalVisible = false"
-        @confirm="handleShippingConfirm"
-      />
+      <ShippingModal :visible="shippingModalVisible" :initialValue="cashier.shippingFee"
+        @close="shippingModalVisible = false" @confirm="handleShippingConfirm" />
 
       <!-- 规格选择弹窗（拆包） -->
       <div v-if="specPopup.visible" class="spec-popup-mask" @click="closeSpecPopup">
         <div class="spec-popup-container" :style="specPopupStyle" @click.stop>
           <div class="spec-popup-content">
-            <div
-              v-for="(spec, index) in specPopup.specList"
-              :key="index"
-              class="spec-item"
-              @click="handleSpecClick(spec)"
-            >
+            <div v-for="(spec, index) in specPopup.specList" :key="index" class="spec-item"
+              @click="handleSpecClick(spec)">
               <!-- 商品名称 + 规格名称 -->
               <div class="spec-item-name">{{ specPopup.commodity.name }}-{{ spec.specName }}</div>
 
@@ -463,13 +403,9 @@
 				<span class="multilevel-popup-title">选择分级商品</span>
 			</div> -->
           <div class="multilevel-popup-content">
-            <div
-              v-for="(child, index) in multiLevelPopup.childrenList"
-              :key="child.id || index"
-              :id="'multilevel-grid-item-' + child.id"
-              class="multilevel-grid-item"
-              @click="handleMultiLevelClick(child)"
-            >
+            <div v-for="(child, index) in multiLevelPopup.childrenList" :key="child.id || index"
+              :id="'multilevel-grid-item-' + child.id" class="multilevel-grid-item"
+              @click="handleMultiLevelClick(child)">
               <!-- 商品名称 -->
               <div class="multilevel-item-name">
                 {{ child.commodityName || child.name }}
@@ -491,14 +427,11 @@
                 </div>
 
                 <!-- 库存信息 -->
-                <div
-                  class="multilevel-item-stock"
-                  :style="
+                <div class="multilevel-item-stock" :style="
                     !child.outPutPurchaseInventories || child.outPutPurchaseInventories.length === 0
                       ? { color: '#aa0000' }
                       : {}
-                  "
-                >
+                  ">
                   余:
                   <span v-for="item2 in child.outPutPurchaseInventories" :key="item2.id" class="stock-item">
                     {{ item2.mount }}{{ item2.specName }}
@@ -4053,6 +3986,26 @@ export default {
 
 <style lang="scss" scoped>
 @import '@/common/css/cashier.scss';
+
+.cashier-box {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.cashier-container {
+  display: flex;
+  width: 100%;
+  flex: 1;
+  .left-space {
+    width: 50%;
+    height: 100%;
+  }
+  .right-space {
+    width: 50%;
+    height: 100%;
+  }
+}
 
 /* 商品网格项样式 */
 .grid-item {

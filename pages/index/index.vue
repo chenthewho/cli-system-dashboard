@@ -2,10 +2,7 @@
   <div id="app">
     <Sidebar ref="sidebarRef" @update-content="updateCashierContent" />
     <div class="main-content" :class="{ 'no-sidebar': cashierContent === 'one' }">
-      <div class="content-area">
-        <div v-show="cashierContent === 'one'">
-          <Cashier ref="orderRef" @goToManagement="switchToManagement" />
-        </div>
+        <Cashier v-show="cashierContent === 'one'" ref="orderRef" @goToManagement="switchToManagement" />
         <order ref="orderRef2" v-show="cashierContent === 'two'" />
         <goodIndex ref="goodIndexRef" v-show="cashierContent === 'three'" />
         <setting v-show="cashierContent === 'six'" />
@@ -13,9 +10,8 @@
         <settlementIndex ref="settlementIndexRef" v-show="cashierContent === 'five'" />
         <rotating ref="rotatingRef" v-show="cashierContent === 'seven'" />
         <shipperManagement ref="shipperManagementRef" v-show="cashierContent === 'eight'" />
-      </div>
     </div>
-  </div>
+	</div>
 </template>
 
 <script>
@@ -136,6 +132,7 @@ export default {
 .main-content {
   position: relative;
   width: calc(100vw - 40rpx);
+	height: 100vh;
   background-color: #f3f4f9;
 }
 
