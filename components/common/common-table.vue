@@ -1,7 +1,7 @@
 <template>
 	<view class="uni-table-scroll" :class="{ 'table--border': border, 'border-none': !noData }">
 		<!-- #ifdef H5 -->
-		<table class="uni-table" border="0" cellpadding="0" cellspacing="0" :class="{ 'table--stripe': stripe }" :style="{ 'min-width': minWidth + 'px' }">
+		<table class="uni-table" border="0" cellpadding="0" cellspacing="0" :class="{ 'table--stripe': stripe }">
 			<slot></slot>
 			<tr v-if="noData" class="uni-table-loading">
 				<td class="uni-table-text" :class="{ 'empty-border': border }">{{ emptyText }}</td>

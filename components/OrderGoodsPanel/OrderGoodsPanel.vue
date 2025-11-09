@@ -1,7 +1,7 @@
 <template>
 	<div class="order-goods-panel">
 		<div class="table-wrapper">
-			<uni-table ref="table" :loading="loading" border stripe emptyText="暂无物品,请添加商品到购物车" @selection-change="selectionChange">
+			<commonTable ref="table" :loading="loading" border stripe emptyText="暂无物品,请添加商品到购物车" @selection-change="selectionChange">
 					<uni-tr>
 						<uni-th  align="center">名称</uni-th>
 						<uni-th  align="center">数量</uni-th>
@@ -34,7 +34,7 @@
 						<uni-icons type="trash-filled" size="20" color="#eb0404" class="icon-search" @click="handleDelete(item)"></uni-icons>
 					</uni-td>
 				</uni-tr>
-				</uni-table>
+				</commonTable>
 		</div>
 		
 		<!-- Footer 固定在底部 -->
@@ -65,8 +65,12 @@
 </template>
 
 <script>
+import commonTable from '@/components/common/common-table.vue';
 export default {
 	name: 'OrderGoodsPanel',
+	components: {
+		commonTable
+	},
 	props: {
 		// 商品列表
 		goodsList: {
@@ -152,6 +156,9 @@ export default {
 	overflow-y: auto;
 	width: 100%;
 	box-sizing: border-box;
+	table {
+		max-width: 100% !important;
+	}
 }
 
 /* 现代简洁风格表格样式 */
@@ -597,6 +604,8 @@ export default {
 @media screen and (max-width: 1366px) {
 	.header-cell,
 	.table-cell {
+		justify-content: center;
+		align-items: center;
 		font-size: 11rpx;
 	}
 	

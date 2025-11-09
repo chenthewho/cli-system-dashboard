@@ -156,11 +156,11 @@ export default {
     display: flex;
     .name-title {
       color: $zn-font-color-leve1;
-      font-size: 10rpx;
+      font-size: 11rpx;
     }
     .code {
       color: $zn-font-color-leve2;
-      font-size: 9rpx;
+      font-size: 10rpx;
       margin-top: 2rpx;
     }
   }
@@ -169,7 +169,7 @@ export default {
   font-weight: bold;
   display: flex; /* 使用 flexbox 布局 */
   align-items: center;
-  padding: 6rpx 4rpx;
+  padding: 8rpx 4rpx;
   cursor: pointer; /* 鼠标悬停时显示为手型 */
 }
 
