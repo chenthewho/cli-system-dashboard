@@ -140,7 +140,8 @@
 						font-size: 18rpx;
 						font-weight: 500;
 						color: #374151;
-						min-width: 80rpx;
+						width: 80rpx;
+						flex-shrink: 0;
 					}
 
 					.amount-input {
@@ -149,7 +150,7 @@
 						outline: none;
 						font-size: 18rpx;
 						font-weight: 600;
-						text-align: center;
+						text-align: right;
 						background: transparent;
 						color: #1e293b;
 					}
@@ -172,10 +173,10 @@
 						color: #10b981;
 						border: 1rpx solid #10b981;
 						border-radius: 3rpx;
-						padding: 0 8rpx;
-						height: 24rpx;
+						padding: 0 4rpx;
+						height: 22rpx;
 						line-height: 22rpx;
-						font-size: 14rpx;
+						font-size: 12rpx;
 						font-weight: 500;
 						cursor: pointer;
 						transition: all 0.3s ease;
@@ -197,7 +198,7 @@
 						.discount-btn {
 							background: white;
 							border: none;
-							padding: 0 6rpx;
+							padding: 0 3rpx;
 							height: 22rpx;
 							line-height: 22rpx;
 							font-size: 14rpx;

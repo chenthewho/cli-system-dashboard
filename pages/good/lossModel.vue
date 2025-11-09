@@ -11,16 +11,18 @@
 				:show-add-button="false"
 				@back="back"
 				@item-click="addCommodity"
+				@spec-selected="handleSpecSelected"
+				@multilevel-selected="handleMultiLevelSelected"
 			></GoodsSelector>
-			<div style="flex: 1; background-color: #ffffff; text-align: right;">
-				<div
-					style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx; display: flex; justify-content: space-between; align-items: center;">
+		<div style="flex: 1; background-color: #ffffff; text-align: right; position: relative;">
+			<div
+				style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx; display: flex; justify-content: space-between; align-items: center;">
+				<div style="font-size: 15rpx; font-weight: bold;">
 					<div style="font-size: 15rpx; font-weight: bold;">
-						<div style="font-size: 15rpx; font-weight: bold;">
-						</div>
 					</div>
 				</div>
-				<div :style="{marginLeft: '5rpx',marginRight: '5rpx', height: (windowHeight-60)+'px'}">
+			</div>
+			<div :style="{marginLeft: '5rpx',marginRight: '5rpx', height: (windowHeight-60)+'px', position: 'relative'}">
 					<!-- 表头 -->
 					<div class="table-header">
 						<div style="flex: 3; padding: 10px; text-align: left;">
@@ -66,49 +68,16 @@
 
 							</div>
 						</div>
-					</scroll-view>
-					<!--键盘-->
-					<div v-if="showKeyBoard1">
-						<view class="mybrankmask"
-							:style="{ width: '450rpx', height: '200rpx', backgroundColor: '#ffffff', zIndex: 999, left: 0, bottom: 0, boxShadow: '0 -4rpx 20rpx rgba(0,0,0,0.15)' }">
-							<view style="padding: 8rpx;">
-								<view class="MymaskList">
-									<view class="maskListItem" @click="NumberCk(1)">1</view>
-									<view class="maskListItem" @click="NumberCk(2)">2</view>
-									<view class="maskListItem" @click="NumberCk(3)">3</view>
-									<view class="maskListItem " @click="Tuige()"><uni-icons custom-prefix="iconfont"
-											type="icon-tuige" size="35" color="#ffffff"
-											style="margin-right: 5rpx;"></uni-icons>
-									</view>
-
-								</view>
-								<view class="MymaskList">
-									<view class="maskListItem" @click="NumberCk(4)">4</view>
-									<view class="maskListItem" @click="NumberCk(5)">5</view>
-									<view class="maskListItem" @click="NumberCk(6)">6</view>
-
-									<view class="maskListItem" @click="NumberCk('+')"
-										style="font-size: 35rpx;color: white;">
-										+</view>
-								</view>
-								<view class="MymaskList">
-									<view class="maskListItem" @click="NumberCk(7)">7</view>
-									<view class="maskListItem" @click="NumberCk(8)">8</view>
-									<view class="maskListItem" @click="NumberCk(9)">9</view>
-									<view class="maskListItem" @click="NumberCk('-')"
-										style="font-size: 35rpx;color: white;">
-										-</view>
-								</view>
-								<view class="MymaskList">
-									<view class="maskListItem" @click="NumberCk(0)" style="width: 48%;">0</view>
-									<view class="maskListItem" @click="NumberCk('.')">.</view>
-									<view class="maskListItem confirm-btn"
-										@click="hideBorad">确定
-									</view>
-								</view>
-							</view>
-						</view>
-					</div>
+			</scroll-view>
+			<!--键盘-->
+			<NumericKeyboard 
+				:show="showKeyBoard1" 
+				:value="getCurrentValue()"
+				:container-position="true"
+				@input="handleKeyboardInput"
+				@delete="handleKeyboardDelete"
+				@confirm="hideBorad"
+			/>
 				</div>
 
 				<div style="position: fixed;bottom: 0;height: 30rpx;background: #ffffff;width: 100%;"
@@ -122,37 +91,6 @@
 
 
 		</div>
-	
-	<!-- 规格选择弹窗（拆包） -->
-	<div v-if="specPopup.visible" class="spec-popup-mask" @click="closeSpecPopup">
-		<div 
-			class="spec-popup-container" 
-			:style="specPopupStyle"
-			@click.stop
-		>
-			<div class="spec-popup-content">
-				<div 
-					v-for="(spec, index) in specPopup.specList" 
-					:key="index"
-					class="spec-item"
-					@click="handleSpecClick(spec)"
-				>
-					<!-- 商品名称 + 规格名称 -->
-					<div class="spec-item-name">
-						{{ specPopup.commodity.name }}-{{ spec.specName }}
-					</div>
-					
-					<!-- 商品信息区域 -->
-					<div class="spec-item-info">
-						<!-- 标签行 -->
-						<div class="spec-item-tags">
-							<div class="tag tag-unpack">拆包</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
 	</div>
 </template>
 
@@ -161,10 +99,12 @@
 	import lossModelApi from '../../api/lossModel/lossModelApi';
 	import purchase from '../../api/purchase/purchase';
 	import GoodsSelector from '../../components/GoodsSelector/GoodsSelector.vue'
+	import NumericKeyboard from '../../components/NumericKeyboard/NumericKeyboard.vue'
 	
 	export default {
 		components: {
-			GoodsSelector
+			GoodsSelector,
+			NumericKeyboard
 		},
 		data() {
 			return {
@@ -182,44 +122,13 @@
 				showKeyBoard1: false,
 				LossCommodityList: [],
 				targetId: "id-0-view",
-				showComfirmBtn: true,
-				// 规格弹窗数据（拆包）
-				specPopup: {
-					visible: false,
-					left: 0,
-					top: 0,
-					commodity: null,
-					specList: []
-				},
+				showComfirmBtn: true
 			}
 		},
 		computed: {
 			// 已选商品ID列表
 			selectedCommodityIds() {
 				return this.LossCommodityList.map(item => item.commodityId);
-			},
-			// 规格弹窗样式（拆包）
-			specPopupStyle() {
-				const { left, top, specList } = this.specPopup;
-				if (!specList || specList.length === 0) {
-					return {};
-				}
-				const itemHeight = 90; // 每项高度
-				const popupHeight = Math.min(specList.length * itemHeight + 10, 450); // 限制最大高度450px
-				
-				// 使用 uni-app 兼容的方式获取屏幕高度
-				const screenHeight = this.windowHeight || uni.getWindowInfo().windowHeight;
-				
-				// 计算最佳位置（避免超出屏幕）
-				let adjustedTop = top - 100 < 0 ? 0 : top - 100;
-				adjustedTop = adjustedTop + popupHeight > screenHeight 
-					? screenHeight - popupHeight - 20
-					: adjustedTop;
-				
-				return {
-					left: left + 'px',
-					top: adjustedTop + 'px'
-				};
 			}
 		},
 		onLoad(options) {
@@ -236,53 +145,67 @@
 			this.initSystem();
 		},
 		methods: {
-			totalInitInventory() {
-				return this.LossCommodityList.reduce((total, item) => {
-					return total + (parseFloat(item.mount) || 0);
-				}, 0);
-			},
-			NumberCk(val) {
-				let myvalue = "";
-				switch (this.valueType) {
-					case 1:
-						myvalue = this.LossCommodityList[this.editingIndex].mount;
-						break;
+		totalInitInventory() {
+			return this.LossCommodityList.reduce((total, item) => {
+				return total + (parseFloat(item.mount) || 0);
+			}, 0);
+		},
+		// 获取当前编辑的值
+		getCurrentValue() {
+			if (this.editingIndex === -1) return '';
+			switch (this.valueType) {
+				case 1:
+					return this.LossCommodityList[this.editingIndex].mount || '';
+				default:
+					return '';
+			}
+		},
+		// 处理键盘输入
+		handleKeyboardInput(val) {
+			let myvalue = this.getCurrentValue();
+			
+			// 如果是+/-，先计算表达式
+			if (val === '+' || val === '-') {
+				try {
+					myvalue = eval(myvalue.toString());
+				} catch (e) {
+					myvalue = parseFloat(myvalue) || 0;
 				}
-				if (val == '.') {
-					if (myvalue.toString().indexOf('.') >= 0) {
-						return;
-					}
-				}
-				var txt = myvalue == null || myvalue == 0 || myvalue == undefined ? '' : myvalue;
-				myvalue = txt + val.toString();
-				switch (this.valueType) {
-					case 1:
-						this.LossCommodityList[this.editingIndex].mount = myvalue;
-						break;
-				}
-			},
-			Tuige() {
-				let myvalue = "";
-				switch (this.valueType) {
-					case 1:
-						myvalue = this.LossCommodityList[this.editingIndex].mount;
-						break;
-				}
-				if (myvalue == null || myvalue === '' || myvalue.toString() === '0') {
-					return;
-				}
-				myvalue = myvalue ? myvalue.toString() : '';
-				if(myvalue.length == 1){
-					myvalue = "0";
-				}else{
-					myvalue = myvalue.slice(0, -1);
-				}
-				switch (this.valueType) {
-					case 1:
-						this.LossCommodityList[this.editingIndex].mount = myvalue;
-						break;
-				}
-			},
+			}
+			
+			// 拼接新值
+			var txt = myvalue == null || myvalue == 0 || myvalue == undefined ? '' : myvalue;
+			myvalue = txt + val.toString();
+			
+			// 更新值
+			switch (this.valueType) {
+				case 1:
+					this.LossCommodityList[this.editingIndex].mount = myvalue;
+					break;
+			}
+		},
+		// 处理键盘删除
+		handleKeyboardDelete() {
+			let myvalue = this.getCurrentValue();
+			
+			if (myvalue == null || myvalue === '' || myvalue.toString() === '0') {
+				return;
+			}
+			
+			myvalue = myvalue ? myvalue.toString() : '';
+			if(myvalue.length == 1){
+				myvalue = "0";
+			} else {
+				myvalue = myvalue.slice(0, -1);
+			}
+			
+			// 更新值
+			switch (this.valueType) {
+				case 1:
+					this.LossCommodityList[this.editingIndex].mount = myvalue;
+					break;
+			}
+		},
 			initSystem() {
 				let that = this;
 				uni.getSystemInfo({
@@ -293,17 +216,18 @@
 					}
 				});
 			},
-			showKeyBorad(index, type) {
-				this.$nextTick(() => {
-					// 确保赋值和 view 的 id 一致
-					this.scrollIntoView = `id-${this.currentNumber}-view`
-				})
-				this.valueType = type;
-				this.editingIndex = index;
-				this.showKeyBoard1 = true;
-				// 键盘高度调整为200rpx
-				this.scrollHeight2 = this.windowHeight - 210 - 200 + 'px';
-			},
+		showKeyBorad(index, type) {
+			this.valueType = type;
+			this.editingIndex = index;
+			this.showKeyBoard1 = true;
+			// 键盘高度调整为200rpx
+			this.scrollHeight2 = this.windowHeight - 210 - 200 + 'px';
+			
+			// 设置滚动目标，使选中的行滚动到可视区域
+			this.$nextTick(() => {
+				this.targetId = `id-${index}-view`;
+			});
+		},
 			hideBorad() {
 				this.scrollHeight2 = this.windowHeight - 150 + 'px';
 				this.showKeyBoard1 = false;
@@ -397,12 +321,16 @@
 						})
 					}
 
+					console.log("this.commodityList",this.commodityList);
+
 				})
 			},
 			addCommodity(e) {
 				// 检查是否已经添加
 				if (this.LossCommodityList.some(x => x.commodityId === e.id)) return;
 				
+				// 只处理非拆包、非多规格商品
+				// 拆包和多规格商品由 GoodsSelector 内部弹窗处理
 				if (e.saleWay === 1 || e.saleWay === 2 || e.saleWay === 4) {
 					var commodityAdded = {
 						id: "",
@@ -410,67 +338,66 @@
 						commodityId: e.id,
 						mount: 0
 					}
-					if (e.commoditySpecs.length > 0) {
+					if (e.commoditySpecs && e.commoditySpecs.length > 0) {
 						commodityAdded.spec = e.commoditySpecs[0]
 					}
 					this.LossCommodityList.push(commodityAdded)
 				}
-				
-				// 处理定装拆包
-				if(e.saleWay === 3){
-					uni.createSelectorQuery().selectAll(`#grid-item-${e.id}`).boundingClientRect(data => {
-						console.log("拆包商品位置信息", data)
-						if (data && data.length > 0) {
-							this.createSpecPopup(data[0].left + data[0].width / 2, data[0].top, e, e.commoditySpecs)
-						}
-					}).exec()
-				}
 			},
 			
-			// 用于添加拆包商品
-			addCommodity2(e, spec) {
+			// 处理规格选择（拆包商品）
+			handleSpecSelected({ commodity, spec }) {
+				console.log('选择拆包规格:', commodity, spec);
+				// 检查是否已经添加
+				if (this.LossCommodityList.some(x => x.commodityId === commodity.id)) {
+					uni.showToast({
+						title: '该商品已添加',
+						icon: 'none',
+						duration: 1500
+					});
+					return;
+				}
+				
+				// 添加拆包商品
 				var commodityAdded = {
 					id: "",
-					name: e.name,
-					commodityId: e.id,
-					mount: 0
-				}
-				commodityAdded.spec = spec
-				this.LossCommodityList.push(commodityAdded)
-			},
-			
-			// 创建规格弹窗（拆包）
-			createSpecPopup(left, top, commodity, specList) {
-				if (!specList || specList.length < 1) return;
-				
-				this.specPopup = {
-					visible: true,
-					left,
-					top,
-					commodity,
-					specList
+					name: commodity.name || commodity.commodityName,
+					commodityId: commodity.id,
+					mount: 0,
+					spec: spec
 				};
+				this.LossCommodityList.push(commodityAdded);
 			},
 			
-			// 关闭规格弹窗
-			closeSpecPopup() {
-				this.specPopup.visible = false;
-				// 延迟清空数据，等动画完成
-				setTimeout(() => {
-					this.specPopup = {
-						visible: false,
-						left: 0,
-						top: 0,
-						commodity: null,
-						specList: []
-					};
-				}, 300);
-			},
-			
-			// 点击规格项
-			handleSpecClick(spec) {
-				this.addCommodity2(this.specPopup.commodity, spec);
-				this.closeSpecPopup();
+			// 处理多规格商品选择
+			handleMultiLevelSelected(childCommodity) {
+				console.log('选择多规格子商品:', childCommodity);
+				// 检查是否已经添加
+				if (this.LossCommodityList.some(x => x.commodityId === childCommodity.commodityId || x.commodityId === childCommodity.id)) {
+					uni.showToast({
+						title: '该商品已添加',
+						icon: 'none',
+						duration: 1500
+					});
+					return;
+				}
+				
+				// 添加多规格子商品
+				var commodityAdded = {
+					id: "",
+					name: childCommodity.commodityName || childCommodity.name,
+					commodityId: childCommodity.commodityId || childCommodity.id,
+					mount: 0
+				};
+				
+				// 获取规格信息
+				if (childCommodity.commoditySpecs && childCommodity.commoditySpecs.length > 0) {
+					commodityAdded.spec = childCommodity.commoditySpecs[0];
+				} else if (childCommodity.commoditySpec) {
+					commodityAdded.spec = childCommodity.commoditySpec;
+				}
+				
+				this.LossCommodityList.push(commodityAdded);
 			}
 		}
 
@@ -529,55 +456,6 @@
 		background: #ffffff;
 	}
 
-	.mybrankmask .MymaskList {
-		font-weight: bold;
-		display: flex;
-		width: 100%;
-		height: 42rpx;
-		justify-content: space-around;
-		margin-bottom: 6rpx;
-		font-size: 26rpx;
-	}
-
-	.mybrankmask .MymaskList .large {
-		font-weight: bold;
-		height: 42rpx;
-		line-height: 42rpx;
-		z-index: 5;
-		font-size: 26rpx;
-	}
-
-	.mybrankmask .MymaskList .maskListItem {
-		font-weight: bold;
-		width: 23%;
-		height: 42rpx;
-		text-align: center;
-		line-height: 42rpx;
-		border-radius: 8rpx;
-		background: #5a5a5a;
-		font-size: 26rpx;
-		color: white;
-		transition: all 0.15s;
-		box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
-	}
-	
-	.mybrankmask .MymaskList .maskListItem:active {
-		opacity: 0.8;
-		transform: scale(0.96);
-		background: #4a4a4a;
-		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.3);
-	}
-	
-	.mybrankmask .MymaskList .confirm-btn {
-		background: #11998e;
-		font-weight: bold;
-	}
-	
-	.mybrankmask .MymaskList .confirm-btn:active {
-		opacity: 0.8;
-		background: #0d7a6f;
-	}
-
 	.total-content {
 		display: flex;
 		height: 35rpx;
@@ -607,122 +485,5 @@
 		color: #ffffff;
 		box-shadow: 0 2rpx 8rpx rgba(33, 150, 243, 0.3);
 		border-radius: 8rpx 8rpx 0 0;
-	}
-
-	/* 规格选择弹窗样式（拆包） */
-	.spec-popup-mask {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100%;
-		background-color: rgba(0, 0, 0, 0.3);
-		z-index: 9998;
-		animation: fadeIn 0.2s ease-out;
-	}
-	
-	.spec-popup-container {
-		position: fixed;
-		min-width: 250px;
-		max-width: 500px;
-		background-color: #ffffff;
-		border: 3px solid #00aaff;
-		border-radius: 12px;
-		overflow: hidden;
-		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-		z-index: 9999;
-		animation: scaleIn 0.2s ease-out;
-		display: flex;
-		flex-direction: column;
-	}
-	
-	.spec-popup-content {
-		padding: 5px;
-		overflow-y: auto;
-		max-height: 450px;
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-	}
-	
-	.spec-item {
-		min-height: 70px;
-		padding: 12px;
-		border: 3px solid #7e7e7e;
-		border-radius: 8px;
-		background: #ffffff;
-		cursor: pointer;
-		transition: all 0.2s ease;
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-	
-	.spec-item:hover {
-		border-color: #00aaff;
-		background: linear-gradient(135deg, rgba(0, 170, 255, 0.05) 0%, rgba(0, 136, 204, 0.05) 100%);
-		transform: translateY(-2px);
-		box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
-	}
-	
-	.spec-item:active {
-		transform: translateY(0);
-		box-shadow: 0 2px 6px rgba(0, 170, 255, 0.3);
-	}
-	
-	.spec-item-name {
-		font-size: 18rpx;
-		font-weight: bold;
-		color: #333;
-		line-height: 1.4;
-		word-break: break-all;
-	}
-	
-	.spec-item-info {
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-	}
-	
-	.spec-item-tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 6px;
-	}
-	
-	.tag {
-		padding: 2px 6px;
-		border-radius: 3px;
-		font-size: 12rpx;
-		font-weight: 600;
-		white-space: nowrap;
-	}
-	
-	.tag-unpack {
-		color: #dc9300;
-		border: 1px solid #dc9300;
-		background: rgba(220, 147, 0, 0.1);
-	}
-	
-	/* 淡入动画 */
-	@keyframes fadeIn {
-		from {
-			opacity: 0;
-		}
-		to {
-			opacity: 1;
-		}
-	}
-	
-	/* 缩放动画 */
-	@keyframes scaleIn {
-		from {
-			transform: scale(0.8);
-			opacity: 0;
-		}
-		to {
-			transform: scale(1);
-			opacity: 1;
-		}
 	}
 </style>

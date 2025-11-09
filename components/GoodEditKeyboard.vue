@@ -54,17 +54,20 @@
 
 			
 			<!-- 押筐选择 -->
-			<div v-if="showStep2" style="display: flex; align-items: center; padding: 3rpx 8rpx; margin-top: 10rpx;">
-				<select-lay 
-					:zindex="1211" 
-					:name="editingCard.extralModel.name" 
-					:value="editingCard.extralModel.id"
-					direction="up"
-					placeholder="请选择项目" 
-					:options="editCardExtralModel"
-					@selectitem="handleExtraModelSelect" 
-					slabel="name">
-				</select-lay>
+			<div v-if="showStep2" style="display: flex; align-items: center; padding: 3rpx 5rpx; margin-top: 10rpx;">
+			<select-lay 
+				:zindex="1211" 
+				:name="editingCard.extralModel.name" 
+				:value="editingCard.extralModel.id"
+				direction="up"
+				placeholder="请选择项目" 
+				:options="editCardExtralModel"
+				@selectitem="handleExtraModelSelect" 
+				slabel="name"
+				height="40rpx"
+				width="125rpx"
+				padding="5rpx 30rpx 5rpx 8rpx">
+			</select-lay>
 			</div>
 			</div>
 

@@ -1,11 +1,11 @@
 <template>
 	  <div id="app">
-	    <div class="sidebar" v-show="cashierContent !== 'one'">
+	    <div class="sidebar" v-show="cashierContent !='one'" >
 	      <Sidebar ref="sidebarRef" @update-content="updateCashierContent" />
 	    </div>
-	    <div class="main-content" :class="{'no-sidebar': cashierContent === 'one'}">
+	    <div :class="['main-content', { 'no-sidebar': cashierContent === 'one' }]">
 			<div class="content-area">							
-				<div v-show="cashierContent==='one'">
+				<div class="no-sidebar" v-show="cashierContent==='one'">
 					 <Cashier ref="orderRef" @goToManagement="switchToManagement" />
 				</div>
 		  <order ref="orderRef2"  v-show="cashierContent==='two'" />
@@ -136,7 +136,7 @@ export default {
 
 .main-content {
  background-color: gray;
-  margin-left: 40rpx; /* 主内容区左边距与侧边栏宽度相同 */
+ margin-left: 40rpx;
   flex-grow: 1; /* 主内容区占据剩余空间 */
 }
 

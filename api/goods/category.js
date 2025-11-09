@@ -102,5 +102,8 @@ export default {
 	},
 	DeleteCommodity(id){
 		return http.get(`/Commodity/DeleteCommodity?id=${id}`)
+	},
+	EditCommodity(data){
+		return http.post(`/Commodity/EditCommodity`,data)
 	}
 }

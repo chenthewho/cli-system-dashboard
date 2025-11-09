@@ -18,24 +18,24 @@
 								<input v-model="localPayAmount.total" inputmode="none" class="amount-input" readonly>
 							</div>
 
-							<div class="input-row discount-row" :class="{'active': selectInputPay === 9}"
-								@click="handleEditingClick(9)">
-								<div class="discount-toggle">
-									<button class="discount-btn" :class="{'active': localAccountDiscount}"
-										@click="handleSetDiscount">优惠</button>
-									<button class="discount-btn" :class="{'active': !localAccountDiscount}"
-										@click="handleSetOvercharge">多收</button>
-								</div>
-								<input v-model="localDiscountAmount" inputmode="none" class="amount-input">
-								<button v-if="shouldShowSmartRoundButton" class="smart-round-btn" @click="handleSmartRound">{{
-									smartRoundButtonText }}</button>
+						<div class="input-row discount-row" :class="{'active': selectInputPay === 9}"
+							@click="handleEditingClick(9)">
+							<div class="discount-toggle">
+								<button class="discount-btn" :class="{'active': localAccountDiscount}"
+									@click="handleSetDiscount">优惠</button>
+								<button class="discount-btn" :class="{'active': !localAccountDiscount}"
+									@click="handleSetOvercharge">多收</button>
 							</div>
+							<button v-if="shouldShowSmartRoundButton" class="smart-round-btn" @click="handleSmartRound">{{
+								smartRoundButtonText }}</button>
+							<input v-model="localDiscountAmount" inputmode="none" class="amount-input">
+						</div>
 
-							<div class="input-row" :class="{'active': selectInputPay === 4}" @click="handleEditingClick(4)">
-								<label class="input-label">收筐抵扣</label>
-								<input v-model="localPayAmount.BasketOffsetAmount" inputmode="none" class="amount-input">
-								<button class="collect-btn" @click="handleCollectBasket">收筐</button>
-							</div>
+						<div class="input-row" :class="{'active': selectInputPay === 4}" @click="handleEditingClick(4)">
+							<label class="input-label">收筐抵扣</label>
+							<button class="collect-btn" @click="handleCollectBasket">收筐</button>
+							<input v-model="localPayAmount.BasketOffsetAmount" inputmode="none" class="amount-input">
+						</div>
 
 							<div class="input-row" :class="{'active': selectInputPay === 3}" @click="handleEditingClick(3)">
 								<label class="input-label">下欠金额</label>
