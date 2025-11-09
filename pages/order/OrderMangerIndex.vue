@@ -1,13 +1,10 @@
 <template>
-	<view style="background-color:darkgrey;">
-		<view style="height: 1px; background-color: #ccc; box-shadow: 0 2rpx 5rpx rgba(0, 0, 0, 0.2);"></view>
+	<view>
 		<!-- 左右布局容器 -->
 		<view class="layout-container" :style="{ height: scrollHeight + 'px' }">
 			<!-- 左侧订单列表 -->
-			<scroll-view class="scrollArea left-panel" scroll-y="true" :style="{ height: scrollHeight + 'px' }" 
-				@scrolltolower="loadMore" 
-				lower-threshold="100"
-				@scroll="onScroll">
+			<scroll-view class="scrollArea left-panel" scroll-y="true" :style="{ height: scrollHeight + 'px' }"
+				@scrolltolower="loadMore" lower-threshold="100" @scroll="onScroll">
 				<div style="height: 50rpx;" v-if="moduleList.length==0 && !loading">
 					<div style=" margin-top: 100rpx; text-align: center;">
 						<uni-icons custom-prefix="iconfont" type="icon-zanwudingdan" size="40" color="#4c4c4c"></uni-icons>
@@ -15,58 +12,53 @@
 					</div>
 				</div>
 
-				<view v-for=" item in moduleList" :key="item.id" style=" display: flex;font-weight: bold;">
+				<view v-for=" item in moduleList" :key="item.id">
 					<u-checkbox-group placement="column" @change="checkboxChange(item.id)"
 						style=" margin-top: 40px;margin-left: 20px;" v-if="isEdting">
 						<u-checkbox class="checkBox" :key="item.id" label="" :checked="checkboxValue.includes(item.id)" />
 					</u-checkbox-group>
-					<view
-						class="order-item"
-						:class="{'order-item-selected': selectedOrderId === item.id}"
-						:style="{backgroundColor:item.status==2?'#f5f5f5':'white'}"
-						@click="showInfo(item)">
-						
+					<view class="order-item" :class="{'order-item-selected': selectedOrderId === item.id}"
+						:style="{backgroundColor:item.status==2?'#f5f5f5':'white'}" @click="showInfo(item)">
+
 						<!-- 状态标签 - 固定在左上角 -->
-					<view class="status-badges">
-						<view class="status-badge status-modified" v-if="item.status==5">
-							<uni-icons type="compose" size="10" color="#fff"></uni-icons>
-							<text class="status-badge-text">已修改</text>
-						</view>
-						<view class="status-badge status-refunded" v-if="item.status==2">
-							<uni-icons type="undo" size="10" color="#fff"></uni-icons>
-							<text class="status-badge-text">退单</text>
-						</view>
-					</view>
-					
-					<!-- 已发单标签 - 固定在右上角 -->
-					<view class="sent-badge-top" v-if="item.shareNum > 0">
-						<text class="sent-badge">已发单</text>
-					</view>
-					
-					<!-- 第一行：客户名称、时间、实收金额 -->
-					<view class="order-row-first">
-						<view class="customer-info">
-							<uni-icons custom-prefix="iconfont" type="icon-tubiao_guke" size="13" color="#000000"></uni-icons>
-							<text class="customer-name">{{item.customName ? item.customName : "散客"}}</text>
-						</view>
-						<view class="order-time">
-							{{item.createTime.replace("T"," ")}}
-						</view>
-							<view class="actual-money">
-								实收(元): <text class="money-value">{{item.actualMoney}}</text>
+						<view class="status-badges">
+							<view class="status-badge status-modified" v-if="item.status==5">
+								<text class="status-badge-text">已修改</text>
+							</view>
+							<view class="status-badge status-refunded" v-if="item.status==2">
+								<text class="status-badge-text">退单</text>
 							</view>
 						</view>
-						
+
+						<!-- 已发单标签 - 固定在右上角 -->
+						<view class="sent-badge-top" v-if="item.shareNum > 0">
+							<text class="sent-badge">已发单</text>
+						</view>
+
+						<!-- 第一行：客户名称、时间、实收金额 -->
+						<view class="order-row-first">
+							<view class="customer-info">
+								<image src="/static/img/common/header.png" class="user-header" />
+								<text class="customer-name">{{ item.customName ? item.customName : "散客" }}</text>
+							</view>
+							<view class="order-time">
+								{{ item.createTime.replace("T", " ") }}
+							</view>
+							<view class="actual-money">
+								实收(元): <text class="money-value">{{ item.actualMoney }}</text>
+							</view>
+						</view>
+
 						<!-- 第二行：商品列表和下欠金额 -->
 						<view class="order-row-second">
-							<view class="module-str">{{item.modulestr}}</view>
-							<view class="debt-badge" v-if="item.debt>0">
-								下欠: <text class="debt-value">{{item.debt}}</text>
+							<view class="module-str">{{ item.modulestr }}</view>
+							<view class="debt-badge" v-if="item.debt > 0">
+								下欠: <text class="debt-value">{{ item.debt }}</text>
 							</view>
 						</view>
 					</view>
 				</view>
-				
+
 				<!-- 加载提示 -->
 				<view style="text-align: center; padding: 20rpx; color: #666;" v-if="loading">
 					<text>加载中...</text>
@@ -75,7 +67,7 @@
 					<text>没有更多数据了</text>
 				</view>
 			</scroll-view>
-			
+
 			<!-- 右侧订单详情 -->
 			<view class="right-panel" :style="{ height: scrollHeight + 'px' }">
 				<view v-if="!showDetail" class="empty-detail">
@@ -85,44 +77,42 @@
 				<view v-else class="detail-content">
 					<view class="detail-header-new">
 						<view class="header-left">
-							<uni-icons type="list" size="18" color="#fff"></uni-icons>
 							<text class="detail-title-new">订单详情</text>
 						</view>
-						<view class="header-right">
-							<u-button
-								icon="share-square"
-								type="primary"
-								text="发单" 
-								@click="shareOrder()" 
-								class="share-order-btn"
-								size="small">
-							</u-button>
+						<view  class="header-right">
+							<view @click="shareOrder()" class="share-order-btn">
+								<image src="/static/img/common/editor.png" />
+								发单
+							</view>
 						</view>
 					</view>
-					
+
 					<scroll-view scroll-y="true" :style="{ height: (scrollHeight - 115) + 'px' }">
 						<div class="order-info-grid-compact">
 							<!-- 第一行 -->
 							<div class="info-row">
-								<div class="info-item-new">				
-									<text class="info-value-new info-value-small">{{currentOrder.createTime ? currentOrder.createTime.replace("T", " ") : ""}}</text>
+								<div class="info-item-new">
+									<text class="info-value-new info-value-small">{{currentOrder.createTime ?
+										currentOrder.createTime.replace("T", " ") : ""}}</text>
 								</div>
 								<div class="info-item-new">
-									<text class="info-value-new info-value-small">{{currentOrder.accountCode ? currentOrder.accountCode : ""}}</text>
+									<text class="info-value-new info-value-small">{{currentOrder.accountCode ? currentOrder.accountCode :
+										""}}</text>
 								</div>
 							</div>
-							
+
 							<!-- 第二行 -->
 							<div class="info-row">
 								<div class="info-item-new">
-									<text class="info-value-new info-value-small">{{currentOrder.customName ? currentOrder.customName : "散客"}}</text>
+									<text class="info-value-new info-value-small">{{currentOrder.customName ? currentOrder.customName :
+										"散客"}}</text>
 								</div>
 								<div class="info-item-new">
 									<text class="info-label-new">总计金额:</text>
 									<text class="info-value-new highlight-value">{{currentOrder.payableAmount}}</text>
 								</div>
 							</div>
-							
+
 							<!-- 第三行 -->
 							<div class="info-row">
 								<div class="info-item-new">
@@ -134,39 +124,35 @@
 									<text class="info-value-new highlight-value">{{currentOrder.actualMoney}}</text>
 								</div>
 							</div>
-							
+
 							<!-- 第四行 - 下欠和状态 -->
 							<div class="info-row">
 								<div class="info-item-new" v-if="currentOrder.debt>0">
 									<text class="info-label-new">下欠:</text>
 									<text class="info-value-new debt-value-new">{{currentOrder.debt}}</text>
 								</div>
-							<div class="info-item-status" v-if="currentOrder.status !=1">
-								<view class="status-container-flex">
-									<view class="status-tag-group">
-										<view class="status-tag status-modified-tag" v-if="currentOrder.status==5">
-											<uni-icons type="compose" size="12" color="#31BDEC"></uni-icons>
-											<text class="status-tag-text">已修改</text>
+								<div class="info-item-status" v-if="currentOrder.status !=1">
+									<view class="status-container-flex">
+										<view class="status-tag-group">
+											<view class="status-tag status-modified-tag" v-if="currentOrder.status==5">
+												<uni-icons type="compose" size="12" color="#31BDEC"></uni-icons>
+												<text class="status-tag-text">已修改</text>
+											</view>
+											<view class="status-tag status-refunded-tag" v-if="currentOrder.status==2">
+												<uni-icons type="undo" size="12" color="#F56C6C"></uni-icons>
+												<text class="status-tag-text">退单</text>
+											</view>
 										</view>
-										<view class="status-tag status-refunded-tag" v-if="currentOrder.status==2">
-											<uni-icons type="undo" size="12" color="#F56C6C"></uni-icons>
-											<text class="status-tag-text">退单</text>
-										</view>
+										<u-button v-if="currentOrder.status==5" class="history-btn-right" type="primary" size="mini"
+											@click="showHistoryOrder(currentOrder)">
+											<uni-icons type="eye" size="12" color="#fff"></uni-icons>
+											<text style="margin-left: 4rpx;">查看历史</text>
+										</u-button>
 									</view>
-									<u-button 
-										v-if="currentOrder.status==5"
-										class="history-btn-right"
-										type="primary"
-										size="mini"
-										@click="showHistoryOrder(currentOrder)">
-										<uni-icons type="eye" size="12" color="#fff"></uni-icons>
-										<text style="margin-left: 4rpx;">查看历史</text>
-									</u-button>
-								</view>
-							</div>
+								</div>
 							</div>
 						</div>
-						
+
 						<div class="product-table-container">
 							<div class="product-table">
 								<div class="table-row table-header-row">
@@ -177,8 +163,9 @@
 									<div class="table-header-cell">单价</div>
 									<div class="table-header-cell">小计</div>
 								</div>
-						
-								<div class="table-row table-body-row" v-for="item in currentCardInfo" v-if="item.type!=4" :key="item.id">
+
+								<div class="table-row table-body-row" v-for="item in currentCardInfo" v-if="item.type!=4"
+									:key="item.id">
 									<div class="table-cell">{{item.name}}</div>
 									<div class="table-cell">{{item.mount}}</div>
 									<div class="table-cell">{{item.totalWeight}}</div>
@@ -189,30 +176,18 @@
 							</div>
 						</div>
 					</scroll-view>
-					
+
 					<view class="order-action-buttons-compact">
-						<u-button v-if="currentOrder.status!=2" 
-							class="action-btn-compact modify-btn-new"
-							type="primary" 
-							@click="TurnToTuigeCashier" 
-							text="改单">
+						<u-button v-if="currentOrder.status!=2" class="action-btn-compact modify-btn-new" type="primary"
+							@click="TurnToTuigeCashier" text="改单">
 						</u-button>
-						<u-button v-if="currentOrder.status!=2" 
-							class="action-btn-compact refund-btn-new"
-							type="primary" 
-							@click="TuigeOrder" 
-							text="退单">
+						<u-button v-if="currentOrder.status!=2" class="action-btn-compact refund-btn-new" type="primary"
+							@click="TuigeOrder" text="退单">
 						</u-button>
-						<u-button v-if="currentOrder.debt>0"
-							class="action-btn-compact repay-btn-new"
-							type="primary" 
-							text="整单还款" 
+						<u-button v-if="currentOrder.debt>0" class="action-btn-compact repay-btn-new" type="primary" text="整单还款"
 							@click="openPayTypeDialogVisible">
 						</u-button>
-						<u-button 
-							class="action-btn-compact print-btn-new"
-							type="primary"
-							text="打印" 
+						<u-button class="action-btn-compact print-btn-new" type="primary" text="打印"
 							@click="printerModel(currentOrder)">
 						</u-button>
 					</view>
@@ -232,8 +207,7 @@
 										<div class="payment-methods">
 											<div :class="{'payment-item':true,'activepayment':item.select==1?true:false}"
 												v-for="item , index in payWay" @click="changPayWay(index)">
-												<u-icon style="margin-top: 10rpx;" :size="40" :name="item.coin"
-													:color="item.color"></u-icon>
+												<u-icon style="margin-top: 10rpx;" :size="40" :name="item.coin" :color="item.color"></u-icon>
 												<span class="payment-text">{{item.label}}</span>
 											</div>
 										</div>
@@ -252,9 +226,8 @@
 													<view class="maskListItem" @click="NumberCk2(1)">1</view>
 													<view class="maskListItem" @click="NumberCk2(2)">2</view>
 													<view class="maskListItem" @click="NumberCk2(3)">3</view>
-													<view class="maskListItem "
-														style="background-color: #67C23A;color: #fff;"
-														@click="Tuige2()">退格</view>
+													<view class="maskListItem " style="background-color: #67C23A;color: #fff;" @click="Tuige2()">
+														退格</view>
 												</view>
 												<view class="MymaskList">
 													<view class="maskListItem" @click="NumberCk2(4)">4</view>
@@ -326,11 +299,13 @@
 					<!-- 历史订单列表 -->
 					<scroll-view class="history-scroll" :style="{ height: (scrollHeight - 100) + 'px' }" scroll-y="true">
 						<div class="history-order-list">
-							<div class="history-order-item" v-for="(order, index) in historyOrderList" :key="index" @click="showOrderDetail(order)">
+							<div class="history-order-item" v-for="(order, index) in historyOrderList" :key="index"
+								@click="showOrderDetail(order)">
 								<div class="history-order-header">
 									<div class="history-order-info">
 										<text class="history-customer-name">{{ order.customName || "散客" }}</text>
-										<text class="history-order-time">{{ order.updateTime ? order.updateTime.replace("T", " ") : "" }}</text>
+										<text class="history-order-time">{{ order.updateTime ? order.updateTime.replace("T", " ") : ""
+											}}</text>
 									</div>
 									<div class="history-order-amounts">
 										<text class="history-total-amount">实收: ¥{{ order.actualMoney || 0 }}</text>
@@ -393,13 +368,14 @@
 							<!-- 第一行 -->
 							<div class="info-row">
 								<div class="info-item-new">
-									<text class="info-value-new info-value-small">{{ orderDetailData.createTime ? orderDetailData.createTime.replace("T", " ") : "" }}</text>
+									<text class="info-value-new info-value-small">{{ orderDetailData.createTime ?
+										orderDetailData.createTime.replace("T", " ") : "" }}</text>
 								</div>
 								<div class="info-item-new">
 									<text class="info-value-new info-value-small">{{ orderDetailData.accountCode || "-" }}</text>
 								</div>
 							</div>
-							
+
 							<!-- 第二行 -->
 							<div class="info-row">
 								<div class="info-item-new">
@@ -410,7 +386,7 @@
 									<text class="info-value-new highlight-value">{{ orderDetailData.payableAmount || 0 }}</text>
 								</div>
 							</div>
-							
+
 							<!-- 第三行 -->
 							<div class="info-row">
 								<div class="info-item-new" v-if="orderDetailData.basketOffsetAmount">
@@ -422,7 +398,7 @@
 									<text class="info-value-new highlight-value">{{ orderDetailData.actualMoney || 0 }}</text>
 								</div>
 							</div>
-							
+
 							<!-- 第四行 - 下欠和状态 -->
 							<div class="info-row">
 								<div class="info-item-new" v-if="orderDetailData.debt > 0">
@@ -466,9 +442,10 @@
 				</div>
 			</view>
 		</view>
-		
+
 		<!-- 隐藏的canvas，用于生成订单图片 -->
-		<canvas canvas-id="orderCanvas" style="width: 750px; height: 3000px; position: fixed; left: -9999px; top: -9999px;"></canvas>
+		<canvas canvas-id="orderCanvas"
+			style="width: 750px; height: 3000px; position: fixed; left: -9999px; top: -9999px;"></canvas>
 
 	</view>
 
@@ -1599,6 +1576,7 @@
 	/* 左右布局容器 */
 	.layout-container {
 		display: flex;
+		justify-content: space-between;
 		height: 100%;
 		overflow: hidden;
 		position: relative;
@@ -1606,12 +1584,12 @@
 	
 	/* 左侧订单列表面板 - 固定宽度 */
 	.left-panel {
+		padding: 5rpx 0rpx;
 		flex: 0 0 50%;
 		width: 50%;
 		min-width: 50%;
 		max-width: 50%;
-		background-color: darkgrey;
-		border-right: 2rpx solid #ccc;
+		padding-left: 10rpx;
 		overflow-y: auto;
 		overflow-x: hidden;
 		box-sizing: border-box;
@@ -1619,10 +1597,8 @@
 	
 	/* 右侧订单详情面板 - 固定宽度 */
 	.right-panel {
-		flex: 0 0 50%;
-		width: 50%;
-		min-width: 50%;
-		max-width: 50%;
+		flex: 0 0 49%;
+		width: 49%;
 		background-color: #f5f5f5;
 		display: flex;
 		flex-direction: column;
@@ -1632,23 +1608,22 @@
 	
 	/* 订单项基础样式 */
 	.order-item {
-		width: 98%;
-		min-height: 40rpx;
+		width: 100%;
+		min-height: 50rpx;
 		background-color: white;
-		margin-left: 5rpx;
-		margin-bottom: 4rpx;
+		margin-bottom: 8rpx;
 		margin-top: 4rpx;
-		border-radius: 4px;
-		padding: 6rpx 8rpx;
+		border-radius: 6px;
 		cursor: pointer;
 		transition: all 0.3s ease;
 		border: 2rpx solid transparent;
 		position: relative;
+		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.08);
 	}
 	
 	/* 状态标签容器 - 固定在左上角 */
 	.status-badges {
-		position: absolute;
+		position: relative;
 		top: 0;
 		left: 0;
 		display: flex;
@@ -1671,7 +1646,7 @@
 		gap: 3rpx;
 		padding: 2rpx 8rpx;
 		border-radius: 0 0 6rpx 0;
-		font-size: 10rpx;
+		font-size: 12rpx;
 		font-weight: 600;
 		color: white;
 		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.12);
@@ -1690,6 +1665,8 @@
 	}
 	
 	.status-badge-text {
+		font-size: 8rpx;
+		font-weight: 500;
 		line-height: 1;
 	}
 	
@@ -1709,8 +1686,7 @@
 		justify-content: space-between;
 		align-items: center;
 		width: 100%;
-		padding-top: 8rpx;
-		margin-bottom: 4rpx;
+		padding: 8rpx;
 	}
 	
 	.customer-info {
@@ -1719,6 +1695,10 @@
 		align-items: center;
 		gap: 4rpx;
 		min-width: 0;
+		.user-header {
+			width: 10rpx;
+			height: 10rpx;
+		}
 	}
 	
 	.customer-name {
@@ -1771,6 +1751,7 @@
 		align-items: center;
 		width: 100%;
 		gap: 8rpx;
+		padding: 0 8rpx 8rpx 8rpx ;
 	}
 	
 	.module-str {
@@ -1821,9 +1802,9 @@
 	
 	/* 订单项选中样式 */
 	.order-item-selected {
-		border: 2rpx solid #3498db !important;
-		background-color: #e3f2fd !important;
-		box-shadow: 0 2rpx 12rpx rgba(52, 152, 219, 0.3) !important;
+		border: 2rpx solid $zn-theme-color !important;
+		background-color: #e3f2fdc2 !important;
+		box-shadow: 0 1rpx 8rpx #5dcdfd97 !important;
 	}
 	
 	/* 空状态样式 */
@@ -1840,9 +1821,11 @@
 	.detail-content {
 		display: flex;
 		flex-direction: column;
-		height: 100%;
+		height: 96%;
 		background-color: white;
+		border-radius: 4rpx;
 		padding: 10rpx;
+		margin-top: 8rpx;
 	}
 	
 	/* 详情头部 */
@@ -1850,14 +1833,13 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 15rpx;
 		background: linear-gradient(135deg, #3498db, #2980b9);
 		border-radius: 8rpx;
 		margin-bottom: 10rpx;
 	}
 	
 	.detail-title {
-		font-size: 28rpx;
+		font-size: 26rpx;
 		font-weight: bold;
 		color: white;
 	}
@@ -1867,12 +1849,8 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		padding: 8rpx 12rpx;
-		background: linear-gradient(135deg, #4A90E2, #357ABD);
 		border-radius: 6rpx;
-		margin-bottom: 10rpx;
-		box-shadow: 0 2rpx 8rpx rgba(74, 144, 226, 0.2);
-		min-height: 40rpx;
+		margin-bottom: 5rpx;
 	}
 	
 
@@ -1897,7 +1875,7 @@
 	.detail-title-new {
 		font-size: 16rpx;
 		font-weight: bold;
-		color: white;
+		color: $zn-font-color-leve1;
 		letter-spacing: 0.5rpx;
 	}
 	
@@ -1907,21 +1885,25 @@
 	}
 	
 	.share-order-btn {
-		min-width: 80rpx !important;
-		height: 28rpx !important;
-		font-size: 13rpx !important;
-		font-weight: 600 !important;
-		background: linear-gradient(135deg, #67C23A, #5DAF2E) !important;
-		border: none !important;
-		border-radius: 4rpx !important;
-		box-shadow: 0 2rpx 4rpx rgba(103, 194, 58, 0.25) !important;
+		width: 60rpx;
+		height: 24rpx;
+		font-size: 12rpx;
+		font-weight: 600;
+		background: $zn-theme-color;
+		border-radius: 30rpx;
 		transition: all 0.3s ease !important;
+		color: #ffffff;
+		display: flex;
+		line-height: 24rpx;
+		justify-content: center;
+		align-items: center;
+		image {
+			width: 12rpx;
+			height: 12rpx;
+			margin-right: 4rpx;
+		}
 	}
-	
-	.share-order-btn:hover {
-		transform: translateY(-2rpx);
-		box-shadow: 0 4rpx 10rpx rgba(103, 194, 58, 0.4) !important;
-	}
+
 	
 	/* 订单信息网格布局 */
 	.order-info-grid {
@@ -1933,9 +1915,9 @@
 	
 	/* 紧凑的订单信息网格 */
 	.order-info-grid-compact {
-		padding: 8rpx;
+		padding: 8rpx 8rpx 4rpx 8rpx;
 		background-color: #f8f9fa;
-		border-radius: 6rpx;
+		border-radius: 4rpx;
 		margin-bottom: 8rpx;
 	}
 	
@@ -1998,7 +1980,7 @@
 	}
 	
 	.highlight-value {
-		color: #E6A23C;
+		color: $zn-main-act-color;
 		font-size: 15rpx;
 		font-weight: bold;
 	}
@@ -2208,7 +2190,7 @@
 	}
 	
 	.scrollArea {
-		background-color: darkgrey;
+
 	}
 
 	/* 抽屉容器 */
@@ -2571,6 +2553,14 @@
 		background-color: #f8f9fa;
 		border-radius: 6rpx;
 		flex-wrap: wrap;
+		
+		:deep(.u-button) {
+			font-size: 30rpx !important;
+		}
+		
+		:deep(.u-button__text) {
+			font-size: 30rpx !important;
+		}
 	}
 	
 	/* 新的按钮基础样式 - 自适应宽度 */
@@ -2591,7 +2581,7 @@
 		flex: 1;
 		min-width: 70rpx !important;
 		height: 32rpx !important;
-		font-size: 13rpx !important;
+		font-size: 30rpx !important;
 		font-weight: 600 !important;
 		border-radius: 5rpx !important;
 		box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.08) !important;
@@ -2632,13 +2622,10 @@
 	
 	/* 新改单按钮 */
 	.modify-btn-new {
-		background: linear-gradient(135deg, #409EFF, #3A8EE6) !important;
+		background: $zn-main-purple-color;
 		color: white !important;
 	}
 	
-	.modify-btn-new:hover {
-		background: linear-gradient(135deg, #3A8EE6, #3376C5) !important;
-	}
 
 	/* 退单按钮 */
 	.refund-btn {
@@ -2689,33 +2676,25 @@
 		border-color: #27ae60 !important;
 		color: white !important;
 	}
-
-	.print-btn:hover {
-		background: linear-gradient(135deg, #229954, #1e8449) !important;
-	}
 	
 	/* 新打印按钮 */
 	.print-btn-new {
-		background: linear-gradient(135deg, #67C23A, #5DAF2E) !important;
+		background: $zn-main-act-color !important;
 		color: white !important;
 	}
-	
-	.print-btn-new:hover {
-		background: linear-gradient(135deg, #5DAF2E, #529B28) !important;
-	}
+
 	
 	/* 产品表格容器 - 自适应宽度 */
 	.product-table-container {
 		width: 100%;
 		margin: 15rpx 0;
-		padding: 0 15rpx;
 		box-sizing: border-box;
+		border-radius: 4rpx;
 	}
 	
 	/* 紧凑模式下的表格容器 */
 	.order-info-grid-compact ~ .product-table-container {
 		margin: 8rpx 0;
-		padding: 0 8rpx;
 	}
 	
 	.product-table {

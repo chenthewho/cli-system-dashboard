@@ -44,7 +44,7 @@
 			// 主题色，对底部按钮和选中日期有效
 			color: {
 				type: String,
-				default: '#3c9cff'
+				default: '#3e79f3'
 			},
 			// 月份数据
 			months: {

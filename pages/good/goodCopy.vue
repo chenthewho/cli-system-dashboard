@@ -146,7 +146,7 @@
 </template>
 
 <script>
-	import Sidebar from '@/components/Sidebar.vue'
+
 	import VerticalTab from '@/components/VerticalTab.vue'
 	import cashierDiscount from '../../api/cashier/cashierDiscount'
 	import cashierIgnore from '../../api/cashier/cashierIgnore'
@@ -163,7 +163,6 @@
 	export default {
 		name: 'Cashier',
 		components: {
-			Sidebar,
 			VerticalTab
 		},
 		data() {
