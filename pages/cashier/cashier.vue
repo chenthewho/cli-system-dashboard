@@ -2691,7 +2691,6 @@ export default {
 
     // GoodEditKeyboard 组件确认事件处理
     handleGoodEditConfirm(updatedCard) {
-      console.log('updatedCard', updatedCard)
       // 更新编辑中的商品数据
       this.editingCard = updatedCard
       this.goodSelect[this.editingIndex] = updatedCard
