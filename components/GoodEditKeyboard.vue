@@ -481,6 +481,8 @@ export default {
 
 <style scoped lang="scss">
 .cashier-card {
+	display: flex;
+	flex-direction: column;
 	background: #fff;
 	overflow: hidden;
 	display: flex;

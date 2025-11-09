@@ -23,7 +23,8 @@
         </view>
       </view>
       <!-- 商品列表 -->
-      <scroll-view scroll-y="true">
+       <div style="display: flex;">
+        <scroll-view scroll-y="true">
         <div v-if="isLoading" class="loading-container">
           <div class="loading-spinner">
             <div class="spinner"></div>
@@ -79,8 +80,10 @@
               </div>
             </div>
           </div>
-          <!--模糊查询字体列(词云列)-->
-          <scroll-view scroll-y="true" v-if="rows.length > 0" class="quick-search-tab">
+        </view>
+      </scroll-view>
+      <!--模糊查询字体列(词云列)-->
+      <scroll-view scroll-y="true" v-if="rows.length > 0" class="quick-search-tab">
             <view
               class="key-word"
               :class="{ 'key-word-active': currentKeyWord === item }"
@@ -91,8 +94,7 @@
               <span v-for="char in item" :key="char">{{ char }}</span>
             </view>
           </scroll-view>
-        </view>
-      </scroll-view>
+       </div>
     </view>
   </div>
 </template>
@@ -746,6 +748,7 @@ export default {
 		.good-content {
 			display: flex;
 			margin-top: 4rpx;
+      height: calc(100vh - 70rpx);
 			.good-list {
 				display: flex;
 				justify-content: space-between;
@@ -757,7 +760,7 @@ export default {
 					display: flex;
 					flex-direction: column;
 					width: 108rpx;
-					height: 45rpx;
+					height: 50rpx;
 					padding: 5rpx;
 					border-radius: 4rpx;
 					background: #ffffff;
@@ -773,18 +776,19 @@ export default {
 					box-shadow: 0 4px 12px rgba(0, 170, 255, 0.3);
 				}
 			}
-			.quick-search-tab {
+		}
+    .quick-search-tab {
 				margin-left: auto;
 				position: relative;
 				width: 30rpx;
 				border-radius: 6rpx;
 				background-color: #ffffff;
+        margin-top: 4rpx;
 				.key-word {}
 				.key-word:last-child {
 					border: none;
 				}
 			}
-		}
   }
 }
 /* 垂直标签栏 */
