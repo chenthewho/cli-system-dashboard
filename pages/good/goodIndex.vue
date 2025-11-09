@@ -76,7 +76,6 @@
 
 <style lang="scss">
 	.scrollArea {
-		background-color: darkgrey;
 		height: calc(100vh - 34rpx);
 
 	}

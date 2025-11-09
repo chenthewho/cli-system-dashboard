@@ -125,7 +125,7 @@
 	}
 	.primary {
 		.icon {
-			background: #3c9cff;
+			background: #3e79f3;
 			
 			// /deep/ .u-icon__icon{
 			// 	color: #ffffff !important;
@@ -133,7 +133,7 @@
 		}
 	
 		.text {
-			color: #3c9cff;
+			color: #3e79f3;
 		}
 	}
 	

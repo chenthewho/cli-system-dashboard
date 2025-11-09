@@ -1,78 +1,68 @@
 <template>
 	<div class="order-goods-panel">
-		<!-- 表头 -->
 		<div class="modern-table-header">
 			<div class="header-cell header-name" @click="handleNameClick">名称</div>
 			<div class="header-cell header-quantity">数量</div>
 			<div class="header-cell header-price">单价</div>
-			<div class="header-cell header-weight">重量</div>
 			<div class="header-cell header-subtotal">小计</div>
-			<div class="header-cell header-action"></div>
+			<div class="header-cell header-action">操作</div>
 		</div>
 		
-		<!-- 商品列表 -->
-		<div v-if="goodsList.length > 0" class="modern-table-body">
-			<div 
-				class="modern-table-row" 
-				v-for="(item, index) in goodsList"
-				:key="item.key || index" 
-				@click="handleItemClick(item, index)"
-			>
-				<div class="table-cell cell-name">
-					<span class="name-text">{{ item.skuName }}</span>
-					<span 
-						v-if="item.extralModel && item.extralModel.id != '' && item.extralModel.quantity > 0"
-						class="extra-tag"
-					>
-						{{ item.extralModel.name }}
-					</span>
-				</div>
-				<div class="table-cell cell-quantity">{{ item.quantity }}</div>
-				<div class="table-cell cell-price">{{ item.referenceAmount }}</div>
-				<div class="table-cell cell-weight">
-					<span class="weight-main">{{ item.allweight - item.carweight }}</span>
-					<span class="weight-detail">({{ item.allweight }}-{{ item.carweight }})</span>
-				</div>
-				<div class="table-cell cell-subtotal">¥{{ item.money2 }}</div>
-				<div class="table-cell cell-action" @click.stop="handleDelete(item)">
-					<u-icon name="trash" color="#ff6b6b" size="22"></u-icon>
-				</div>
-			</div>
-		</div>
-		
-		<!-- 空状态 -->
-		<div v-if="goodsList.length == 0" class="empty-state">
-			<uni-icons custom-prefix="iconfont" type="icon-kongliebiao" size="80" color="#c0c4cc"></uni-icons>
-			<div class="empty-text">暂无物品</div>
-			<div class="empty-hint">请添加商品到购物车</div>
-		</div>
-		
-		<!-- 总计金额 -->
-		<div class="card-sumarry">
-			<div class="detail-list">
-				<div class="detail-item payable" style="font-weight: bold;">
-					<div>总计金额</div>
-					<div class="amount">￥
-						<span>{{ totalAmount }}</span>
+		<div class="table-body-wrapper">
+			<div v-if="goodsList.length > 0" class="modern-table-body">
+				<div 
+					class="modern-table-row" 
+					v-for="(item, index) in goodsList"
+					:key="item.key || index" 
+					@click="handleItemClick(item, index)"
+				>
+					<div class="table-cell cell-name">
+						<span class="name-text">{{ item.skuName }}</span>
+						<span 
+							v-if="item.extralModel && item.extralModel.id != '' && item.extralModel.quantity > 0"
+							class="extra-tag"
+						>
+							{{ item.extralModel.name }}
+						</span>
+					</div>
+					<div class="table-cell cell-quantity">{{ item.quantity }}</div>
+					<div class="table-cell cell-subtotal">¥{{ item.money2 }}</div>
+					<div class="table-cell cell-action" @click.stop="handleDelete(item)">
+						<u-icon name="trash" color="#ff6b6b" size="22"></u-icon>
 					</div>
 				</div>
 			</div>
+			
+			<div v-else class="empty-state">
+				<uni-icons custom-prefix="iconfont" type="icon-kongliebiao" size="80" color="#c0c4cc"></uni-icons>
+				<div class="empty-text">暂无物品</div>
+				<div class="empty-hint">请添加商品到购物车</div>
+			</div>
 		</div>
 		
-		<!-- 底部操作区域 -->
-		<div class="card-footer">
-			<div class="shipping-info" @click="handleShippingClick">
-				<uni-icons custom-prefix="iconfont" type="icon-ehl_sanlunche" size="24" color="#00aaff"></uni-icons>
-				<span class="shipping-text">运费{{ shippingFee > 0 ? shippingFee + '元' : '' }}</span>
+		<!-- Footer 固定在底部 -->
+		<div class="footer">
+			<!-- 总计金额 -->
+			<div class="card-sumarry">
+				<div class="text">总计金额</div>
+				<div class="amount">￥{{ totalAmount }}</div>
 			</div>
-		<div class="footer-item footer-right">
-			<div v-if="showHangOrder" class="btn btn-primary-plain btn-submit modern-btn" @click="handleHangOrder">
-				挂单
+			
+			<!-- 底部操作区域 -->
+			<div class="card-footer">
+				<div class="shipping-info" @click="handleShippingClick">
+					<uni-icons custom-prefix="iconfont" type="icon-ehl_sanlunche" size="24" color="#00aaff"></uni-icons>
+					<span class="shipping-text">运费{{ shippingFee > 0 ? shippingFee + '元' : '' }}</span>
+				</div>
+				<div class="footer-item footer-right">
+					<div v-if="showHangOrder" class="btn btn-primary-plain btn-submit modern-btn" @click="handleHangOrder">
+						挂单
+					</div>
+					<div class="btn btn-primary btn-submit modern-btn" @click="handleCheckout">
+						{{ checkoutButtonText }}
+					</div>
+				</div>
 			</div>
-			<div class="btn btn-primary btn-submit modern-btn" @click="handleCheckout">
-				{{ checkoutButtonText }}
-			</div>
-		</div>
 		</div>
 	</div>
 </template>
@@ -145,28 +135,30 @@ export default {
 .order-goods-panel {
 	display: flex;
 	flex-direction: column;
-	height: 100%;
+	height: calc(100vh - 50rpx);
 	width: 100%;
 	background: #ffffff;
 	box-sizing: border-box;
+	position: relative;
 }
 
 /* 现代简洁风格表格样式 */
 .modern-table-header {
 	display: flex;
 	align-items: center;
-	background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
+	background: $zn-table-header-bg;
 	padding: 8rpx 5rpx;
-	box-shadow: 0 2px 8px rgba(24, 144, 255, 0.25);
 	width: 100%;
 	box-sizing: border-box;
+	flex-shrink: 0;
+	z-index: 10;
 }
 
 .header-cell {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	color: #ffffff;
+	color: $zn-font-color-leve1;
 	font-size: 12rpx;
 	font-weight: 600;
 	letter-spacing: 0.3rpx;
@@ -180,28 +172,34 @@ export default {
 }
 
 .header-name { 
-	flex: 0 0 26%; 
+	flex: 0 0 40%; 
 	min-width: 0; 
 	justify-content: flex-start;
 	padding-left: 4rpx;
 	cursor: pointer;
 }
-.header-quantity { flex: 0 0 12%; min-width: 0; }
-.header-price { flex: 0 0 13%; min-width: 0; }
-.header-weight { flex: 0 0 28%; min-width: 0; }
-.header-subtotal { flex: 0 0 15%; min-width: 0; }
+.header-quantity { flex: 0 0 15%; min-width: 0; }
+.header-price { flex: 0 0 15%; min-width: 0; }
+.header-weight { flex: 0 0 20%; min-width: 0; }
+.header-subtotal { flex: 0 0 20%; min-width: 0; }
 .header-action { 
 	flex: 0 0 6%; 
 	min-width: 0;
 	justify-content: center;
 }
 
-.modern-table-body {
-	background: #ffffff;
-	border-radius: 0 0 8rpx 8rpx;
+/* 商品列表容器 */
+.table-body-wrapper {
+	flex: 1;
 	overflow-y: auto;
 	overflow-x: hidden;
-	flex: 1;
+	width: 100%;
+	box-sizing: border-box;
+	min-height: 0;
+}
+
+.modern-table-body {
+	background: #ffffff;
 	width: 100%;
 	box-sizing: border-box;
 }
@@ -287,7 +285,7 @@ export default {
 }
 
 .cell-price {
-	flex: 0 0 13%;
+	flex: 0 0 15%;
 	font-weight: 500;
 	color: #555555;
 	font-size: 12rpx;
@@ -296,7 +294,7 @@ export default {
 }
 
 .cell-weight {
-	flex: 0 0 28%;
+	flex: 0 0 20%;
 	flex-direction: column;
 	gap: 2rpx;
 	min-width: 0;
@@ -318,7 +316,7 @@ export default {
 }
 
 .cell-subtotal {
-	flex: 0 0 15%;
+	flex: 0 0 20%;
 	font-weight: 700;
 	background: linear-gradient(135deg, #ff4d4f 0%, #f5222d 100%);
 	-webkit-background-clip: text;
@@ -350,10 +348,10 @@ export default {
 	align-items: center;
 	justify-content: center;
 	padding: 60rpx 20rpx;
-	margin-top: 20rpx;
 	width: 100%;
+	height: 100%;
 	box-sizing: border-box;
-	flex: 1;
+	min-height: 200px;
 }
 
 .empty-text {
@@ -369,19 +367,6 @@ export default {
 	font-size: 12rpx;
 	color: #c0c4cc;
 	text-align: center;
-}
-
-/* 总计金额区域 */
-.card-sumarry {
-	background: linear-gradient(to right, #ffffff 0%, #f0f8ff 100%);
-	height: 40rpx;
-	min-height: 40rpx;
-	border-top: 3px solid #1890ff;
-	box-shadow: 0 -2px 10px rgba(24, 144, 255, 0.08);
-	width: 100%;
-	box-sizing: border-box;
-	flex-shrink: 0;
-	padding: 0 8px;
 }
 
 .detail-list {
@@ -555,6 +540,37 @@ export default {
 .btn-primary.btn-submit:hover {
 	background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
 	box-shadow: 0 6px 20px rgba(24, 144, 255, 0.4);
+}
+
+.footer {
+	flex-shrink: 0;
+	width: 100%;
+	background: #ffffff;
+	box-sizing: border-box;
+	padding-bottom: 10rpx;
+	
+	.card-sumarry {
+		width: 100%;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		background: #ffffff;
+		height: 40rpx;
+		border-top: 3px solid #1890ff;
+		padding: 0 10px;
+		box-sizing: border-box;
+		
+		.text {
+			font-size: 12rpx;
+			font-weight: bold;
+			color: $zn-font-color-leve1;
+		}
+		
+		.amount {
+			color: $zn-main-purple-color;
+			font-weight: bold;
+		}
+	}
 }
 
 /* 响应式字体大小 - 在小宽度下减小字体 */

@@ -1,145 +1,145 @@
 <template>
 	<div class="cashier-card">
 		<div class="cashier-col">
-			<div class="card-title">
-				<div style="display: flex; flex-flow: row; align-items: center; justify-content: space-between; padding: 2px 6px; font-weight: bold;">
-					<div style="font-size: 15rpx; text-align: left;">
-						{{ editingCard.skuName }}
-					</div>
-					<u-icon name="edit-pen" color="#969696" size="30" @click="showAllweightStr = !showAllweightStr"></u-icon>
+		<div class="good-name">
+			<div class="good-name-header">
+				<uni-icons type="left" size="30" @click="goBack"></uni-icons>
+				<div class="good-name-text">
+					{{ editingCard.skuName }}
+				</div>
+				<u-icon class="edit-pen" name="edit-pen" color="#969696" size="30" @click="showAllweightStr = !showAllweightStr"></u-icon>
+			</div>
+		</div>
+
+	<!-- 非定装输入 -->
+	<div class="card-body" v-if="editingCard.saleWay === 1">
+		<div class="input-row">
+			<div :class="{ 'custom-input': true, 'input-focused': custominputFocused, 'input-wrapper': true }" @click="custominputFocusedMethod(1)">
+				<div class="input-label">数量</div>
+				<div class="input-value-container">
+					<input ref="input_quantity" class="step1-input input-field" type="text" inputmode="none" v-model="editingCard.quantity" />
+					<span class="currency-label">件</span>
 				</div>
 			</div>
-
-		<!-- 非定装输入 -->
-		<div class="card-body" v-if="editingCard.saleWay === 1">
-			<div style="padding: 5rpx; display: flex; justify-content: space-between; align-items: center; gap: 5rpx;">
-				<div :class="{ 'custom-input': true, 'input-focused': custominputFocused3 }" @click="custominputFocusedMethod(3)" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex: 1;">
-					<div style="font-size: 12rpx; color: #666; margin-right: 5rpx;">总重</div>
-					<div style="display: flex; align-items: center;">
-						<input ref="input_allweight" class="step1-input" type="text" inputmode="none" :value="editingCard.allweight" style="border: none; background: transparent; outline: none; text-align: right;" />
-						<span class="currency-label">斤</span>
-					</div>
-				</div>
-
-				<div :class="{ 'custom-input': true, 'input-focused': custominputFocused }" @click="custominputFocusedMethod(1)" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex: 1;">
-					<div style="font-size: 12rpx; color: #666; margin-right: 5rpx;">数量</div>
-					<div style="display: flex; align-items: center;">
-						<input ref="input_quantity" class="step1-input" type="text" inputmode="none" :value="editingCard.quantity" style="border: none; background: transparent; outline: none; text-align: right;" />
-						<span class="currency-label">件</span>
-					</div>
-				</div>
-			</div>
-
-			<div v-if="showAllweightStr" style="font-size: 16rpx; color: white; font-weight: bold; padding: 3rpx 8rpx; line-height: 18rpx; background-color: orange; margin: 3rpx 5rpx; border-radius: 4rpx; word-break: break-all; white-space: normal;">
-				总重：{{ editingCard.allweightSrt }}
-			</div>
-
-			<div style="padding: 5rpx; display: flex; justify-content: space-between; align-items: center; gap: 5rpx;">
-				<div :class="{ 'custom-input': true, 'input-focused': custominputFocused4 }" @click="custominputFocusedMethod(4)" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex: 1;">
-					<div style="font-size: 12rpx; color: #666; margin-right: 5rpx;">皮重</div>
-					<div style="display: flex; align-items: center;">
-						<input ref="input_carweight" class="step1-input" type="text" inputmode="none" :value="editingCard.carweight" style="border: none; background: transparent; outline: none; text-align: right;" />
-						<span class="currency-label">斤</span>
-					</div>
-				</div>
-
-				<div :class="{ 'custom-input': true, 'input-focused': custominputFocused2 }" @click="custominputFocusedMethod(2)" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex: 1;">
-					<div style="font-size: 12rpx; color: #666; margin-right: 5rpx;">单价</div>
-					<div style="display: flex; align-items: center;">
-						<input ref="input_referenceAmount" class="step1-input" type="text" inputmode="none" :value="editingCard.referenceAmount" style="border: none; background: transparent; outline: none; text-align: right;" />
-						<span class="currency-label">元</span>
-					</div>
-				</div>
-			</div>
-
-			
-			<!-- 押筐选择 -->
-			<div v-if="showStep2" style="display: flex; align-items: center; padding: 3rpx 8rpx; margin-top: 10rpx;">
-				<select-lay 
-					:zindex="1211" 
-					:name="editingCard.extralModel.name" 
-					:value="editingCard.extralModel.id"
-					direction="up"
-					placeholder="请选择项目" 
-					:options="editCardExtralModel"
-					@selectitem="handleExtraModelSelect" 
-					slabel="name">
-				</select-lay>
-			</div>
-			</div>
-
-		<!-- 定装输入 -->
-		<div class="card-body" v-if="editingCard.saleWay === 2 || editingCard.saleWay === 3">
-			<div style="padding: 5rpx; display: flex; justify-content: space-between; align-items: center; gap: 5rpx;">
-				<div :class="{ 'custom-input': true, 'input-focused': custominputFocused }" @click="custominputFocusedMethod(1)" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex: 1;">
-					<div style="font-size: 12rpx; color: #666; margin-right: 5rpx;">数量</div>
-					<div style="display: flex; align-items: center;">
-						<input ref="input_quantity" class="step1-input" type="text" inputmode="none" :value="editingCard.quantity" style="border: none; background: transparent; outline: none; text-align: right;" />
-						<span class="currency-label">{{ editingCard.commoditySpec ? editingCard.commoditySpec.specName : '' }}</span>
-					</div>
-				</div>
-
-				<div :class="{ 'custom-input': true, 'input-focused': custominputFocused2 }" @click="custominputFocusedMethod(2)" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex: 1;">
-					<div style="font-size: 12rpx; color: #666; margin-right: 5rpx;">单价</div>
-					<div style="display: flex; align-items: center;">
-						<input ref="input_referenceAmount" class="step1-input" type="text" inputmode="none" :value="editingCard.referenceAmount" style="border: none; background: transparent; outline: none; text-align: right;" />
-						<span class="currency-label">元</span>
-					</div>
+			<div :class="{ 'custom-input': true, 'input-focused': custominputFocused3, 'input-wrapper': true }" @click="custominputFocusedMethod(3)">
+				<div class="input-label">总重</div>
+				<div class="input-value-container">
+					<input ref="input_allweight" class="step1-input input-field" type="text" inputmode="none" v-model="editingCard.allweight" />
+					<span class="currency-label">斤</span>
 				</div>
 			</div>
 		</div>
 
-		<!-- 散装输入 -->
-		<div class="card-body" v-if="editingCard.saleWay === 4">
-			<div style="padding: 5rpx; display: flex; justify-content: space-between; align-items: center; gap: 5rpx;">
-				<div :class="{ 'custom-input': true, 'input-focused': custominputFocused3 }" @click="custominputFocusedMethod(3)" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex: 1;">
-					<div style="font-size: 12rpx; color: #666; margin-right: 5rpx;">总重</div>
-					<div style="display: flex; align-items: center;">
-						<input ref="input_allweight" class="step1-input" type="text" inputmode="none" :value="editingCard.allweightSrt" style="border: none; background: transparent; outline: none; text-align: right;" />
-						<span class="currency-label">斤</span>
-					</div>
-				</div>
+		<div v-if="showAllweightStr" class="allweight-display">
+			总重：{{ editingCard.allweightSrt }}
+		</div>
 
-				<div :class="{ 'custom-input': true, 'input-focused': custominputFocused2 }" @click="custominputFocusedMethod(2)" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; flex: 1;">
-					<div style="font-size: 12rpx; color: #666; margin-right: 5rpx;">单价</div>
-					<div style="display: flex; align-items: center;">
-						<input ref="input_referenceAmount" class="step1-input" type="text" inputmode="none" :value="editingCard.referenceAmount" style="border: none; background: transparent; outline: none; text-align: right;" />
-						<span class="currency-label">元</span>
-					</div>
+		<div class="input-row">
+			<div :class="{ 'custom-input': true, 'input-focused': custominputFocused4, 'input-wrapper': true }" @click="custominputFocusedMethod(4)">
+				<div class="input-label">皮重</div>
+				<div class="input-value-container">
+					<input ref="input_carweight" class="step1-input input-field" type="text" inputmode="none" v-model="editingCard.carweight" />
+					<span class="currency-label">斤</span>
+				</div>
+			</div>
+
+			<div :class="{ 'custom-input': true, 'input-focused': custominputFocused2, 'input-wrapper': true }" @click="custominputFocusedMethod(2)">
+				<div class="input-label">单价</div>
+				<div class="input-value-container">
+					<input ref="input_referenceAmount" class="step1-input input-field" type="text" inputmode="none" v-model="editingCard.referenceAmount" />
+					<span class="currency-label">元</span>
 				</div>
 			</div>
 		</div>
 
-		<!-- 键盘 -->
-		<view class="mybrankmask" :style="{ width: '100%', maxWidth: '450rpx', height: '195rpx', zIndex: 999, left: 0, bottom: 0, marginTop:'0rpx', margin: '0 auto 0' }">
-			<view style="padding: 8rpx;">
-				<view class="MymaskList">
-					<view class="maskListItem" @click="NumberCk(1)">1</view>
-					<view class="maskListItem" @click="NumberCk(2)">2</view>
-					<view class="maskListItem" @click="NumberCk(3)">3</view>
-					<view class="maskListItem" @click="Tuige()">
-						<uni-icons custom-prefix="iconfont" type="icon-tuige" size="35" color="#ffffff" style="margin-right: 5rpx;"></uni-icons>
-					</view>
-				</view>
-				<view class="MymaskList">
-					<view class="maskListItem" @click="NumberCk(4)">4</view>
-					<view class="maskListItem" @click="NumberCk(5)">5</view>
-					<view class="maskListItem" @click="NumberCk(6)">6</view>
-					<view class="maskListItem" @click="NumberCk('+')">+</view>
-				</view>
-				<view class="MymaskList">
-					<view class="maskListItem" @click="NumberCk(7)">7</view>
-					<view class="maskListItem" @click="NumberCk(8)">8</view>
-					<view class="maskListItem" @click="NumberCk(9)">9</view>
-					<view class="maskListItem" @click="NumberCk('-')">-</view>
-				</view>
-				<view class="MymaskList">
-					<view class="maskListItem" @click="NumberCk(0)" style="width: 48%;">0</view>
-					<view class="maskListItem" @click="NumberCk('.')">.</view>
-					<view class="maskListItem confirm-btn" @click="confirm">确定</view>
+		
+		<!-- 押筐选择 -->
+		<div v-if="showStep2" class="extra-model-selector">
+			<select-lay 
+				:zindex="1211" 
+				:name="editingCard.extralModel.name" 
+				:value="editingCard.extralModel.id"
+				direction="up"
+				placeholder="请选择项目" 
+				:options="editCardExtralModel"
+				@selectitem="handleExtraModelSelect" 
+				slabel="name">
+			</select-lay>
+		</div>
+		</div>
+
+	<!-- 定装输入 -->
+	<div class="card-body" v-if="editingCard.saleWay === 2 || editingCard.saleWay === 3">
+		<div class="input-row">
+			<div :class="{ 'custom-input': true, 'input-focused': custominputFocused, 'input-wrapper': true }" @click="custominputFocusedMethod(1)">
+				<div class="input-label">数量</div>
+				<div class="input-value-container">
+					<input ref="input_quantity" class="step1-input input-field" type="text" inputmode="none" v-model="editingCard.quantity" />
+					<span class="currency-label">{{ editingCard.commoditySpec ? editingCard.commoditySpec.specName : '' }}</span>
+				</div>
+			</div>
+
+			<div :class="{ 'custom-input': true, 'input-focused': custominputFocused2, 'input-wrapper': true }" @click="custominputFocusedMethod(2)">
+				<div class="input-label">单价</div>
+				<div class="input-value-container">
+					<input ref="input_referenceAmount" class="step1-input input-field" type="text" inputmode="none" v-model="editingCard.referenceAmount" />
+					<span class="currency-label">元</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 散装输入 -->
+	<div class="card-body" v-if="editingCard.saleWay === 4">
+		<div class="input-row">
+			<div :class="{ 'custom-input': true, 'input-focused': custominputFocused3, 'input-wrapper': true }" @click="custominputFocusedMethod(3)">
+				<div class="input-label">总重</div>
+				<div class="input-value-container">
+					<input ref="input_allweight" class="step1-input input-field" type="text" inputmode="none" v-model="editingCard.allweightSrt" />
+					<span class="currency-label">斤</span>
+				</div>
+			</div>
+
+			<div :class="{ 'custom-input': true, 'input-focused': custominputFocused2, 'input-wrapper': true }" @click="custominputFocusedMethod(2)">
+				<div class="input-label">单价</div>
+				<div class="input-value-container">
+					<input ref="input_referenceAmount" class="step1-input input-field" type="text" inputmode="none" v-model="editingCard.referenceAmount" />
+					<span class="currency-label">元</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 键盘 -->
+	<view class="mybrankmask">
+		<view class="keyboard-container">
+			<view class="MymaskList">
+				<view class="maskListItem" @click="NumberCk(1)">1</view>
+				<view class="maskListItem" @click="NumberCk(2)">2</view>
+				<view class="maskListItem" @click="NumberCk(3)">3</view>
+				<view class="maskListItem" @click="Tuige()">
+					<uni-icons custom-prefix="iconfont" type="icon-tuige" size="35" color="#ffffff" class="backspace-icon"></uni-icons>
 				</view>
 			</view>
+			<view class="MymaskList">
+				<view class="maskListItem" @click="NumberCk(4)">4</view>
+				<view class="maskListItem" @click="NumberCk(5)">5</view>
+				<view class="maskListItem" @click="NumberCk(6)">6</view>
+				<view class="maskListItem" @click="NumberCk('+')">+</view>
+			</view>
+			<view class="MymaskList">
+				<view class="maskListItem" @click="NumberCk(7)">7</view>
+				<view class="maskListItem" @click="NumberCk(8)">8</view>
+				<view class="maskListItem" @click="NumberCk(9)">9</view>
+				<view class="maskListItem" @click="NumberCk('-')">-</view>
+			</view>
+			<view class="MymaskList">
+				<view class="maskListItem zero-key" @click="NumberCk(0)">0</view>
+				<view class="maskListItem" @click="NumberCk('.')">.</view>
+				<view class="maskListItem confirm-btn" @click="confirm">确定</view>
+			</view>
 		</view>
+	</view>
 		</div>
 	</div>
 </template>
@@ -189,7 +189,7 @@ export default {
 		card: {
 			handler(newVal) {
 				this.editingCard = JSON.parse(JSON.stringify(newVal));
-				console.log("this.editingCard",this.editingCard);
+				console.log("this.editingCardxxxxx",this.editingCard);
 				if (this.editingCard.saleWay === 1 || this.editingCard.saleWay === 4) {
 					// 非定装和散装：默认聚焦总重（index 3）
 					this.custominputFocusedMethod(3);
@@ -214,12 +214,16 @@ export default {
 			}
 		});
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.inputBuffer.timer) {
 			clearTimeout(this.inputBuffer.timer);
 		}
 	},
 	methods: {
+	goBack(){
+		this.$emit('close');
+	},
+
 	NumberCk(val) {
 		// 取消之前的复杂计算定时器
 		if (this.inputBuffer.timer) {
@@ -475,7 +479,7 @@ export default {
 };
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .cashier-card {
 	background: #fff;
 	overflow: hidden;
@@ -492,13 +496,26 @@ export default {
 	overflow: hidden;
 }
 
-.card-title {
-	background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%);
-	color: white;
-	padding: 5rpx;
-	padding-left: 10rpx;
-	padding-right: 10rpx;
+.good-name {
+	color: $zn-font-color-leve1;
+	padding: 5rpx 10rpx;
 	flex-shrink: 0;
+
+	.good-name-header {
+		display: flex;
+		flex-flow: row;
+		align-items: center;
+		padding: 2px 6px;
+		font-weight: bold;
+	}
+
+	.good-name-text {
+		font-size: 15rpx;
+		text-align: left;
+	}
+	.edit-pen {
+		margin-left: auto;
+	}
 }
 
 .card-body {
@@ -506,6 +523,67 @@ export default {
 	flex: 1;
 	overflow-y: auto;
 	min-height: 0;
+
+	// 输入行容器
+	.input-row {
+		padding: 5rpx;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 5rpx;
+	}
+
+	// 输入包装器
+	.input-wrapper {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		flex: 1;
+	}
+
+	// 输入标签
+	.input-label {
+		font-size: 12rpx;
+		color: #666;
+		margin-right: 5rpx;
+	}
+
+	// 输入值容器
+	.input-value-container {
+		display: flex;
+		align-items: center;
+	}
+
+	// 输入字段样式重置
+	.input-field {
+		border: none;
+		background: transparent;
+		outline: none;
+		text-align: right;
+	}
+
+	// 总重显示提示
+	.allweight-display {
+		font-size: 16rpx;
+		color: white;
+		font-weight: bold;
+		padding: 3rpx 8rpx;
+		line-height: 18rpx;
+		background-color: orange;
+		margin: 3rpx 5rpx;
+		border-radius: 4rpx;
+		word-break: break-all;
+		white-space: normal;
+	}
+
+	// 押筐选择器
+	.extra-model-selector {
+		display: flex;
+		align-items: center;
+		padding: 3rpx 8rpx;
+		margin-top: 10rpx;
+	}
 }
 
 .custom-input {
@@ -543,6 +621,27 @@ export default {
 
 .mybrankmask {
 	flex-shrink: 0;
+	width: 100%;
+	max-width: 450rpx;
+	height: 195rpx;
+	left: 0;
+	bottom: 0;
+	margin: 0 auto 0;
+
+	// 键盘容器
+	.keyboard-container {
+		padding: 8rpx;
+	}
+
+	// 退格图标
+	.backspace-icon {
+		margin-right: 5rpx;
+	}
+
+	// 零键特殊宽度
+	.zero-key {
+		width: 48%;
+	}
 }
 
 .MymaskList {

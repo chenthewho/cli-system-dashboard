@@ -53,7 +53,7 @@
 					textSize: '30rpx',
 					textColor: '#333',
 					textActiveSize: '30rpx',
-					textActiveColor: '#3c9cff',
+					textActiveColor: '#3e79f3',
 					extraIcon: {},
 					extraActiveIcon: {},
 					sign: '',
@@ -88,7 +88,7 @@
 					...this.parentData.extraIcon
 				}
 				if (this.active || this.isDroped) {
-					style.color = this.parentData.extraActiveIcon?.color ? this.parentData.extraActiveIcon?.color : '#3c9cff';
+					style.color = this.parentData.extraActiveIcon?.color ? this.parentData.extraActiveIcon?.color : '#3e79f3';
 					style.size = this.parentData.extraActiveIcon?.size ? this.parentData.extraActiveIcon?.size : '30rpx';
 				}
 				if (this.isDroped) {
