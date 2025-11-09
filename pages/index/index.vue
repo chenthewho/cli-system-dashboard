@@ -130,9 +130,10 @@ export default {
 }
 
 .main-content {
- background-color: gray;
-  margin-left: 40rpx; /* 主内容区左边距与侧边栏宽度相同 */
-  flex-grow: 1; /* 主内容区占据剩余空间 */
+  position: relative;
+  width: calc(100vw - 40rpx);
+	height: 100vh;
+  background-color: #f3f4f9;
 }
 
 .main-content.no-sidebar {
