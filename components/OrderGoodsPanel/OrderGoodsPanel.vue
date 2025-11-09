@@ -1,22 +1,17 @@
 <template>
 	<div class="order-goods-panel">
-		<div class="modern-table-header">
-			<div class="header-cell header-name" @click="handleNameClick">名称</div>
-			<div class="header-cell header-quantity">数量</div>
-			<div class="header-cell header-price">单价</div>
-			<div class="header-cell header-subtotal">小计</div>
-			<div class="header-cell header-action">操作</div>
-		</div>
-		
-		<div class="table-body-wrapper">
-			<div v-if="goodsList.length > 0" class="modern-table-body">
-				<div 
-					class="modern-table-row" 
-					v-for="(item, index) in goodsList"
-					:key="item.key || index" 
-					@click="handleItemClick(item, index)"
-				>
-					<div class="table-cell cell-name">
+		<div class="table-wrapper">
+			<uni-table ref="table" :loading="loading" border stripe emptyText="暂无物品,请添加商品到购物车" @selection-change="selectionChange">
+					<uni-tr>
+						<uni-th  align="center">名称</uni-th>
+						<uni-th  align="center">数量</uni-th>
+						<uni-th  align="center">单价</uni-th>
+						<uni-th  align="center">小计</uni-th>
+						<uni-th width="50" align="center">操作</uni-th>
+					</uni-tr>
+				<uni-tr v-for="(item, index) in goodsList" :key="index">
+					<uni-td align="center">
+						<div class="table-cell cell-name" @click="handleItemClick(item, index)">
 						<span class="name-text">{{ item.skuName }}</span>
 						<span 
 							v-if="item.extralModel && item.extralModel.id != '' && item.extralModel.quantity > 0"
@@ -25,19 +20,21 @@
 							{{ item.extralModel.name }}
 						</span>
 					</div>
-					<div class="table-cell cell-quantity">{{ item.quantity }}</div>
-					<div class="table-cell cell-subtotal">¥{{ item.money2 }}</div>
-					<div class="table-cell cell-action" @click.stop="handleDelete(item)">
-						<u-icon name="trash" color="#ff6b6b" size="22"></u-icon>
-					</div>
-				</div>
-			</div>
-			
-			<div v-else class="empty-state">
-				<uni-icons custom-prefix="iconfont" type="icon-kongliebiao" size="80" color="#c0c4cc"></uni-icons>
-				<div class="empty-text">暂无物品</div>
-				<div class="empty-hint">请添加商品到购物车</div>
-			</div>
+					</uni-td>
+					<uni-td align="center">
+						<view class="table-body-text" @click="handleItemClick(item, index)">{{ item.quantity }}</view>
+					</uni-td>
+					<uni-td align="center">
+						<view class="table-body-text" @click="handleItemClick(item, index)" >{{ item.referenceAmount }}</view>
+					</uni-td>
+					<uni-td align="center" >
+						<view class="table-body-text table-body-text-money" @click="handleItemClick(item, index)" >¥{{ item.money2 }}</view>
+					</uni-td>
+					<uni-td align="center">
+						<uni-icons type="trash-filled" size="20" color="#eb0404" class="icon-search" @click="handleDelete(item)"></uni-icons>
+					</uni-td>
+				</uni-tr>
+				</uni-table>
 		</div>
 		
 		<!-- Footer 固定在底部 -->
@@ -110,6 +107,7 @@ export default {
 		
 		// 删除商品
 		handleDelete(item) {
+			console.log('item', item)
 			this.$emit('delete-item', item);
 		},
 		
@@ -134,12 +132,26 @@ export default {
 <style lang="scss" scoped>
 .order-goods-panel {
 	display: flex;
+	flex: 1;
 	flex-direction: column;
-	height: calc(100vh - 50rpx);
+	height: calc(100vh - 100rpx);
 	width: 100%;
 	background: #ffffff;
 	box-sizing: border-box;
 	position: relative;
+	padding-bottom: 110rpx; // 为 footer 预留空间
+	.table-body-text {
+		font-size: 12rpx;
+	}
+	.table-body-text-money {
+		color: #eb0404;
+	}
+}
+
+.table-wrapper {
+	overflow-y: auto;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 /* 现代简洁风格表格样式 */
@@ -492,6 +504,8 @@ export default {
 	align-items: center;
 	justify-content: center;
 	letter-spacing: 2px;
+	margin: 0;
+	margin-left: 5rpx;
 	cursor: pointer;
 }
 
@@ -543,11 +557,16 @@ export default {
 }
 
 .footer {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
 	flex-shrink: 0;
 	width: 100%;
 	background: #ffffff;
 	box-sizing: border-box;
 	padding-bottom: 10rpx;
+	z-index: 10;
 	
 	.card-sumarry {
 		width: 100%;
@@ -557,7 +576,7 @@ export default {
 		background: #ffffff;
 		height: 40rpx;
 		border-top: 3px solid #1890ff;
-		padding: 0 10px;
+		padding: 0 20px;
 		box-sizing: border-box;
 		
 		.text {
@@ -569,6 +588,7 @@ export default {
 		.amount {
 			color: $zn-main-purple-color;
 			font-weight: bold;
+			font-size: 13rpx;
 		}
 	}
 }

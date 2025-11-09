@@ -4070,6 +4070,8 @@ export default {
 
 /* 确保右侧卡片在 step1 和 step2 切换时保持一致 */
 .cashier-card {
+  display: flex;
+  flex-direction: column;
   transition: none;
   height: 100%;
 

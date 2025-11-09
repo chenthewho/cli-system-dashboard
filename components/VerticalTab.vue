@@ -150,7 +150,7 @@ export default {
 .tabs-box {
   background-color: #ffffff;
   width: 70rpx;
-  height: calc(100vh - 35rpx);
+  height: calc(100vh - 45rpx);
   padding: 4rpx;
   .shipper-name {
     display: flex;
