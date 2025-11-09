@@ -224,37 +224,38 @@ export default {
       this.keyWordList.push('全')
       this.currentKeyWord = '全'
 
-      // 收集所有商品名称
-      const nameInput = []
+      // 统计商品首字（中文）频率
+      const firstCharFrequency = {}
+      
       for (let i = 0; i < goodsList.length; i++) {
-        nameInput.push(goodsList[i].name)
-      }
-
-      // 统计字符频率
-      const charFrequency = {}
-      for (let i = 0; i < nameInput.length; i++) {
-        const name = nameInput[i]
+        const name = goodsList[i].name
+        if (!name || name.length === 0) continue
+        
+        // 找到第一个中文字符
         for (let j = 0; j < name.length; j++) {
           const char = name[j]
           if (char.match(/[\u4e00-\u9fa5]/)) {
-            // 只统计中文字符
-            if (charFrequency[char]) {
-              charFrequency[char]++
+            // 统计首字频率
+            if (firstCharFrequency[char]) {
+              firstCharFrequency[char]++
             } else {
-              charFrequency[char] = 1
+              firstCharFrequency[char] = 1
             }
+            // 只取首字，找到后跳出循环
+            break
           }
         }
       }
 
       // 按频率排序，取前10个
-      const charArray = Object.keys(charFrequency)
+      const charArray = Object.keys(firstCharFrequency)
         .map(char => ({
           char: char,
-          count: charFrequency[char],
+          count: firstCharFrequency[char],
         }))
         .sort((a, b) => b.count - a.count)
 
+      // 将排序后的首字添加到 keyWordList
       for (let i = 0; i < Math.min(charArray.length, 10); i++) {
         this.keyWordList.push(charArray[i].char)
       }

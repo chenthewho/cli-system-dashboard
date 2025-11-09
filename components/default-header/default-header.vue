@@ -11,50 +11,32 @@
           <u-icon name="grid-fill" size="18" color="#fff" style="margin-right: 5rpx"></u-icon>
           <span>管理</span>
         </div> -->
-        <div style="display: flex; align-items: center; justify-content: center; gap: 10rpx">
-          <div class="menu-item" style="display: flex; align-items: center; gap: 15rpx">
-            <span @click="turnToCommonSetting" style="color: black; font-size: 18rpx; font-weight: bold">{{
-              currentCompanyName
-            }}</span>
-            <div
-              @click="showCompanySwitcher"
-              style="
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 5rpx 5rpx;
-                background-color: #f5f5f5;
-                border-radius: 8rpx;
-                cursor: pointer;
-                border: 1px solid #e0e0e0;
-              "
-            >
+        <div class="company-name-container">
+          <div class="menu-item company-menu-item">
+            <span class="company-name-text" @click="turnToCommonSetting">
+              {{ currentCompanyName }}
+            </span>
+            <div class="company-switcher" @click="showCompanySwitcher">
               <u-icon name="arrow-down" size="16" color="#666"></u-icon>
-              <span style="font-size: 14px; color: #666"></span>
             </div>
           </div>
         </div>
         <div
-          class="menu-item"
+          class="menu-item last-order-container"
           v-if="lastOrder"
-          style="margin-right: 5rpx; margin-left: auto; display: flex; align-items: center; justify-content: flex-end"
           @click="showLastModel"
         >
-          <span style="margin-right: 5rpx">
-            <u-icon name="file-text" color="#2d7a4e" size="28"></u-icon>
+          <span class="last-order-icon">
+            <u-icon name="file-text" color="#fba903" size="28"></u-icon>
           </span>
-          <span style="color: #2d7a4e">上一张订单: {{ lastOrder.accountCode }}</span>
-          <span style="margin-left: 25rpx; color: #2d7a4e"
+          <span class="last-order-text">上一张订单: {{ lastOrder.accountCode }}</span>
+          <span class="last-order-text last-order-customer"
             >顾客:
             {{ lastOrder.customName != null && lastOrder.customName != '' ? lastOrder.customName : '散客' }}</span
           >
-          <span style="margin-left: 25rpx; color: #2d7a4e">金额: {{ lastOrder.payableAmount }}</span>
+          <span class="last-order-text last-order-amount">金额: {{ lastOrder.payableAmount }}</span>
         </div>
-        <div
-          class="btn btn-primary-plain btn-submit"
-          style="font-weight: bold; box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3); height: 25rpx"
-          @click="showHangList"
-        >
+        <div class="btn btn-primary-plain btn-submit hang-order-btn" @click="showHangList">
           挂单中心
         </div>
       </div>
@@ -80,7 +62,7 @@
       <div class="company-list">
         <div v-for="company in companyList" :key="company.id" class="company-item" @click="switchCompany(company)">
           <div class="company-info">
-            <u-icon name="home" size="25" color="#409EFF" style="margin-right: 10rpx"></u-icon>
+            <u-icon name="home" size="25" color="#409EFF" class="company-icon"></u-icon>
             <span>{{ company.name }}</span>
           </div>
           <u-icon v-if="company.name === currentCompanyName" name="checkmark" size="16" color="#67C23A"></u-icon>
@@ -115,6 +97,7 @@ export default {
       lastModelSHOW: false,
       showCompanyList: false,
       companyList: [],
+      interval: null,
     }
   },
   created() {
@@ -123,10 +106,12 @@ export default {
   },
   mounted() {
     this.updateTime() // 组件挂载时更新一次时间
-    setInterval(this.updateTime, 1000) // 每秒更新一次时间
+    this.interval = setInterval(this.updateTime, 1000) // 每秒更新一次时间
   },
   beforeUnmount() {
-    clearInterval(this.interval) // 清除定时器
+    if (this.interval) {
+      clearInterval(this.interval) // 清除定时器
+    }
   },
   goIndex() {
     uni.navigateTo({
@@ -200,7 +185,7 @@ export default {
       console.log('company', company)
       // 检查是否切换到相同商家
       const currentCompanyId = uni.getStorageSync('companyId')
-      if (currentCompanyId == company.id) {
+      if (currentCompanyId === company.id) {
         this.showCompanyList = false
         return
       }
@@ -270,6 +255,84 @@ export default {
   .menu-item {
     cursor: pointer;
   }
+
+  // 公司名称容器
+  .company-name-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10rpx;
+  }
+
+  // 公司菜单项
+  .company-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 15rpx;
+  }
+
+  // 公司名称文本
+  .company-name-text {
+    color: #000000;
+    font-size: 18rpx;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  // 公司切换器
+  .company-switcher {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5rpx;
+    background-color: #f5f5f5;
+    border-radius: 8rpx;
+    cursor: pointer;
+    border: 1px solid #e0e0e0;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: #e8e8e8;
+      border-color: #d0d0d0;
+    }
+  }
+
+  // 上一张订单容器
+  .last-order-container {
+    margin-right: 5rpx;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  // 上一张订单图标
+  .last-order-icon {
+    margin-right: 5rpx;
+    display: flex;
+    align-items: center;
+  }
+
+  // 上一张订单文本
+  .last-order-text {
+    color: $zn-main-act-color;
+    font-size: 14px;
+  }
+
+  .last-order-customer {
+    margin-left: 25rpx;
+  }
+
+  .last-order-amount {
+    margin-left: 25rpx;
+  }
+
+  // 挂单中心按钮
+  .hang-order-btn {
+    font-weight: bold;
+    box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);
+    height: 25rpx;
+  }
 }
 
 .horizontal-line {
@@ -307,6 +370,10 @@ export default {
     display: flex;
     align-items: center;
     font-size: 14rpx;
+
+    .company-icon {
+      margin-right: 10rpx;
+    }
   }
 }
 

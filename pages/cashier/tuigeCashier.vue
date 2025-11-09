@@ -521,7 +521,6 @@
 	handleCategoryUpdated(categoryList) {
 		// 更新父组件的 categoryList（用于其他功能）
 		this.categoryList = categoryList;
-		console.log('分类列表已更新:', categoryList);
 	},
 	
 	// 处理 OrderGoodsPanel 组件的商品点击事件（编辑已添加的商品）

@@ -11,7 +11,7 @@
       </div>
       <div class="right-space">
         <div v-if="step1" class="cashier-card">
-            <div class="cashier-col">
+
               <div class="card-title">
                 <!-- 可滑动的客户管理区域 -->
                 <scroll-view
@@ -72,7 +72,6 @@
                 @hang-order="hangOrder"
                 @checkout="orderCreate"
               />
-            </div>
           </div>
           <!-- 使用 GoodEditKeyboard 组件 -->
           <div v-if="!step1" class="cashier-card">
@@ -81,6 +80,7 @@
               :fixed-tare-weight="fixedTareWeight"
               :show-step2="showStep2"
               :edit-card-extral-model="editCardExtralModel"
+              @close="step1 = true"
               @confirm="handleGoodEditConfirm"
               @extra-model-select="handleExtraModelSelect"
             />
@@ -722,12 +722,7 @@ export default {
       const isActive = this.isMainCustomerActive
       const hasDebt = debts > 0
 
-      const activeShadow = hasDebt
-        ? '0 3px 10px rgba(245, 34, 45, 0.3)'
-        : '0 3px 10px rgba(56, 158, 13, 0.3)'
-
       return {
-        boxShadow: isActive ? activeShadow : '0 2px 6px rgba(0, 0, 0, 0.1)',
         background: hasDebt ? '#ff4d4f' : isActive ? '#389e0d' : '#8c8c8c',
       }
     },
@@ -955,7 +950,6 @@ export default {
         uni.setStorageSync(cacheKey, JSON.stringify(customerData))
         // 同时保存最后使用的客户ID
         this.saveLastCustomerId()
-        console.log(`保存客户数据到缓存 [${cacheKey}]:`, customerData)
       } catch (e) {
         console.error('保存客户数据缓存失败:', e)
       }
@@ -2693,6 +2687,7 @@ export default {
 
     // GoodEditKeyboard 组件确认事件处理
     handleGoodEditConfirm(updatedCard) {
+      console.log('updatedCard', updatedCard)
       // 更新编辑中的商品数据
       this.editingCard = updatedCard
       this.goodSelect[this.editingIndex] = updatedCard
@@ -4003,7 +3998,7 @@ export default {
   }
   .right-space {
     width: 50%;
-    height: 100%;
+    height: calc(100vh - 35rpx)
   }
 }
 
@@ -4076,6 +4071,7 @@ export default {
 /* 确保右侧卡片在 step1 和 step2 切换时保持一致 */
 .cashier-card {
   transition: none;
+  height: 100%;
 
   .card-body {
     width: 100%;
@@ -5344,9 +5340,10 @@ export default {
   }
 }
 
-/* 现代客户按钮样式 */
+/* 客户按钮样式 - 统一管理 */
 .modern-customer-btn {
   cursor: pointer;
+  transition: all 0.3s ease;
 
   &:hover {
     transform: translateY(-2px) scale(1.02);
@@ -5358,7 +5355,10 @@ export default {
   }
 }
 
+// 主客户按钮
 .main-customer-btn {
+  cursor: pointer;
+  transition: all 0.3s ease;
   border: none;
   border-radius: 0;
   font-size: 16px;
@@ -5370,11 +5370,23 @@ export default {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  transition: all 0.3s ease;
   margin: 0 1px 0 0;
+
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 5px 14px rgba(56, 158, 13, 0.4);
+    filter: brightness(1.15);
+  }
+
+  &:active {
+    transform: translateY(0) scale(1);
+  }
 }
 
+// 动态客户按钮
 .dynamic-customer-btn {
+  cursor: pointer;
+  transition: all 0.3s ease;
   border: none;
   border-radius: 6px;
   font-size: 15px;
@@ -5387,34 +5399,46 @@ export default {
   align-items: center;
   flex-shrink: 0;
   position: relative;
-  transition: all 0.3s ease;
   margin-right: 1px;
+
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    filter: brightness(1.15);
+  }
+
+  &:active {
+    transform: translateY(0) scale(1);
+  }
+
+  // 按钮主要内容区域
+  .customer-btn-main {
+    display: flex;
+    align-items: center;
+    gap: 6rpx;
+  }
+
+  // 商品数量标签
+  .customer-btn-count {
+    font-size: 11px;
+    display: flex;
+    color: #ffffff;
+  }
+
+  // 删除按钮
+  .customer-btn-remove {
+    display: flex;
+    align-items: center;
+    margin-left: 8rpx;
+    cursor: pointer;
+    padding: 2rpx;
+
+    .customer-btn-remove-icon {
+      opacity: 0.9;
+    }
+  }
 }
 
-.customer-btn-main {
-  display: flex;
-  align-items: center;
-  gap: 6rpx;
-}
-
-.customer-btn-count {
-  font-size: 11px;
-  display: flex;
-  color: #ffffff;
-}
-
-.customer-btn-remove {
-  display: flex;
-  align-items: center;
-  margin-left: 8rpx;
-  cursor: pointer;
-  padding: 2rpx;
-}
-
-.customer-btn-remove-icon {
-  opacity: 0.9;
-}
-
+// 添加客户按钮
 .add-customer-btn {
   border: none;
   border-radius: 50%;
@@ -5422,9 +5446,9 @@ export default {
   background: transparent;
   width: 32px;
   height: 32px;
-  font-weight: 700;
   min-width: 32px;
   min-height: 32px;
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -5432,18 +5456,6 @@ export default {
   flex-shrink: 0;
   transition: all 0.3s ease;
   margin-left: 2px;
-}
-
-/* 主客户按钮特殊样式 */
-.main-customer-btn:hover {
-  box-shadow: 0 5px 14px rgba(56, 158, 13, 0.4) !important;
-  filter: brightness(1.15) !important;
-}
-
-/* 动态客户按钮特殊样式 */
-.dynamic-customer-btn:hover {
-  transform: translateY(-2px) scale(1.02) !important;
-  filter: brightness(1.15) !important;
 }
 
 .step1-input {
@@ -5620,33 +5632,7 @@ export default {
   flex: 2;
 }
 
-/* 客户滚动视图样式 */
-.customer-scroll-view {
-  width: 500px !important;
-  min-width: 500px !important;
-  max-width: 500px !important;
-  overflow: hidden;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  margin: -8px;
-  padding: 2px 0;
-  flex: 1;
-}
-
-.customer-scroll-view ::-webkit-scrollbar {
-  display: none;
-}
-
-.customer-scroll-content {
-  display: inline-flex;
-  align-items: center;
-  gap: 0;
-  margin: 0;
-  padding: 0;
-  white-space: nowrap;
-}
-
-/* 确保父容器也不会超出宽度 */
+/* 客户滚动区域样式 */
 .card-title {
   width: 100%;
   max-width: 100%;
@@ -5654,6 +5640,33 @@ export default {
   overflow: hidden;
   padding: 0;
   margin: 0;
+}
+
+.customer-scroll-view {
+  width: 500px;
+  min-width: 500px;
+  max-width: 500px;
+  overflow: hidden;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  flex: 1;
+  margin: -8px;
+  padding: 2px 0;
+
+  // 隐藏滚动条
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  // 滚动内容容器
+  .customer-scroll-content {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+  }
 }
 
 /* 商品搜索框样式 */
