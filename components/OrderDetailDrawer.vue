@@ -99,9 +99,9 @@
 
 			<!-- 底部操作按钮 -->
 			<view class="action-buttons" v-if="showActions">
-				<u-button type="primary" @click="handlePrint" text="打印" size="small" 
+				<u-button type="primary" @click="handlePrint" text="打印"
 					:custom-style="{flex: 1}"></u-button>
-				<u-button type="primary" icon="share-square" @click="handleShare" text="发单" size="small"
+				<u-button type="primary" icon="share-square" @click="handleShare" text="发单"
 					:custom-style="{flex: 1}"></u-button>
 			</view>
 			</view>
