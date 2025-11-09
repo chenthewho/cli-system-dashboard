@@ -443,6 +443,9 @@
         </div>
       </div>
     </div>
+    <!-- 隐藏的canvas，用于生成订单图片 -->
+  <canvas canvas-id="orderCanvas"
+    style="width: 750px; height: 3000px; position: fixed; left: -9999px; top: -9999px;"></canvas>
   </div>
 </template>
 
@@ -470,6 +473,7 @@ import cashierHang from '../../api/cashier/cashierHang'
 import Purchase from '../../api/purchase/purchase.js'
 import { generateGUID } from '../util/CommonMethod.js'
 import { getCompanyId } from '../../common/const/cacheSync'
+import { generateOrderImage } from '../util/generateOrderImage.js'
 import MyNumberInputVue from '../../components/MyNumberInput.vue'
 import RepayBasketModel from '@/components/repay-basket-model.vue' //还筐弹窗
 import BasketOffestModel from './component/basket-offest-model.vue'
@@ -2981,6 +2985,7 @@ export default {
     createNativeView(left, top, commodity, specList) {
       if (!specList || specList.length < 1) return
 
+      console.log('specList', specList)
       this.specPopup = {
         visible: true,
         left,
@@ -3097,7 +3102,6 @@ export default {
           .selectAll(`#grid-item-${id}`)
           .boundingClientRect(data => {
             // const { left, top, width, height } = data;
-            console.log('data', data)
             this.createNativeView(data[0].left + data[0].width / 2, data[0].top, e, e.commoditySpecs)
           })
           .exec()
@@ -3955,10 +3959,94 @@ export default {
       // #endif
     },
     shareOrder(id) {
-      cashierOrder.GetCanvasBase64ById(id).then(res => {
-        if (res.code == 200) {
-          this.downLoadImage(res.data)
+      // 如果 lastOrder 存在且 id 匹配，直接使用
+      let order = null
+      let products = []
+      
+      if (this.lastOrder && this.lastOrder.id === id) {
+        order = this.lastOrder
+        // 解析商品列表，包含所有类型（包括 type 4）
+        if (order.module) {
+          try {
+            products = JSON.parse(order.module)
+          } catch (e) {
+            console.error('解析订单商品数据失败:', e)
+            products = []
+          }
         }
+      }
+      
+      // 如果 lastOrder 不存在或不匹配，根据 id 获取订单信息
+      if (!order) {
+        cashierOrder.GetOrderByAccountId(id).then(res => {
+          if (res.code === 200 && res.data) {
+            order = res.data
+            // 解析商品列表
+            if (order.module) {
+              try {
+                if (typeof order.module === 'string') {
+                  products = JSON.parse(order.module)
+                } else {
+                  products = order.module
+                }
+              } catch (e) {
+                console.error('解析订单商品数据失败:', e)
+                products = []
+              }
+            }
+            // 调用生成图片方法
+            this.generateOrderImageForShare(order, products)
+          } else {
+            uni.showToast({
+              title: '获取订单信息失败',
+              icon: 'none'
+            })
+          }
+        }).catch(err => {
+          console.error('获取订单信息异常:', err)
+          uni.showToast({
+            title: '获取订单信息失败',
+            icon: 'none'
+          })
+        })
+      } else {
+        // 直接使用 lastOrder，调用生成图片方法
+        this.generateOrderImageForShare(order, products)
+      }
+    },
+    
+    // 生成订单图片并分享
+    generateOrderImageForShare(order, products) {
+      // 获取公司信息
+      const companyId = uni.getStorageSync('companyId') || this.currentCompanyId
+      cashierOrder.getStoreInfo(companyId).then(res => {
+        const companyInfo = res.data || {}
+        
+        // 调用公共方法生成订单图片
+        generateOrderImage({
+          order: order,
+          products: products,
+          companyInfo: companyInfo,
+          canvasId: 'orderCanvas',
+          componentContext: this,
+          onSuccess: (tempFilePath) => {
+            // 生成成功，分享图片
+            this.shareImage(tempFilePath)
+          },
+          onError: (error) => {
+            console.error('生成订单图片失败:', error)
+            uni.showToast({
+              title: error || '生成图片失败',
+              icon: 'none'
+            })
+          }
+        })
+      }).catch(err => {
+        console.error('获取公司信息失败:', err)
+        uni.showToast({
+          title: '获取公司信息失败',
+          icon: 'none'
+        })
       })
     },
     shareImage(tempFilePath) {
