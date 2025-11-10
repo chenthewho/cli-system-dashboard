@@ -55,7 +55,7 @@
                       @click="addNewCustomerButton"
                       title="添加客户"
                     >
-                      <uni-icons type="plus" size="30" color="#ff7043"></uni-icons>
+                      +
                     </div>
                   </view>
                 </scroll-view>
@@ -711,7 +711,7 @@ export default {
       const hasDebt = debts > 0
 
       return {
-        background: hasDebt ? '#ff4d4f' : isActive ? '#389e0d' : '#8c8c8c',
+        background: hasDebt ? '#ff4d4f' : isActive ? '#3e79f3' : '#8c8c8cad',
       }
     },
     smartRoundButtonText() {
@@ -893,7 +893,7 @@ export default {
         boxShadow: isActive
           ? '0 3px 10px rgba(56, 158, 13, 0.3)'
           : '0 2px 6px rgba(0, 0, 0, 0.1)',
-        background: isActive ? '#389e0d' : '#8c8c8c',
+        background: isActive ? '#3e79f3' : '#8c8c8cad',
       }
     },
     // 切换到管理页面（订单）
@@ -5464,22 +5464,17 @@ export default {
 
 // 添加客户按钮
 .add-customer-btn {
-  border: none;
-  border-radius: 50%;
-  color: transparent;
-  background: transparent;
-  width: 32px;
-  height: 32px;
-  min-width: 32px;
-  min-height: 32px;
-  font-weight: 700;
-  display: inline-flex;
+  width: 50rpx;
+  height: 30rpx;
+  font-size: 18rpx;
+  display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  flex-shrink: 0;
   transition: all 0.3s ease;
   margin-left: 2px;
+  background-color: #5dcdfd43;
+  color: $zn-main-purple-color;
 }
 
 .step1-input {
@@ -5667,9 +5662,7 @@ export default {
 }
 
 .customer-scroll-view {
-  width: 500px;
-  min-width: 500px;
-  max-width: 500px;
+  width: 100%;
   overflow: hidden;
   box-sizing: border-box;
   flex-shrink: 0;
