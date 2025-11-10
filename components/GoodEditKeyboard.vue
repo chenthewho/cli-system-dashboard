@@ -678,6 +678,9 @@ export default {
     align-items: center;
     padding: 3rpx 8rpx;
     margin-top: 10rpx;
+		::v-deep .uni-select-lay-mask {
+			position: relative;
+		}
   }
 }
 

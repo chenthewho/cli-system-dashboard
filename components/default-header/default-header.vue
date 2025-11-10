@@ -262,6 +262,7 @@ export default {
     align-items: center;
     justify-content: center;
     gap: 10rpx;
+    margin-left: 10rpx;
   }
 
   // 公司菜单项
