@@ -1,13 +1,13 @@
 <template>
 	<div class="order-goods-panel">
 		<div class="table-wrapper">
-			<uni-table ref="table" class="my-table" :loading="loading" border stripe emptyText="暂无物品,请添加商品到购物车" @selection-change="selectionChange" >
+			<uni-table ref="table" class="my-table" :loading="loading" stripe emptyText="暂无物品,请添加商品到购物车" @selection-change="selectionChange" >
 					<uni-tr>
 						<uni-th  align="center">名称</uni-th>
 						<uni-th  align="center">数量</uni-th>
 						<uni-th  align="center">单价</uni-th>
-						<uni-th  align="center">小计</uni-th>
-						<uni-th width="50" align="center">操作</uni-th>
+						<uni-th  align="center">小计(元)</uni-th>
+						<uni-th width="50" align="center"></uni-th>
 					</uni-tr>
 				<uni-tr v-for="(item, index) in goodsList" :key="index">
 					<uni-td align="center">
@@ -22,13 +22,20 @@
 					</div>
 					</uni-td>
 					<uni-td align="center">
-						<view class="table-body-text" @click="handleItemClick(item, index)">{{ item.quantity }}</view>
+						<view class="table-body-text" @click="handleItemClick(item, index)">
+							<div>{{ getQuantity(item) }}</div>
+							<div class="tips" v-if="item.saleWay === 1">毛:{{item.allweight}} - 皮:{{item.carweight}}</div>
+						</view>
 					</uni-td>
 					<uni-td align="center">
-						<view class="table-body-text" @click="handleItemClick(item, index)" >{{ item.referenceAmount }}</view>
+						<view class="table-body-text" @click="handleItemClick(item, index)" >
+							{{ item.referenceAmount }}元{{ item.commoditySpec && item.commoditySpec.specName ? item.saleWay === 1 ? '/斤' : ('/' + item.commoditySpec.specName) : '' }}
+						</view>
 					</uni-td>
 					<uni-td align="center" >
-						<view class="table-body-text table-body-text-money" @click="handleItemClick(item, index)" >¥{{ item.money2 }}</view>
+						<view class="table-body-text table-body-text-money" @click="handleItemClick(item, index)" >
+							{{ item.money2 }}
+						</view>
 					</uni-td>
 					<uni-td align="center">
 						<uni-icons type="trash-filled" size="20" color="#eb0404" class="icon-search" @click="handleDelete(item)"></uni-icons>
@@ -124,6 +131,22 @@ export default {
 		// 结账
 		handleCheckout() {
 			this.$emit('checkout');
+		},
+
+		getQuantity(item) {
+			const spenc = item.commoditySpec && item.commoditySpec.specName ? item.commoditySpec.specName : ''
+			let res = ''
+			// 如果是散装数量为 总重
+			if (item.saleWay === 4) {
+				res = item.allweight + spenc
+			} else if (item.saleWay === 1) {
+				// 非定装，展示数量展示 xx/单位（净重）/n ( 毛：xx - 皮：xx )
+				res = `
+				${item.quantity}${spenc}(${item.allweight - item.carweight})`
+			} else {
+				res = item.quantity + spenc
+			}
+			return res
 		}
 	}
 }
@@ -142,6 +165,9 @@ export default {
 	padding-bottom: 110rpx; // 为 footer 预留空间
 	.table-body-text {
 		font-size: 12rpx;
+		.tips {
+			font-size: 8rpx;
+		}
 	}
 	.table-body-text-money {
 		color: #eb0404;
@@ -281,12 +307,11 @@ export default {
 
 .extra-tag {
 	display: inline-block;
-	padding: 1rpx 5rpx;
+	padding: 1rpx 4rpx;
 	background: linear-gradient(135deg, #ff9c6e 0%, #ff7a45 100%);
 	color: #ffffff;
-	font-size: 9rpx;
+	font-size: 7rpx;
 	border-radius: 3rpx;
-	font-weight: 500;
 	letter-spacing: 0.2rpx;
 	white-space: nowrap;
 	box-shadow: 0 1px 4px rgba(255, 122, 69, 0.3);
@@ -571,7 +596,7 @@ export default {
 	background: #ffffff;
 	box-sizing: border-box;
 	padding-bottom: 10rpx;
-	z-index: 10;
+	z-index: 2;
 	
 	.card-sumarry {
 		width: 100%;

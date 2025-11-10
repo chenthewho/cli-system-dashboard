@@ -11,7 +11,6 @@
       </div>
       <div class="right-space">
         <div v-if="step1" class="cashier-card">
-
               <div class="card-title">
                 <!-- 可滑动的客户管理区域 -->
                 <scroll-view
@@ -450,31 +449,18 @@
 </template>
 
 <script>
-import VerticalTab from '@/components/VerticalTab.vue'
 import GoodEditKeyboard from '@/components/GoodEditKeyboard.vue'
 import PaymentModal from '@/components/PaymentModal.vue'
 import OrderDetailDrawer from '@/components/OrderDetailDrawer.vue'
 import CashierGoodsPanel from '@/components/CashierGoodsPanel/CashierGoodsPanel.vue'
 import CustomerSelector from '@/components/CustomerSelector/CustomerSelector.vue'
 import OrderGoodsPanel from '@/components/OrderGoodsPanel/OrderGoodsPanel.vue'
-import cashierDiscount from '../../api/cashier/cashierDiscount'
-import cashierIgnore from '../../api/cashier/cashierIgnore'
 import cashierOrder from '../../api/cashier/cashierOrder'
 import category from '../../api/goods/category'
 import member from '../../api/member/member'
-import timeCard from '../../api/member/timeCard'
-import payment from '../../api/cashier/payment'
-import staff from '../../api/security/staff'
-import stockStore from '../../api/stock/stockStore'
 import config from '../../common/config'
 import global from '../../common/const/global'
-import login from '../../api/auth/login'
-import cashierHang from '../../api/cashier/cashierHang'
-import Purchase from '../../api/purchase/purchase.js'
-import { generateGUID } from '../util/CommonMethod.js'
-import { getCompanyId } from '../../common/const/cacheSync'
 import { generateOrderImage } from '../util/generateOrderImage.js'
-import MyNumberInputVue from '../../components/MyNumberInput.vue'
 import RepayBasketModel from '@/components/repay-basket-model.vue' //还筐弹窗
 import BasketOffestModel from './component/basket-offest-model.vue'
 import RepayModal from '@/components/RepaymentModal.vue'
@@ -483,9 +469,7 @@ import ShippingModal from '@/components/ShippingModal.vue'
 export default {
   name: 'Cashier',
   components: {
-    VerticalTab,
     GoodEditKeyboard,
-    MyNumberInputVue,
     RepayBasketModel,
     BasketOffestModel,
     RepayModal,
@@ -845,7 +829,6 @@ export default {
     },
   },
   mounted() {
-    console.log('cashier mounted')
     this.refreshPage()
     this.calculateScrollHeight()
     // 监听窗口大小变化
@@ -869,16 +852,13 @@ export default {
     },
     // 触发实付金额闪烁效果
     flashActualAmount() {
-      console.log('触发实付金额闪烁动画', this.actualAmountFlash)
       // 先重置，确保动画可以重复播放
       this.actualAmountFlash = false
       // 使用 $nextTick 确保 DOM 更新
       this.$nextTick(() => {
         this.actualAmountFlash = true
-        console.log('设置闪烁状态为 true', this.actualAmountFlash)
         setTimeout(() => {
           this.actualAmountFlash = false
-          console.log('实付金额闪烁动画结束')
         }, 1000)
       })
     },
@@ -891,7 +871,6 @@ export default {
     },
     // 刷新页面数据 - 供父组件调用
     refreshPage() {
-      console.log('cashier refreshPage')
       this.vesionType = uni.getStorageSync('vesionType') ?? 1
       this.windowHeight = uni.getWindowInfo().windowHeight
       // this.initSystem();
@@ -919,7 +898,6 @@ export default {
     },
     // 切换到管理页面（订单）
     goToManagement() {
-      console.log('goToManagement - 向父组件发出事件')
       // 向父组件（index.vue）发出事件
       this.$emit('goToManagement')
     },
@@ -964,7 +942,6 @@ export default {
         // 保存客户按钮列表（按商行区分）
         const cacheKey = this.getCustomerButtonsCacheKey()
         uni.setStorageSync(cacheKey, JSON.stringify(this.customerButtons))
-        console.log(`已保存客户按钮列表到缓存 [${cacheKey}]:`, this.customerButtons)
 
         // 为每个客户按钮保存其对应的数据到单独的缓存
         this.customerButtons.forEach(btn => {
@@ -977,7 +954,6 @@ export default {
               timestamp: Date.now(),
             }
             uni.setStorageSync(cacheKey, JSON.stringify(customerData))
-            console.log(`保存客户按钮数据 [${cacheKey}]:`, customerData)
           }
         })
       } catch (e) {
@@ -991,7 +967,6 @@ export default {
         const cachedButtons = uni.getStorageSync(cacheKey)
         if (cachedButtons) {
           const buttons = JSON.parse(cachedButtons)
-          console.log(`从缓存恢复客户按钮列表 [${cacheKey}]:`, buttons)
 
           // 为每个按钮加载其对应的数据
           this.customerButtons = buttons.map(btn => {
@@ -1009,8 +984,6 @@ export default {
             }
             return btn
           })
-
-          console.log('已恢复客户按钮数据:', this.customerButtons)
         }
       } catch (e) {
         console.error('加载客户按钮列表缓存失败:', e)
@@ -1022,7 +995,6 @@ export default {
         const cachedData = uni.getStorageSync(cacheKey)
         if (cachedData) {
           const customerData = JSON.parse(cachedData)
-          console.log(`从缓存恢复客户数据 [${cacheKey}]:`, customerData)
           return customerData
         }
         return null
@@ -1035,7 +1007,6 @@ export default {
       try {
         const cacheKey = this.getCustomerCacheKey(customerId)
         uni.removeStorageSync(cacheKey)
-        console.log(`已清空客户缓存 [${cacheKey}]`)
       } catch (e) {
         console.error('清空客户缓存失败:', e)
       }
@@ -1049,7 +1020,6 @@ export default {
             try {
               // 获取当前商行ID
               const companyId = this.currentCompanyId || uni.getStorageSync('companyId') || 'default'
-              console.log(`清理商行 [${companyId}] 的所有客户缓存`)
 
               // 获取所有存储的key，清除当前商行的客户相关缓存
               const allKeys = uni.getStorageInfoSync().keys || []
@@ -1063,12 +1033,10 @@ export default {
               // 清除当前商行最后使用的客户ID
               const lastCustomerIdKey = this.getLastCustomerIdCacheKey()
               uni.removeStorageSync(lastCustomerIdKey)
-              console.log(`已清空最后客户ID缓存 [${lastCustomerIdKey}]`)
 
               // 清除当前商行的客户按钮列表
               const customerButtonsKey = this.getCustomerButtonsCacheKey()
               uni.removeStorageSync(customerButtonsKey)
-              console.log(`已清空客户按钮列表缓存 [${customerButtonsKey}]`)
               this.customerButtons = []
 
               // 刷新列表
@@ -1130,13 +1098,11 @@ export default {
         this.customerButtons[currentActiveIndex].goodSelect = [...this.goodSelect]
         this.customerButtons[currentActiveIndex].shippingFee = this.cashier.shippingFee || 0
         this.customerButtons[currentActiveIndex].goodsCount = this.goodSelect.length
-        console.log('已保存激活客户按钮的数据')
       }
 
       // 保存当前客户的 goodSelect 和运费数据到缓存
       if (this.goodSelect.length > 0 || this.cashier.shippingFee > 0) {
         this.saveCustomerDataToCache()
-        console.log('客户切换前已保存当前数据到缓存')
       }
     },
     saveCurrentActiveCustomerData() {
@@ -1148,7 +1114,6 @@ export default {
         this.mainCustomerData.member = { ...this.currentMember }
         this.mainCustomerData.goodSelect = [...this.goodSelect]
         this.mainCustomerData.shippingFee = this.cashier.shippingFee || 0
-        console.log('主客户激活，已保存主客户数据')
         return
       }
 
@@ -1159,7 +1124,6 @@ export default {
         this.customerButtons[currentActiveIndex].goodSelect = [...this.goodSelect]
         this.customerButtons[currentActiveIndex].shippingFee = this.cashier.shippingFee || 0
         this.customerButtons[currentActiveIndex].goodsCount = this.goodSelect.length
-        console.log('已保存激活的动态客户按钮数据')
       }
     },
     loadNewCustomerData(newCustomerId) {
@@ -1168,15 +1132,12 @@ export default {
       if (customerData && customerData.goodSelect) {
         this.goodSelect = customerData.goodSelect
         this.cashier.shippingFee = customerData.shippingFee || 0
-        console.log('已加载新客户的购物车数据:', this.goodSelect)
-        console.log('已加载新客户的运费:', this.cashier.shippingFee)
         // 重新计算金额
         this.reCountGoodSelect()
       } else {
         // 如果没有缓存数据，清空购物车
         this.goodSelect = []
         this.cashier.shippingFee = 0
-        console.log('新客户无缓存数据，已清空购物车')
       }
     },
     loadLastCustomerAndGoodSelect() {
@@ -1189,17 +1150,14 @@ export default {
         if (activeButtonIndex !== -1) {
           // 如果有激活的动态客户，主客户设为未激活
           this.isMainCustomerActive = false
-          console.log('检测到激活的动态客户按钮，主客户设为未激活')
         } else {
           // 没有激活的动态客户，主客户保持激活状态
           this.isMainCustomerActive = true
-          console.log('没有激活的动态客户按钮，主客户保持激活')
         }
 
         // 尝试恢复最后使用的客户信息（按商行区分）
         const lastCustomerIdCacheKey = this.getLastCustomerIdCacheKey()
         const lastCustomerId = uni.getStorageSync(lastCustomerIdCacheKey) || ''
-        console.log(`尝试恢复最后使用的客户ID [${lastCustomerIdCacheKey}]:`, lastCustomerId)
 
         const customerData = this.loadCustomerDataFromCache(lastCustomerId)
         if (customerData) {
@@ -1210,7 +1168,6 @@ export default {
             if (this.isMainCustomerActive) {
               this.mainCustomerData.member = { ...customerData.member }
             }
-            console.log('已恢复客户信息:', this.currentMember)
           }
           if (customerData.goodSelect && customerData.goodSelect.length > 0) {
             this.goodSelect = customerData.goodSelect
@@ -1218,7 +1175,6 @@ export default {
             if (this.isMainCustomerActive) {
               this.mainCustomerData.goodSelect = [...customerData.goodSelect]
             }
-            console.log('已恢复购物车数据:', this.goodSelect)
             // 重新计算金额
             this.$nextTick(() => {
               this.reCountGoodSelect()
@@ -1230,7 +1186,6 @@ export default {
           if (this.isMainCustomerActive) {
             this.mainCustomerData.shippingFee = customerData.shippingFee || 0
           }
-          console.log('已恢复运费:', this.cashier.shippingFee)
         } else {
           // 没有缓存数据，使用默认的散客
           console.log('无缓存数据，使用默认散客状态')
@@ -1244,7 +1199,6 @@ export default {
         const customerId = (this.currentMember && this.currentMember.id) || ''
         const cacheKey = this.getLastCustomerIdCacheKey()
         uni.setStorageSync(cacheKey, customerId)
-        console.log(`已保存最后使用的客户ID [${cacheKey}]:`, customerId)
       } catch (e) {
         console.error('保存最后客户ID失败:', e)
       }
@@ -1259,8 +1213,6 @@ export default {
         const customerCachePrefix = `cashier_customer_${companyId}_`
         const customerCacheKeys = allKeys.filter(key => key.startsWith(customerCachePrefix))
         const caches = []
-
-        console.log(`获取商行 [${companyId}] 的客户缓存，找到 ${customerCacheKeys.length} 个`)
 
         customerCacheKeys.forEach(key => {
           try {
@@ -1294,10 +1246,8 @@ export default {
     showMultiCustomerManager() {
       this.customerCacheList = this.getAllCustomerCaches()
       this.multiCustomerModalVisible = true
-      console.log('多客户缓存列表:', this.customerCacheList)
     },
     switchToCustomer(customerCache) {
-      console.log('切换到客户:', customerCache)
 
       // 保存当前客户数据
       this.saveCurrentCustomerDataBeforeSwitch()
@@ -1724,8 +1674,6 @@ export default {
 
       // 保存最后使用的客户ID
       this.saveLastCustomerId()
-
-      console.log(`订单完成，${firstCustomer.name}成为新主客户`)
     },
     // 运费相关方法
     showShippingModal() {
@@ -2694,7 +2642,7 @@ export default {
       // 更新编辑中的商品数据
       this.editingCard = updatedCard
       this.goodSelect[this.editingIndex] = updatedCard
-
+      console.log('this.goodSelect----------->', this.goodSelect)
       // 保存到缓存并重新计算
       this.saveGoodSelectToCache()
       this.reCountGoodSelect()
@@ -2757,14 +2705,12 @@ export default {
     handleTabChanged(data) {
       // 组件内部已经处理了商品加载逻辑
       // 这里只需要处理父组件需要知道的状态变化
-      console.log('标签已切换:', data)
     },
 
     // 处理分类列表更新事件（从 CashierGoodsPanel 组件触发）
     handleCategoryUpdated(categoryList) {
       // 更新父组件的 categoryList（用于其他功能）
       this.categoryList = categoryList
-      console.log('分类列表已更新:', categoryList)
     },
 
     /**
@@ -2984,7 +2930,6 @@ export default {
     createNativeView(left, top, commodity, specList) {
       if (!specList || specList.length < 1) return
 
-      console.log('specList', specList)
       this.specPopup = {
         visible: true,
         left,
@@ -3058,14 +3003,11 @@ export default {
           .createSelectorQuery()
           .selectAll(`#grid-item-${id}`)
           .boundingClientRect(data => {
-            console.log('分级商品弹窗位置:', data)
             this.createMultiLevelView(data[0].left + data[0].width / 2, data[0].top, e, e.childrenList)
           })
           .exec()
         return // 显示分级商品弹窗后直接返回
       }
-
-      console.log('e', e)
 
       //1-非定装 2-定装 4-散装
       if (e.saleWay === 1 || e.saleWay === 2 || e.saleWay === 4) {
@@ -3194,7 +3136,6 @@ export default {
       this.hangDialogVisible = true
     },
     deleteGDorder(item) {
-      console.log('item', item)
       // 先关闭挂单中心弹窗，确保删除提示显示在最前面
       this.hangListVisible = false
       // 使用 $nextTick 确保弹窗关闭后再显示删除确认提示
@@ -3307,9 +3248,7 @@ export default {
       cashierOrder.GetAllGDorder(this.currentCompanyId).then(res => {
         that.hangListVisible = true
         var hangleList = res.data
-        console.log('hangleList', hangleList)
         hangleList.forEach((item, index) => {
-          console.log('item.module', item.module)
           // 为每个挂单项添加唯一的 uniqueKey
           item.uniqueKey = item.id || `hang_${Date.now()}_${index}`
           if (item.module) {
@@ -3318,7 +3257,6 @@ export default {
             modelList.forEach((item2, index2) => {
               item.modelInfo += item2.name + 'x' + item2.mount + '|'
             })
-            console.log('item', item)
           }
         })
 
@@ -3490,7 +3428,6 @@ export default {
       var CompanyId = this.currentCompanyId
       var goodModelList = []
       var userInfo = uni.getStorageSync('userInfo')
-      console.log('this.goodSelect', this.goodSelect)
       //选择商品转化成后端订单商品对象
       for (var i = 0; i < this.goodSelect.length; i++) {
         var commodity = {
@@ -3832,7 +3769,6 @@ export default {
       var CompanyId = this.currentCompanyId
       var goodModelList = []
       var userInfo = uni.getStorageSync('userInfo')
-      console.log('this.goodSelect', this.goodSelect)
       //选择商品转化成后端订单商品对象
       for (var i = 0; i < this.goodSelect.length; i++) {
         var commodity = {
@@ -3853,7 +3789,6 @@ export default {
         //处理押筐物体(2.0押筐物体存放在extralModel,extralModel.id==""时候为空，不做处理)
         commodity.subModel = []
         if (that.goodSelect[i].extralModel) {
-          console.log('that.goodSelect[i].extralModel', that.goodSelect[i].extralModel)
           if (that.goodSelect[i].extralModel && that.goodSelect[i].extralModel.id != '') {
             commodity.subModel.push({
               Id: '00000000-0000-0000-0000-000000000000',
