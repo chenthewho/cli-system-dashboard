@@ -1,7 +1,7 @@
 <template>
 	<view :style="{ 'display': 'flex', 'width': '100%', 'height': (windowHeight - 65) + 'px', 'overflow': 'hidden' }">
 		<div style="width: 160rpx; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); display: flex; flex-direction: column; overflow: hidden; box-shadow: 2rpx 0 8rpx rgba(0, 0, 0, 0.08);">
-			<scroll-view scroll-y style="flex: 1; width: 100%;">
+			<scroll-view scroll-y style="flex: 1; height: 0; width: 100%;">
 				<!-- 圆弧边卡片 -->
 				<div v-if="categoryList.length > 0" style="display: flex; flex-direction: column; gap: 5rpx; padding: 5rpx 0;">
 					<div @click="exchangeTab(item)" v-for="item in categoryList" :key="item.id" :style="{

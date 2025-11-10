@@ -45,34 +45,36 @@
 		</div>
 
 		<div style="width: 100%; background-color: #f5f5f5; text-align: right;">
-		<div
-			style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx;margin-top: 5rpx; display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; padding: 0 10rpx; border-radius: 8rpx;">
+	<div
+		style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx;margin-top: 5rpx; display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; padding: 0 10rpx; border-radius: 8rpx;">
+		<div style="display: flex; align-items: center; gap: 10rpx;">
+			<view style="position: relative; display: flex; align-items: center;">
+				<uni-icons type="search" size="14" color="#999" style="position: absolute; left: 6rpx; z-index: 1;"></uni-icons>
+				<input 
+					class="search-input" 
+					type="text" 
+					v-model="searchKeyword" 
+					placeholder="搜索商品" 
+					style="height: 26rpx; line-height: 26rpx; padding-left: 26rpx; padding-right: 10rpx; border: 1rpx solid #e0e0e0; border-radius: 20rpx; font-size: 12rpx; width: 140rpx; background-color: #f5f5f5;" 
+				/>
+			</view>
 			<div style="font-size: 15rpx; font-weight: bold;"><text
 					style="margin-right: 5rpx;">{{currentTabName}}</text>
 			</div>
-			<div style="text-align: right; display: flex; align-items: center; gap: 10rpx;">
-				<view style="position: relative; display: flex; align-items: center;">
-					<uni-icons type="search" size="14" color="#999" style="position: absolute; left: 6rpx; z-index: 1;"></uni-icons>
-					<input 
-						class="search-input" 
-						type="text" 
-						v-model="searchKeyword" 
-						placeholder="搜索商品" 
-						style="height: 26rpx; line-height: 26rpx; padding-left: 26rpx; padding-right: 10rpx; border: 1rpx solid #e0e0e0; border-radius: 20rpx; font-size: 12rpx; width: 140rpx; background-color: #f5f5f5;" 
-					/>
-				</view>
-				<button
-					style="height: 24rpx;line-height: 24rpx;font-weight: bold;background-color: orange;color:white;border-radius: 4rpx;padding: 0 12rpx;"
-					@click="showDeleteGood = !showDeleteGood">编辑</button>
-			</div>
 		</div>
+		<div style="text-align: right; display: flex; align-items: center; gap: 10rpx;">
+			<button
+				style="height: 24rpx;line-height: 24rpx;font-weight: bold;background-color: orange;color:white;border-radius: 4rpx;padding: 0 12rpx;"
+				@click="showDeleteGood = !showDeleteGood">编辑</button>
+		</div>
+	</div>
 			<div style="margin-left: 5rpx;margin-right: 5rpx; overflow: hidden;">
 				<scroll-view class="scrollArea" scroll-y="true" :style="{height:scrollHeight, width: '100%'}">
 					<!-- 宫格布局 -->
 					<div class="goods-grid-container">
 						<!-- 添加货品卡片（始终第一个） -->
 						<div class="grid-item add-item" :style="{ width: gridItemWidth }" @click="showAddNewGood = true">
-							<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 80rpx;">
+							<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 40rpx;">
 								<uni-icons type="plusempty" size="32" color="#07c160"></uni-icons>
 								<div style="margin-top: 8rpx; font-size: 14rpx; color: #07c160; font-weight: bold;">添加货品</div>
 							</div>
@@ -81,7 +83,8 @@
 					<!-- 普通商品卡片 -->
 					<div v-for="(item, index) in filteredGoodSelect" :key="item.id || index" 
 						 class="grid-item" 
-						 :style="{ width: gridItemWidth, position: 'relative' }">
+						 :style="{ width: gridItemWidth, position: 'relative' }"
+						 @click="handleGoodClick(item)">
 							<!-- 删除按钮 -->
 							<div v-if="showDeleteGood" 
 								class="delete-icon" 
@@ -90,7 +93,7 @@
 							</div>
 							
 							<!-- 商品名称 -->
-							<div style="text-align: left; font-weight: bold; font-size: 20rpx; letter-spacing: 1rpx; display: flex;">
+							<div style="text-align: left; font-weight: bold; font-size: 16rpx; letter-spacing: 1rpx; display: flex;">
 								{{ item.name }}
 							</div>
 							
@@ -171,6 +174,18 @@
 		@close="showAddNewGood = false"
 		@confirm="saveGood"
 	/>
+	
+	<!-- 编辑货品弹窗 - 使用组件 -->
+	<EditGoodModalAdvanced
+		:show="showEditGood"
+		:unitList="unit"
+		:extralModelList="extralModelList"
+		:currentCategoryId="currentTabId"
+		:categoryList="categoryList"
+		:editData="editingGood"
+		@close="showEditGood = false"
+		@success="handleEditSuccess"
+	/>
 
 
 	<!-- 添加新分类弹窗 -->
@@ -219,11 +234,13 @@
 	import selectLayUnit from './component/selectLayUnit'
 	import labelApi from '../../api/label/labelApi';
 	import AddGoodModalAdvanced from '../../components/AddGoodModal/AddGoodModalAdvanced.vue';
+	import EditGoodModalAdvanced from '../../components/AddGoodModal/EditGoodModalAdvanced.vue';
 	
 	export default {
 		components: {
 			selectLayUnit,
-			AddGoodModalAdvanced
+			AddGoodModalAdvanced,
+			EditGoodModalAdvanced
 		},
 		data() {
 			return {
@@ -242,6 +259,8 @@
 			tempSpuDialogVisible: false,
 			tempSpuSkuName: "",
 			showAddNewGood: false,
+			showEditGood: false,
+			editingGood: null,
 			showDeleteGood: false,
 			extralModelList: [],
 			itemsPerRow: 4, // 每行显示的商品数量
@@ -686,6 +705,124 @@
 				});
 			});
 		},
+		// 点击商品卡片 - 打开编辑弹窗
+		handleGoodClick(item) {
+			// 如果处于删除模式，不打开编辑弹窗
+			if (this.showDeleteGood) {
+				return;
+			}
+			
+			// 设置要编辑的商品数据
+			this.editingGood = item;
+			// 打开编辑弹窗
+			this.showEditGood = true;
+		},
+		// 更新商品 - 接收来自编辑组件的表单数据
+		updateGood(formData) {
+			let that = this;
+			
+			// 包装类型选项（用于转换）
+			const packageTypeOptions = [
+				{ label: "定装", value: "2" },
+				{ label: "非定装", value: "1" },
+				{ label: "散装", value: "4" }
+			];
+			
+			// 需要转换成double,不然发送失败500
+			for (var i = 0; i < formData.specList.length; i++) {
+				formData.specList[i].fixcount = parseFloat(formData.specList[i].fixcount) || 0;
+				formData.specList[i].fixprice = parseFloat(formData.specList[i].fixprice) || 0;
+			}
+			
+			// 如果售卖方式等于1-2-4的话需要处理unit
+			if (formData.saleWay === 1 || formData.saleWay === 2 || formData.saleWay === 4) {
+				// 检查是否已经有对应的 spec
+				const hasUnitSpec = formData.specList.some(spec => spec.specName === formData.unit && spec.fixcount === 1);
+				if (!hasUnitSpec) {
+					formData.specList.push({
+						id: that.generateUUID(),
+						specName: formData.unit,
+						fixcount: 1,
+						fixprice: 0,
+						parentId: "",
+						price: 0
+					});
+				}
+			}
+			
+			// 需要转换成double,不然发送失败500
+			formData.price = parseFloat(formData.price) || 0;
+			formData.fixTare = parseFloat(formData.fixTare) || 0;
+			formData.initWeight = formData.initWeight ? parseFloat(formData.initWeight) : 0;
+
+			console.log("更新前的 formData:", formData);
+
+			// 分级的话添加分级
+			if (formData.isMultiLevel == 1) {
+				formData.multiLevelList = []; // 重置分级列表
+				// 添加分级
+				for (var i = 0; i < formData.gradeList.length; i++) {
+					let grade = formData.gradeList[i];
+					
+					// 将 packageType 转换成对应的 value 值
+					let packageTypeValue = grade.packageType;
+					const packageTypeOption = packageTypeOptions.find(opt => opt.label === grade.packageType || opt.value === grade.packageType);
+					if (packageTypeOption) {
+						packageTypeValue = packageTypeOption.value;
+					}
+
+					let levelModel = {
+						specList: [],
+						multiLevelList: [],
+						classifyId: formData.classifyId || that.currentTabId,
+						price: grade.price ? parseFloat(grade.price) : 0,
+						name: grade.gradeName,
+						fixTare: parseFloat(formData.fixTare),
+						initWeight: grade.avgWeight ? parseFloat(grade.avgWeight) : 0,
+						isShareStock: formData.isShareStock,
+						stockType: formData.stockType,
+						extralModelId: formData.extralModelId,
+						saleWay: parseInt(packageTypeValue),
+					};
+
+					levelModel.specList.push({
+						id: that.generateUUID(),
+						specName: grade.countUnit,
+						fixcount: 1,
+						fixprice: 0,
+						parentId: "",
+						price: 0
+					});
+
+					formData.multiLevelList.push(levelModel);
+				}
+			}
+
+			// 调用更新接口
+			category.CommoditySave3(JSON.stringify(formData)).then(res => {
+				uni.showToast({
+					icon: 'success',
+					title: '更新成功',
+					duration: 1200,
+				});
+				that.showEditGood = false;
+				that.editingGood = null;
+				// 刷新货品列表
+				that.updateActiveTab(that.currentTabId);
+			}).catch(err => {
+				console.error('更新失败:', err);
+				uni.showToast({
+					icon: 'none',
+					title: '更新失败，请重试',
+					duration: 1200,
+				});
+			});
+		},
+		// 编辑货品成功后的回调
+		handleEditSuccess() {
+			// 刷新当前分类的商品列表
+			this.updateActiveTab(this.currentTabId);
+		},
 		deleteItem(e) {
 			const that = this;
 			// 调用API删除商品
@@ -863,10 +1000,12 @@
 							name: res.data[i].commodityName,
 							price: res.data[i].price,
 							saleWay: res.data[i].saleWay,
+							specList: res.data[i].commoditySpecs,
 							extralModel: res.data[i].extralModel,
 							inventory: res.data[i].inventory,
 							type: 0,
 							initWeight: res.data[i].initWeight,
+							classId:res.data[i].classId,
 							specLabel: specLabel // 添加规格标签
 						})
 					}
@@ -949,7 +1088,7 @@
 	
 	/* 货品标签样式 */
 	.good-tag {
-		padding: 2rpx 6rpx;
+		padding: 1rpx 3rpx;
 		border: 1px solid;
 		border-radius: 4rpx;
 		font-size: 10rpx;

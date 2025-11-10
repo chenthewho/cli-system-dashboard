@@ -36,8 +36,8 @@
 				<!-- 标题栏 -->
 				<view class="znj-add-good-modal-header">
 					<button class="znj-add-good-header-btn cancel" @click="handleCancel">返回</button>
-					<text class="znj-add-good-modal-title">添加新货品</text>
-					<button class="znj-add-good-header-btn confirm" @click="handleConfirm">添加</button>
+					<text class="znj-add-good-modal-title">编辑货品</text>
+					<button class="znj-add-good-header-btn confirm" @click="handleConfirm">保存</button>
 				</view>
 				
 				<!-- 内容区域 -->
@@ -69,31 +69,31 @@
 					</view>
 						
 						<!-- 库存类型 -->
-						<view class="znj-add-good-row">
+						<!-- <view class="znj-add-good-row">
 							<text class="znj-add-good-label">库存类型：</text>
 							<div class="znj-add-good-switch-group">
 								<button class="znj-add-good-switch-btn" :class="{active: formData.stockType === 1}" @click="formData.stockType = 1">自营</button>
 								<button class="znj-add-good-switch-btn" :class="{active: formData.stockType === 2}" @click="formData.stockType = 2">代卖</button>
 							</div>
-						</view>
+						</view> -->
 						
-						<!-- 是否分级 -->
-						<view class="znj-add-good-row">
-							<text class="znj-add-good-label">是否分级：</text>
-							<div class="znj-add-good-switch-group">
-								<button class="znj-add-good-switch-btn" :class="{active: formData.isMultiLevel === 1}" @click="formData.isMultiLevel = 1">是</button>
-								<button class="znj-add-good-switch-btn" :class="{active: formData.isMultiLevel === 0}" @click="formData.isMultiLevel = 0">否</button>
-							</div>
-						</view>
+				<!-- 是否分级 -->
+				<view class="znj-add-good-row">
+					<text class="znj-add-good-label">是否分级：</text>
+					<div class="znj-add-good-switch-group">
+						<button class="znj-add-good-switch-btn" :class="{active: formData.isMultiLevel === 1}" disabled>是</button>
+						<button class="znj-add-good-switch-btn" :class="{active: formData.isMultiLevel === 0}" disabled>否</button>
+					</div>
+				</view>
 						
-						<!-- 是否共用库存 -->
-						<view class="znj-add-good-row" v-if="formData.isMultiLevel === 1">
-							<text class="znj-add-good-label">共用库存：</text>
-							<div class="znj-add-good-switch-group">
-								<button class="znj-add-good-switch-btn" :class="{active: formData.isShareStock === 1}" @click="setShareStock(1)">是</button>
-								<button class="znj-add-good-switch-btn" :class="{active: formData.isShareStock === 0}" @click="setShareStock(0)">否</button>
-							</div>
-						</view>
+				<!-- 是否共用库存 -->
+				<view class="znj-add-good-row" v-if="formData.isMultiLevel === 1">
+					<text class="znj-add-good-label">共用库存：</text>
+					<div class="znj-add-good-switch-group">
+						<button class="znj-add-good-switch-btn" :class="{active: formData.isShareStock === 1}" disabled>是</button>
+						<button class="znj-add-good-switch-btn" :class="{active: formData.isShareStock === 0}" disabled>否</button>
+					</div>
+				</view>
 
 						<!-- 分级区域 -->
 						<div v-if="formData.isMultiLevel === 1" class="znj-add-good-grade-area">
@@ -168,22 +168,22 @@
 							</view>
 						</div>
 
-						<!-- 计算方式 -->
-						<view class="znj-add-good-row" v-if="formData.isMultiLevel == 0">
-							<text class="znj-add-good-label">计算方式：</text>
-							<view class="znj-add-good-btn-group">
-								<button class="znj-add-good-type-btn" :class="{active: formData.saleWay === 1}" @click="changeSaleType(1)">按重量</button>
-								<button class="znj-add-good-type-btn" :class="{active: formData.saleWay === 2}" @click="changeSaleType(2)">按件数</button>
-								<button class="znj-add-good-type-btn" :class="{active: formData.saleWay === 3}" @click="changeSaleType(3)">按件拆包</button>
-								<button class="znj-add-good-type-btn" :class="{active: formData.saleWay === 4}" @click="changeSaleType(4)">散装</button>
-							</view>
+					<!-- 计算方式 -->
+					<view class="znj-add-good-row" v-if="formData.isMultiLevel == 0">
+						<text class="znj-add-good-label">计算方式：</text>
+						<view class="znj-add-good-btn-group">
+							<button class="znj-add-good-type-btn" :class="{active: formData.saleWay === 1}" disabled>按重量</button>
+							<button class="znj-add-good-type-btn" :class="{active: formData.saleWay === 2}" disabled>按件数</button>
+							<button class="znj-add-good-type-btn" :class="{active: formData.saleWay === 3}" disabled>按件拆包</button>
+							<button class="znj-add-good-type-btn" :class="{active: formData.saleWay === 4}" disabled>散装</button>
 						</view>
+					</view>
 
 						<!-- 单位/规格 -->
 						<view class="znj-add-good-row" v-if="formData.isMultiLevel == 0">
-							<text class="znj-add-good-label" v-if="formData.saleWay === 2">单位：</text>
-							<text class="znj-add-good-label" v-else-if="formData.saleWay === 3">单位一：</text>
-							<text class="znj-add-good-label" v-else>单位：</text>
+							<text class="znj-add-good-label" v-if="formData.saleWay === 2">规格：</text>
+							<text class="znj-add-good-label" v-else-if="formData.saleWay === 3">规格一：</text>
+							<text class="znj-add-good-label" v-else>规格：</text>
 							<div v-if="formData.saleWay != 3">
 								<selectLayUnit 
 									:zindex="1212" 
@@ -221,10 +221,10 @@
 						<div v-if="formData.saleWay != 1 && formData.saleWay != 2 && formData.isMultiLevel == 0" :class="{'znj-add-good-spec-area': formData.saleWay === 3}">
 							<!-- 规格二 -->
 							<view class="znj-add-good-row" v-if="formData.specList.length>1">
-								<text class="znj-add-good-label">单位二：</text>
+								<text class="znj-add-good-label">规格二：</text>
 								<div class="znj-add-good-spec-box">
 									<span class="znj-add-good-spec-prefix">1 {{ formData.specList[0].specName }} =</span>
-									<input class="znj-add-good-spec-input" type="text" v-model="formData.specList[1].fixcount" placeholder="" />
+									<input class="znj-add-good-spec-input" type="text" v-model="formData.specList[1].fixcount" placeholder="" disabled />
 								</div>
 								<selectLayUnit 
 									:zindex="1211" 
@@ -240,15 +240,15 @@
 									:selectId="'spec-unit-2'"
 									:activeSelectId="activeSelectId"
 								></selectLayUnit>
-								<button class="znj-add-good-delete-btn" @click="removeSpec(1)">删除</button>
+								<!-- <button class="znj-add-good-delete-btn" @click="removeSpec(1)">删除</button> -->
 							</view>
 							
 							<!-- 规格三 -->
 							<view class="znj-add-good-row" v-if="formData.specList.length>2">
-								<text class="znj-add-good-label">单位三：</text>
+								<text class="znj-add-good-label">规格三：</text>
 								<div class="znj-add-good-spec-box">
 									<span class="znj-add-good-spec-prefix">1 {{ formData.specList[1].specName }} =</span>
-									<input class="znj-add-good-spec-input" type="text" v-model="formData.specList[2].fixcount" placeholder="" />
+									<input class="znj-add-good-spec-input" type="text" v-model="formData.specList[2].fixcount" placeholder="" disabled />
 								</div>
 								<selectLayUnit 
 									:zindex="1210" 
@@ -264,16 +264,16 @@
 									:selectId="'spec-unit-3'"
 									:activeSelectId="activeSelectId"
 								></selectLayUnit>
-								<button class="znj-add-good-delete-btn" @click="removeSpec(2)">删除</button>
+								<!-- <button class="znj-add-good-delete-btn" @click="removeSpec(2)">删除</button> -->
 							</view>
 							
 							<!-- 添加规格按钮 -->
-							<div v-if="formData.saleWay === 3">
+							<!-- <div v-if="formData.saleWay === 3">
 								<view class="znj-add-good-row" v-if="formData.specList.length<3" style="margin-top: 10rpx;">
 									<text class="znj-add-good-label"></text>
 									<button class="znj-add-good-btn add" @click="addSpec">添加规格</button>
 								</view>
-							</div>
+							</div> -->
 						</div>
 						
 						<!-- 分割线 -->
@@ -327,9 +327,10 @@
 <script>
 import selectLayUnit from '../../pages/good/component/selectLayUnit';
 import SimpleSelect from '../SimpleSelect/SimpleSelect.vue';
+import categoryApi from '@/api/goods/category.js';
 
 export default {
-	name: 'AddGoodModalAdvanced',
+	name: 'EditGoodModalAdvanced',
 	components: {
 		selectLayUnit,
 		SimpleSelect
@@ -361,11 +362,17 @@ export default {
 		categoryList: {
 			type: Array,
 			default: () => []
+		},
+		// 要编辑的商品数据
+		editData: {
+			type: Object,
+			default: () => null
 		}
 	},
 	data() {
 		return {
 		formData: {
+			id: "",
 			name: "",
 			stockType: 1, // 1=自营，2=代卖，默认自营
 			saleWay: 1,
@@ -416,6 +423,8 @@ export default {
 		},
 		// 将分类列表转换为下拉框格式
 		categoryOptions() {
+			console.log("this.categoryList",this.categoryList);
+
 			if (!this.categoryList || this.categoryList.length === 0) {
 				return [];
 			}
@@ -434,7 +443,61 @@ export default {
 			return selected ? selected.name : '';
 		}
 	},
+	watch: {
+		// 监听 editData 的变化，加载数据到表单
+		editData: {
+			handler(newVal) {
+				if (newVal && this.show) {
+					this.loadEditData(newVal);
+				}
+			},
+			immediate: true,
+			deep: true
+		},
+		// 监听 show 的变化
+		show(newVal) {
+			if (newVal && this.editData) {
+				this.loadEditData(this.editData);
+			}
+		}
+	},
 	methods: {
+		// 加载编辑数据
+		loadEditData(data) {
+			if (!data) return;
+			console.log("Data",data)
+			// 深拷贝数据避免直接修改原数据
+			this.formData = {
+				id: data.id || "",
+				name: data.name || "",
+				stockType: data.stockType || 1,
+				saleWay: data.saleWay || 1,
+				unit: data.unit || "件",
+				specList: data.specList ? JSON.parse(JSON.stringify(data.specList)) : [],
+				price: data.price || 0,
+				fixTare: data.fixTare || 0,
+				fixWeight: data.fixWeight || 0,
+				initWeight: data.initWeight || 0,
+				extralModelId: data.extralModelId || "",
+				extralModelName: data.extralModelName || (data.extralModel ? data.extralModel.name : "无"),
+				showToSale: data.showToSale !== undefined ? data.showToSale : 1,
+				isMultiLevel: data.isMultiLevel || 0,
+				isShareStock: data.isShareStock || 0,
+				multiLevelList: data.multiLevelList ? JSON.parse(JSON.stringify(data.multiLevelList)) : [],
+				categoryId: data.categoryId || data.classId || "",
+				gradeList: data.gradeList && data.gradeList.length > 0 ? JSON.parse(JSON.stringify(data.gradeList)) : [{
+					packageType: "定装",
+					countUnit: "件",
+					avgWeight: "",
+					gradeName: "",
+					price: ""
+				}]
+			};
+
+
+			console.log("this.formData",this.formData);
+		},
+		
 		// 关闭弹窗
 		handleClose() {
 			this.$emit('close');
@@ -442,12 +505,12 @@ export default {
 		
 		// 取消
 		handleCancel() {
-			this.resetForm();
+			this.closeSelect();
 			this.$emit('close');
 		},
 		
-	// 确认添加
-	handleConfirm() {
+	// 确认保存
+	async handleConfirm() {
 		// 验证表单
 		if (!this.formData.name || this.formData.name === '') {
 			uni.showToast({
@@ -470,60 +533,66 @@ export default {
 			}
 		}
 		
-		// 如果是分级货品，验证所有分级的货品等级是否已填写
-		if (this.formData.isMultiLevel === 1) {
-			for (let i = 0; i < this.formData.gradeList.length; i++) {
-				const grade = this.formData.gradeList[i];
-				if (!grade.gradeName || grade.gradeName.trim() === '') {
-					uni.showToast({
-						icon: 'none',
-						title: `请填写第${i + 1}个货品等级`,
-						duration: 1500,
-					});
-					return;
-				}
-			}
-		}
+		// // 如果是分级货品，验证所有分级的货品等级是否已填写
+		// if (this.formData.isMultiLevel === 1) {
+		// 	for (let i = 0; i < this.formData.gradeList.length; i++) {
+		// 		const grade = this.formData.gradeList[i];
+		// 		if (!grade.gradeName || grade.gradeName.trim() === '') {
+		// 			uni.showToast({
+		// 				icon: 'none',
+		// 				title: `请填写第${i + 1}个货品等级`,
+		// 				duration: 1500,
+		// 			});
+		// 			return;
+		// 		}
+		// 	}
+		// }
 		
 		// 添加分类ID（优先使用选择的分类，否则使用传入的当前分类）
 		this.formData.classifyId = this.formData.categoryId || this.currentCategoryId;
 		
-		// 发送数据给父组件
-		this.$emit('confirm', this.formData);
-		this.resetForm();
+		// 显示加载提示
+		uni.showLoading({
+			title: '保存中...',
+			mask: true
+		});
+		
+		try {
+
+			console.log("this.formData",this.formData);
+			// 调用编辑商品接口
+			const response = await categoryApi.EditCommodity(this.formData);
+			
+			uni.hideLoading();
+			
+			if (response && response.success !== false) {
+				uni.showToast({
+					icon: 'success',
+					title: '保存成功',
+					duration: 1500
+				});
+				
+				// 关闭弹窗并通知父组件刷新
+				this.$emit('success');
+				this.$emit('close');
+			} else {
+				uni.showToast({
+					icon: 'error',
+					title: response.message || '保存失败',
+					duration: 2000
+				});
+			}
+		} catch (error) {
+			console.error('保存货品失败:', error);
+			uni.hideLoading();
+			uni.showToast({
+				icon: 'error',
+				title: '保存失败，请重试',
+				duration: 2000
+			});
+		}
 	},
 		
-	// 重置表单
-	resetForm() {
-		this.formData = {
-			name: "",
-			stockType: 1,
-			saleWay: 1,
-			unit: "件",
-			specList: [],
-			price: 0,
-			fixTare: 0,
-			fixWeight: 0,
-			initWeight: 0,
-			extralModelId: "",
-			extralModelName: "无",
-			showToSale: 1,
-			isMultiLevel: 0,
-			isShareStock: 0,
-			multiLevelList: [],
-			categoryId: "", // 重置分类ID
-			gradeList: [{
-				packageType: "定装",
-				countUnit: "件",
-				avgWeight: "",
-				gradeName: "",
-				price: ""
-			}]
-		};
-		this.activeSelectId = '';
-		this.closeSelect();
-	},
-	
 	// 选择分类 - 适配 select-lay 组件
 	handleSelectCategory(index) {
 		const selectedCategory = this.categoryOptions[index];
@@ -716,7 +785,7 @@ export default {
 </script>
 
 <style scoped>
-/* 添加新货品弹窗美化样式 */
+/* 编辑货品弹窗美化样式 - 与添加货品弹窗样式一致 */
 .znj-add-good-modal-mask {
 	position: fixed;
 	top: 0;
@@ -901,6 +970,11 @@ export default {
 	border-color: #1976d2;
 }
 
+.znj-add-good-type-btn:disabled {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
 .znj-add-good-spec-area {
 	background: #f5f5f5;
 	border: 1px solid #e0e0e0;
@@ -997,6 +1071,11 @@ export default {
 .znj-add-good-switch-btn.active {
 	background: #1976d2;
 	color: #fff;
+}
+
+.znj-add-good-switch-btn:disabled {
+	cursor: not-allowed;
+	opacity: 0.6;
 }
 
 .znj-add-good-btn {

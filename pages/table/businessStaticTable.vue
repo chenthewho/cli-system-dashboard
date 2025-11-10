@@ -87,14 +87,14 @@
 							style="font-weight: bold; margin-left: 5rpx;margin-right: 5rpx;"></uni-icons>赊欠统计
 					</view>
 					<view class="right">
-						{{
-							tableStatic.debtMoney
-						}}
+
 					</view>
 				</view>
 				<view class="card-body">
-					<view class="grid" style="color: darkred;" ><view>待付款</view><view >0</view></view>
-					<view class="grid" style="color: green;"  ><view>还款</view><view>0</view></view>
+					<view class="grid" style="color: darkred;" ><view>赊欠</view><view >						{{
+							tableStatic.debtMoney
+						}}</view></view>
+					<view class="grid" style="color: green;"  ><view>还款</view><view>{{tableStatic.repayMoney }}</view></view>
 				</view>
 			</view>
 

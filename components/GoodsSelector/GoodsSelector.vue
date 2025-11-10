@@ -96,7 +96,7 @@
 											style="margin-top: 5rpx; font-size: 10rpx; padding-left: 2rpx;padding-right: 2rpx;color: #aa55ff;border: 1px solid #aa55ff;border-radius: 2rpx;">拆</text>
 										<text v-if="item.saleWay===4"
 											style="margin-top: 5rpx; font-size: 10rpx; padding-left: 2rpx;padding-right: 2rpx;color: #55aaff;border: 1px solid #55aaff;border-radius: 2rpx;">散</text>
-										<text v-if="item.extralModel"
+										<text v-if="item.extralModel&&item.extralModel.name"
 											style="margin-top: 5rpx;margin-left: 5rpx; font-size: 10rpx; padding-left: 2rpx;padding-right: 2rpx;color: #ff5500;border: 1px solid #ff5500;border-radius: 2rpx;">{{item.extralModel.name}}</text>
 									</div>
 									<div v-if="item.isMultiLevel==1">
@@ -112,6 +112,85 @@
 		</div>
 		<!-- 垂直线 -->
 		<div style="width: 3rpx; background-color: #ccc; "></div>
+		
+		<!-- 规格选择弹窗（拆包） -->
+		<div v-if="specPopup.visible" class="spec-popup-mask" @click="closeSpecPopup">
+			<div 
+				class="spec-popup-container" 
+				:style="specPopupStyle"
+				@click.stop
+			>
+				<div class="spec-popup-content">
+					<div 
+						v-for="(spec, index) in specPopup.specList" 
+						:key="index"
+						class="spec-item"
+						@click="handleSpecClick(spec)"
+					>
+						<!-- 商品名称 + 规格名称 -->
+						<div class="spec-item-name">
+							{{ specPopup.commodity.commodityName || specPopup.commodity.name }}-{{ spec.specName }}
+						</div>
+						
+						<!-- 商品信息区域 -->
+						<div class="spec-item-info">
+							<!-- 标签行 -->
+							<div class="spec-item-tags">
+								<span class="tag tag-unpack">拆包</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- 多规格商品选择弹窗 -->
+		<div v-if="multiLevelPopup.visible" class="multilevel-popup-mask" @click="closeMultiLevelPopup">
+			<div 
+				class="multilevel-popup-container" 
+				:style="multiLevelPopupStyle"
+				@click.stop
+			>
+				<div class="multilevel-popup-content">
+					<div 
+						v-for="(child, index) in multiLevelPopup.childrenList" 
+						:key="child.id || index"
+						:id="'multilevel-grid-item-' + child.id"
+						class="multilevel-grid-item"
+						@click="handleMultiLevelClick(child)"
+					>
+						<!-- 商品名称 -->
+						<div class="multilevel-item-name">
+							{{ child.commodityName || child.name }}
+						</div>
+						
+						<!-- 商品信息区域 -->
+						<div class="multilevel-item-info">
+							<!-- 标签行 -->
+							<div class="multilevel-item-tags">
+								<span v-if="child.saleWay==1" class="tag tag-unfixed">非定</span>
+								<span v-if="child.saleWay==2" class="tag tag-fixed">
+									定{{ child.initWeight ? child.initWeight : '' }}
+								</span>
+								<span v-if="child.saleWay==3" class="tag tag-unpack">拆包</span>
+								<span v-if="child.saleWay==4" class="tag tag-bulk">散</span>
+							</div>
+							
+							<!-- 库存信息 -->
+							<div 
+								class="multilevel-item-stock"
+								:style="!child.outPutPurchaseInventories || child.outPutPurchaseInventories.length === 0 ? { color: '#aa0000' } : {}"
+							>
+								余: 
+								<span v-for="item2 in child.outPutPurchaseInventories" :key="item2.id" class="stock-item">
+									{{ item2.mount }}{{ item2.specName }}
+								</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	</div>
 </template>
 
@@ -160,7 +239,23 @@ export default {
 			searchKeyword: '', // 搜索关键词
 			activeType: "全部", // 当前选中的分类
 			scrollHeight: 0, // 滚动区域高度
-			tabList: [] // 分类列表（带"全部"选项）
+			tabList: [], // 分类列表（带"全部"选项）
+			// 规格选择弹窗数据（拆包）
+			specPopup: {
+				visible: false,
+				left: 0,
+				top: 0,
+				commodity: null,
+				specList: []
+			},
+			// 多规格弹窗数据
+			multiLevelPopup: {
+				visible: false,
+				left: 0,
+				top: 0,
+				parentCommodity: null,
+				childrenList: []
+			}
 		}
 	},
 	computed: {
@@ -182,6 +277,22 @@ export default {
 			}
 			
 			return filteredList;
+		},
+		// 规格弹窗样式
+		specPopupStyle() {
+			return {
+				left: this.specPopup.left + 'px',
+				top: this.specPopup.top + 'px',
+				transform: 'translate(-50%, 0)'
+			};
+		},
+		// 多规格弹窗样式
+		multiLevelPopupStyle() {
+			return {
+				left: this.multiLevelPopup.left + 'px',
+				top: this.multiLevelPopup.top + 'px',
+				transform: 'translate(-50%, 0)'
+			};
 		}
 	},
 	watch: {
@@ -255,6 +366,39 @@ export default {
 		
 		// 点击商品项
 		handleItemClick(item) {
+			// 如果是多规格商品，显示多规格弹窗
+			if (item.isMultiLevel == 1) {
+				uni.createSelectorQuery().in(this).selectAll(`#grid-item-${item.id}`).boundingClientRect(data => {
+					if (data && data.length > 0) {
+						console.log("多规格商品弹窗位置:", data);
+						this.createMultiLevelView(
+							data[0].left + data[0].width / 2, 
+							data[0].top, 
+							item, 
+							item.childrenList || []
+						);
+					}
+				}).exec();
+				return;
+			}
+			
+			// 如果是拆包商品，显示规格选择弹窗
+			if (item.saleWay === 3) {
+				uni.createSelectorQuery().in(this).selectAll(`#grid-item-${item.id}`).boundingClientRect(data => {
+					if (data && data.length > 0) {
+						console.log("拆包商品弹窗位置:", data);
+						this.createNativeView(
+							data[0].left + data[0].width / 2, 
+							data[0].top, 
+							item, 
+							item.commoditySpecs || item.specList || []
+						);
+					}
+				}).exec();
+				return;
+			}
+			
+			// 其他商品直接触发点击事件
 			this.$emit('item-click', item);
 		},
 		
@@ -266,6 +410,79 @@ export default {
 		// 新增货品按钮
 		handleAddGood() {
 			this.$emit('add-good');
+		},
+		
+		// ==================== 弹窗相关方法 ====================
+		
+		// 创建规格选择弹窗（拆包）
+		createNativeView(left, top, commodity, specList) {
+			if (!specList || specList.length < 1) return;
+			
+			this.specPopup = {
+				visible: true,
+				left,
+				top,
+				commodity,
+				specList
+			};
+		},
+		
+		// 关闭规格弹窗
+		closeSpecPopup() {
+			this.specPopup.visible = false;
+			// 延迟清空数据，等动画完成
+			setTimeout(() => {
+				this.specPopup = {
+					visible: false,
+					left: 0,
+					top: 0,
+					commodity: null,
+					specList: []
+				};
+			}, 300);
+		},
+		
+		// 点击规格项
+		handleSpecClick(spec) {
+			const commodity = this.specPopup.commodity;
+			this.closeSpecPopup();
+			// 触发选择规格事件，传递商品和规格信息
+			this.$emit('spec-selected', { commodity, spec });
+		},
+		
+		// 创建多规格商品弹窗
+		createMultiLevelView(left, top, parentCommodity, childrenList) {
+			if (!childrenList || childrenList.length < 1) return;
+			
+			this.multiLevelPopup = {
+				visible: true,
+				left,
+				top,
+				parentCommodity,
+				childrenList
+			};
+		},
+		
+		// 关闭多规格弹窗
+		closeMultiLevelPopup() {
+			this.multiLevelPopup.visible = false;
+			// 延迟清空数据，等动画完成
+			setTimeout(() => {
+				this.multiLevelPopup = {
+					visible: false,
+					left: 0,
+					top: 0,
+					parentCommodity: null,
+					childrenList: []
+				};
+			}, 300);
+		},
+		
+		// 点击多规格商品项
+		handleMultiLevelClick(childCommodity) {
+			this.closeMultiLevelPopup();
+			// 触发选择子商品事件
+			this.$emit('multilevel-selected', childCommodity);
 		}
 	}
 }
@@ -353,6 +570,237 @@ export default {
 
 .activeCard {
 	border: 3px solid #007AFF;
+}
+
+/* ==================== 弹窗样式 ==================== */
+
+/* 规格选择弹窗样式（拆包） */
+.spec-popup-mask {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.3);
+	z-index: 9998;
+	animation: fadeIn 0.2s ease-out;
+}
+
+.spec-popup-container {
+	position: fixed;
+	min-width: 250px;
+	max-width: 500px;
+	background-color: #ffffff;
+	border: 3px solid #00aaff;
+	border-radius: 10px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+	z-index: 9999;
+	animation: scaleIn 0.2s ease-out;
+	display: flex;
+	flex-direction: column;
+}
+
+.spec-popup-content {
+	padding: 5px;
+	overflow-y: auto;
+	max-height: 450px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.spec-item {
+	min-height: 70px;
+	padding: 12px;
+	border: 3px solid #7e7e7e;
+	border-radius: 8px;
+	background: #ffffff;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.spec-item:hover {
+	border-color: #00aaff;
+	background: linear-gradient(135deg, rgba(0, 170, 255, 0.05) 0%, rgba(0, 136, 204, 0.05) 100%);
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
+}
+
+.spec-item:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 6px rgba(0, 170, 255, 0.3);
+}
+
+.spec-item-name {
+	font-size: 18rpx;
+	font-weight: bold;
+	color: #333;
+	line-height: 1.4;
+	word-break: break-all;
+}
+
+.spec-item-info {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.spec-item-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+/* 多规格弹窗样式 */
+.multilevel-popup-mask {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.3);
+	z-index: 9998;
+	animation: fadeIn 0.2s ease-out;
+}
+
+.multilevel-popup-container {
+	position: fixed;
+	min-width: 250px;
+	max-width: 500px;
+	background-color: #ffffff;
+	border: 3px solid #00aaff;
+	border-radius: 10px;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+	z-index: 9999;
+	animation: scaleIn 0.2s ease-out;
+	display: flex;
+	flex-direction: column;
+}
+
+.multilevel-popup-content {
+	padding: 5px;
+	overflow-y: auto;
+	max-height: 450px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.multilevel-grid-item {
+	min-height: 70px;
+	padding: 12px;
+	border: 3px solid #7e7e7e;
+	border-radius: 8px;
+	background: #ffffff;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.multilevel-grid-item:hover {
+	border-color: #00aaff;
+	background: #f0f9ff;
+	box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
+	transform: translateX(5px);
+}
+
+.multilevel-grid-item:active {
+	transform: translateX(5px) scale(0.98);
+	background: #e6f7ff;
+}
+
+.multilevel-item-name {
+	font-size: 18rpx;
+	font-weight: bold;
+	color: #333;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.multilevel-item-info {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.multilevel-item-tags {
+	display: flex;
+	gap: 6px;
+	flex-wrap: wrap;
+}
+
+.multilevel-item-stock {
+	font-size: 14px;
+	color: #666;
+	display: flex;
+	gap: 4px;
+	flex-wrap: wrap;
+}
+
+.stock-item {
+	color: #333;
+}
+
+/* 标签通用样式 */
+.tag {
+	display: inline-block;
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-size: 12px;
+	font-weight: 500;
+	border: 1px solid;
+	line-height: 1.2;
+}
+
+.tag-unfixed {
+	color: #00aa00;
+	border-color: #00aa00;
+	background-color: rgba(0, 170, 0, 0.1);
+}
+
+.tag-fixed {
+	color: #55aaff;
+	border-color: #55aaff;
+	background-color: rgba(85, 170, 255, 0.1);
+}
+
+.tag-unpack {
+	color: #dc9300;
+	border-color: #dc9300;
+	background-color: rgba(220, 147, 0, 0.1);
+}
+
+.tag-bulk {
+	color: #55aaff;
+	border-color: #55aaff;
+	background-color: rgba(85, 170, 255, 0.1);
+}
+
+/* 动画 */
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes scaleIn {
+	from {
+		opacity: 0;
+		transform: translate(-50%, 0) scale(0.8);
+	}
+	to {
+		opacity: 1;
+		transform: translate(-50%, 0) scale(1);
+	}
 }
 </style>
 

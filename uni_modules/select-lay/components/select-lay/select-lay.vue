@@ -122,12 +122,12 @@
 			// 新增：标签文字内容
 			labelText: {
 				type: String,
-				default: '押筐项'
+				default: '附加'
 			},
 			// 新增：标签背景颜色
 			labelColor: {
 				type: String,
-				default: '#1890ff'
+				default: '#8c8c8c'
 			}
 		},
 		data() {
@@ -308,6 +308,9 @@
 		display: flex;
 		justify-content: center;
 		align-items: center;
+		border-radius: 4rpx;
+		border-bottom-right-radius: 0;
+		border-top-right-radius: 0;
 	}
 
 		.uni-select-input {

@@ -12,6 +12,8 @@
 				@back="back"
 				@add-good="showAddNewGood=true"
 				@item-click="addCommodity"
+				@multilevel-selected="handleMultiLevelSelected"
+				@spec-selected="handleSpecSelected"
 				@search="handleSearch"
 				@category-change="changeTab"
 			></GoodsSelector>
@@ -800,15 +802,16 @@ showKeyBorad(index, type) {
 		return;
 	}
 	
-	this.$nextTick(() => {
-		// 确保赋值和 view 的 id 一致
-		this.scrollIntoView = `id-${this.currentNumber}-view`
-	})
 	this.valueType = type;
 	this.editingIndex = index;
 	this.showKeyBoard1 = true;
 	// 键盘高度调整为200rpx
 	this.scrollHeight2 = this.windowHeight - 210 - 200 + 'px';
+	
+	// 设置滚动目标，使选中的行滚动到可视区域
+	this.$nextTick(() => {
+		this.targetId = `id-${index}-view`;
+	});
 },
 	hideBorad() {
 		this.scrollHeight2 = this.windowHeight - 150 + 'px';
@@ -1005,7 +1008,7 @@ showKeyBorad(index, type) {
 				incomingPrice: e.incomingPrice ? e.incomingPrice : 0,
 				inboundAmount: 0
 			}
-			if (e.commoditySpecs.length > 0) {
+			if (e.commoditySpecs && e.commoditySpecs.length > 0) {
 				commodityAdded.spec = e.commoditySpecs[0]
 			}
 			this.BatchCommodityList.push(commodityAdded)
@@ -1103,6 +1106,16 @@ showKeyBorad(index, type) {
 		this.closeMultiLevelPopup();
 		// 直接使用子商品自身的数据
 		this.addCommodity(childCommodity);
+	},
+	// 处理多等级商品选择（来自GoodsSelector组件）
+	handleMultiLevelSelected(childCommodity) {
+		// 直接调用addCommodity处理子商品
+		this.addCommodity(childCommodity);
+	},
+	// 处理拆包商品规格选择（来自GoodsSelector组件）
+	handleSpecSelected(data) {
+		// data包含 { commodity, spec }
+		this.addCommodity2(data.commodity, data.spec);
 	},
 	
 	// 创建原生视图用于选择规格（仅APP-PLUS环境）

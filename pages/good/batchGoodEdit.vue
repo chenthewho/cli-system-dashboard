@@ -544,23 +544,24 @@
 					}
 				});
 			},
-		showKeyBorad(index, type) {
-			// 如果是编辑入库重量(type===2)且saleWay===3，不允许编辑
-			const item = this.BatchCommodityList[index];
-			if (type === 2 && item && item.saleWay === 3) {
-				return;
-			}
-			
-			this.$nextTick(() => {
-				// 确保赋值和 view 的 id 一致
-				this.scrollIntoView = `id-${this.currentNumber}-view`
-			})
-			this.valueType = type;
-			this.editingIndex = index;
-			this.showKeyBoard1 = true;
-			// 键盘高度调整为200rpx
-			this.scrollHeight2 = this.windowHeight - 210 - 200 + 'px';
-		},
+	showKeyBorad(index, type) {
+		// 如果是编辑入库重量(type===2)且saleWay===3，不允许编辑
+		const item = this.BatchCommodityList[index];
+		if (type === 2 && item && item.saleWay === 3) {
+			return;
+		}
+		
+		this.valueType = type;
+		this.editingIndex = index;
+		this.showKeyBoard1 = true;
+		// 键盘高度调整为200rpx
+		this.scrollHeight2 = this.windowHeight - 210 - 200 + 'px';
+		
+		// 设置滚动目标，使选中的行滚动到可视区域
+		this.$nextTick(() => {
+			this.targetId = `id-${index}-view`;
+		});
+	},
 			hideBorad() {
 				this.scrollHeight2 = this.windowHeight - 150 + 'px';
 				this.showKeyBoard1 = false;

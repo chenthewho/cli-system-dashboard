@@ -12,15 +12,15 @@
 				@back="back"
 				@item-click="getCommodityCorrection"
 			></GoodsSelector>
-			<div style="flex: 1; background-color: #ffffff; text-align: right;">
-				<div
-					style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx; display: flex; justify-content: space-between; align-items: center;">
+		<div style="flex: 1; background-color: #ffffff; text-align: right; position: relative;">
+			<div
+				style="height: 40rpx; margin-left: 5rpx;margin-right: 5rpx; display: flex; justify-content: space-between; align-items: center;">
+				<div style="font-size: 15rpx; font-weight: bold;">
 					<div style="font-size: 15rpx; font-weight: bold;">
-						<div style="font-size: 15rpx; font-weight: bold;">
-						</div>
 					</div>
 				</div>
-				<div :style="{marginLeft: '5rpx',marginRight: '5rpx', height: (windowHeight-60)+'px'}">
+			</div>
+			<div :style="{marginLeft: '5rpx',marginRight: '5rpx', height: (windowHeight-60)+'px', position: 'relative'}">
 					<!-- 表头 -->
 					<div class="table-header">
 						<div style="flex: 3; padding: 10px; text-align: left;">
@@ -34,20 +34,20 @@
 						</div>
 					</div>
 
-					<scroll-view class="scrollArea" scroll-y="true" :style="{height:scrollHeight2}"
-						:scroll-into-view="targetId">
-						<div style="display: flex; height: 45rpx; font-size: 18rpx;" v-for="(item, index) in correctionCommodityList"
-							:id="'id-' + index + '-view'" :key="index"
-							:style="{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#f0f0f0' }">
+				<scroll-view class="scrollArea" scroll-y="true" :style="{height:scrollHeight2}"
+					:scroll-into-view="targetId">
+					<div style="display: flex; min-height: 45rpx; font-size: 18rpx;" v-for="(item, index) in correctionCommodityList"
+						:id="'id-' + index + '-view'" :key="index"
+						:style="{ backgroundColor: index % 2 === 0 ? '#ffffff' : '#f0f0f0' }">
 							<div
 								style="flex: 3; padding: 8px; text-align: left; font-weight: bold; line-height: 35rpx;">
 								{{ item.correctCommodityName }}
 							</div>
-							<div style="flex: 2; padding: 8px; text-align: left; display: flex; align-items: center; justify-content: center; gap: 5rpx;">
-								<div style="flex: 1;line-height: 25rpx;display: flex;flex-wrap: wrap;gap: 3rpx;" v-for="inventory in item.correctionList">
-									<text style="font-size: 14px; color: #666; font-weight: 500;">{{inventory.mount+"("+inventory.specName+")"}}|</text>
-								</div>
-							</div>
+				<div style="flex: 2; padding: 8px; text-align: center; display: flex; align-items: center; justify-content: center;">
+					<input @click="showKeyBorad(index)" inputmode="none" 
+						:class="['input1', { 'input-active': editingIndex === index }]"
+						v-model="item.correctMount" />
+				</div>
 							<div
 								style="width: 40rpx; padding: 8px; border-right: 1px solid #f4f4f4; text-align: center; line-height: 35rpx; display: flex; align-items: center; justify-content: center;">
 								<uni-icons custom-prefix="iconfont" type="icon-shanchu" size="24"
@@ -65,49 +65,16 @@
 
 							</div>
 						</div>
-					</scroll-view>
-					<!--键盘-->
-					<div v-if="showKeyBoard1">
-						<view class="mybrankmask"
-							:style="{ width: '450rpx', height: '200rpx', backgroundColor: '#ffffff', zIndex: 999, left: 0, bottom: 0, boxShadow: '0 -4rpx 20rpx rgba(0,0,0,0.15)' }">
-							<view style="padding: 8rpx;">
-								<view class="MymaskList">
-									<view class="maskListItem" @click="NumberCk(1)">1</view>
-									<view class="maskListItem" @click="NumberCk(2)">2</view>
-									<view class="maskListItem" @click="NumberCk(3)">3</view>
-									<view class="maskListItem " @click="Tuige()"><uni-icons custom-prefix="iconfont"
-											type="icon-tuige" size="35" color="#ffffff"
-											style="margin-right: 5rpx;"></uni-icons>
-									</view>
-
-								</view>
-								<view class="MymaskList">
-									<view class="maskListItem" @click="NumberCk(4)">4</view>
-									<view class="maskListItem" @click="NumberCk(5)">5</view>
-									<view class="maskListItem" @click="NumberCk(6)">6</view>
-
-									<view class="maskListItem" @click="NumberCk('+')"
-										style="font-size: 35rpx;color: white;">
-										+</view>
-								</view>
-								<view class="MymaskList">
-									<view class="maskListItem" @click="NumberCk(7)">7</view>
-									<view class="maskListItem" @click="NumberCk(8)">8</view>
-									<view class="maskListItem" @click="NumberCk(9)">9</view>
-									<view class="maskListItem" @click="NumberCk('-')"
-										style="font-size: 35rpx;color: white;">
-										-</view>
-								</view>
-								<view class="MymaskList">
-									<view class="maskListItem" @click="NumberCk(0)" style="width: 48%;">0</view>
-									<view class="maskListItem" @click="NumberCk('.')">.</view>
-									<view class="maskListItem confirm-btn"
-										@click="hideBorad">确定
-									</view>
-								</view>
-							</view>
-						</view>
-					</div>
+				</scroll-view>
+				<!--键盘-->
+				<NumericKeyboard 
+					:show="showKeyBoard1" 
+					:value="getCurrentValue()"
+					:container-position="true"
+					@input="handleKeyboardInput"
+					@delete="handleKeyboardDelete"
+					@confirm="hideBorad"
+				/>
 				</div>
 
 				<div style="position: fixed;bottom: 0;height: 30rpx;background: #ffffff;width: 100%;"
@@ -159,10 +126,12 @@
 	import purchase from '../../../api/purchase/purchase';
 	import correctionApi from '../../../api/correction/correctionApi';
 	import GoodsSelector from '../../../components/GoodsSelector/GoodsSelector.vue'
+	import NumericKeyboard from '../../../components/NumericKeyboard/NumericKeyboard.vue'
 	
 	export default {
 		components: {
-			GoodsSelector
+			GoodsSelector,
+			NumericKeyboard
 		},
 		data() {
 			return {
@@ -173,10 +142,10 @@
 				valueType: 1,
 				windowWidth: 0,
 				windowHeight: 0,
-				scrollHeight2: '0px',
-				currentClassId: '',
-				editingIndex: -1,
-				userInfo: null,
+			scrollHeight2: '0px',
+			currentClassId: '',
+			editingIndex: -1,
+			userInfo: null,
 				showKeyBoard1: false,
 				correctionCommodityList: [],
 				targetId: "id-0-view",
@@ -234,61 +203,73 @@
 			this.initSystem();
 		},
 		methods: {
-			totalInitInventory() {
-				return this.correctionCommodityList.reduce((total, item) => {
-					return total + (parseFloat(item.initInventory) || 0);
-				}, 0);
-			},
+	totalInitInventory() {
+		return this.correctionCommodityList.reduce((total, item) => {
+			return total + (parseFloat(item.correctMount) || 0);
+		}, 0);
+	},
 			totalInitWeight() {
 				return this.correctionCommodityList.reduce((total, item) => {
 					return total + (parseFloat(item.totalWeight) || 0);
 				}, 0);
 			},
-			getCommdityActive(id) {
-				return this.correctionCommodityList.some(x => x.commodityId === id);
-			},
-			NumberCk(val) {
-				let myvalue = "";
-				switch (this.valueType) {
-					case 1:
-						myvalue = this.correctionCommodityList[this.editingIndex].mount;
-						break;
-				}
-				if (val == '.') {
-					if (myvalue.toString().indexOf('.') >= 0) {
-						return;
-					}
-				}
-				var txt = myvalue == null || myvalue == 0 || myvalue == undefined ? '' : myvalue;
-				myvalue = txt + val.toString();
-				switch (this.valueType) {
-					case 1:
-						this.correctionCommodityList[this.editingIndex].mount = myvalue;
-						break;
-				}
-			},
-			Tuige() {
-				let myvalue = "";
-				switch (this.valueType) {
-					case 1:
-						myvalue = this.correctionCommodityList[this.editingIndex].mount;
-						break;
-				}
-				if (myvalue == null || myvalue === '' || myvalue.toString() === '0') {
-					return;
-				}
-				myvalue = myvalue ? myvalue.toString() : '';
-				if(myvalue.length == 1){
-					myvalue = "0";
-				}else{
-					myvalue = myvalue.slice(0, -1);
-				}
-				switch (this.valueType) {
-					case 1:
-						this.correctionCommodityList[this.editingIndex].mount = myvalue;
-						break;
-				}
-			},
+		getCommdityActive(id) {
+			return this.correctionCommodityList.some(x => x.commodityId === id);
+		},
+	// 获取当前编辑的值
+	getCurrentValue() {
+		if (this.editingIndex === -1) return '';
+		const item = this.correctionCommodityList[this.editingIndex];
+		return item ? (item.correctMount || '') : '';
+	},
+	// 处理键盘输入
+	handleKeyboardInput(val) {
+		if (this.editingIndex === -1) return;
+		
+		let myvalue = this.getCurrentValue();
+		
+		// 如果是+/-，先计算表达式
+		if (val === '+' || val === '-') {
+			try {
+				myvalue = eval(myvalue.toString());
+			} catch (e) {
+				myvalue = parseFloat(myvalue) || 0;
+			}
+		}
+		
+		// 拼接新值
+		var txt = myvalue == null || myvalue == 0 || myvalue == undefined ? '' : myvalue;
+		myvalue = txt + val.toString();
+		
+		// 更新值
+		const item = this.correctionCommodityList[this.editingIndex];
+		if (item) {
+			item.correctMount = myvalue;
+		}
+	},
+	// 处理键盘删除
+	handleKeyboardDelete() {
+		if (this.editingIndex === -1) return;
+		
+		let myvalue = this.getCurrentValue();
+		
+		if (myvalue == null || myvalue === '' || myvalue.toString() === '0') {
+			return;
+		}
+		
+		myvalue = myvalue ? myvalue.toString() : '';
+		if(myvalue.length == 1){
+			myvalue = "0";
+		} else {
+			myvalue = myvalue.slice(0, -1);
+		}
+		
+		// 更新值
+		const item = this.correctionCommodityList[this.editingIndex];
+		if (item) {
+			item.correctMount = myvalue;
+		}
+	},
 			initSystem() {
 				let that = this;
 				uni.getSystemInfo({
@@ -299,24 +280,23 @@
 					}
 				});
 			},
-			showKeyBorad(index, type) {
-				this.$nextTick(() => {
-					// 确保赋值和 view 的 id 一致
-					this.scrollIntoView = `id-${this.currentNumber}-view`
-				})
-				this.valueType = type;
-				this.editingIndex = index;
-				this.showKeyBoard1 = true;
-				// 键盘高度调整为200rpx
-				this.scrollHeight2 = this.windowHeight - 210 - 200 + 'px';
-			},
-			hideBorad() {
-				this.scrollHeight2 = this.windowHeight - 150 + 'px';
-				this.showKeyBoard1 = false;
-				// 清除激活状态
-				this.editingIndex = -1;
-				this.valueType = 0;
-			},
+	showKeyBorad(index) {
+		this.editingIndex = index;
+		this.showKeyBoard1 = true;
+		// 键盘高度调整为200rpx
+		this.scrollHeight2 = this.windowHeight - 210 - 200 + 'px';
+		
+		// 设置滚动目标，使选中的行滚动到可视区域
+		this.$nextTick(() => {
+			this.targetId = `id-${index}-view`;
+		});
+	},
+	hideBorad() {
+		this.scrollHeight2 = this.windowHeight - 150 + 'px';
+		this.showKeyBoard1 = false;
+		// 清除激活状态
+		this.editingIndex = -1;
+	},
 			createCorrection() {
 				let that = this;
 				that.showComfirmBtn = false;
@@ -511,55 +491,6 @@
 		border-color: #1976d2;
 		box-shadow: 0 0 0 3rpx rgba(33, 150, 243, 0.2);
 		background: #ffffff;
-	}
-
-	.mybrankmask .MymaskList {
-		font-weight: bold;
-		display: flex;
-		width: 100%;
-		height: 42rpx;
-		justify-content: space-around;
-		margin-bottom: 6rpx;
-		font-size: 26rpx;
-	}
-
-	.mybrankmask .MymaskList .large {
-		font-weight: bold;
-		height: 42rpx;
-		line-height: 42rpx;
-		z-index: 5;
-		font-size: 26rpx;
-	}
-
-	.mybrankmask .MymaskList .maskListItem {
-		font-weight: bold;
-		width: 23%;
-		height: 42rpx;
-		text-align: center;
-		line-height: 42rpx;
-		border-radius: 8rpx;
-		background: #5a5a5a;
-		font-size: 26rpx;
-		color: white;
-		transition: all 0.15s;
-		box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
-	}
-	
-	.mybrankmask .MymaskList .maskListItem:active {
-		opacity: 0.8;
-		transform: scale(0.96);
-		background: #4a4a4a;
-		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.3);
-	}
-	
-	.mybrankmask .MymaskList .confirm-btn {
-		background: #11998e;
-		font-weight: bold;
-	}
-	
-	.mybrankmask .MymaskList .confirm-btn:active {
-		opacity: 0.8;
-		background: #0d7a6f;
 	}
 
 	.total-content {
