@@ -23,78 +23,81 @@
         </view>
       </view>
       <!-- 商品列表 -->
-       <div style="display: flex;">
-        <scroll-view scroll-y="true">
-        <div v-if="isLoading" class="loading-container">
-          <div class="loading-spinner">
-            <div class="spinner"></div>
-            <div class="loading-text">正在加载商品...</div>
+      <div style="display: flex">
+        <scroll-view scroll-y="true" class="goods-scroll-view">
+          <div v-if="isLoading" class="loading-container">
+            <div class="loading-spinner">
+              <div class="spinner"></div>
+              <div class="loading-text">正在加载商品...</div>
+            </div>
           </div>
-        </div>
-        <view v-else class="good-content">
-          <div class="good-list">
-            <div
-              v-for="item in rows"
-              :key="item.key"
-              :id="'grid-item-'+item.id"
-              :class="['good-item', isItemActive(item) ? 'good-item-act' : null]"
-              @click="handleItemClick(item, item.id)"
-              :style="
-                !item.outPutPurchaseInventories || item.outPutPurchaseInventories.length === 0
-                  ? { color: '#aa0000' }
-                  : {}
-              "
-            >
+          <view v-else class="good-content">
+            <div class="good-list">
               <div
-                style="
-                  text-align: left;
-                  font-weight: bold;
-                  font-size: 24px;
-                  line-height: 1.2;
-                  margin-bottom: 2rpx;
-                  height: 30px;
+                v-for="item in rows"
+                :key="item.key"
+                :id="'grid-item-' + item.id"
+                :class="['good-item', isItemActive(item) ? 'good-item-act' : null]"
+                @click="handleItemClick(item, item.id)"
+                :style="
+                  !item.outPutPurchaseInventories || item.outPutPurchaseInventories.length === 0
+                    ? { color: '#aa0000' }
+                    : {}
                 "
               >
-                {{ item.name }}
-              </div>
-              <div>
-                <div class="commodity-tags">
-                  <span v-if="commodityType === 1" class="tag tag-consignment">代卖</span>
-                  <span v-if="commodityType === 2" class="tag tag-self">自营</span>
-                  <span v-if="item.isMultiLevel == 0">
-                    <span v-if="item.saleWay == 1" class="tag tag-unfixed">非定</span>
-                    <span v-if="item.saleWay == 2" class="tag tag-fixed"
-                      >定{{ item.initWeight ? item.initWeight : '' }}</span
-                    >
-                    <span v-if="item.saleWay == 3" class="tag tag-unpack">拆包</span>
-                    <span v-if="item.saleWay == 4" class="tag tag-bulk">散</span>
-                  </span>
-                  <span v-if="item.isMultiLevel == 1" class="tag tag-multi">多规格</span>
+                <div
+                  style="
+                    text-align: left;
+                    font-weight: bold;
+                    font-size: 24px;
+                    line-height: 1.2;
+                    margin-bottom: 2rpx;
+                    height: 30px;
+                  "
+                >
+                  {{ item.name }}
                 </div>
-                <div class="inventory-info" v-if="item.isMultiLevel == 0">
-                  <span class="inventory-label">余:</span>
-                  <span v-for="(item2, idx) in item.outPutPurchaseInventories" :key="idx" class="inventory-item"
-                    >{{ item2.mount }}{{ item2.specName }}</span
-                  >
+                <div>
+                  <div class="commodity-tags">
+                    <span v-if="commodityType === 1" class="tag tag-consignment">代卖</span>
+                    <span v-if="commodityType === 2" class="tag tag-self">自营</span>
+                    <span v-if="item.isMultiLevel == 0">
+                      <span v-if="item.saleWay == 1" class="tag tag-unfixed">非定</span>
+                      <span v-if="item.saleWay == 2" class="tag tag-fixed"
+                        >定{{ item.initWeight ? item.initWeight : '' }}</span
+                      >
+                      <span v-if="item.saleWay == 3" class="tag tag-unpack">拆包</span>
+                      <span v-if="item.saleWay == 4" class="tag tag-bulk">散</span>
+                    </span>
+                    <span v-if="item.isMultiLevel == 1" class="tag tag-multi">多规格</span>
+                    <span v-if="item.extralModel && item.extralModel.name" class="tag tag-extra">{{
+                      item.extralModel.name
+                    }}</span>
+                  </div>
+                  <div class="inventory-info" v-if="item.isMultiLevel == 0">
+                    <span class="inventory-label">余:</span>
+                    <span v-for="(item2, idx) in item.outPutPurchaseInventories" :key="idx" class="inventory-item"
+                      >{{ item2.mount }}{{ item2.specName }}</span
+                    >
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </view>
-      </scroll-view>
-      <!--模糊查询字体列(词云列)-->
-      <scroll-view scroll-y="true" v-if="rows.length > 0" class="quick-search-tab">
-            <view
-              class="key-word"
-              :class="{ 'key-word-active': currentKeyWord === item }"
-              v-for="(item, index) in keyWordList"
-              :key="index"
-              @click="handleKeyWordClick(item)"
-            >
-              <span v-for="char in item" :key="char">{{ char }}</span>
-            </view>
-          </scroll-view>
-       </div>
+          </view>
+        </scroll-view>
+        <!--模糊查询字体列(词云列)-->
+        <scroll-view scroll-y="true" v-if="rows.length > 0" class="quick-search-tab">
+          <view
+            class="key-word"
+            :class="{ 'key-word-active': currentKeyWord === item }"
+            v-for="(item, index) in keyWordList"
+            :key="index"
+            @click="handleKeyWordClick(item)"
+          >
+            <span v-for="char in item" :key="char">{{ char }}</span>
+          </view>
+        </scroll-view>
+      </div>
     </view>
   </div>
 </template>
@@ -228,11 +231,11 @@ export default {
 
       // 统计商品首字（中文）频率
       const firstCharFrequency = {}
-      
+
       for (let i = 0; i < goodsList.length; i++) {
         const name = goodsList[i].name
         if (!name || name.length === 0) continue
-        
+
         // 找到第一个中文字符
         for (let j = 0; j < name.length; j++) {
           const char = name[j]
@@ -331,11 +334,11 @@ export default {
       if (key === '全') {
         this.rows = []
         this.rows = [...this.commidityList].sort((a, b) => b.inventory - a.inventory)
-      
       } else {
         const filteredList = this.commidityList.filter(x => x.name.includes(key))
         this.rows = []
         this.rows = filteredList.sort((a, b) => b.inventory - a.inventory)
+        console.log('this.rows', this.rows)
       }
     },
 
@@ -745,50 +748,53 @@ export default {
         position: relative;
       }
     }
-		.good-content {
-			display: flex;
-			margin-top: 4rpx;
+    .good-content {
+      display: flex;
+      margin-top: 4rpx;
       height: calc(100vh - 70rpx);
-			.good-list {
-				display: flex;
-				justify-content: space-between;
-				align-items: flex-start;
-				align-content: flex-start;
-				flex-wrap: wrap;
-				width: 244rpx;
-				.good-item {
-					display: flex;
-					flex-direction: column;
-					width: 108rpx;
-					height: 50rpx;
-					padding: 5rpx;
-					border-radius: 4rpx;
-					background: #ffffff;
-					transition: all 0.2s ease;
-					margin-bottom: 5rpx;
-					overflow: hidden;
-					box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-					border: 2px solid transparent;
-				}
-				.good-item-act {
-					border-color: #00aaff;
-					background: #c9eafc;
-					box-shadow: 0 4px 12px rgba(0, 170, 255, 0.3);
-				}
-			}
-		}
+      .good-list {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        align-content: flex-start;
+        flex-wrap: wrap;
+        width: 244rpx;
+        .good-item {
+          display: flex;
+          flex-direction: column;
+          width: 108rpx;
+          height: 50rpx;
+          padding: 5rpx;
+          border-radius: 4rpx;
+          background: #ffffff;
+          transition: all 0.2s ease;
+          margin-bottom: 5rpx;
+          overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          border: 2px solid transparent;
+        }
+        .good-item-act {
+          border-color: #00aaff;
+          background: #c9eafc;
+          box-shadow: 0 4px 12px rgba(0, 170, 255, 0.3);
+        }
+      }
+    }
     .quick-search-tab {
-				margin-left: auto;
-				position: relative;
-				width: 30rpx;
-				border-radius: 6rpx;
-				background-color: #ffffff;
-        margin-top: 4rpx;
-				.key-word {}
-				.key-word:last-child {
-					border: none;
-				}
-			}
+      height: calc(100vh - 70rpx);
+      overflow-y: auto;
+      margin-left: auto;
+      position: relative;
+      width: 30rpx;
+      border-radius: 6rpx;
+      background-color: #ffffff;
+      margin-top: 4rpx;
+      .key-word {
+      }
+      .key-word:last-child {
+        border: none;
+      }
+    }
   }
 }
 /* 垂直标签栏 */
@@ -913,6 +919,11 @@ export default {
   color: red;
   border-color: red;
   background-color: rgba(255, 0, 0, 0.1);
+}
+.tag-extra {
+  color: #ee6018;
+  border-color: #ee6018;
+  background-color: rgba(255, 85, 0, 0.1);
 }
 
 /* 库存信息样式 */

@@ -247,7 +247,7 @@
 				if (this.changevalue == '') {
 					this.changes = false;
 					return;
-				};
+				}
 				if (this.oldvalue == this.changevalue) {
 					return;
 				}
@@ -495,6 +495,7 @@
 			top: calc(100% + 5px);
 			left: 0;
 			width: 100%;
+			max-height: 120rpx;
 			
 			// overflow-y: auto;
 			border-radius: 4px;
@@ -518,7 +519,7 @@
 				font-size: 15px;
 
 			&.active {
-				background: #1890ff;
+				background: $zn-main-purple-color;
 				color: #fff;
 
 				&:hover {

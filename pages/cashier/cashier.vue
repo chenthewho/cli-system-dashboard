@@ -40,12 +40,12 @@
                         {{ customerBtn.name }}
                         <text
                           v-if="customerBtn.goodsCount > 0"
-                          class="customer-btn-count"
+                          :class="!customerBtn.isActive ? 'customer-btn-count-active' : 'customer-btn-count'"
                           >|{{ customerBtn.goodsCount }}件</text
                         >
                       </div>
                       <div @click.stop="deleteCustomerByIndex(index)" class="customer-btn-remove">
-                        <uni-icons type="close" size="18" color="#ffffff" class="customer-btn-remove-icon"></uni-icons>
+                        <uni-icons type="close" size="18" :color="!customerBtn.isActive ? '#000000' : '#ffffff'" class="customer-btn-remove-icon"></uni-icons>
                       </div>
                     </div>
 
@@ -643,7 +643,8 @@ export default {
       const hasDebt = debts > 0
 
       return {
-        background: hasDebt ? '#ff4d4f' : isActive ? '#3e79f3' : '#8c8c8cad',
+        background: hasDebt ? '#ff4d4f' : isActive ? '#3e79f3' : '#5dcdfd43',
+        color: isActive ? '#ffffff' : '#000000',
       }
     },
     smartRoundButtonText() {
@@ -828,7 +829,8 @@ export default {
         boxShadow: isActive
           ? '0 3px 10px rgba(56, 158, 13, 0.3)'
           : '0 2px 6px rgba(0, 0, 0, 0.1)',
-        background: isActive ? '#3e79f3' : '#8c8c8cad',
+        background: isActive ? '#3e79f3' : '#5dcdfd43',
+        color: isActive ? '#ffffff' : '#000000',
       }
     },
     // 切换到管理页面（订单）
@@ -4824,15 +4826,15 @@ export default {
 .success-modal-actions {
   display: flex;
   align-items: center;
-  gap: 50px;
+  gap: 30px;
 }
 
 .success-modal-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 18rpx;
   height: 32rpx;
+  width: 72rpx;
   border: none;
   border-radius: 6rpx;
   font-weight: bold;
@@ -4846,15 +4848,15 @@ export default {
 }
 
 .success-modal-btn--print {
-  background-color: orange;
+  background-color: $zn-main-act-color;
 }
 
 .success-modal-btn--share {
-  background-color: dodgerblue;
+  background-color: $zn-theme-color;
 }
 
 .success-modal-btn--continue {
-  background-color: green;
+  background-color: $zn-main-purple-color;
 }
 
 .success-modal-icon {
@@ -5285,6 +5287,11 @@ export default {
     font-size: 11px;
     display: flex;
     color: #ffffff;
+  }
+  .customer-btn-count-active {
+    font-size: 11px;
+    display: flex;
+    color: #000;
   }
 
   // 删除按钮

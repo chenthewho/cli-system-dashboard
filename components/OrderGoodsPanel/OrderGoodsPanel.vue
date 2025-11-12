@@ -3,6 +3,7 @@
 		<div class="table-wrapper">
 			<uni-table ref="table" class="my-table" :loading="loading" stripe emptyText="暂无物品,请添加商品到购物车" @selection-change="selectionChange" >
 					<uni-tr>
+						<uni-th  width="40" align="center"></uni-th>
 						<uni-th  align="center">名称</uni-th>
 						<uni-th  align="center">数量</uni-th>
 						<uni-th  align="center">单价</uni-th>
@@ -10,6 +11,11 @@
 						<uni-th width="50" align="center"></uni-th>
 					</uni-tr>
 				<uni-tr v-for="(item, index) in goodsList" :key="index">
+					<uni-td align="center">
+						<view class="table-body-text" @click="handleItemClick(item, index)" >
+							{{ index + 1 }}
+						</view>
+					</uni-td>
 					<uni-td align="center">
 						<div class="table-cell cell-name" @click="handleItemClick(item, index)">
 						<span class="name-text">{{ item.skuName }}</span>

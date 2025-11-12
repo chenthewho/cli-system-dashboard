@@ -283,7 +283,7 @@ export default {
     card: {
       handler(newVal) {
         this.editingCard = JSON.parse(JSON.stringify(newVal))
-        if (this.editingCard.saleWay === 1 || this.editingCard.saleWay === 4) {
+        if (this.editingCard.saleWay === 4) {
           // 非定装和散装：默认聚焦总重（index 3）
           this.custominputFocusedMethod(3)
         } else {
