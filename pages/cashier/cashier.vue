@@ -404,7 +404,7 @@
           <div class="multilevel-popup-content">
             <div v-for="(child, index) in multiLevelPopup.childrenList" :key="child.id || index"
               :id="'multilevel-grid-item-' + child.id" class="multilevel-grid-item"
-              @click="handleMultiLevelClick(child)">
+              @click="handleMultiLevelClick(child, multiLevelPopup)">
               <!-- 商品名称 -->
               <div class="multilevel-item-name">
                 {{ child.commodityName || child.name }}
@@ -2986,11 +2986,11 @@ export default {
       }, 300)
     },
     // 点击分级商品项
-    handleMultiLevelClick(childCommodity) {
+    handleMultiLevelClick(childCommodity, parentCommodity) {
       // 处理分级商品的点击逻辑，类似普通商品
       this.closeMultiLevelPopup()
       // 调用 handleClick 处理选中的子商品
-      this.handleClick(childCommodity, childCommodity.id)
+      this.handleClick({...childCommodity, parentName: parentCommodity.parentCommodity.name}, childCommodity.id)
     },
     handleClick(e, id) {
       //如果在step2状态下点击新货品，先移除未确定的货品
@@ -3015,7 +3015,7 @@ export default {
       if (e.saleWay === 1 || e.saleWay === 2 || e.saleWay === 4) {
         this.goodSelect.push({
           key: this.goodSelectKeyCounter++,
-          skuName: e.name, //货品名称
+          skuName: e.parentName ? e.parentName + '-' + e.name : e.name, //货品名称
           referenceAmount: e.price, //单价
           stockType: e.stockType, //库存类型
           quantity: 0,
@@ -3060,7 +3060,7 @@ export default {
 
       this.goodSelect.push({
         key: this.goodSelectKeyCounter++,
-        skuName: e.name,
+        skuName: e.name + '-' + spec.specName,
         referenceAmount: e.price,
         stockType: e.stockType,
         quantity: 0,
