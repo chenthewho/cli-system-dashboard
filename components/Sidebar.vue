@@ -333,14 +333,14 @@ export default {
 		position: relative;
 		display: flex;
 		justify-content: center;
-		top: 20px;
+		top: 10px;
     width: 40rpx;
-    height: 130px;
+    height: 100px;
 
     .logo-image {
-      width: 40rpx;
-      height: 40rpx;
-      border-radius: 50%;
+      width: 28rpx;
+      height: 30rpx;
+      border-radius: 0;
       object-fit: cover;
     }
   }
