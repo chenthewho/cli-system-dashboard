@@ -215,87 +215,17 @@
             "
             @change-type="currentSelctCustomerType = $event"
           />
-          <u-modal
-            title="挂单中心"
-            :show="hangListVisible"
+          <!-- 挂单中心模态框 -->
+          <HangOrderModal
+            :visible="hangListVisible"
+            :hangList="hangList"
+            :selectedOrder="orderGDSelect"
             @close="hangListVisible = false"
-            :closeOnClickOverlay="true"
-            :showConfirmButton="false"
-            :width="'600rpx'"
-          >
-            <div class="hang-modal-container">
-              <!-- 左边订单列表 -->
-              <div class="slot-content hang-order-list">
-                <view class="grid-member-container">
-                  <view v-for="group in hangList" :key="group.date" class="group-container">
-                    <view class="group-title hang-order-group-title">
-                      {{ group.date }}
-                    </view>
-                    <view
-                      class="grid-member-item2"
-                      v-for="item in group.items"
-                      :key="item.uniqueKey"
-                      @click="selectGDorder(item)"
-                      :style="{
-                        fontWeight: 'bold',
-                        cursor: 'pointer',
-                        backgroundColor: orderGDSelect && orderGDSelect.id === item.id ? '#00aaff' : 'transparent',
-                        color: orderGDSelect && orderGDSelect.id === item.id ? '#ffffff' : 'black',
-                        padding: '8rpx',
-                        marginBottom: '5rpx',
-                        borderRadius: '4rpx',
-                      }"
-                    >
-                      <text>{{ item.key }}</text>
-                      <div class="hang-order-item-header">
-                        <div>{{ item.createTime.replace('T', ' ') }}</div>
-                        <div>{{ item.customName }}</div>
-                      </div>
-                      <div class="hang-order-model-info">
-                        {{ item.modelInfo }}
-                      </div>
-                    </view>
-                  </view>
-                </view>
-              </div>
-
-              <!-- 右边订单详情 -->
-              <div class="order-detail hang-order-detail">
-                <template v-if="orderGDSelect">
-                  <view class="table hang-order-table">
-                    <!-- 表头 -->
-                    <view class="table-row header hang-order-header">
-                      <view class="table-cell2">名称</view>
-                      <view class="table-cell2">单价</view>
-                      <view class="table-cell2">总重</view>
-                      <view class="table-cell2">皮重</view>
-                      <view class="table-cell2">小计</view>
-                    </view>
-
-                    <!-- 表格内容示例 -->
-                    <view class="table-row hang-order-row" v-for="(item, index) in orderGDSelect.modelList" :key="index">
-                      <view class="table-cell2">{{ item.name }}</view>
-                      <view class="table-cell2">{{ item.referenceAmount }}</view>
-                      <view class="table-cell2">{{ item.totalWeight }}</view>
-                      <view class="table-cell2">{{ item.tareWeight }}</view>
-                      <view class="table-cell2">{{ item.subtotal }}</view>
-                    </view>
-                  </view>
-                </template>
-                <div class="hang-order-actions">
-                  <button @click="deleteGDorder(orderGDSelect)" class="hang-order-btn hang-order-btn--delete">
-                    删除
-                  </button>
-                  <button @click="printerGDModel(orderGDSelect)" class="hang-order-btn hang-order-btn--print">
-                    打印挂单
-                  </button>
-                  <button @click="hangOrderParse(orderGDSelect)" class="hang-order-btn hang-order-btn--parse">
-                    取挂单
-                  </button>
-                </div>
-              </div>
-            </div>
-          </u-modal>
+            @select-order="selectGDorder"
+            @delete="deleteGDorder"
+            @print="printerGDModel"
+            @parse="hangOrderParse"
+          />
 
           <!--收银弹窗-->
           <PaymentModal
@@ -465,6 +395,7 @@ import RepayBasketModel from '@/components/repay-basket-model.vue' //还筐弹�
 import BasketOffestModel from './component/basket-offest-model.vue'
 import RepayModal from '@/components/RepaymentModal.vue'
 import ShippingModal from '@/components/ShippingModal.vue'
+import HangOrderModal from '@/components/HangOrderModal/HangOrderModal.vue' //挂单中心
 
 export default {
   name: 'Cashier',
@@ -479,6 +410,7 @@ export default {
     CustomerSelector,
     OrderGoodsPanel,
     ShippingModal,
+    HangOrderModal,
   },
   data() {
     return {
@@ -875,6 +807,13 @@ export default {
       this.windowHeight = uni.getWindowInfo().windowHeight
       // this.initSystem();
       this.currentCompanyId = uni.getStorageSync('companyId')
+      
+      // 清空商品面板的缓存数据
+      if (this.$refs.goodsPanel) {
+        this.$refs.goodsPanel.clearTabCache()
+        console.log('[refreshPage] 已清空商品面板缓存')
+      }
+      
       // this.getCategoryList();
       this.getlastOrder()
       this.initCompanySetting()
@@ -882,10 +821,6 @@ export default {
       this.getallextralgood()
       // 从缓存恢复客户和 goodSelect 数据
       this.loadLastCustomerAndGoodSelect()
-      // 刷新 VerticalTab 组件
-      if (this.$refs.verticalTabRef) {
-        this.$refs.verticalTabRef.refresh()
-      }
     },
     getDynamicCustomerStyle(customerBtn) {
       const isActive = !!customerBtn?.isActive
@@ -4850,102 +4785,6 @@ export default {
   /* 背景颜色 */
 }
 
-.hang-modal-container {
-  display: flex;
-  height: 350rpx;
-  border: 1px solid #ccc;
-  width: 600rpx;
-}
-
-.hang-order-list {
-  flex: 1;
-  overflow-y: auto;
-  border-right: 1px solid #eee;
-  padding: 10rpx;
-  height: 325rpx;
-}
-
-.hang-order-detail {
-  flex: 1;
-  position: relative;
-}
-
-.hang-order-table {
-  border: 1px solid #ccc;
-}
-
-.hang-order-header {
-  background-color: #cecece;
-  font-weight: bold;
-}
-
-.hang-order-row {
-  overflow-y: auto;
-}
-
-.hang-order-actions {
-  position: absolute;
-  bottom: 0;
-  height: 35rpx;
-  border-top: 1px solid #ccc;
-  width: 100%;
-  display: flex;
-  gap: 6rpx;
-  padding: 4rpx 0;
-}
-
-.hang-order-btn {
-  width: 70rpx;
-  font-weight: bold;
-  color: #ffffff;
-  height: 25rpx;
-  line-height: 25rpx;
-  font-size: 12rpx;
-  margin-top: 1rpx;
-  border: none;
-  border-radius: 4rpx;
-  cursor: pointer;
-  transition: filter 0.2s ease;
-}
-
-.hang-order-btn:hover {
-  filter: brightness(1.05);
-}
-
-.hang-order-btn--delete {
-  background: gainsboro;
-}
-
-.hang-order-btn--print {
-  background: orange;
-}
-
-.hang-order-btn--parse {
-  background: #00aaff;
-}
-
-.hang-order-model-info {
-  margin-top: 5rpx;
-  font-size: 10rpx;
-  white-space: nowrap;
-  width: 250rpx;
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.hang-order-group-title {
-  font-weight: bold;
-  margin-bottom: 10rpx;
-  font-size: 20rpx;
-}
-
-.hang-order-item-header {
-  padding: 2rpx;
-  font-size: 10rpx;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 
 .success-modal-card {
   border-radius: 10rpx;

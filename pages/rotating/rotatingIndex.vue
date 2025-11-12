@@ -949,7 +949,7 @@
 							<view class="basket-detail-title-icon">
 								<uni-icons type="basket" size="20" color="#55aaff"></uni-icons>
 							</view>
-							<text class="basket-detail-title-text">{{ baskerShowType === 2 ? '押筐详情' : '还筐详情' }}</text>
+							<text class="basket-detail-title-text">{{ baskerShowType === 2 ? '押筐详情' : '收筐详情' }}</text>
 						</div>
 						<div class="basket-detail-summary" v-if="selectedBasket">
 							<text class="basket-detail-summary-text">{{ selectedBasket.basketModelName }} - {{ selectedBasket.mount }}个，共 {{ unifiedRecords.length }} 条记录</text>
@@ -963,7 +963,7 @@
 								<div class="basket-detail-record-header">
 									<div class="basket-detail-record-info">
 										<text class="basket-detail-record-type" :class="record.type === 'order' ? 'type-order' : 'type-repay'">
-											{{ record.type === 'order' ? (baskerShowType === 2 ? '订单押筐' : '订单抵扣') : (baskerShowType === 2 ? '押筐单' : '还筐单') }}
+											{{ record.type === 'order' ? (baskerShowType === 2 ? '订单押筐' : '订单抵扣') : (baskerShowType === 2 ? '押筐单' : '收筐单') }}
 										</text>
 										<text class="basket-detail-record-time">{{ formatDate(record.createTime) }}</text>
 									</div>
@@ -1134,7 +1134,7 @@ export default {
 		dutyTime: null,
 		timer: null,
 		card2tabValue: [{
-			name: "还筐",
+			name: "收筐",
 			value: 1,
 		},
 		{

@@ -950,10 +950,35 @@ export default {
 
 		},
 refreshTabs() {
-	// 刷新tabs组件的下划线显示
-	if (this.$refs.customTabs && this.$refs.customTabs.refresh) {
-		this.$refs.customTabs.refresh();
-	}
+	// 刷新批次数据
+	category.GetAllBatch(this.companyId).then(res => {
+		this.batchList = res.data;
+		this.batchList = this.batchList.sort((a, b) =>
+			new Date(b.createTime).getTime() - new Date(a.createTime).getTime()
+		);
+		
+		// 根据当前选中的tab筛选批次
+		const currentTab = this.tabList[this.currentTabIndex];
+		if (currentTab) {
+			this.batchShowList = this.batchList.filter(batch => {
+				return batch.saleStatus === currentTab.value;
+			});
+			
+			// 如果当前选中的批次不在筛选后的列表中，清空选中状态
+			if (this.selectBatch && !this.batchShowList.find(b => b.id === this.selectBatch.id)) {
+				this.BatchCommodityList = [];
+				this.expenseList = [];
+				this.settleRecords = [];
+				this.selectBatch = null;
+			}
+			
+			// 如果有批次，选中第一个
+			if (this.batchShowList.length > 0 && !this.selectBatch) {
+				this.exchangeBatch(this.batchShowList[0]);
+			}
+		}
+	});
+	
 },
 changeType(item) {
 	// 更新当前选中的tab索引

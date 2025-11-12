@@ -18,7 +18,7 @@
 					 style="font-weight: bold;color: black;font-size: 15rpx;" :style="{width:textWidth+'rpx'}"  @click="select">{{name}}</text>
 				<view class="uni-select-lay-icon" :class="{disabled:disabled, 'icon-up': direction === 'up'}" @click.stop="select"><text></text></view>
 			</view>
-			<scroll-view class="uni-select-lay-options" :class="{'dropdown-up': direction === 'up'}" :style="{'z-index': active ? 100000 : zindex + 1}" :scroll-y="true" v-show="active" @scroll="selectmove"
+			<scroll-view class="uni-select-lay-options" :class="{'dropdown-up': direction === 'up'}" :style="{'z-index': active ? 100000 : zindex + 1, 'maxHeight': maxHeight, 'height': maxHeight}" :scroll-y="true" v-show="active" @scroll="selectmove"
 				@touchstart="movetouch">
 				<template v-if="!changes">
 					<!-- <view class="uni-select-lay-item" v-if="showplaceholder" :class="{active:value==''}"
@@ -123,6 +123,11 @@
 			activeSelectId: {
 				type: String,
 				default: ''
+			},
+			// 新增：下拉列表最大高度
+			maxHeight: {
+				type: String,
+				default: '160rpx' // 默认4个选项的高度
 			}
 		},
 		data() {
@@ -472,8 +477,8 @@
 			top: calc(100% + 5px);
 			left: 0;
 			width: 100%;
-			
-			// overflow-y: auto;
+			overflow-y: auto;
+			overflow-x: hidden;
 			border-radius: 4px;
 			border: 1px solid rgb(139, 139, 139);
 			background: #fff;
@@ -493,6 +498,10 @@
 				transition: .3s;
 				font-size: 14px;
 				text-align: center;
+				min-height: 36rpx; /* 确保每个选项有固定高度 */
+				display: flex;
+				align-items: center;
+				justify-content: center;
 
 				&.active {
 					background: #007AFF;

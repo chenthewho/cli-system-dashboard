@@ -178,11 +178,6 @@
 		},
 			sectionChange(index) {
 				this.curNow = index;
-				// if (this.curNow === 1) {
-				// 	this.$refs.CustomerMangerIndexVue.refresh();
-				// } else if (this.curNow === 0) {
-				// 	this.$refs.OrderMangerIndexVue.refresh();
-				// }
 			},
 			dateChange(e) {
 				this.dateRange = e;

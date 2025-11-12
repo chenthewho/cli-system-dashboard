@@ -53,19 +53,20 @@
 					<!-- 货品分类选择 - 移到货品名称下面，改成下拉框 -->
 					<view class="znj-add-good-row" v-if="categoryList && categoryList.length > 0">
 						<text class="znj-add-good-label">货品分类：</text>
-						<SimpleSelect 
-							:zindex="1213" 
-							:value="formData.categoryId" 
-							:name="selectedCategoryName" 
-							placeholder="请选择货品分类"
-							:options="categoryOptions" 
-							@selectitem="handleSelectCategory" 
-							slabel="name"
-							svalue="id"
-							height="28rpx"
-							width="200rpx"
-							padding="0 20px 0 8px"
-						></SimpleSelect>
+					<SimpleSelect 
+						:zindex="1213" 
+						:value="formData.categoryId" 
+						:name="selectedCategoryName" 
+						placeholder="请选择货品分类"
+						:options="categoryOptions" 
+						@selectitem="handleSelectCategory" 
+						slabel="name"
+						svalue="id"
+						height="28rpx"
+						width="200rpx"
+						padding="0 20px 0 8px"
+						maxHeight="160rpx"
+					></SimpleSelect>
 					</view>
 						
 						<!-- 库存类型 -->
@@ -187,8 +188,8 @@
 							<div v-if="formData.saleWay != 3">
 								<selectLayUnit 
 									:zindex="1212" 
-									:value="formData.unit" 
-									:name="formData.unit" 
+									:value="formData.specList[0].specName" 
+									:name="formData.specList[0].specName" 
 									placeholder=" "
 									:options="unitList" 
 									@selectitem="editCardSpecSelct"
@@ -198,6 +199,7 @@
 									height="28rpx"
 									width="80rpx"
 									padding="0 20px 0 8px"
+									maxHeight="160rpx"
 								></selectLayUnit>
 							</div>
 							<div v-else>
@@ -213,6 +215,7 @@
 									@open="handleSelectOpen"
 									:selectId="'spec-unit-1'"
 									:activeSelectId="activeSelectId"
+									maxHeight="160rpx"
 								></selectLayUnit>
 							</div>
 						</view>
@@ -239,6 +242,7 @@
 									@open="handleSelectOpen"
 									:selectId="'spec-unit-2'"
 									:activeSelectId="activeSelectId"
+									maxHeight="160rpx"
 								></selectLayUnit>
 								<!-- <button class="znj-add-good-delete-btn" @click="removeSpec(1)">删除</button> -->
 							</view>
@@ -263,6 +267,7 @@
 									@open="handleSelectOpen"
 									:selectId="'spec-unit-3'"
 									:activeSelectId="activeSelectId"
+									maxHeight="160rpx"
 								></selectLayUnit>
 								<!-- <button class="znj-add-good-delete-btn" @click="removeSpec(2)">删除</button> -->
 							</view>
@@ -282,19 +287,20 @@
 						<!-- 附加物品 -->
 						<view class="znj-add-good-row" v-if="formData.saleWay == 1">
 							<text class="znj-add-good-label">附加物品：</text>
-							<select-lay 
-								:zindex="1211" 
-								:value="formData.extralModelId" 
-								:name="formData.extralModelName" 
-								placeholder="请选择项目"
-								:options="extralModelList" 
-								@selectitem="editCardExtraModelSelct" 
-								slabel="name"
-								height="28rpx"
-								width="120rpx"
-								padding="0 20px 0 8px"
-								:showLabel="false"
-							></select-lay>
+						<select-lay 
+							:zindex="1211" 
+							:value="formData.extralModelId" 
+							:name="formData.extralModelName" 
+							placeholder="请选择项目"
+							:options="extralModelList" 
+							@selectitem="editCardExtraModelSelct" 
+							slabel="name"
+							height="28rpx"
+							width="120rpx"
+							padding="0 20px 0 8px"
+							:showLabel="false"
+							maxHeight="160rpx"
+						></select-lay>
 						</view>
 						
 						<!-- 单位重量 -->
@@ -478,7 +484,7 @@ export default {
 				fixTare: data.fixTare || 0,
 				fixWeight: data.fixWeight || 0,
 				initWeight: data.initWeight || 0,
-				extralModelId: data.extralModelId || "",
+				extralModelId: data.extralModel.id || "",
 				extralModelName: data.extralModelName || (data.extralModel ? data.extralModel.name : "无"),
 				showToSale: data.showToSale !== undefined ? data.showToSale : 1,
 				isMultiLevel: data.isMultiLevel || 0,
@@ -532,21 +538,6 @@ export default {
 				return;
 			}
 		}
-		
-		// // 如果是分级货品，验证所有分级的货品等级是否已填写
-		// if (this.formData.isMultiLevel === 1) {
-		// 	for (let i = 0; i < this.formData.gradeList.length; i++) {
-		// 		const grade = this.formData.gradeList[i];
-		// 		if (!grade.gradeName || grade.gradeName.trim() === '') {
-		// 			uni.showToast({
-		// 				icon: 'none',
-		// 				title: `请填写第${i + 1}个货品等级`,
-		// 				duration: 1500,
-		// 			});
-		// 			return;
-		// 		}
-		// 	}
-		// }
 		
 		// 添加分类ID（优先使用选择的分类，否则使用传入的当前分类）
 		this.formData.classifyId = this.formData.categoryId || this.currentCategoryId;
@@ -758,7 +749,7 @@ export default {
 		
 		// 选择单位回调
 		editCardSpecSelct(e) {
-			this.formData.unit = this.unitList[e].value;
+			this.formData.specList[0].specName = this.unitList[e].label;
 		},
 		editCardSpecSelct1(e) {
 			this.formData.specList[0].specName = this.unitList[e].label;
@@ -1337,12 +1328,14 @@ export default {
 /* 全局下拉选项（fixed定位，提升到外层） */
 .native-select-options-global {
 	position: fixed;
-	max-height: 200rpx;
+	max-height: 160rpx; /* 固定4个选项的高度：每个选项约40rpx（8rpx*2 padding + 24rpx内容），4个约160rpx */
+	height: 160rpx; /* 固定高度 */
 	background: #fff;
 	border: 1px solid #8b8b8b;
 	border-radius: 4rpx;
 	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
 	overflow-y: auto;
+	overflow-x: hidden;
 	z-index: 100001;
 	padding: 4rpx 0;
 }
@@ -1354,6 +1347,11 @@ export default {
 	cursor: pointer;
 	transition: background-color 0.15s;
 	color: #333;
+	min-height: 36rpx; /* 确保每个选项有固定高度 */
+	line-height: 20rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .native-select-item:hover {

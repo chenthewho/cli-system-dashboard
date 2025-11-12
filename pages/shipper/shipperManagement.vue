@@ -55,6 +55,22 @@
 					this.$refs.selfOperatedRef.loadData(true);
 				}
 			});
+		},
+		// 刷新当前选中的货主
+		refreshCurrentShipper() {
+			this.$nextTick(() => {
+				if (this.currentTab === 0 && this.$refs.consignmentRef) {
+					// 代销货主
+					if (this.$refs.consignmentRef.currentShipperId) {
+						this.$refs.consignmentRef.loadShipperDetail();
+					}
+				} else if (this.currentTab === 1 && this.$refs.selfOperatedRef) {
+					// 自营货主
+					if (this.$refs.selfOperatedRef.currentShipperId) {
+						this.$refs.selfOperatedRef.loadShipperDetail();
+					}
+				}
+			});
 		}
 	}
 	}
