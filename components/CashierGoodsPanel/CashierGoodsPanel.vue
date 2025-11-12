@@ -70,6 +70,7 @@
                     <span v-if="item.saleWay == 4" class="tag tag-bulk">散</span>
                   </span>
                   <span v-if="item.isMultiLevel == 1" class="tag tag-multi">多规格</span>
+                  <span v-if="item.extralModel && item.extralModel.name" class="tag tag-extra">{{ item.extralModel.name }}</span>
                 </div>
                 <div class="inventory-info" v-if="item.isMultiLevel == 0">
                   <span class="inventory-label">余:</span>
@@ -336,6 +337,7 @@ export default {
         const filteredList = this.commidityList.filter(x => x.name.includes(key))
         this.rows = []
         this.rows = filteredList.sort((a, b) => b.inventory - a.inventory)
+        console.log('this.rows', this.rows)
       }
     },
 
@@ -913,6 +915,11 @@ export default {
   color: red;
   border-color: red;
   background-color: rgba(255, 0, 0, 0.1);
+}
+.tag-extra {
+  color: #ee6018;
+  border-color: #ee6018;
+  background-color: rgba(255, 85, 0, 0.1);
 }
 
 /* 库存信息样式 */
