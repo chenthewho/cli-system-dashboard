@@ -284,7 +284,7 @@ export default {
     flex-direction: column;
     align-items: center;
     transition: background-color 0.3s;
-		margin-bottom: 10rpx;
+		margin-bottom: 8rpx;
     border-radius: 6rpx;
 
     &.active {
@@ -333,9 +333,8 @@ export default {
 		position: relative;
 		display: flex;
 		justify-content: center;
-		top: 20px;
     width: 40rpx;
-    height: 130px;
+    height: 100px;
 
     .logo-image {
       width: 40rpx;

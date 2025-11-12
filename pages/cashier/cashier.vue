@@ -4987,15 +4987,15 @@ export default {
 .success-modal-actions {
   display: flex;
   align-items: center;
-  gap: 50px;
+  gap: 30px;
 }
 
 .success-modal-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 18rpx;
   height: 32rpx;
+  width: 72rpx;
   border: none;
   border-radius: 6rpx;
   font-weight: bold;
@@ -5009,15 +5009,15 @@ export default {
 }
 
 .success-modal-btn--print {
-  background-color: orange;
+  background-color: $zn-main-act-color;
 }
 
 .success-modal-btn--share {
-  background-color: dodgerblue;
+  background-color: $zn-theme-color;
 }
 
 .success-modal-btn--continue {
-  background-color: green;
+  background-color: $zn-main-purple-color;
 }
 
 .success-modal-icon {
