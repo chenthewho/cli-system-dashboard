@@ -157,7 +157,7 @@
 						:key="child.id || index"
 						:id="'multilevel-grid-item-' + child.id"
 						class="multilevel-grid-item"
-						@click="handleMultiLevelClick(child)"
+						@click="handleMultiLevelClick(child, multiLevelPopup)"
 					>
 						<!-- 商品名称 -->
 						<div class="multilevel-item-name">
@@ -377,6 +377,8 @@ export default {
 							item, 
 							item.childrenList || []
 						);
+					} else {
+						console.error("未找到多等级商品的DOM元素");
 					}
 				}).exec();
 				return;
@@ -479,10 +481,11 @@ export default {
 		},
 		
 		// 点击多规格商品项
-		handleMultiLevelClick(childCommodity) {
+		handleMultiLevelClick(childCommodity, parentCommodity) {
 			this.closeMultiLevelPopup();
 			// 触发选择子商品事件
-			this.$emit('multilevel-selected', childCommodity);
+			const res = {...childCommodity, parentName: parentCommodity.parentCommodity.commodityName}
+			this.$emit('multilevel-selected', res);
 		}
 	}
 }

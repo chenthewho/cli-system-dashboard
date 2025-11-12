@@ -691,13 +691,13 @@
 								name: item.className,
 								value: index
 							});
-						};
+						}
 						if (!this.tabListOrigin.some(tab => tab.name === item.className)) {
 							this.tabListOrigin.push({
 								name: item.className,
 								value: item.classId
 							});
-						};
+						}
 						if (this.tabListOrigin.length > 0) {
 							this.newGoodInfo.classId = this.tabListOrigin[0].value;
 						}
