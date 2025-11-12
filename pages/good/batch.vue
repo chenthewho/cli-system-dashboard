@@ -2,7 +2,7 @@
 	<div :style="{'display': 'flex', 'height': (WindowHeight-65)+'px',width:'100%', 'overflow': 'hidden' }">
 		<div style="width: 160rpx; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); display: flex; flex-direction: column; overflow: hidden; box-shadow: 2rpx 0 8rpx rgba(0, 0, 0, 0.08);">
 		<!-- 新增批次按钮 -->
-		<div @click="BatchAddshow = true" style="
+		<div @click="getBatchNewCodeByShipperId(shipperSelectedId);BatchAddshow = true;" style="
           width: 120rpx;
           height: 30rpx;
 		  margin: 5rpx 5rpx 8rpx 5rpx;
@@ -33,10 +33,7 @@
        textAlign: 'left',
        fontSize: '14rpx',
        color: selectBatch.id === item.id ? '#ffffff' : '#333',
-	   border: selectBatch.id === item.id ? '2rpx solid #2196F3' : '1rpx solid #e0e0e0',
-	   transform: selectBatch.id === item.id ? 'scale(1.02)' : 'scale(1)',
-	   transition: 'all 0.3s ease',
-	   cursor: 'pointer'
+	   border: selectBatch.id === item.id ? '2rpx solid #2196F3' : '1rpx solid #e0e0e0'
      }">
 							<div>
 								<text style="font-size: 15rpx; font-weight: bold;">
@@ -73,7 +70,7 @@
 					<button v-if="selectBatch.saleStatus===0&&deleteBatchValid()"
 						style="margin-right: 5rpx; height: 20rpx;line-height: 20rpx;font-weight: bold;background-color: #aaaaaa;color: #818181;"
 						@click="deleteBatch">删除批次</button>
-					<DropdownButton :options="operatorBtnoptions" :fontSize="12" :menuFontSize="10" :defaultValue="操作"
+					<DropdownButton :options="operatorBtnoptions" :fontSize="12" :menuFontSize="10" :defaultValue="'操作'"
 						:width="70" :height="20" :iconPosition="-5" @change="operabtnChange">
 					</DropdownButton>
 					<!-- <button
@@ -85,9 +82,9 @@
 				<!-- 表头 -->
 				<div class="table-header">
 					<div class="table-cell header-cell" style="flex: 2;">货品</div>
-					<div class="table-cell header-cell" style="flex: 2;">已售数量</div>
-					<div class="table-cell header-cell" style="flex: 2;">已售重量 / 入库重量</div>
-					<div class="table-cell header-cell last-cell" style="flex: 2;">剩余库存 / 入库数量</div>
+					<div class="table-cell header-cell" style="flex: 2;">入库数量</div>
+					<div class="table-cell header-cell" style="flex: 2;">销量</div>
+					<div class="table-cell header-cell last-cell" style="flex: 2;">库存</div>
 				</div>
 				<scroll-view class="scrollArea" scroll-y="true" :style="{ height: WindowHeight-170 + 'px' }" v-if="BatchCommodityList.length>0">
 					<!-- 表格内容行 -->
@@ -96,13 +93,13 @@
 							{{item.commodityName}}
 						</div>
 						<div class="table-cell" style="flex: 2;">
-							{{item.saleMountStr===""?0:item.saleMountStr}}
+							{{item.initMountStr}}/{{item.initWeight}}
 						</div>
 						<div class="table-cell" style="flex: 2;">
-							( {{item.saleWeight}} ) / {{item.initWeight}}
+						{{item.saleMountStr===""?0:item.saleMountStr}}/	( {{item.saleWeight}} )
 						</div>
 						<div class="table-cell last-cell" style="flex: 2;">
-							( {{item.inventMountStr}} ) / {{item.initMountStr}}
+							{{item.inventMountStr}} / ({{item.inventWeight}})
 						</div>
 					</div>
 					<!-- 总计行 -->
@@ -111,13 +108,13 @@
 							总计
 						</div>
 						<div class="table-cell" style="flex: 2;">
-							{{totalInventorySold()}}
+							{{totalInitMountStr()}}/{{totalInitWeight().toFixed(1)}}
 						</div>
 						<div class="table-cell" style="flex: 2;">
-							( {{totalWeightSold()}} ) / {{totalInitWeight() }}
+							{{totalSaleMount()}}/ ( {{totalWeightSold().toFixed(1)}} )
 						</div>
 						<div class="table-cell last-cell" style="flex: 2;">
-							( {{totalInventory()}} ) / {{totalInitInventory()}}
+							{{totalInventMount()}} / ({{totalInventWeight().toFixed(1)}})
 						</div>
 					</div>
 				</scroll-view>
@@ -160,15 +157,15 @@
           </div>
           <div class="znj-batch-modal-shipper-list">
             <scroll-view class="znj-batch-modal-scroll" scroll-y="true">
-              <div v-for="(item, index) in shipperList" :key="item.id"
-                :class="['znj-batch-modal-shipper-item', {selected: shipperSelectedId === item.id}]">
-                <div style="display: flex; align-items: center; flex: 1;" @click="changAddedBatchCode(item.id)">
+              <div v-for="(item, index) in shipperList" :key="item.id" @click="changAddedBatchCode(item.id)"
+                :class="['znj-batch-modal-shipper-item', {selected: String(shipperSelectedId) === String(item.id)}]">
+                <div style="display: flex; align-items: center; flex: 1;" >
                   {{ (index+1) + '. ' + item.shipperName }}
                 </div>
-                <button class="znj-batch-edit-shipper-btn" @click.stop="editShipper(item)" 
+                <!-- <button class="znj-batch-edit-shipper-btn" @click.stop="editShipper(item)" 
                   style="margin-left: 10rpx; padding: 5rpx 10rpx; background-color: #409EFF; color: white; border: none; border-radius: 6rpx; font-size: 12rpx;">
                   编辑
-                </button>
+                </button> -->
               </div>
             </scroll-view>
           </div>
@@ -242,23 +239,7 @@
 			}]
 		}
 	},
-	// onShow() {
-	// 	console.log("onShow 触发了")
-	// 	// 检查是否需要刷新
-	// 	var refresh_batch = uni.getStorageSync("refresh_batch");
-	// 	if (refresh_batch != null && refresh_batch != "") {
-	// 		console.log("需要刷新批次:", refresh_batch)
-	// 		this.getAllBatch();
-	// 		// 延迟一下确保批次列表已加载
-	// 		setTimeout(() => {
-	// 			this.getBatchCommodityList(refresh_batch);
-	// 		}, 100);
-	// 		uni.removeStorageSync("refresh_batch")
-	// 	}
-	// },
-	// onLoad() {
-	// 	console.log("onLoad 触发了")
-	// },
+
 	mounted() {
 		this.companyId = uni.getStorageSync('companyId');
 		this.getallShipper();
@@ -342,6 +323,48 @@
 					return total + (parseFloat(item.initWeight) || 0);
 				}, 0);
 			},
+			// 计算总入库数量（字符串格式）
+			totalInitMountStr() {
+				let totalMount = 0;
+				this.BatchCommodityList.forEach(item => {
+					if (item.initPurchaseInventories && item.initPurchaseInventories.length > 0) {
+						item.initPurchaseInventories.forEach(inv => {
+							totalMount += (parseFloat(inv.mount) || 0);
+						});
+					}
+				});
+				return totalMount;
+			},
+			// 计算总销量数量
+			totalSaleMount() {
+				let totalMount = 0;
+				this.BatchCommodityList.forEach(item => {
+					if (item.salePurchaseInventories && item.salePurchaseInventories.length > 0) {
+						item.salePurchaseInventories.forEach(inv => {
+							totalMount += (parseFloat(inv.mount) || 0);
+						});
+					}
+				});
+				return totalMount;
+			},
+			// 计算总库存数量
+			totalInventMount() {
+				let totalMount = 0;
+				this.BatchCommodityList.forEach(item => {
+					if (item.outPutPurchaseInventories && item.outPutPurchaseInventories.length > 0) {
+						item.outPutPurchaseInventories.forEach(inv => {
+							totalMount += (parseFloat(inv.mount) || 0);
+						});
+					}
+				});
+				return totalMount;
+			},
+			// 计算总库存重量
+			totalInventWeight() {
+				return this.BatchCommodityList.reduce((total, item) => {
+					return total + (parseFloat(item.inventWeight) || 0);
+				}, 0);
+			},
 			deleteBatch() {
 				let that = this;
 				uni.showModal({
@@ -421,10 +444,12 @@
 			getBatchCommodityList(id) {
 				batch.GetBybatchPurchaseAssist(id).then(res => {
 					this.BatchCommodityList = res.data;
+
 					for (var i = 0; i < this.BatchCommodityList.length; i++) {
 						this.BatchCommodityList[i].saleMountStr = "";
 						this.BatchCommodityList[i].initMountStr = "";
 						this.BatchCommodityList[i].inventMountStr = "";
+						this.BatchCommodityList[i].inventWeight = this.BatchCommodityList[i].initWeight - this.BatchCommodityList[i].saleWeight;
 						for (var j = 0; j < this.BatchCommodityList[i].salePurchaseInventories.length; j++) {
 							this.BatchCommodityList[i].saleMountStr += this.BatchCommodityList[i]
 								.salePurchaseInventories[j].mount + this.BatchCommodityList[i]
@@ -441,6 +466,8 @@
 								.outPutPurchaseInventories[j].specName + " "
 						}
 					}
+
+					console.log("this.BatchCommodityList", this.BatchCommodityList)
 				})
 			},
 			createBatch() {
@@ -479,14 +506,16 @@
 				// })
 			},
 			changAddedBatchCode(id) {
-				this.shipperSelectedId = id;
+				// 确保类型一致，转换为字符串进行比较
+				this.shipperSelectedId = String(id);
 				this.getBatchNewCodeByShipperId(id);
 			},
 			getallShipper() {
 				category.GetAllShipper(this.companyId).then(res => {
 					this.shipperList = res.data;
-					if (this.shipperList.length > 0) {
-						this.shipperSelectedId = this.shipperList[0].id;
+					// 只有在没有选中货主时才设置默认选中第一个
+					if (this.shipperList.length > 0 && !this.shipperSelectedId) {
+						this.shipperSelectedId = String(this.shipperList[0].id);
 						this.getBatchNewCodeByShipperId(this.shipperList[0].id);
 					}
 				})
@@ -547,10 +576,6 @@
 						icon: 'none'
 					});
 				})
-			},
-			shipperSelect(e) {
-				this.shipperSelectedId = e;
-				this.getBatchNewCodeByShipperId(e);
 			},
 			getBatchNewCodeByShipperId(Id) {
 				category.GetNewBatchCode(this.companyId, Id).then(res => {
@@ -763,7 +788,7 @@
   cursor: pointer;
   transition: background 0.2s;
 }
-.znj-batch-modal-shipper-item.selected, .znj-batch-modal-shipper-item:hover {
+.znj-batch-modal-shipper-item.selected{
   background: #e3f2fd;
   color: #1976d2;
 }

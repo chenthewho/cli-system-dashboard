@@ -282,19 +282,20 @@
 						<!-- 附加物品 -->
 						<view class="znj-add-good-row" v-if="formData.saleWay == 1">
 							<text class="znj-add-good-label">附加物品：</text>
-							<select-lay 
-								:zindex="1211" 
-								:value="formData.extralModelId" 
-								:name="formData.extralModelName" 
-								placeholder="请选择项目"
-								:options="extralModelList" 
-								@selectitem="editCardExtraModelSelct" 
-								slabel="name"
-								height="28rpx"
-								width="120rpx"
-								padding="0 20px 0 8px"
-								:showLabel="false"
-							></select-lay>
+						<select-lay 
+							:zindex="1211" 
+							:value="formData.extralModelId" 
+							:name="formData.extralModelName" 
+							placeholder="请选择项目"
+							:options="extralModelList" 
+							@selectitem="editCardExtraModelSelct" 
+							slabel="name"
+							height="28rpx"
+							width="120rpx"
+							padding="0 20px 0 8px"
+							:showLabel="false"
+							maxHeight="200px"
+						></select-lay>
 						</view>
 						
 						<!-- 单位重量 -->

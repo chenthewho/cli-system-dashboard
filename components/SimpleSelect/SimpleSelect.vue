@@ -20,7 +20,7 @@
 		</view>
 		
 		<!-- 下拉选项 -->
-		<view v-if="isOpen" class="simple-select-options" :style="{ width: width }">
+		<view v-if="isOpen" class="simple-select-options" :style="{ width: width, maxHeight: maxHeight, height: maxHeight }">
 			<view 
 				v-for="(item, index) in options" 
 				:key="item[realValueKey] || index"
@@ -109,6 +109,11 @@ export default {
 		padding: {
 			type: String,
 			default: '0 30rpx 0 12rpx'
+		},
+		// 下拉选项最大高度
+		maxHeight: {
+			type: String,
+			default: '160rpx' // 默认4个选项的高度
 		}
 	},
 	data() {
@@ -247,12 +252,12 @@ export default {
 	top: calc(100% + 4rpx);
 	left: 0;
 	width: 200rpx;
-	max-height: 400rpx;
 	background: #fff;
 	border: 1px solid #8b8b8b;
 	border-radius: 4rpx;
 	box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
 	overflow-y: auto;
+	overflow-x: hidden;
 	z-index: 999;
 	padding: 4rpx 0;
 }
@@ -267,6 +272,10 @@ export default {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+	min-height: 36rpx; /* 确保每个选项有固定高度 */
+	line-height: 20rpx;
+	display: flex;
+	align-items: center;
 }
 
 .simple-select-option:hover {

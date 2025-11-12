@@ -18,7 +18,7 @@
 				 style="font-weight: bold;color: black;font-size: 15rpx;" :style="{width:textWidth+'rpx'}"  @click="select">{{name}}</text>
 			<view class="uni-select-lay-icon" :class="{disabled:disabled, 'icon-up': direction === 'up'}" @click.stop="select"><text></text></view>
 		</view>
-		<scroll-view class="uni-select-lay-options" :class="{'dropdown-up': direction === 'up'}" :scroll-y="true" v-show="active" @scroll="selectmove"
+		<scroll-view class="uni-select-lay-options" :class="{'dropdown-up': direction === 'up'}" :style="{maxHeight: maxHeight}" :scroll-y="true" v-show="active" @scroll="selectmove"
 			@touchstart="movetouch">
 			<template v-if="!changes">
 				<!-- <view class="uni-select-lay-item" v-if="showplaceholder" :class="{active:value==''}"
@@ -128,6 +128,11 @@
 			labelColor: {
 				type: String,
 				default: '#8c8c8c'
+			},
+			// 新增：下拉列表最大高度
+			maxHeight: {
+				type: String,
+				default: 'auto'
 			}
 		},
 		data() {

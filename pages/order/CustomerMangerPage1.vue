@@ -302,7 +302,7 @@
 											</view>
 											<view class="status-tag status-refunded-tag" v-if="selectedOrder.status == 2">
 												<uni-icons type="undo" size="12" color="#F56C6C"></uni-icons>
-												<text class="status-tag-text">退单</text>
+												<text class="status-tag-text">作废</text>
 											</view>
 										</view>
 									</view>
@@ -354,7 +354,7 @@
 							class="action-btn-compact refund-btn-new"
 							type="primary" 
 							@click="refundOrder" 
-							text="退单">
+							text="作废">
 						</u-button>
 						<u-button v-if="selectedOrder.debt>0"
 							class="action-btn-compact repay-btn-new"
@@ -570,7 +570,7 @@
 		getOrderStatusText(status) {
 			switch(status) {
 				case 1: return '正常';
-				case 2: return '退单';
+				case 2: return '作废';
 				case 5: return '已修改';
 				default: return '未知';
 			}

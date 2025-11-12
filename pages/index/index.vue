@@ -2,7 +2,7 @@
   <div id="app">
     <Sidebar ref="sidebarRef" @update-content="updateCashierContent" />
     <div class="main-content" :class="{ 'no-sidebar': cashierContent === 'one' }">
-        <Cashier v-show="cashierContent === 'one'" ref="orderRef" @goToManagement="switchToManagement" />
+        <Cashier v-show="cashierContent === 'one'" ref="cashierRef" @goToManagement="switchToManagement" />
         <order ref="orderRef2" v-show="cashierContent === 'two'" />
         <goodIndex ref="goodIndexRef" v-show="cashierContent === 'three'" />
         <setting v-show="cashierContent === 'six'" />
@@ -55,7 +55,7 @@ export default {
     }
     var refresh_CompanyInfo = uni.getStorageSync('refreshCompanyInfo')
     if (refresh_CompanyInfo != null && refresh_CompanyInfo.trim() !== '') {
-      this.$refs.orderRef.refreshHeaderInfo()
+      this.$refs.cashierRef.refreshHeaderInfo()
       uni.removeStorageSync('refreshCompanyInfo')
     }
     plus.navigator.setFullscreen(true)
@@ -64,7 +64,7 @@ export default {
     console.log('vesionType', this.vesionType)
   },
   mounted() {
-    // this.$refs.orderRef.onLoadMethod();
+    // this.$refs.cashierRef.onLoadMethod();
   },
   methods: {
     refreshBatch(id) {
@@ -77,8 +77,8 @@ export default {
       this.cashierContent = newContent
       // 切换到对应页面时刷新数据
       this.$nextTick(() => {
-        if (this.cashierContent === 'one' && this.$refs.orderRef) {
-          this.$refs.orderRef.refreshPage()
+        if (this.cashierContent === 'one' && this.$refs.cashierRef) {
+          this.$refs.cashierRef.refreshPage()
         } else if (this.cashierContent === 'two' && this.$refs.orderRef2) {
           this.$refs.orderRef2.onshowMethed()
         } else if (this.cashierContent === 'five' && this.$refs.settlementIndexRef) {
@@ -95,8 +95,8 @@ export default {
           // 切换到轮班页面时刷新数据
           this.$refs.rotatingRef.refreshPage()
         } else if (this.cashierContent === 'eight' && this.$refs.shipperManagementRef) {
-          // 切换到货主管理页面时刷新数据
-          console.log('切换到货主管理页面')
+          // 切换到货主管理页面时刷新当前选中的货主
+          this.$refs.shipperManagementRef.refreshCurrentShipper()
         }
       })
     },

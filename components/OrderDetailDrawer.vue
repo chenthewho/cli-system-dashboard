@@ -163,7 +163,7 @@ export default {
 			if (!this.orderData || !this.orderData.status) return '';
 			switch (this.orderData.status) {
 				case 1: return '正常';
-				case 2: return '退单';
+				case 2: return '作废';
 				case 5: return '已修改';
 				default: return '未知';
 			}

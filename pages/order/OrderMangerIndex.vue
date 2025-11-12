@@ -26,7 +26,7 @@
 								<text class="status-badge-text">已修改</text>
 							</view>
 							<view class="status-badge status-refunded" v-if="item.status==2">
-								<text class="status-badge-text">退单</text>
+								<text class="status-badge-text">作废</text>
 							</view>
 						</view>
 
@@ -140,7 +140,7 @@
 											</view>
 											<view class="status-tag status-refunded-tag" v-if="currentOrder.status==2">
 												<uni-icons type="undo" size="12" color="#F56C6C"></uni-icons>
-												<text class="status-tag-text">退单</text>
+												<text class="status-tag-text">作废</text>
 											</view>
 										</view>
 										<u-button v-if="currentOrder.status==5" class="history-btn-right" type="primary" size="mini"
@@ -182,7 +182,7 @@
 							@click="TurnToTuigeCashier" text="改单">
 						</u-button>
 						<u-button v-if="currentOrder.status!=2" class="action-btn-compact refund-btn-new" type="primary"
-							@click="TuigeOrder" text="退单">
+							@click="TuigeOrder" text="作废">
 						</u-button>
 						<u-button v-if="currentOrder.debt>0" class="action-btn-compact repay-btn-new" type="primary" text="整单还款"
 							@click="openPayTypeDialogVisible">
@@ -545,7 +545,7 @@
 				this.hasMore = true;
 				this.moduleList = [];
 				this.originalModuleList = [];
-				
+				this.getMinTimeToNow();
 				// 加载第一页数据
 				this.loadPageData();
 			},
@@ -936,7 +936,7 @@
 				console.log("status",status);
 				switch(status) {
 					case 1: return '正常';
-					case 2: return '退单';
+					case 2: return '作废';
 					case 4: return '已修改';
 					default: return '未知';
 				}

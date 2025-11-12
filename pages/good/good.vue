@@ -18,27 +18,28 @@
 	          ">
 					新增分类
 				</div>
-				<!-- 圆弧边卡片 -->
-				<div style="display: flex; flex-direction: column; gap: 5rpx;">
-					<div @click="exchangeTab(item)" v-for="item in categoryList" :key="item.id" :style="{
-	       marginLeft: '10rpx',
-	       width: '100rpx',
-	       backgroundColor: currentTabId === item.id ? '#62d860' : '#ffffff', // 浅绿色或白色
-	       borderRadius: '12rpx',
-	       boxShadow: '0 4rpx 12rpx rgba(0, 0, 0, 0.1)',
-	       padding: '10rpx',
-	       boxSizing: 'border-box',
-	       textAlign: 'left',
-	       fontSize: '14rpx',
-	       color: '#333'
-	     }">
-						<div>
-							<text style="font-size: 15rpx; font-weight: bold;">
-								{{ item.name }}
-							</text>
-						</div>
+			<!-- 圆弧边卡片 -->
+			<scroll-view scroll-y="true" :style="{height:scrollHeight, width: '100%'}">
+				<div @click="exchangeTab(item)" v-for="item in categoryList" :key="item.id" :style="{
+       marginLeft: '10rpx',
+       width: '100rpx',
+       backgroundColor: currentTabId === item.id ? '#62d860' : '#ffffff', // 浅绿色或白色
+       borderRadius: '12rpx',
+       boxShadow: '0 4rpx 12rpx rgba(0, 0, 0, 0.1)',
+       padding: '10rpx',
+			 marginTop:'5rpx',
+       boxSizing: 'border-box',
+       textAlign: 'left',
+       fontSize: '14rpx',
+       color: '#333'
+     }">
+					<div>
+						<text style="font-size: 15rpx; font-weight: bold;">
+							{{ item.name }}
+						</text>
 					</div>
 				</div>
+			</scroll-view>
 			</div>
 			<!-- 垂直线 -->
 			<div :style="{ 'width': '5rpx', 'background-color': '#ccc','height': (windowHeight-65)+'px' }"></div>
@@ -686,6 +687,8 @@
 					formData.multiLevelList.push(levelModel);
 				}
 			}
+
+			console.log("保存前的 formData:", formData);
 
 			category.CommoditySave3(JSON.stringify(formData)).then(res => {
 				uni.showToast({

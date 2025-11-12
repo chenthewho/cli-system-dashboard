@@ -95,7 +95,7 @@
 			return {
 				currentCompanyId: "",
 				baseFormData: {},
-				list: ['还款', '还筐', '删除订单'],
+				list: ['还款', '收筐', '删除订单'],
 				tabs1Current: 0,
 				moduleList: [],
 				scrollHeight: 0,

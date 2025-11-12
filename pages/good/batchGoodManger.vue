@@ -829,8 +829,8 @@ showKeyBorad(index, type) {
 					var commodityAdded = {
 					id: "",
 					name: commodity.commodityName,
-					initMount:  commodity.initMount,
-					initWeight: commodity.saleWay === 3 ? 0 : commodity.initWeight,
+					initMount:  0,
+					initWeight: 0,
 					fixWeight:0,//单位重量（目前仅用于定装）
 					commodityId: commodity.commodityId,
 					calcType: 1,
