@@ -1,28 +1,5 @@
 <template>
 	<view>
-
-    <!-- 隐藏的Canvas用于生成订单图片 -->
-    <!-- 临时设置为可见以便调试 -->
-    <canvas
-      canvas-id="orderCanvas"
-      id="orderCanvas"
-      type="2d"
-      :width="canvasWidth"
-      :height="canvasHeight"
-      :style="{
-        width: canvasWidth + 'px',
-        height: canvasHeight + 'px',
-        position: 'fixed',
-        left: '10px',
-        top: '10px',
-        backgroundColor: '#FFFFFF',
-        border: '2px solid red',
-        zIndex: 9999,
-      }"
-    >
-    </canvas>
-
-
 		<!-- 左右布局容器 -->
 		<view class="layout-container" :style="{ height: scrollHeight + 'px' }">
 			<!-- 左侧订单列表 -->
@@ -466,6 +443,23 @@
 			</view>
 		</view>
 
+	<!-- 隐藏的canvas，用于生成订单图片 -->
+	<canvas 
+		canvas-id="orderCanvas" 
+		:style="{
+			width: canvasWidth + 'px',
+			height: canvasHeight + 'px',
+			position: 'fixed',
+			left: '0',
+			top: '0',
+			opacity: '0',
+			pointerEvents: 'none',
+			zIndex: '-1',
+			backgroundColor: '#FFFFFF'
+		}"
+		:width="canvasWidth"
+		:height="canvasHeight"></canvas>
+
 	</view>
 
 </template>
@@ -478,7 +472,7 @@
 		components: {
 
 		},
-			data() {
+		data() {
 			return {
 				list: ['今日', '昨日'],
 				tabs1Current: 0,
@@ -497,7 +491,6 @@
 				canvasheight: 0,
 				canvasWidth: 750,
 				canvasHeight: 1000,
-				pixelRatio: 1, // 设备像素比
 				isGeneratingImage: false, // 是否正在生成图片
 				scrollHeight: 0,
 				checkboxValue: [],
@@ -556,12 +549,6 @@
 		mounted() {
 			this.scrollHeight = uni.getWindowInfo().windowHeight - 50;
 			console.log("scroll-view 高度:", this.scrollHeight + "px");
-			
-			// 获取设备像素比
-			const systemInfo = uni.getSystemInfoSync();
-			this.pixelRatio = systemInfo.pixelRatio || 2;
-			console.log("设备像素比:", this.pixelRatio);
-			
 			this.CompanyId = uni.getStorageSync('companyId'); 
 			this.getMinTimeToNow();
 			this.refresh();
@@ -1190,143 +1177,36 @@
 			
 			console.log('计算的canvas尺寸', { width, heightCalc });
 			
-			// 设置canvas尺寸（考虑像素比）
+			// 设置canvas尺寸
 			this.canvasWidth = width;
 			this.canvasHeight = heightCalc;
 			
 			// 等待Vue更新DOM，并增加额外延迟确保canvas渲染完成
 			this.$nextTick(() => {
 				console.log('Vue DOM已更新，canvas尺寸已设置为:', this.canvasWidth, 'x', this.canvasHeight);
-				console.log('设备像素比:', this.pixelRatio);
 				
-				// H5端需要较短延迟，App/小程序需要较长延迟
-				// #ifdef H5
-				const delayTime = 1000;
-				// #endif
-				// #ifndef H5
-				const delayTime = 1500;
-				// #endif
-				
+				// 增加延迟确保canvas尺寸真正生效（增加到1500ms）
 				setTimeout(() => {
-					console.log(`⏱️ 延迟${delayTime}ms后，开始绘制canvas`);
+					console.log('⏱️ 延迟1500ms后，开始绘制canvas');
 					console.log('绘制区域尺寸:', width, 'x', heightCalc);
 					console.log('Canvas元素尺寸:', this.canvasWidth, 'x', this.canvasHeight);
 					
-					let ctx = null;
-					let isNativeCanvas = false;
-					
-					// #ifdef H5
-					// 在 H5 环境下使用原生 Canvas API
-					const canvasElement = document.getElementById('orderCanvas');
-					if (canvasElement) {
-						console.log('✅ Canvas DOM元素获取成功');
-						console.log('Canvas 实际尺寸 (width/height属性):', canvasElement.width, 'x', canvasElement.height);
-						console.log('Canvas 显示尺寸 (CSS):', canvasElement.style.width, 'x', canvasElement.style.height);
-						console.log('Canvas 客户端尺寸:', canvasElement.clientWidth, 'x', canvasElement.clientHeight);
-						
-						// 如果 canvas 尺寸不对，尝试手动设置
-						if (canvasElement.width !== width || canvasElement.height !== heightCalc) {
-							console.warn('⚠️ Canvas尺寸不匹配，正在修复...');
-							canvasElement.width = width;
-							canvasElement.height = heightCalc;
-							console.log('✅ Canvas尺寸已修复为:', width, 'x', heightCalc);
-						}
-						
-						// 使用原生 Canvas 2D API
-						ctx = canvasElement.getContext('2d');
-						isNativeCanvas = true;
-						console.log('✅ 使用原生Canvas 2D API');
-					} else {
-						console.error('❌ Canvas DOM元素未找到');
-					}
-					// #endif
-					
-					// #ifndef H5
-					// 在非 H5 环境下使用 uni-app 的 Canvas API
-					ctx = uni.createCanvasContext('orderCanvas', this);
-					isNativeCanvas = false;
-					console.log('✅ 使用 uni-app Canvas API');
-					// #endif
-					
-					console.log('Canvas上下文创建成功', ctx);
+					// 创建canvas上下文 - 重要：确保在setTimeout内创建
+					const ctx = uni.createCanvasContext('orderCanvas', this);
+					console.log('Canvas上下文创建成功');
 					
 					// 先清空canvas
 					ctx.clearRect(0, 0, width, heightCalc);
 					console.log('Canvas已清空');
 					
-					// 根据不同的 canvas 类型使用不同的 API
-					if (isNativeCanvas) {
-						// 原生 Canvas API (H5)
-						console.log('使用原生 Canvas API 绘制');
-						
-						// 白色背景
-						ctx.fillStyle = '#FFFFFF';
-						ctx.fillRect(0, 0, width, heightCalc);
-						console.log('✅ 白色背景绘制完成');
-						
-						// 红色矩形
-						ctx.fillStyle = '#FF0000';
-						ctx.fillRect(50, 50, 100, 100);
-						console.log('✅ 测试红色矩形绘制完成');
-						
-						// 绿色矩形
-						ctx.fillStyle = '#00FF00';
-						ctx.fillRect(200, 50, 100, 100);
-						console.log('✅ 测试绿色矩形绘制完成');
-						
-						// 蓝色边框
-						ctx.strokeStyle = '#0000FF';
-						ctx.lineWidth = 5;
-						ctx.strokeRect(0, 0, width, heightCalc);
-						console.log('✅ 蓝色边框绘制完成');
-						
-						// 测试文字
-						ctx.fillStyle = '#000000';
-						ctx.font = '40px sans-serif';
-						ctx.textAlign = 'center';
-						ctx.textBaseline = 'top';
-						ctx.fillText('测试文字 - Canvas正常工作', width / 2, 200);
-						console.log('✅ 测试文字绘制完成');
-						
-						console.log('✅✅✅ 原生Canvas测试绘制完成');
-					} else {
-						// uni-app Canvas API (小程序/App)
-						console.log('使用 uni-app Canvas API 绘制');
-						
-						// 白色背景
-						ctx.setFillStyle('#FFFFFF');
-						ctx.fillRect(0, 0, width, heightCalc);
-						console.log('✅ 白色背景绘制完成');
-						
-						// 红色矩形
-						ctx.setFillStyle('#FF0000');
-						ctx.fillRect(50, 50, 100, 100);
-						console.log('✅ 测试红色矩形绘制完成');
-						
-						// 绿色矩形
-						ctx.setFillStyle('#00FF00');
-						ctx.fillRect(200, 50, 100, 100);
-						console.log('✅ 测试绿色矩形绘制完成');
-						
-						// 蓝色边框
-						ctx.setStrokeStyle('#0000FF');
-						ctx.setLineWidth(5);
-						ctx.strokeRect(0, 0, width, heightCalc);
-						console.log('✅ 蓝色边框绘制完成');
-						
-						// 测试文字
-						ctx.setFillStyle('#000000');
-						ctx.setFontSize(40);
-						ctx.setTextAlign('center');
-						ctx.setTextBaseline('top');
-						ctx.fillText('测试文字 - Canvas正常工作', width / 2, 200);
-						console.log('✅ 测试文字绘制完成');
-						
-						// uni-app 需要调用 draw
-						ctx.draw(false, () => {
-							console.log('✅✅✅ uni-app Canvas测试绘制完成');
-						});
-					}
+					// 白色背景（填充整个canvas） - 非常重要！
+					ctx.setFillStyle('#FFFFFF');
+					ctx.fillRect(0, 0, width, heightCalc);
+					console.log('✅ 白色背景绘制完成，尺寸:', width, 'x', heightCalc);
+					
+					// 重置绘制参数
+					ctx.setFillStyle('#000000');
+					ctx.setStrokeStyle('#000000');
 					
 					let y = 50; // 顶部留白
 					
@@ -1597,15 +1477,7 @@
 						// 绘制完成，导出图片（使用false参数，不保留之前的绘制）
 						ctx.draw(false, () => {
 							console.log('✅ Canvas绘制完成（有logo），draw回调已触发');
-							
-							// H5端需要较短延迟，App/小程序需要较长延迟
-							// #ifdef H5
-							const exportDelay = 100;
-							// #endif
-							// #ifndef H5
-							const exportDelay = 500;
-							// #endif
-							
+							// 增加延迟时间，确保平板等性能较差设备有足够时间渲染
 							setTimeout(() => {
 								console.log('开始导出Canvas为图片...', 'canvasId:', 'orderCanvas', '尺寸:', width, 'x', heightCalc);
 								console.log('Canvas实际尺寸:', this.canvasWidth, 'x', this.canvasHeight);
@@ -1616,8 +1488,8 @@
 									y: 0,
 									width: width,
 									height: heightCalc,
-									destWidth: width,
-									destHeight: heightCalc,
+									destWidth: width * 2,
+									destHeight: heightCalc * 2,
 									fileType: 'png',
 									quality: 1,
 									success: (res) => {
@@ -1653,23 +1525,15 @@
 										});
 									}
 								}, this);
-							}, exportDelay);
+							}, 500); // 减少到500ms，因为draw回调已经确保绘制完成
 						});
 						},
 						fail: (err) => {
 							console.error('获取logo图片失败:', err);
-							
-							// H5端需要较短延迟，App/小程序需要较长延迟
-							// #ifdef H5
-							const exportDelay2 = 100;
-							// #endif
-							// #ifndef H5
-							const exportDelay2 = 500;
-							// #endif
-							
 							// 即使logo加载失败，也继续导出图片
 							ctx.draw(false, () => {
 								console.log('✅ Canvas绘制完成（无logo），draw回调已触发');
+								// 增加延迟时间，确保平板等性能较差设备有足够时间渲染
 								setTimeout(() => {
 									console.log('开始导出Canvas为图片（无logo）...', '尺寸:', width, 'x', heightCalc);
 									console.log('Canvas实际尺寸:', this.canvasWidth, 'x', this.canvasHeight);
@@ -1680,8 +1544,8 @@
 										y: 0,
 										width: width,
 										height: heightCalc,
-										destWidth: width,
-										destHeight: heightCalc,
+										destWidth: width * 2,
+										destHeight: heightCalc * 2,
 										fileType: 'png',
 										quality: 1,
 										success: (res) => {
@@ -1717,11 +1581,11 @@
 											});
 										}
 									}, this);
-								}, exportDelay2);
+								}, 500); // 减少到500ms，因为draw回调已经确保绘制完成
 							});
 						}
 					});
-				}, delayTime); // 给canvas渲染时间
+				}, 1500); // 给canvas渲染1500ms的时间
 			});
 		}).catch(err => {
 			console.error('❌ 获取公司信息失败:', err);
