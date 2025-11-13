@@ -144,6 +144,7 @@
 								<view style="flex: 2.2;">货主/车次</view>
 								<view style="flex: 1.5;text-align: center;">创建时间</view>
 								<view style="flex: 0.8;text-align: center;">状态</view>
+								<view style="flex: 1;text-align: center;">均价</view>
 								<view style="flex: 1;text-align: right;">售额</view>
 							</view>
 							<view class="step1-table-content">
@@ -167,6 +168,9 @@
 											<text v-if="simple.saleStatus===2" class="compact-status-tag"
 												style="--status-color: #00b900;--status-bg: #e8f5e9;">已结算</text>
 										</view>
+										<view style="flex: 1;text-align: center;">
+											¥{{simple.averagePrice || (simple.weightSold > 0 ? (simple.cargoAmount / simple.weightSold).toFixed(2) : '0.00')}}
+										</view>
 										<view class="row-amount" style="flex: 1;">
 											¥{{simple.cargoAmount}}
 										</view>
@@ -180,6 +184,7 @@
 							<view class="compact-table-header">
 								<view style="flex: 2.5;">货品名称</view>
 								<view style="flex: 1.2;text-align: center;">已售重量</view>
+								<view style="flex: 1;text-align: center;">均价</view>
 								<view style="flex: 1.2;text-align: right;">货款金额</view>
 							</view>
 							<view class="step1-table-content">
@@ -193,6 +198,9 @@
 										</view>
 										<view class="row-weight" style="flex: 1.2;">
 											{{item.weightSold}}
+										</view>
+										<view style="flex: 1;text-align: center;">
+											¥{{item.averagePrice || (item.weightSold > 0 ? (item.amountSale / item.weightSold).toFixed(2) : '0.00')}}
 										</view>
 										<view class="row-amount" style="flex: 1.2;">
 											¥{{item.amountSale}}

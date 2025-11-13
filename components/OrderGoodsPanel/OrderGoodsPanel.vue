@@ -39,7 +39,11 @@
 						</view>
 					</uni-td>
 					<uni-td align="center" >
-						<view class="table-body-text table-body-text-money" @click="handleItemClick(item, index)" >
+						<view 
+							class="table-body-text table-body-text-money" 
+							:class="{ 'negative-subtotal': parseFloat(item.money2) < 0 }"
+							@click="handleItemClick(item, index)" 
+						>
 							{{ item.money2 }}
 						</view>
 					</uni-td>
@@ -68,7 +72,11 @@
 					<div v-if="showHangOrder" class="btn btn-primary-plain btn-submit modern-btn" @click="handleHangOrder">
 						挂单
 					</div>
-					<div class="btn btn-primary btn-submit modern-btn" @click="handleCheckout">
+					<div 
+						class="btn btn-primary btn-submit modern-btn" 
+						:class="{ 'btn-disabled': hasNegativeSubtotal }"
+						@click="handleCheckout"
+					>
 						{{ checkoutButtonText }}
 					</div>
 				</div>
@@ -107,6 +115,15 @@ export default {
 			default: '结账'
 		}
 	},
+	computed: {
+		// 检查是否有负数小计
+		hasNegativeSubtotal() {
+			return this.goodsList.some(item => {
+				const subtotal = parseFloat(item.money2) || 0;
+				return subtotal < 0;
+			});
+		}
+	},
 	methods: {
 		// 点击表头名称
 		handleNameClick() {
@@ -136,6 +153,21 @@ export default {
 		
 		// 结账
 		handleCheckout() {
+			// 检查是否有货品小计小于0的情况
+			const hasNegativeSubtotal = this.goodsList.some(item => {
+				const subtotal = parseFloat(item.money2) || 0;
+				return subtotal < 0;
+			});
+			
+			if (hasNegativeSubtotal) {
+				uni.showToast({
+					title: '存在小计为负数的商品，无法结账',
+					icon: 'none',
+					duration: 2000
+				});
+				return;
+			}
+			
 			this.$emit('checkout');
 		},
 
@@ -178,6 +210,7 @@ export default {
 	.table-body-text-money {
 		color: #eb0404;
 	}
+	
 }
 
 .table-wrapper {
@@ -292,7 +325,7 @@ export default {
 	flex: 0 0 26%;
 	justify-content: flex-start;
 	flex-direction: column;
-	align-items: flex-start;
+	align-items: center;
 	gap: 3rpx;
 	padding-left: 4rpx;
 	min-width: 0;
@@ -590,6 +623,20 @@ export default {
 .btn-primary.btn-submit:hover {
 	background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%) !important;
 	box-shadow: 0 6px 20px rgba(24, 144, 255, 0.4);
+}
+
+/* 禁用状态的结账按钮 */
+.btn-disabled {
+	background: linear-gradient(135deg, #d9d9d9 0%, #bfbfbf 100%) !important;
+	color: #8c8c8c !important;
+	cursor: not-allowed !important;
+	opacity: 0.6;
+}
+
+.btn-disabled:hover {
+	background: linear-gradient(135deg, #d9d9d9 0%, #bfbfbf 100%) !important;
+	box-shadow: none !important;
+	transform: none !important;
 }
 
 .footer {

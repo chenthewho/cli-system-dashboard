@@ -108,9 +108,9 @@
             "splashscreen" : {
                 "androidStyle" : "default",
                 "android" : {
-                    "hdpi" : "static/img/logo.png",
-                    "xhdpi" : "static/img/logo.png",
-                    "xxhdpi" : "static/img/logo.png"
+                    "hdpi" : "static/img/logo-480x762.png",
+                    "xhdpi" : "static/img/logo-720x1242.png",
+                    "xxhdpi" : "static/img/logo-1080x1822.png"
                 },
                 "useOriginalMsgbox" : true,
                 "iosStyle" : "common"

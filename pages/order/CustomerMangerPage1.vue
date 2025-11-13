@@ -223,6 +223,7 @@
 		<!--还款弹窗-->
 		<RepaymentModal :visible="showRepaymentModal"
       :customerInfo="customerInfo"
+      :attachOrderIdList="checkboxValue"
       @confirm="handleRepaymentConfirm"
       @close="showRepaymentModal = false">
 		</RepaymentModal>
@@ -1000,6 +1001,15 @@
 					
 					    return debtB - debtA; // 按 debt 升序排序
 					});
+					
+					// 默认选中有欠款的订单
+					this.checkboxValue = [];
+					this.moduleList.forEach(item => {
+						if (item.debt && item.debt > 0) {
+							this.checkboxValue.push(item.id);
+						}
+					});
+					this.countSelect();
 				})
 			},
 			showBasketModel(){
@@ -1035,6 +1045,8 @@
 				this.modelTitle="下欠";
 			},
 			back() {
+				// 设置刷新标识，告知父页面需要刷新订单数据
+				uni.setStorageSync('needRefreshCustomerOrders', true);
 				uni.navigateBack();
 			},
 			changeAll(e) {

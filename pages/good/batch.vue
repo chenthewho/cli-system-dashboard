@@ -248,7 +248,6 @@
 		
 		// 监听刷新事件
 		uni.$on('refreshBatch', (batchId) => {
-			console.log("收到刷新事件:", batchId)
 			this.getAllBatch();
 			if (batchId) {
 				setTimeout(() => {
@@ -279,7 +278,6 @@
 				}
 			},
 			enterTolossModel() {
-				console.log("this.selectBatch", this.selectBatch)
 				uni.navigateTo({
 					url: `/pages/good/lossAssistModel?batch=${JSON.stringify(this.selectBatch)}`
 				})
@@ -420,21 +418,41 @@
 			});
 		},
 		setSaleStatus(info) {
-			var newBatch = JSON.parse(JSON.stringify(this.selectBatch))
-			newBatch.saleStatus = info;
-			category.UpdateBatchStatus(newBatch).then(res => {
+			// 只发送必要的字段，避免DateTime转换问题
+			const updateData = {
+				id: this.selectBatch.id,
+				batchCode: this.selectBatch.batchCode,
+				shipperId: this.selectBatch.shipperId,
+				shipperName: this.selectBatch.shipperName,
+				companyId: this.selectBatch.companyId,
+				saleStatus: info
+				// 不包含createTime字段，避免格式问题
+			};
+			
+			category.UpdateBatchStatus(updateData).then(res => {
 				if (res.code === 200) {
 					uni.showToast({
 						title: '操作成功',
 						icon: 'none'
 					});
 					this.selectBatch.saleStatus = info;
+					// 刷新批次列表和商品列表
+					this.getAllBatch();
+					if (this.selectBatch && this.selectBatch.id) {
+						this.getBatchCommodityList(this.selectBatch.id);
+					}
 				} else {
 					uni.showToast({
 						title: '操作失败',
 						icon: 'none'
 					});
 				}
+			}).catch(err => {
+				console.error('更新批次状态失败:', err);
+				uni.showToast({
+					title: '操作失败',
+					icon: 'none'
+				});
 			})
 		},
 			exchangeBatch(item) {
@@ -466,8 +484,6 @@
 								.outPutPurchaseInventories[j].specName + " "
 						}
 					}
-
-					console.log("this.BatchCommodityList", this.BatchCommodityList)
 				})
 			},
 			createBatch() {
@@ -525,7 +541,6 @@
 				res.data.forEach(item => {
 					item.createTime = item.createTime.replace("T", " ");
 				});
-				console.log("res.data", res.data)
 				// 筛选 salestatus 等于 -1 的批次
 				const filteredData = res.data.filter(item => item.saleStatus === 1);
 

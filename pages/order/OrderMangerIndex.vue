@@ -1,5 +1,28 @@
 <template>
 	<view>
+
+    <!-- 隐藏的Canvas用于生成订单图片 -->
+    <!-- 临时设置为可见以便调试 -->
+    <canvas
+      canvas-id="orderCanvas"
+      id="orderCanvas"
+      type="2d"
+      :width="canvasWidth"
+      :height="canvasHeight"
+      :style="{
+        width: canvasWidth + 'px',
+        height: canvasHeight + 'px',
+        position: 'fixed',
+        left: '10px',
+        top: '10px',
+        backgroundColor: '#FFFFFF',
+        border: '2px solid red',
+        zIndex: 9999,
+      }"
+    >
+    </canvas>
+
+
 		<!-- 左右布局容器 -->
 		<view class="layout-container" :style="{ height: scrollHeight + 'px' }">
 			<!-- 左侧订单列表 -->
@@ -443,10 +466,6 @@
 			</view>
 		</view>
 
-		<!-- 隐藏的canvas，用于生成订单图片 -->
-		<canvas canvas-id="orderCanvas"
-			style="width: 750px; height: 3000px; position: fixed; left: -9999px; top: -9999px;"></canvas>
-
 	</view>
 
 </template>
@@ -454,13 +473,12 @@
 <script>
 	import cashierOrder from '../../api/cashier/cashierOrder'
 	import member from '../../api/member/member'
-	import { generateOrderImage } from '../util/generateOrderImage.js'
 	export default {
 		name: 'OrderMangerIndex',
 		components: {
 
 		},
-		data() {
+			data() {
 			return {
 				list: ['今日', '昨日'],
 				tabs1Current: 0,
@@ -477,6 +495,10 @@
 				currentOrder: {},
 				currentCardInfo: [],
 				canvasheight: 0,
+				canvasWidth: 750,
+				canvasHeight: 1000,
+				pixelRatio: 1, // 设备像素比
+				isGeneratingImage: false, // 是否正在生成图片
 				scrollHeight: 0,
 				checkboxValue: [],
 				isEdting: false,
@@ -534,6 +556,12 @@
 		mounted() {
 			this.scrollHeight = uni.getWindowInfo().windowHeight - 50;
 			console.log("scroll-view 高度:", this.scrollHeight + "px");
+			
+			// 获取设备像素比
+			const systemInfo = uni.getSystemInfoSync();
+			this.pixelRatio = systemInfo.pixelRatio || 2;
+			console.log("设备像素比:", this.pixelRatio);
+			
 			this.CompanyId = uni.getStorageSync('companyId'); 
 			this.getMinTimeToNow();
 			this.refresh();
@@ -1073,52 +1101,672 @@
 				return formattedDate;
 			},
 	shareOrder() {
+		// 防止重复点击
+		if (this.isGeneratingImage) {
+			uni.showToast({
+				title: '图片正在生成中，请稍候...',
+				icon: 'none'
+			});
+			return;
+		}
+		
+		// 显示加载提示
+		uni.showLoading({
+			title: '正在生成图片...',
+			mask: true
+		});
+		
 		// 使用canvas生成订单详情图片
 		this.generateOrderImage();
 	},
-	
+		
 	// 使用canvas生成订单详情图片（参照票据样式）
 	generateOrderImage() {
+		this.isGeneratingImage = true;
 		const order = this.currentOrder;
-		const products = this.currentCardInfo;
+		const products = this.currentCardInfo || [];
+		
+		console.log('=== 开始生成订单图片 ===');
+		console.log('订单信息:', order);
+		console.log('商品列表:', products);
+		console.log('当前canvas尺寸:', this.canvasWidth, 'x', this.canvasHeight);
 		
 		// 获取公司信息
 		const companyId = uni.getStorageSync('companyId');
+		console.log('companyId', companyId);
+		
 		cashierOrder.getStoreInfo(companyId).then(res => {
 			const companyInfo = res.data || {};
+			const companyName = companyInfo.name || '店铺名称';
+			const companyAddress = companyInfo.address || '地址信息';
+			const companyPhone = companyInfo.phone || '联系电话';
 			
-			// 调用公共方法生成订单图片
-			generateOrderImage({
-				order: order,
-				products: products,
-				companyInfo: companyInfo,
-				canvasId: 'orderCanvas',
-				componentContext: this,
-				onSuccess: (tempFilePath) => {
-					// 生成成功，分享图片
-					this.saveAndShareImage(tempFilePath);
-				},
-				onError: (error) => {
-					console.error('生成订单图片失败:', error);
-					uni.showToast({
-						title: error || '生成图片失败',
-						icon: 'none'
-					});
+			console.log('公司信息获取成功', { companyName, companyAddress, companyPhone });
+			
+			// 画布尺寸
+			const width = 750;
+			const padding = 40;
+			
+			// 判断是否为退款单（欠款大于0或有还筐抵扣）
+			const isRefund = order.debt < 0 || order.basketOffsetAmount > 0;
+			const voucherTitle = isRefund ? '退款凭证' : '付款凭证';
+			
+			// 计算还筐信息
+			let basketOffsetNum = 0;
+			let basketInfo = '';
+			products.forEach((item) => {
+				if (item.type === 4) {
+					basketOffsetNum += parseInt(item.mount || 0);
+					basketInfo += `${item.name}:${item.mount};`;
 				}
 			});
+			
+			const productItems = products.filter((m) => m.type !== 4);
+			
+			console.log('商品信息', { productItems, basketOffsetNum });
+			
+			// 精确计算高度 - 每个区域预留足够空间
+			let heightCalc = 0;
+			heightCalc += 60; // 顶部留白
+			heightCalc += 60; // 标题（字号40）
+			heightCalc += 40; // 副标题第一行（字号20）
+			heightCalc += 35; // 副标题第二行
+			heightCalc += 50; // 市场名称（字号32）
+			heightCalc += 45; // 客户和票号行（字号26）
+			heightCalc += 40; // 日期行
+			heightCalc += 40; // 表格前间距
+			heightCalc += 50; // 表头
+			heightCalc += productItems.length * 50; // 商品行（每行50）
+			heightCalc += 50; // 合计行
+			if (basketOffsetNum > 0) {
+				heightCalc += 50; // 还筐行
+			}
+			heightCalc += 40; // 间距
+			heightCalc += 60; // 本单合计
+			heightCalc += 50; // 实付/实退行
+			heightCalc += 40; // 分割线和间距
+			heightCalc += 45; // 底部信息
+			heightCalc += 120; // logo和底部留白
+			
+			console.log('计算的canvas尺寸', { width, heightCalc });
+			
+			// 设置canvas尺寸（考虑像素比）
+			this.canvasWidth = width;
+			this.canvasHeight = heightCalc;
+			
+			// 等待Vue更新DOM，并增加额外延迟确保canvas渲染完成
+			this.$nextTick(() => {
+				console.log('Vue DOM已更新，canvas尺寸已设置为:', this.canvasWidth, 'x', this.canvasHeight);
+				console.log('设备像素比:', this.pixelRatio);
+				
+				// H5端需要较短延迟，App/小程序需要较长延迟
+				// #ifdef H5
+				const delayTime = 1000;
+				// #endif
+				// #ifndef H5
+				const delayTime = 1500;
+				// #endif
+				
+				setTimeout(() => {
+					console.log(`⏱️ 延迟${delayTime}ms后，开始绘制canvas`);
+					console.log('绘制区域尺寸:', width, 'x', heightCalc);
+					console.log('Canvas元素尺寸:', this.canvasWidth, 'x', this.canvasHeight);
+					
+					let ctx = null;
+					let isNativeCanvas = false;
+					
+					// #ifdef H5
+					// 在 H5 环境下使用原生 Canvas API
+					const canvasElement = document.getElementById('orderCanvas');
+					if (canvasElement) {
+						console.log('✅ Canvas DOM元素获取成功');
+						console.log('Canvas 实际尺寸 (width/height属性):', canvasElement.width, 'x', canvasElement.height);
+						console.log('Canvas 显示尺寸 (CSS):', canvasElement.style.width, 'x', canvasElement.style.height);
+						console.log('Canvas 客户端尺寸:', canvasElement.clientWidth, 'x', canvasElement.clientHeight);
+						
+						// 如果 canvas 尺寸不对，尝试手动设置
+						if (canvasElement.width !== width || canvasElement.height !== heightCalc) {
+							console.warn('⚠️ Canvas尺寸不匹配，正在修复...');
+							canvasElement.width = width;
+							canvasElement.height = heightCalc;
+							console.log('✅ Canvas尺寸已修复为:', width, 'x', heightCalc);
+						}
+						
+						// 使用原生 Canvas 2D API
+						ctx = canvasElement.getContext('2d');
+						isNativeCanvas = true;
+						console.log('✅ 使用原生Canvas 2D API');
+					} else {
+						console.error('❌ Canvas DOM元素未找到');
+					}
+					// #endif
+					
+					// #ifndef H5
+					// 在非 H5 环境下使用 uni-app 的 Canvas API
+					ctx = uni.createCanvasContext('orderCanvas', this);
+					isNativeCanvas = false;
+					console.log('✅ 使用 uni-app Canvas API');
+					// #endif
+					
+					console.log('Canvas上下文创建成功', ctx);
+					
+					// 先清空canvas
+					ctx.clearRect(0, 0, width, heightCalc);
+					console.log('Canvas已清空');
+					
+					// 根据不同的 canvas 类型使用不同的 API
+					if (isNativeCanvas) {
+						// 原生 Canvas API (H5)
+						console.log('使用原生 Canvas API 绘制');
+						
+						// 白色背景
+						ctx.fillStyle = '#FFFFFF';
+						ctx.fillRect(0, 0, width, heightCalc);
+						console.log('✅ 白色背景绘制完成');
+						
+						// 红色矩形
+						ctx.fillStyle = '#FF0000';
+						ctx.fillRect(50, 50, 100, 100);
+						console.log('✅ 测试红色矩形绘制完成');
+						
+						// 绿色矩形
+						ctx.fillStyle = '#00FF00';
+						ctx.fillRect(200, 50, 100, 100);
+						console.log('✅ 测试绿色矩形绘制完成');
+						
+						// 蓝色边框
+						ctx.strokeStyle = '#0000FF';
+						ctx.lineWidth = 5;
+						ctx.strokeRect(0, 0, width, heightCalc);
+						console.log('✅ 蓝色边框绘制完成');
+						
+						// 测试文字
+						ctx.fillStyle = '#000000';
+						ctx.font = '40px sans-serif';
+						ctx.textAlign = 'center';
+						ctx.textBaseline = 'top';
+						ctx.fillText('测试文字 - Canvas正常工作', width / 2, 200);
+						console.log('✅ 测试文字绘制完成');
+						
+						console.log('✅✅✅ 原生Canvas测试绘制完成');
+					} else {
+						// uni-app Canvas API (小程序/App)
+						console.log('使用 uni-app Canvas API 绘制');
+						
+						// 白色背景
+						ctx.setFillStyle('#FFFFFF');
+						ctx.fillRect(0, 0, width, heightCalc);
+						console.log('✅ 白色背景绘制完成');
+						
+						// 红色矩形
+						ctx.setFillStyle('#FF0000');
+						ctx.fillRect(50, 50, 100, 100);
+						console.log('✅ 测试红色矩形绘制完成');
+						
+						// 绿色矩形
+						ctx.setFillStyle('#00FF00');
+						ctx.fillRect(200, 50, 100, 100);
+						console.log('✅ 测试绿色矩形绘制完成');
+						
+						// 蓝色边框
+						ctx.setStrokeStyle('#0000FF');
+						ctx.setLineWidth(5);
+						ctx.strokeRect(0, 0, width, heightCalc);
+						console.log('✅ 蓝色边框绘制完成');
+						
+						// 测试文字
+						ctx.setFillStyle('#000000');
+						ctx.setFontSize(40);
+						ctx.setTextAlign('center');
+						ctx.setTextBaseline('top');
+						ctx.fillText('测试文字 - Canvas正常工作', width / 2, 200);
+						console.log('✅ 测试文字绘制完成');
+						
+						// uni-app 需要调用 draw
+						ctx.draw(false, () => {
+							console.log('✅✅✅ uni-app Canvas测试绘制完成');
+						});
+					}
+					
+					let y = 50; // 顶部留白
+					
+					// 1. 标题 - 居中（字号40，预留60px高度）
+					ctx.setFillStyle('#000000');
+					ctx.setFontSize(40);
+					ctx.setTextAlign('center');
+					ctx.setTextBaseline('top');
+					ctx.fillText(voucherTitle, width / 2, y);
+					console.log('绘制标题:', voucherTitle);
+					y += 60;
+					
+					// 2. 副标题 - 居中（字号20）
+					ctx.setFontSize(20);
+					ctx.setTextBaseline('top');
+					ctx.fillText('广东省食用农产品批发市场销售票据', width / 2, y);
+					y += 30;
+					ctx.fillText('(广州江南果菜批发市场)', width / 2, y);
+					y += 40;
+					
+					// 3. 市场名称 - 居中加粗（字号32）
+					ctx.setFontSize(32);
+					ctx.setTextBaseline('top');
+					let displayCompanyName = companyName;
+					if (displayCompanyName.length > 18) {
+						displayCompanyName = displayCompanyName.substring(0, 18) + '...';
+					}
+					ctx.fillText(displayCompanyName, width / 2, y);
+					y += 50;
+					
+					// 4. 客户和票号 - 左右对齐（字号26）
+					ctx.setFontSize(26);
+					ctx.setTextBaseline('top');
+					ctx.setTextAlign('left');
+					let customerName = order.customName || '散客';
+					if (customerName.length > 10) {
+						customerName = customerName.substring(0, 10) + '...';
+					}
+					ctx.fillText('客户：' + customerName, padding, y);
+					
+					ctx.setTextAlign('right');
+					let accountCode = order.accountCode || '';
+					if (accountCode.length > 15) {
+						accountCode = accountCode.substring(0, 15) + '...';
+					}
+					ctx.fillText('票号：' + accountCode, width - padding, y);
+					y += 40;
+					
+					// 5. 日期 - 右对齐
+					const createTime = order.createTime ? order.createTime.replace('T', ' ').substring(0, 16) : '';
+					ctx.setTextAlign('right');
+					ctx.setFontSize(24);
+					ctx.setTextBaseline('top');
+					ctx.fillText(createTime, width - padding, y);
+					y += 40;
+					
+					// 6. 表格
+					const tableX = padding;
+					const tableWidth = width - padding * 2;
+					const colWidths = [30, 150, 90, 150, 110, 130]; // #, 货品, 数量, 重量, 单价, 小计
+					
+					// 表头背景
+					ctx.setFillStyle('#F5F5F5');
+					ctx.fillRect(tableX, y, tableWidth, 45);
+					
+					// 表头文字（字号24）
+					ctx.setFillStyle('#000000');
+					ctx.setFontSize(24);
+					ctx.setTextBaseline('middle');
+					
+					const headers = ['#', '货品', '数量', '重量', '单价', '小计'];
+					const headerY = y + 22; // 垂直居中
+					headers.forEach((header, index) => {
+						let currentX = tableX;
+						for (let i = 0; i < index; i++) {
+							currentX += colWidths[i];
+						}
+						
+						if (index === 0) {
+							ctx.setTextAlign('center');
+							ctx.fillText(header, currentX + colWidths[index] / 2, headerY);
+						} else if (index === 1) {
+							ctx.setTextAlign('left');
+							ctx.fillText(header, currentX + 10, headerY);
+						} else if (index === 5) {
+							ctx.setTextAlign('right');
+							ctx.fillText(header, currentX + colWidths[index] - 10, headerY);
+						} else {
+							ctx.setTextAlign('center');
+							ctx.fillText(header, currentX + colWidths[index] / 2, headerY);
+						}
+					});
+					y += 45;
+					
+					// 表头下边框
+					ctx.setStrokeStyle('#DDDDDD');
+					ctx.setLineWidth(1);
+					ctx.beginPath();
+					ctx.moveTo(tableX, y);
+					ctx.lineTo(tableX + tableWidth, y);
+					ctx.stroke();
+					y += 5;
+					
+					// 金额右对齐位置
+					const amountRightX = tableX + tableWidth - 10;
+					
+					// 7. 绘制商品行（每行50px高度）
+					let totalAmount = 0;
+					ctx.setFontSize(22);
+					ctx.setTextBaseline('middle');
+					
+					console.log('开始绘制商品列表，共', productItems.length, '个商品');
+					
+					productItems.forEach((item, index) => {
+						const rowY = y + 25; // 垂直居中
+						ctx.setFillStyle('#000000');
+						
+						// 序号
+						ctx.setTextAlign('center');
+						ctx.fillText((index + 1).toString(), tableX + colWidths[0] / 2, rowY);
+						
+						// 货品名称
+						ctx.setTextAlign('left');
+						let productName = item.name || '';
+						if (productName.length > 12) {
+							productName = productName.substring(0, 12) + '...';
+						}
+						ctx.fillText(productName, tableX + colWidths[0] + 10, rowY);
+						
+						// 数量
+						ctx.setTextAlign('center');
+						const mountText = item.type === 2 ? item.mount + '' : item.mount + '件';
+						ctx.fillText(mountText, tableX + colWidths[0] + colWidths[1] + colWidths[2] / 2, rowY);
+						
+						// 重量
+						let weightText = '--';
+						if (item.type !== 2) {
+							const totalWeight = parseFloat(item.totalWeight || 0);
+							const tareWeight = parseFloat(item.tareWeight || 0);
+							const netWeight = (totalWeight - tareWeight).toFixed(2);
+							weightText = netWeight + '';
+						}
+						ctx.fillText(weightText, tableX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2, rowY);
+						
+						// 单价
+						ctx.fillText((item.referenceAmount || 0) + '', tableX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2, rowY);
+						
+						// 小计
+						const subtotal = parseFloat(item.subtotal || 0);
+						totalAmount += subtotal;
+						ctx.setTextAlign('right');
+						ctx.fillText(subtotal.toFixed(0), amountRightX, rowY);
+						
+						y += 50;
+					});
+					
+					// 表格底边框
+					ctx.setStrokeStyle('#DDDDDD');
+					ctx.setLineWidth(1);
+					ctx.beginPath();
+					ctx.moveTo(tableX, y - 5);
+					ctx.lineTo(tableX + tableWidth, y - 5);
+					ctx.stroke();
+					
+					// 8. 合计行
+					const summaryY = y + 25;
+					ctx.setFillStyle('#000000');
+					ctx.setFontSize(26);
+					ctx.setTextAlign('left');
+					ctx.fillText('合计', tableX + 60, summaryY);
+					
+					ctx.setTextAlign('right');
+					ctx.fillText(totalAmount.toFixed(0), amountRightX, summaryY);
+					y += 50;
+					
+					// 9. 还筐信息
+					if (basketOffsetNum > 0) {
+						const basketDate = createTime.substring(5, 10); // MM-DD
+						const basketY = y + 25;
+						ctx.setTextAlign('left');
+						ctx.setFontSize(24);
+						ctx.fillText(`${basketDate} 还筐`, tableX + 60, basketY);
+						
+						ctx.fillText(basketInfo, tableX + 200, basketY);
+						
+						ctx.setTextAlign('right');
+						ctx.fillText('-' + (order.basketOffsetAmount || 0), amountRightX, basketY);
+						y += 50;
+					}
+					
+					y += 40;
+					
+					// 10. 本单合计
+					ctx.setStrokeStyle('#000000');
+					ctx.setLineWidth(2);
+					ctx.beginPath();
+					ctx.moveTo(padding, y - 15);
+					ctx.lineTo(width - padding, y - 15);
+					ctx.stroke();
+					
+					const finalTotalY = y + 30;
+					ctx.setFillStyle('#000000');
+					ctx.setFontSize(32);
+					ctx.setTextAlign('left');
+					ctx.fillText('本单合计：', padding + 20, finalTotalY);
+					
+					const finalAmount = totalAmount - (order.basketOffsetAmount || 0);
+					ctx.setTextAlign('right');
+					ctx.fillText(finalAmount.toFixed(0), amountRightX, finalTotalY);
+					y += 60;
+					
+					// 11. 实付/实退金额
+					const paymentType = order.payType === 1 ? '微信' : order.payType === 2 ? '支付宝' : order.payType === 3 ? '现金' : '挂账';
+					const payLabel = finalAmount >= 0 ? '实付：' : '实退：';
+					const payAmount = Math.abs(order.actualMoney || finalAmount);
+					
+					const payY = y + 25;
+					ctx.setTextAlign('right');
+					ctx.setFontSize(28);
+					ctx.fillText(payLabel + payAmount.toFixed(0) + '(' + paymentType + ')', amountRightX, payY);
+					y += 50;
+					
+					// 12. 底部分割线
+					ctx.setStrokeStyle('#000000');
+					ctx.setLineWidth(1);
+					ctx.beginPath();
+					ctx.moveTo(padding, y);
+					ctx.lineTo(width - padding, y);
+					ctx.stroke();
+					y += 30;
+					
+					// 13. 底部信息
+					ctx.setFillStyle('#333333');
+					ctx.setFontSize(20);
+					ctx.setTextAlign('left');
+					ctx.fillText('地址：' + companyAddress + '，联系电话：' + companyPhone, padding, y + 15);
+					y += 40;
+					
+					// 14. 底部logo
+					const logoPath = '/static/img/orderlogo.png';
+					uni.getImageInfo({
+						src: logoPath,
+						success: (imgInfo) => {
+							// 设置logo显示尺寸（缩小到合适大小）
+							const logoMaxWidth = 200; // 最大宽度
+							const logoMaxHeight = 80; // 最大高度
+							let logoWidth = imgInfo.width;
+							let logoHeight = imgInfo.height;
+							
+							// 按比例缩放
+							if (logoWidth > logoMaxWidth || logoHeight > logoMaxHeight) {
+								const widthRatio = logoMaxWidth / logoWidth;
+								const heightRatio = logoMaxHeight / logoHeight;
+								const ratio = Math.min(widthRatio, heightRatio);
+								logoWidth = logoWidth * ratio;
+								logoHeight = logoHeight * ratio;
+							}
+							
+							// 居中位置
+							const logoX = (width - logoWidth) / 2;
+							const logoY = y + 10;
+							
+							console.log("ctx",ctx)
+
+							// 绘制logo
+							ctx.drawImage(logoPath, logoX, logoY, logoWidth, logoHeight);
+							
+						// 绘制完成，导出图片（使用false参数，不保留之前的绘制）
+						ctx.draw(false, () => {
+							console.log('✅ Canvas绘制完成（有logo），draw回调已触发');
+							
+							// H5端需要较短延迟，App/小程序需要较长延迟
+							// #ifdef H5
+							const exportDelay = 100;
+							// #endif
+							// #ifndef H5
+							const exportDelay = 500;
+							// #endif
+							
+							setTimeout(() => {
+								console.log('开始导出Canvas为图片...', 'canvasId:', 'orderCanvas', '尺寸:', width, 'x', heightCalc);
+								console.log('Canvas实际尺寸:', this.canvasWidth, 'x', this.canvasHeight);
+								
+								uni.canvasToTempFilePath({
+									canvasId: 'orderCanvas',
+									x: 0,
+									y: 0,
+									width: width,
+									height: heightCalc,
+									destWidth: width,
+									destHeight: heightCalc,
+									fileType: 'png',
+									quality: 1,
+									success: (res) => {
+										console.log('✅ 生成票据图片成功:', res.tempFilePath);
+										// 验证图片文件
+										uni.getImageInfo({
+											src: res.tempFilePath,
+											success: (imgInfo) => {
+												console.log('✅ 图片验证成功:', imgInfo);
+												console.log('图片尺寸:', imgInfo.width, 'x', imgInfo.height);
+											},
+											fail: (err) => {
+												console.error('❌ 图片验证失败:', err);
+											}
+										});
+										
+										uni.hideLoading();
+										this.isGeneratingImage = false;
+										// // 更新发单次数
+										// this.updateShareCount();
+										// 生成成功，分享图片
+										this.saveAndShareImage(res.tempFilePath);
+									},
+									fail: (err) => {
+										console.error('❌ 生成票据图片失败:', err);
+										console.error('失败详情:', JSON.stringify(err));
+										uni.hideLoading();
+										this.isGeneratingImage = false;
+										uni.showToast({
+											title: '生成图片失败: ' + (err.errMsg || '未知错误'),
+											icon: 'none',
+											duration: 3000
+										});
+									}
+								}, this);
+							}, exportDelay);
+						});
+						},
+						fail: (err) => {
+							console.error('获取logo图片失败:', err);
+							
+							// H5端需要较短延迟，App/小程序需要较长延迟
+							// #ifdef H5
+							const exportDelay2 = 100;
+							// #endif
+							// #ifndef H5
+							const exportDelay2 = 500;
+							// #endif
+							
+							// 即使logo加载失败，也继续导出图片
+							ctx.draw(false, () => {
+								console.log('✅ Canvas绘制完成（无logo），draw回调已触发');
+								setTimeout(() => {
+									console.log('开始导出Canvas为图片（无logo）...', '尺寸:', width, 'x', heightCalc);
+									console.log('Canvas实际尺寸:', this.canvasWidth, 'x', this.canvasHeight);
+									
+									uni.canvasToTempFilePath({
+										canvasId: 'orderCanvas',
+										x: 0,
+										y: 0,
+										width: width,
+										height: heightCalc,
+										destWidth: width,
+										destHeight: heightCalc,
+										fileType: 'png',
+										quality: 1,
+										success: (res) => {
+											console.log('✅ 生成票据图片成功（无logo）:', res.tempFilePath);
+											// 验证图片文件
+											uni.getImageInfo({
+												src: res.tempFilePath,
+												success: (imgInfo) => {
+													console.log('✅ 图片验证成功:', imgInfo);
+													console.log('图片尺寸:', imgInfo.width, 'x', imgInfo.height);
+												},
+												fail: (err) => {
+													console.error('❌ 图片验证失败:', err);
+												}
+											});
+											
+											uni.hideLoading();
+											this.isGeneratingImage = false;
+											// 更新发单次数
+											this.updateShareCount();
+											// 生成成功，分享图片
+											this.saveAndShareImage(res.tempFilePath);
+										},
+										fail: (err) => {
+											console.error('❌ 生成票据图片失败（无logo）:', err);
+											console.error('失败详情:', JSON.stringify(err));
+											uni.hideLoading();
+											this.isGeneratingImage = false;
+											uni.showToast({
+												title: '生成图片失败: ' + (err.errMsg || '未知错误'),
+												icon: 'none',
+												duration: 3000
+											});
+										}
+									}, this);
+								}, exportDelay2);
+							});
+						}
+					});
+				}, delayTime); // 给canvas渲染时间
+			});
 		}).catch(err => {
-			console.error('获取公司信息失败:', err);
+			console.error('❌ 获取公司信息失败:', err);
+			uni.hideLoading();
+			this.isGeneratingImage = false;
 			uni.showToast({
 				title: '获取公司信息失败',
-				icon: 'none'
+				icon: 'none',
+				duration: 3000
 			});
 		});
 	},
 		
+		// 更新发单次数
+		updateShareCount() {
+			if (!this.currentOrder || !this.currentOrder.id) {
+				console.error('无法更新发单次数：订单信息不完整');
+				return;
+			}
+			
+			// 调用API更新发单次数
+			cashierOrder.updateShareNum(this.currentOrder.id).then(res => {
+				if (res.code === 200) {
+					console.log('发单次数更新成功');
+					// 更新本地订单的shareNum
+					if (this.currentOrder.shareNum) {
+						this.currentOrder.shareNum += 1;
+					} else {
+						this.currentOrder.shareNum = 1;
+					}
+					// 更新列表中对应订单的shareNum
+					const orderIndex = this.moduleList.findIndex(item => item.id === this.currentOrder.id);
+					if (orderIndex !== -1) {
+						this.$set(this.moduleList[orderIndex], 'shareNum', this.currentOrder.shareNum);
+					}
+				}
+			}).catch(err => {
+				console.error('更新发单次数失败:', err);
+			});
+		},
+		
 		// 直接分享图片（不保存到相册）
 		saveAndShareImage(tempFilePath) {
 			const that = this;
-			// 直接分享图片
+			console.log('准备分享图片:', tempFilePath);
 			that.shareImage(tempFilePath);
 		},
 			downLoadImage(base64){
@@ -1561,6 +2209,22 @@
 			height: 12rpx;
 			margin-right: 4rpx;
 		}
+	}
+	
+	/* 测试按钮样式（临时调试用） */
+	.test-canvas-btn {
+		width: 50rpx;
+		height: 24rpx;
+		font-size: 12rpx;
+		font-weight: 600;
+		background: #ff9800;
+		border-radius: 30rpx;
+		transition: all 0.3s ease !important;
+		color: #ffffff;
+		display: flex;
+		line-height: 24rpx;
+		justify-content: center;
+		align-items: center;
 	}
 
 	

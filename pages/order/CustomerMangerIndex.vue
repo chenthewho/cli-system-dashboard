@@ -1,6 +1,9 @@
 <template>
 	<view class="customer-container">
 		<scroll-view class="customer-scroll-area" scroll-y="true" :style="{ height: scrollHeight + 'px' }" 
+			refresher-enabled 
+			:refresher-triggered="refreshing" 
+			@refresherrefresh="onRefresh"
 			@scrolltolower="loadMore" :lower-threshold="100">
 			<view class="customer-list">
 				<view v-for="item in memberOptionsShow" :key="item.id" class="customer-item-wrapper" @click="enterTodetail(item)">
@@ -147,14 +150,24 @@
 				pageSize: 10,
 				totalCount: 0,
 				hasMore: true,
-				loading: false
+				loading: false,
+				refreshing: false
 			}
 		},
 		created() {
 			this.refresh();
 		},
 		onShow() {
-			this.refresh();
+			// 检查是否需要刷新订单数据
+			const needRefresh = uni.getStorageSync('needRefreshCustomerOrders');
+			if (needRefresh) {
+				// 清除标识
+				uni.removeStorageSync('needRefreshCustomerOrders');
+				// 执行刷新操作
+				this.refresh();
+			} else {
+				this.refresh();
+			}
 		},
 		mounted() {
 			// 在组件挂载后设置 scrollHeight
@@ -175,6 +188,17 @@
 			
 			// 加载第一页数据
 			this.loadData();
+		},
+		
+		// 下拉刷新处理
+		onRefresh() {
+			this.refreshing = true;
+			this.refresh();
+			
+			// 延迟结束刷新状态
+			setTimeout(() => {
+				this.refreshing = false;
+			}, 1500);
 		},
 		
 		loadData() {

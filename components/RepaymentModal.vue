@@ -161,6 +161,11 @@ export default {
 		initialData: {
 			type: Object,
 			default: () => ({})
+		},
+		// 关联的订单ID列表
+		attachOrderIdList: {
+			type: Array,
+			default: () => []
 		}
 	},
 	data() {
@@ -347,7 +352,7 @@ export default {
 				operatorId:userInfo.id,
 				repayAmount:parseFloat(this.repaymentData.currentRepayment),
 				accountExpense:accountExpense,
-				attachOrderIdList:[],
+				attachOrderIdList:this.attachOrderIdList,
 			}).then(res=>{
 				if(res.code == 200){
 					uni.showToast({

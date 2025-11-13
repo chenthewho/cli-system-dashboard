@@ -34,7 +34,7 @@ export function generateOrderImage(options) {
 
   // 创建canvas上下文
   const ctx = uni.createCanvasContext(canvasId, componentContext)
-
+  console.log("ctx",ctx);
   // 画布尺寸
   const canvasWidth = 750
   const padding = 30
@@ -332,7 +332,10 @@ export function generateOrderImage(options) {
 
       // 绘制完成，导出图片
       ctx.draw(false, () => {
+        console.log('Canvas绘制完成（有logo），延迟2000ms后导出...')
+        // 增加延迟时间，确保平板等性能较差设备有足够时间渲染
         setTimeout(() => {
+          console.log('开始导出Canvas为图片...', 'canvasId:', canvasId, 'componentContext:', componentContext)
           uni.canvasToTempFilePath(
             {
               canvasId: canvasId,
@@ -340,8 +343,8 @@ export function generateOrderImage(options) {
               y: 0,
               width: canvasWidth,
               height: canvasHeight,
-              destWidth: canvasWidth * 3,
-              destHeight: canvasHeight * 3,
+              destWidth: canvasWidth * 2,
+              destHeight: canvasHeight * 2,
               fileType: 'png',
               quality: 1,
               success: res => {
@@ -355,14 +358,17 @@ export function generateOrderImage(options) {
             },
             componentContext
           )
-        }, 500)
+        }, 2000)
       })
     },
     fail: err => {
       console.error('获取logo图片失败:', err)
       // 即使logo加载失败，也继续导出图片
       ctx.draw(false, () => {
+        console.log('Canvas绘制完成（无logo），延迟2000ms后导出...')
+        // 增加延迟时间，确保平板等性能较差设备有足够时间渲染
         setTimeout(() => {
+          console.log('开始导出Canvas为图片（无logo）...', 'canvasId:', canvasId, 'componentContext:', componentContext)
           uni.canvasToTempFilePath(
             {
               canvasId: canvasId,
@@ -370,8 +376,8 @@ export function generateOrderImage(options) {
               y: 0,
               width: canvasWidth,
               height: canvasHeight,
-              destWidth: canvasWidth * 3,
-              destHeight: canvasHeight * 3,
+              destWidth: canvasWidth * 2,
+              destHeight: canvasHeight * 2,
               fileType: 'png',
               quality: 1,
               success: res => {
@@ -385,7 +391,7 @@ export function generateOrderImage(options) {
             },
             componentContext
           )
-        }, 500)
+        }, 2000)
       })
     },
   })

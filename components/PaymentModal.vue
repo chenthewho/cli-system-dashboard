@@ -31,7 +31,7 @@
 							<input v-model="localDiscountAmount" inputmode="none" class="amount-input">
 						</div>
 
-						<div class="input-row" :class="{'active': selectInputPay === 4}" @click="handleEditingClick(4)">
+						<div class="input-row" :class="{'active': selectInputPay === 4}" >
 							<label class="input-label">收筐抵扣</label>
 							<button class="collect-btn" @click="handleCollectBasket">收筐</button>
 							<input v-model="localPayAmount.BasketOffsetAmount" inputmode="none" class="amount-input">

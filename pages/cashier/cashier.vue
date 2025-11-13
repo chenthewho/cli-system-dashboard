@@ -1308,9 +1308,6 @@ export default {
       // 保存客户按钮列表到缓存
       this.saveCustomerButtonsToCache()
 
-      // 重新计算金额
-      this.changeFee()
-
       uni.showToast({
         title: `已切换到: ${this.mainCustomerData.member.customName || '散客'}`,
         icon: 'success',
@@ -1354,9 +1351,6 @@ export default {
 
       // 保存客户按钮列表到缓存
       this.saveCustomerButtonsToCache()
-
-      // 重新计算金额
-      this.changeFee()
 
       uni.showToast({
         title: `已切换到: ${targetCustomerBtn.name}`,
@@ -1910,8 +1904,10 @@ export default {
         // 切换到新客户
         this.currentMember = e
 
-        // 更新主客户数据
+        // 更新主客户数据，保持当前的商品数据
         this.mainCustomerData.member = { ...e }
+        this.mainCustomerData.goodSelect = [...this.goodSelect]
+        this.mainCustomerData.shippingFee = this.cashier.shippingFee || 0
 
         // 激活主客户
         this.isMainCustomerActive = true
@@ -1926,9 +1922,6 @@ export default {
 
         // 保存客户按钮列表到缓存
         this.saveCustomerButtonsToCache()
-
-        // 加载新客户的数据
-        this.loadNewCustomerData(e?.id)
       } else if (this.currentSelctCustomerType === 2) {
         this.$refs.repayBasketModelRef.openRepayBasket(e)
       } else if (this.currentSelctCustomerType === 3) {
