@@ -13,7 +13,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "lint": "prettier --write"
-  },
+    },
     "devDependencies": {
         "@babel/eslint-parser": "^7.28.5",
         "@vue/cli-plugin-babel": "^5.0.9",
@@ -23,6 +23,7 @@
         "eslint": "^8.57.1",
         "eslint-plugin-prettier": "^5.5.4",
         "eslint-plugin-vue": "^10.5.1",
+        "html2canvas": "^1.4.1",
         "husky": "^9.1.7",
         "lint-staged": "^16.2.6",
         "prettier": "^3.6.2"
