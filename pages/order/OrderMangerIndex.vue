@@ -19,14 +19,6 @@
         </div>
 
         <view v-for="item in moduleList" :key="item.id">
-          <u-checkbox-group
-            placement="column"
-            @change="checkboxChange(item.id)"
-            style="margin-top: 40px; margin-left: 20px"
-            v-if="isEdting"
-          >
-            <u-checkbox class="checkBox" :key="item.id" label="" :checked="checkboxValue.includes(item.id)" />
-          </u-checkbox-group>
           <view
             class="order-item"
             :class="{ 'order-item-selected': selectedOrderId === item.id }"
@@ -557,24 +549,6 @@
         </div>
       </view>
     </view>
-
-    <!-- 隐藏的canvas，用于生成订单图片 -->
-    <canvas
-      canvas-id="orderCanvas"
-      :style="{
-        width: canvasWidth + 'px',
-        height: canvasHeight + 'px',
-        position: 'fixed',
-        left: '0',
-        top: '0',
-        opacity: '0',
-        pointerEvents: 'none',
-        zIndex: '-1',
-        backgroundColor: '#FFFFFF',
-      }"
-      :width="canvasWidth"
-      :height="canvasHeight"
-    ></canvas>
 
     <!-- debug=true 可以看到页面，debug=false 后台渲染 -->
     <OrderImage :orderImageInfo="orderImageInfo" :debug="true" @close="closeOrderImage" />
@@ -1241,7 +1215,7 @@ export default {
       // 防止重复点击
       if (this.isGeneratingImage) {
         uni.showToast({
-          title: '图片正在生成中，请稍候...',
+          title: '单据正在生成中，请稍候...',
           icon: 'none',
         })
         return
@@ -1249,7 +1223,7 @@ export default {
 
       // 显示加载提示
       uni.showLoading({
-        title: '正在生成图片...',
+        title: '正在生成单据...',
         mask: true,
       })
 
@@ -1264,493 +1238,20 @@ export default {
       const products = this.currentCardInfo || []
 
       // 获取公司信息
-      const companyId = uni.getStorageSync('companyId')
-
-      cashierOrder
-        .getStoreInfo(companyId)
-        .then(res => {
-          const companyInfo = res.data || {}
-          const companyName = companyInfo.name || '店铺名称'
-          const companyAddress = companyInfo.address || '地址信息'
-          const companyPhone = companyInfo.phone || '联系电话'
-
-          this.orderImageInfo = {
-            companyName,
-            companyAddress,
-            companyPhone,
-            order,
-            products,
-          }
-          this.generateHandle()
-
-          // // 画布尺寸
-          // const width = 750;
-          // const padding = 40;
-
-          // // 判断是否为退款单（欠款大于0或有还筐抵扣）
-          // const isRefund = order.debt < 0 || order.basketOffsetAmount > 0;
-          // const voucherTitle = isRefund ? '退款凭证' : '付款凭证';
-
-          // // 计算还筐信息
-          // let basketOffsetNum = 0;
-          // let basketInfo = '';
-          // products.forEach((item) => {
-          // 	if (item.type === 4) {
-          // 		basketOffsetNum += parseInt(item.mount || 0);
-          // 		basketInfo += `${item.name}:${item.mount};`;
-          // 	}
-          // });
-
-          // const productItems = products.filter((m) => m.type !== 4);
-
-          // console.log('商品信息', { productItems, basketOffsetNum });
-
-          // // 精确计算高度 - 每个区域预留足够空间
-          // let heightCalc = 0;
-          // heightCalc += 60; // 顶部留白
-          // heightCalc += 60; // 标题（字号40）
-          // heightCalc += 40; // 副标题第一行（字号20）
-          // heightCalc += 35; // 副标题第二行
-          // heightCalc += 50; // 市场名称（字号32）
-          // heightCalc += 45; // 客户和票号行（字号26）
-          // heightCalc += 40; // 日期行
-          // heightCalc += 40; // 表格前间距
-          // heightCalc += 50; // 表头
-          // heightCalc += productItems.length * 50; // 商品行（每行50）
-          // heightCalc += 50; // 合计行
-          // if (basketOffsetNum > 0) {
-          // 	heightCalc += 50; // 还筐行
-          // }
-          // heightCalc += 40; // 间距
-          // heightCalc += 60; // 本单合计
-          // heightCalc += 50; // 实付/实退行
-          // heightCalc += 40; // 分割线和间距
-          // heightCalc += 45; // 底部信息
-          // heightCalc += 120; // logo和底部留白
-
-          // console.log('计算的canvas尺寸', { width, heightCalc });
-
-          // // 设置canvas尺寸
-          // this.canvasWidth = width;
-          // this.canvasHeight = heightCalc;
-
-          // // 等待Vue更新DOM，并增加额外延迟确保canvas渲染完成
-          // this.$nextTick(() => {
-          // 	console.log('Vue DOM已更新，canvas尺寸已设置为:', this.canvasWidth, 'x', this.canvasHeight);
-
-          // 	// 增加延迟确保canvas尺寸真正生效（增加到1500ms）
-          // 	setTimeout(() => {
-          // 		console.log('⏱️ 延迟1500ms后，开始绘制canvas');
-          // 		console.log('绘制区域尺寸:', width, 'x', heightCalc);
-          // 		console.log('Canvas元素尺寸:', this.canvasWidth, 'x', this.canvasHeight);
-
-          // 		// 创建canvas上下文 - 重要：确保在setTimeout内创建
-          // 		const ctx = uni.createCanvasContext('orderCanvas', this);
-          // 		console.log('Canvas上下文创建成功');
-
-          // 		// 先清空canvas
-          // 		ctx.clearRect(0, 0, width, heightCalc);
-          // 		console.log('Canvas已清空');
-
-          // 		// 白色背景（填充整个canvas） - 非常重要！
-          // 		ctx.setFillStyle('#FFFFFF');
-          // 		ctx.fillRect(0, 0, width, heightCalc);
-          // 		console.log('✅ 白色背景绘制完成，尺寸:', width, 'x', heightCalc);
-
-          // 		// 重置绘制参数
-          // 		ctx.setFillStyle('#000000');
-          // 		ctx.setStrokeStyle('#000000');
-
-          // 		let y = 50; // 顶部留白
-
-          // 		// 1. 标题 - 居中（字号40，预留60px高度）
-          // 		ctx.setFillStyle('#000000');
-          // 		ctx.setFontSize(40);
-          // 		ctx.setTextAlign('center');
-          // 		ctx.setTextBaseline('top');
-          // 		ctx.fillText(voucherTitle, width / 2, y);
-          // 		console.log('绘制标题:', voucherTitle);
-          // 		y += 60;
-
-          // 		// 2. 副标题 - 居中（字号20）
-          // 		ctx.setFontSize(20);
-          // 		ctx.setTextBaseline('top');
-          // 		ctx.fillText('广东省食用农产品批发市场销售票据', width / 2, y);
-          // 		y += 30;
-          // 		ctx.fillText('(广州江南果菜批发市场)', width / 2, y);
-          // 		y += 40;
-
-          // 		// 3. 市场名称 - 居中加粗（字号32）
-          // 		ctx.setFontSize(32);
-          // 		ctx.setTextBaseline('top');
-          // 		let displayCompanyName = companyName;
-          // 		if (displayCompanyName.length > 18) {
-          // 			displayCompanyName = displayCompanyName.substring(0, 18) + '...';
-          // 		}
-          // 		ctx.fillText(displayCompanyName, width / 2, y);
-          // 		y += 50;
-
-          // 		// 4. 客户和票号 - 左右对齐（字号26）
-          // 		ctx.setFontSize(26);
-          // 		ctx.setTextBaseline('top');
-          // 		ctx.setTextAlign('left');
-          // 		let customerName = order.customName || '散客';
-          // 		if (customerName.length > 10) {
-          // 			customerName = customerName.substring(0, 10) + '...';
-          // 		}
-          // 		ctx.fillText('客户：' + customerName, padding, y);
-
-          // 		ctx.setTextAlign('right');
-          // 		let accountCode = order.accountCode || '';
-          // 		if (accountCode.length > 15) {
-          // 			accountCode = accountCode.substring(0, 15) + '...';
-          // 		}
-          // 		ctx.fillText('票号：' + accountCode, width - padding, y);
-          // 		y += 40;
-
-          // 		// 5. 日期 - 右对齐
-          // 		const createTime = order.createTime ? order.createTime.replace('T', ' ').substring(0, 16) : '';
-          // 		ctx.setTextAlign('right');
-          // 		ctx.setFontSize(24);
-          // 		ctx.setTextBaseline('top');
-          // 		ctx.fillText(createTime, width - padding, y);
-          // 		y += 40;
-
-          // 		// 6. 表格
-          // 		const tableX = padding;
-          // 		const tableWidth = width - padding * 2;
-          // 		const colWidths = [30, 150, 90, 150, 110, 130]; // #, 货品, 数量, 重量, 单价, 小计
-
-          // 		// 表头背景
-          // 		ctx.setFillStyle('#F5F5F5');
-          // 		ctx.fillRect(tableX, y, tableWidth, 45);
-
-          // 		// 表头文字（字号24）
-          // 		ctx.setFillStyle('#000000');
-          // 		ctx.setFontSize(24);
-          // 		ctx.setTextBaseline('middle');
-
-          // 		const headers = ['#', '货品', '数量', '重量', '单价', '小计'];
-          // 		const headerY = y + 22; // 垂直居中
-          // 		headers.forEach((header, index) => {
-          // 			let currentX = tableX;
-          // 			for (let i = 0; i < index; i++) {
-          // 				currentX += colWidths[i];
-          // 			}
-
-          // 			if (index === 0) {
-          // 				ctx.setTextAlign('center');
-          // 				ctx.fillText(header, currentX + colWidths[index] / 2, headerY);
-          // 			} else if (index === 1) {
-          // 				ctx.setTextAlign('left');
-          // 				ctx.fillText(header, currentX + 10, headerY);
-          // 			} else if (index === 5) {
-          // 				ctx.setTextAlign('right');
-          // 				ctx.fillText(header, currentX + colWidths[index] - 10, headerY);
-          // 			} else {
-          // 				ctx.setTextAlign('center');
-          // 				ctx.fillText(header, currentX + colWidths[index] / 2, headerY);
-          // 			}
-          // 		});
-          // 		y += 45;
-
-          // 		// 表头下边框
-          // 		ctx.setStrokeStyle('#DDDDDD');
-          // 		ctx.setLineWidth(1);
-          // 		ctx.beginPath();
-          // 		ctx.moveTo(tableX, y);
-          // 		ctx.lineTo(tableX + tableWidth, y);
-          // 		ctx.stroke();
-          // 		y += 5;
-
-          // 		// 金额右对齐位置
-          // 		const amountRightX = tableX + tableWidth - 10;
-
-          // 		// 7. 绘制商品行（每行50px高度）
-          // 		let totalAmount = 0;
-          // 		ctx.setFontSize(22);
-          // 		ctx.setTextBaseline('middle');
-
-          // 		console.log('开始绘制商品列表，共', productItems.length, '个商品');
-
-          // 		productItems.forEach((item, index) => {
-          // 			const rowY = y + 25; // 垂直居中
-          // 			ctx.setFillStyle('#000000');
-
-          // 			// 序号
-          // 			ctx.setTextAlign('center');
-          // 			ctx.fillText((index + 1).toString(), tableX + colWidths[0] / 2, rowY);
-
-          // 			// 货品名称
-          // 			ctx.setTextAlign('left');
-          // 			let productName = item.name || '';
-          // 			if (productName.length > 12) {
-          // 				productName = productName.substring(0, 12) + '...';
-          // 			}
-          // 			ctx.fillText(productName, tableX + colWidths[0] + 10, rowY);
-
-          // 			// 数量
-          // 			ctx.setTextAlign('center');
-          // 			const mountText = item.type === 2 ? item.mount + '' : item.mount + '件';
-          // 			ctx.fillText(mountText, tableX + colWidths[0] + colWidths[1] + colWidths[2] / 2, rowY);
-
-          // 			// 重量
-          // 			let weightText = '--';
-          // 			if (item.type !== 2) {
-          // 				const totalWeight = parseFloat(item.totalWeight || 0);
-          // 				const tareWeight = parseFloat(item.tareWeight || 0);
-          // 				const netWeight = (totalWeight - tareWeight).toFixed(2);
-          // 				weightText = netWeight + '';
-          // 			}
-          // 			ctx.fillText(weightText, tableX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] / 2, rowY);
-
-          // 			// 单价
-          // 			ctx.fillText((item.referenceAmount || 0) + '', tableX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3] + colWidths[4] / 2, rowY);
-
-          // 			// 小计
-          // 			const subtotal = parseFloat(item.subtotal || 0);
-          // 			totalAmount += subtotal;
-          // 			ctx.setTextAlign('right');
-          // 			ctx.fillText(subtotal.toFixed(0), amountRightX, rowY);
-
-          // 			y += 50;
-          // 		});
-
-          // 		// 表格底边框
-          // 		ctx.setStrokeStyle('#DDDDDD');
-          // 		ctx.setLineWidth(1);
-          // 		ctx.beginPath();
-          // 		ctx.moveTo(tableX, y - 5);
-          // 		ctx.lineTo(tableX + tableWidth, y - 5);
-          // 		ctx.stroke();
-
-          // 		// 8. 合计行
-          // 		const summaryY = y + 25;
-          // 		ctx.setFillStyle('#000000');
-          // 		ctx.setFontSize(26);
-          // 		ctx.setTextAlign('left');
-          // 		ctx.fillText('合计', tableX + 60, summaryY);
-
-          // 		ctx.setTextAlign('right');
-          // 		ctx.fillText(totalAmount.toFixed(0), amountRightX, summaryY);
-          // 		y += 50;
-
-          // 		// 9. 还筐信息
-          // 		if (basketOffsetNum > 0) {
-          // 			const basketDate = createTime.substring(5, 10); // MM-DD
-          // 			const basketY = y + 25;
-          // 			ctx.setTextAlign('left');
-          // 			ctx.setFontSize(24);
-          // 			ctx.fillText(`${basketDate} 还筐`, tableX + 60, basketY);
-
-          // 			ctx.fillText(basketInfo, tableX + 200, basketY);
-
-          // 			ctx.setTextAlign('right');
-          // 			ctx.fillText('-' + (order.basketOffsetAmount || 0), amountRightX, basketY);
-          // 			y += 50;
-          // 		}
-
-          // 		y += 40;
-
-          // 		// 10. 本单合计
-          // 		ctx.setStrokeStyle('#000000');
-          // 		ctx.setLineWidth(2);
-          // 		ctx.beginPath();
-          // 		ctx.moveTo(padding, y - 15);
-          // 		ctx.lineTo(width - padding, y - 15);
-          // 		ctx.stroke();
-
-          // 		const finalTotalY = y + 30;
-          // 		ctx.setFillStyle('#000000');
-          // 		ctx.setFontSize(32);
-          // 		ctx.setTextAlign('left');
-          // 		ctx.fillText('本单合计：', padding + 20, finalTotalY);
-
-          // 		const finalAmount = totalAmount - (order.basketOffsetAmount || 0);
-          // 		ctx.setTextAlign('right');
-          // 		ctx.fillText(finalAmount.toFixed(0), amountRightX, finalTotalY);
-          // 		y += 60;
-
-          // 		// 11. 实付/实退金额
-          // 		const paymentType = order.payType === 1 ? '微信' : order.payType === 2 ? '支付宝' : order.payType === 3 ? '现金' : '挂账';
-          // 		const payLabel = finalAmount >= 0 ? '实付：' : '实退：';
-          // 		const payAmount = Math.abs(order.actualMoney || finalAmount);
-
-          // 		const payY = y + 25;
-          // 		ctx.setTextAlign('right');
-          // 		ctx.setFontSize(28);
-          // 		ctx.fillText(payLabel + payAmount.toFixed(0) + '(' + paymentType + ')', amountRightX, payY);
-          // 		y += 50;
-
-          // 		// 12. 底部分割线
-          // 		ctx.setStrokeStyle('#000000');
-          // 		ctx.setLineWidth(1);
-          // 		ctx.beginPath();
-          // 		ctx.moveTo(padding, y);
-          // 		ctx.lineTo(width - padding, y);
-          // 		ctx.stroke();
-          // 		y += 30;
-
-          // 		// 13. 底部信息
-          // 		ctx.setFillStyle('#333333');
-          // 		ctx.setFontSize(20);
-          // 		ctx.setTextAlign('left');
-          // 		ctx.fillText('地址：' + companyAddress + '，联系电话：' + companyPhone, padding, y + 15);
-          // 		y += 40;
-
-          // 		// 14. 底部logo
-          // 		const logoPath = '/static/img/orderlogo.png';
-          // 		uni.getImageInfo({
-          // 			src: logoPath,
-          // 			success: (imgInfo) => {
-          // 				// 设置logo显示尺寸（缩小到合适大小）
-          // 				const logoMaxWidth = 200; // 最大宽度
-          // 				const logoMaxHeight = 80; // 最大高度
-          // 				let logoWidth = imgInfo.width;
-          // 				let logoHeight = imgInfo.height;
-
-          // 				// 按比例缩放
-          // 				if (logoWidth > logoMaxWidth || logoHeight > logoMaxHeight) {
-          // 					const widthRatio = logoMaxWidth / logoWidth;
-          // 					const heightRatio = logoMaxHeight / logoHeight;
-          // 					const ratio = Math.min(widthRatio, heightRatio);
-          // 					logoWidth = logoWidth * ratio;
-          // 					logoHeight = logoHeight * ratio;
-          // 				}
-
-          // 				// 居中位置
-          // 				const logoX = (width - logoWidth) / 2;
-          // 				const logoY = y + 10;
-
-          // 				console.log("ctx",ctx)
-
-          // 				// 绘制logo
-          // 				ctx.drawImage(logoPath, logoX, logoY, logoWidth, logoHeight);
-
-          // 			// 绘制完成，导出图片（使用false参数，不保留之前的绘制）
-          // 			ctx.draw(false, () => {
-          // 				console.log('✅ Canvas绘制完成（有logo），draw回调已触发');
-          // 				// 增加延迟时间，确保平板等性能较差设备有足够时间渲染
-          // 				setTimeout(() => {
-          // 					console.log('开始导出Canvas为图片...', 'canvasId:', 'orderCanvas', '尺寸:', width, 'x', heightCalc);
-          // 					console.log('Canvas实际尺寸:', this.canvasWidth, 'x', this.canvasHeight);
-
-          // 					uni.canvasToTempFilePath({
-          // 						canvasId: 'orderCanvas',
-          // 						x: 0,
-          // 						y: 0,
-          // 						width: width,
-          // 						height: heightCalc,
-          // 						destWidth: width * 2,
-          // 						destHeight: heightCalc * 2,
-          // 						fileType: 'png',
-          // 						quality: 1,
-          // 						success: (res) => {
-          // 							console.log('✅ 生成票据图片成功:', res.tempFilePath);
-          // 							// 验证图片文件
-          // 							uni.getImageInfo({
-          // 								src: res.tempFilePath,
-          // 								success: (imgInfo) => {
-          // 									console.log('✅ 图片验证成功:', imgInfo);
-          // 									console.log('图片尺寸:', imgInfo.width, 'x', imgInfo.height);
-          // 								},
-          // 								fail: (err) => {
-          // 									console.error('❌ 图片验证失败:', err);
-          // 								}
-          // 							});
-
-          // 							uni.hideLoading();
-          // 							this.isGeneratingImage = false;
-          // 							// // 更新发单次数
-          // 							// this.updateShareCount();
-          // 							// 生成成功，分享图片
-          // 							this.saveAndShareImage(res.tempFilePath);
-          // 						},
-          // 						fail: (err) => {
-          // 							console.error('❌ 生成票据图片失败:', err);
-          // 							console.error('失败详情:', JSON.stringify(err));
-          // 							uni.hideLoading();
-          // 							this.isGeneratingImage = false;
-          // 							uni.showToast({
-          // 								title: '生成图片失败: ' + (err.errMsg || '未知错误'),
-          // 								icon: 'none',
-          // 								duration: 3000
-          // 							});
-          // 						}
-          // 					}, this);
-          // 				}, 500); // 减少到500ms，因为draw回调已经确保绘制完成
-          // 			});
-          // 			},
-          // 			fail: (err) => {
-          // 				console.error('获取logo图片失败:', err);
-          // 				// 即使logo加载失败，也继续导出图片
-          // 				ctx.draw(false, () => {
-          // 					console.log('✅ Canvas绘制完成（无logo），draw回调已触发');
-          // 					// 增加延迟时间，确保平板等性能较差设备有足够时间渲染
-          // 					setTimeout(() => {
-          // 						console.log('开始导出Canvas为图片（无logo）...', '尺寸:', width, 'x', heightCalc);
-          // 						console.log('Canvas实际尺寸:', this.canvasWidth, 'x', this.canvasHeight);
-
-          // 						uni.canvasToTempFilePath({
-          // 							canvasId: 'orderCanvas',
-          // 							x: 0,
-          // 							y: 0,
-          // 							width: width,
-          // 							height: heightCalc,
-          // 							destWidth: width * 2,
-          // 							destHeight: heightCalc * 2,
-          // 							fileType: 'png',
-          // 							quality: 1,
-          // 							success: (res) => {
-          // 								console.log('✅ 生成票据图片成功（无logo）:', res.tempFilePath);
-          // 								// 验证图片文件
-          // 								uni.getImageInfo({
-          // 									src: res.tempFilePath,
-          // 									success: (imgInfo) => {
-          // 										console.log('✅ 图片验证成功:', imgInfo);
-          // 										console.log('图片尺寸:', imgInfo.width, 'x', imgInfo.height);
-          // 									},
-          // 									fail: (err) => {
-          // 										console.error('❌ 图片验证失败:', err);
-          // 									}
-          // 								});
-
-          // 								uni.hideLoading();
-          // 								this.isGeneratingImage = false;
-          // 								// 更新发单次数
-          // 								this.updateShareCount();
-          // 								// 生成成功，分享图片
-          // 								this.saveAndShareImage(res.tempFilePath);
-          // 							},
-          // 							fail: (err) => {
-          // 								console.error('❌ 生成票据图片失败（无logo）:', err);
-          // 								console.error('失败详情:', JSON.stringify(err));
-          // 								uni.hideLoading();
-          // 								this.isGeneratingImage = false;
-          // 								uni.showToast({
-          // 									title: '生成图片失败: ' + (err.errMsg || '未知错误'),
-          // 									icon: 'none',
-          // 									duration: 3000
-          // 								});
-          // 							}
-          // 						}, this);
-          // 					}, 500); // 减少到500ms，因为draw回调已经确保绘制完成
-          // 				});
-          // 			}
-          // 		});
-          // 	}, 1500); // 给canvas渲染1500ms的时间
-          // });
-        })
-        .catch(err => {
-          console.error('❌ 获取公司信息失败:', err)
-          uni.hideLoading()
-          this.isGeneratingImage = false
-          uni.showToast({
-            title: '获取公司信息失败',
-            icon: 'none',
-            duration: 3000,
-          })
-        })
+      const companyName = uni.getStorageSync('companyName') || ''
+      const companyAddress = uni.getStorageSync('address') || ''
+      const companyPhone = uni.getStorageSync('contact') || ''
+      const marketName = uni.getStorageSync('marketName') || ''
+
+      this.orderImageInfo = {
+        companyName,
+        companyAddress,
+        companyPhone,
+        order,
+        products,
+        marketName,
+      }
+      this.generateHandle()
     },
 
     // 更新发单次数
@@ -1795,21 +1296,13 @@ export default {
               quality: 100, // 图片清晰度
             },
             i => {
-              uni.saveImageToPhotosAlbum({
-                filePath: url,
-                success: function () {
-                  that.shareImage(url)
-                  uni.showToast({
-                    title: '图片保存成功',
-                    icon: 'none',
-                  })
-                  bitmap.clear()
-                },
-              })
+              // 直接使用临时图片路径分享，不保存到相册
+              that.shareImage(url)
+              bitmap.clear()
             },
             e => {
               uni.showToast({
-                title: '图片保存失败',
+                title: '图片处理失败',
                 icon: 'none',
               })
               bitmap.clear()
@@ -1818,7 +1311,7 @@ export default {
         },
         e => {
           uni.showToast({
-            title: '图片保存失败',
+            title: '图片处理失败',
             icon: 'none',
           })
           bitmap.clear()
@@ -1861,12 +1354,6 @@ export default {
       const formattedDate = `${year}-${month}-${day} `
       return formattedDate
     },
-    showEdit() {
-      this.isEdting = !this.isEdting
-      if (this.checkboxValue.length > 0) {
-        this.checkboxValue = []
-      }
-    },
     TurnToTuigeCashier() {
       uni.navigateTo({
         url: '/pages/cashier/tuigeCashier?order=' + JSON.stringify(this.currentOrder),
@@ -1905,7 +1392,7 @@ export default {
     },
     // 生成图片后的回调函数
     receiveRenderData(base64) {
-			console.log('订单base64', base64)
+      console.log('订单base64', base64)
       this.canvasImageMsg = null
       // 重置生成状态
       this.isGeneratingImage = false
@@ -1913,10 +1400,10 @@ export default {
       this.orderImageInfo = null
       // 隐藏加载提示
       uni.hideLoading()
-      // 保存并分享图片
-      this.downLoadImage(base64)
       // 更新发单次数
       this.updateShareCount()
+      // 保存并分享图片
+      this.downLoadImage(base64)
     },
     // 触发生成图片事件
     generateHandle() {
@@ -1936,46 +1423,29 @@ import html2canvas from 'html2canvas'
 export default {
   methods: {
     generateImage(callback) {
+      const startTime = Date.now();
+      console.log('[图片生成] 开始生成时间:', new Date().toLocaleTimeString());
+
       setTimeout(() => {
         const dom = document.getElementById('orderImage'); // 需要生成图片内容的 dom 节点
 
         if (!dom) {
+          console.log('[图片生成] DOM元素未找到，耗时:', Date.now() - startTime, 'ms');
           return;
         }
 
-        // 获取计算后的样式
+        console.log('[图片生成] DOM元素获取完成，耗时:', Date.now() - startTime, 'ms');
+
+        // 获取实际内容尺寸（简化计算，提高性能）
         const computedStyle = window.getComputedStyle(dom);
-        const paddingTop = parseFloat(computedStyle.paddingTop) || 0;
-        const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
-        const paddingLeft = parseFloat(computedStyle.paddingLeft) || 0;
-        const paddingRight = parseFloat(computedStyle.paddingRight) || 0;
         const marginTop = parseFloat(computedStyle.marginTop) || 0;
         const marginBottom = parseFloat(computedStyle.marginBottom) || 0;
 
-        // 获取实际内容的完整尺寸（包括滚动区域和所有padding/margin）
+        // 直接使用scrollHeight，避免遍历所有子元素
         const actualWidth = dom.scrollWidth || dom.clientWidth;
+        const actualHeight = dom.scrollHeight + marginTop + marginBottom + 100; // 添加100px安全边距
 
-        // 计算所有子元素的实际高度
-        let maxChildBottom = 0;
-        const children = dom.querySelectorAll('*');
-        children.forEach(child => {
-          const rect = child.getBoundingClientRect();
-          const domRect = dom.getBoundingClientRect();
-          const relativeBottom = rect.bottom - domRect.top;
-          if (relativeBottom > maxChildBottom) {
-            maxChildBottom = relativeBottom;
-          }
-        });
-
-        // 使用更大的值，并添加安全边距
-        const calculatedHeight = Math.max(
-          dom.scrollHeight,
-          maxChildBottom,
-          dom.offsetHeight
-        );
-
-        // 高度需要包含 padding、margin 和额外的安全边距
-        const actualHeight = calculatedHeight + marginTop + marginBottom + 100; // 添加100px安全边距
+        console.log('[图片生成] 尺寸计算完成，宽度:', actualWidth, '高度:', actualHeight, '耗时:', Date.now() - startTime, 'ms');
 
         // 临时移除可能导致裁剪的样式
         const originalOverflow = dom.style.overflow;
@@ -1983,45 +1453,73 @@ export default {
         dom.style.overflow = 'visible';
         dom.style.maxHeight = 'none';
 
+        console.log('[图片生成] 开始调用html2canvas，耗时:', Date.now() - startTime, 'ms');
+
         html2canvas(dom, {
-          width: actualWidth, // 使用完整内容宽度
-          height: actualHeight, // 使用完整内容高度（包括滚动区域）
-          scrollY: 0, // html2canvas默认绘制视图内的页面，需要把scrollY，scrollX设置为0
+          width: actualWidth,
+          height: actualHeight,
+          scrollY: 0,
           scrollX: 0,
-          useCORS: true, // 支持跨域
-          allowTaint: true, // 允许跨域图片
-          backgroundColor: '#ffffff', // 设置背景色
-          scale: 1, // 提高清晰度，生成2倍图
-          logging: false, // 关闭日志
+          useCORS: true,
+          allowTaint: false, // 改为false，提高性能
+          backgroundColor: '#ffffff',
+          scale: window.devicePixelRatio || 1, // 使用设备像素比，避免过度渲染
+          logging: false,
+          removeContainer: true,
+          imageTimeout: 0, // 设为0，不等待图片加载（logo已通过import加载）
+          foreignObjectRendering: false, // 禁用foreignObject渲染，提高性能
           ignoreElements: (element) => {
-            // 忽略带有 no-capture 类的元素（如关闭按钮）
+            // 忽略不需要的元素
             return element.classList && element.classList.contains('no-capture');
           },
           onclone: (clonedDoc) => {
-            // 在克隆的文档中确保所有内容可见
             const clonedElement = clonedDoc.getElementById('orderImage');
             if (clonedElement) {
-              clonedElement.style.overflow = 'visible';
-              clonedElement.style.maxHeight = 'none';
-              clonedElement.style.height = 'auto';
-              clonedElement.style.minHeight = actualHeight + 'px';
-              // 确保底部有足够空间
-              clonedElement.style.paddingBottom = '100px';
+              // 简化样式设置
+              Object.assign(clonedElement.style, {
+                overflow: 'visible',
+                maxHeight: 'none',
+                height: 'auto',
+                minHeight: actualHeight + 'px',
+                paddingBottom: '100px'
+              });
             }
           }
         }).then((canvas) => {
-          // 恢复原始样式
-          dom.style.overflow = originalOverflow;
-          dom.style.maxHeight = originalMaxHeight;
+          console.log('[图片生成] html2canvas完成，耗时:', Date.now() - startTime, 'ms');
+
+          // 安全恢复原始样式
+          try {
+            if (dom && dom.style) {
+              dom.style.overflow = originalOverflow;
+              dom.style.maxHeight = originalMaxHeight;
+            }
+          } catch (styleErr) {
+            console.warn('[图片生成] 恢复样式失败:', styleErr);
+          }
 
           const base64 = canvas.toDataURL('image/png');
+          console.log('[图片生成] base64转换完成，总耗时:', Date.now() - startTime, 'ms');
+          console.log('[图片生成] 结束时间:', new Date().toLocaleTimeString());
+
           callback&&callback(base64);
         }).catch(err=>{
-          // 恢复原始样式
-          dom.style.overflow = originalOverflow;
-          dom.style.maxHeight = originalMaxHeight;
+          console.log('[图片生成] 生成失败，错误:', err, '耗时:', Date.now() - startTime, 'ms');
+
+          // 安全恢复原始样式
+          try {
+            if (dom && dom.style) {
+              dom.style.overflow = originalOverflow;
+              dom.style.maxHeight = originalMaxHeight;
+            }
+          } catch (styleErr) {
+            console.warn('[图片生成] 恢复样式失败:', styleErr);
+          }
+
+          // 调用callback，避免调用方一直等待
+          callback && callback(null);
         })
-      }, 800); // 增加延迟时间，确保DOM完全渲染和图片加载
+      }, 50); // 进一步减少延迟，logo已预加载
     },
     updateEcharts(newValue, oldValue, ownerInstance, instance) {
       // 监听 service 层数据变更
@@ -2031,8 +1529,8 @@ export default {
         })
       }
     }
-		}
-	}
+  }
+}
 </script>
 
 <style lang="scss">

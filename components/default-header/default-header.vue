@@ -21,11 +21,7 @@
             </div>
           </div>
         </div>
-        <div
-          class="menu-item last-order-container"
-          v-if="lastOrder"
-          @click="showLastModel"
-        >
+        <div class="menu-item last-order-container" v-if="lastOrder" @click="showLastModel">
           <span class="last-order-icon">
             <u-icon name="file-text" color="#fba903" size="28"></u-icon>
           </span>
@@ -36,9 +32,7 @@
           >
           <span class="last-order-text last-order-amount">金额: {{ lastOrder.payableAmount }}</span>
         </div>
-        <div class="btn btn-primary-plain btn-submit hang-order-btn" @click="showHangList">
-          挂单中心
-        </div>
+        <div class="btn btn-primary-plain btn-submit hang-order-btn" @click="showHangList">挂单中心</div>
       </div>
     </div>
     <u-modal
@@ -192,6 +186,7 @@ export default {
 
       // 切换商家
       uni.setStorageSync('companyId', company.id)
+      uni.setStorageSync('marketName', company.marketName)
       uni.setStorageSync('companyName', company.name)
       uni.setStorageSync('vesionType', company.vesionType)
       this.currentCompanyName = company.name
