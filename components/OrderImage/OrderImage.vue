@@ -1,106 +1,101 @@
+<!-- 说明： 因为html2canvas 开启 生成图片会导致calss样式丢失，所以改成行内样式， TODO应该有更好的解决方法 -->
 <template>
-  <div class="order-image-container" v-if="orderImageInfo" @click.self="closeImage">
-    <div class="voucher-wrapper" id="orderImage">
-      <!-- 关闭按钮 - 不会被捕获到图片中 -->
-      <div class="close-btn no-capture" @click="closeImage">
-        <uni-icons type="close" size="24" color="#666"></uni-icons>
-      </div>
-
+  <div :style="containerStyle" v-if="orderImageInfo" @click.self="closeImage">
+    <div id="orderImage" :style="wrapperStyle">
       <!-- 标题 -->
-      <div class="voucher-title">{{ voucherTitle }}</div>
+      <div :style="titleStyle">{{ voucherTitle }}</div>
 
       <!-- 副标题 -->
-      <div class="voucher-subtitle">
+      <div :style="subtitleStyle">
         <div>广东省食用农产品批发市场销售票据</div>
         <div>{{ marketName }}</div>
       </div>
 
       <!-- 店铺名称 -->
-      <div class="company-name">{{ companyName }}</div>
+      <div :style="companyNameStyle">{{ companyName }}</div>
 
       <!-- 客户和票号 -->
-      <div class="order-header">
-        <div class="customer-info">客户：{{ customerName }}</div>
-        <div class="order-code">票号：{{ orderCode }}</div>
+      <div :style="headerRowStyle">
+        <div :style="{ flex: '1' }">客户：{{ customerName }}</div>
+        <div :style="{ flex: '1', textAlign: 'right' }">票号：{{ orderCode }}</div>
       </div>
 
       <!-- 日期 -->
-      <div class="order-date">{{ orderDate }}</div>
+      <div :style="dateStyle">{{ orderDate }}</div>
 
       <!-- 商品表格 -->
-      <div class="product-table">
+      <div :style="tableContainerStyle">
         <!-- 表头 -->
-        <div class="table-header">
-          <div class="col col-no"></div>
-          <div class="col col-name">货品</div>
-          <div class="col col-quantity">数量</div>
-          <div class="col col-weight">重量</div>
-          <div class="col col-price">单价</div>
-          <div class="col col-subtotal">小计</div>
+        <div :style="tableHeaderStyle">
+          <div :style="colNoStyle"></div>
+          <div :style="colNameStyle">货品</div>
+          <div :style="colQuantityStyle">数量</div>
+          <div :style="colWeightStyle">重量</div>
+          <div :style="colPriceStyle">单价</div>
+          <div :style="colSubtotalStyle">小计</div>
         </div>
 
         <!-- 数据行 -->
-        <div class="table-body">
-          <div class="table-row" v-for="(item, index) in productItems" :key="index">
-            <div class="col col-no">{{ index + 1 }}</div>
-            <div class="col col-name">{{ item.name }}</div>
-            <div class="col col-quantity">{{ formatQuantity(item) }}</div>
-            <div class="col col-weight">{{ formatWeight(item) }}</div>
-            <div class="col col-price">{{ item.referenceAmount || 0 }}</div>
-            <div class="col col-subtotal">{{ formatSubtotal(item) }}</div>
+        <div>
+          <div :style="tableRowStyle(index === productItems.length - 1)" v-for="(item, index) in productItems" :key="index">
+            <div :style="colNoStyle">{{ index + 1 }}</div>
+            <div :style="colNameStyle">{{ item.name }}</div>
+            <div :style="colQuantityStyle">{{ formatQuantity(item) }}</div>
+            <div :style="colWeightStyle">{{ formatWeight(item) }}</div>
+            <div :style="colPriceStyle">{{ item.referenceAmount || 0 }}</div>
+            <div :style="colSubtotalStyle">{{ formatSubtotal(item) }}</div>
           </div>
         </div>
 
         <!-- 还筐信息 -->
-        <div class="table-footer" v-if="basketOffsetNum > 0">
-          <div class="basket-row">
-            <div class="basket-label">{{ basketDate }} 还筐抵扣</div>
-            <div class="basket-info">{{ basketInfo }}</div>
-            <div class="basket-value">-{{ basketOffsetAmount }}</div>
+        <div :style="basketContainerStyle" v-if="basketOffsetNum > 0">
+          <div :style="basketRowStyle">
+            <div :style="{ flex: '0 0 auto' }">{{ basketDate }} 还筐抵扣</div>
+            <div :style="{ flex: '1', padding: '0 20rpx' }">{{ basketInfo }}</div>
+            <div :style="{ flex: '0 0 auto', color: '#e74c3c' }">-{{ basketOffsetAmount }}</div>
           </div>
         </div>
       </div>
 
       <!-- 本单合计 -->
-      <div class="final-total">
-        <div class="final-label">本单合计：</div>
-        <div class="final-value">{{ finalAmount }} 元</div>
+      <div :style="finalTotalStyle">
+        <div>本单合计：</div>
+        <div>{{ finalAmount }} 元</div>
       </div>
 
       <!-- 多收金额 -->
-      <div class="payment-info" v-if="overchargeAmount > 0">多收：{{ overchargeAmount.toFixed(0) }} 元</div>
+      <div :style="paymentInfoStyle" v-if="overchargeAmount > 0">多收：{{ overchargeAmount.toFixed(0) }} 元</div>
 
       <!-- 优惠金额 -->
-      <div class="payment-info" v-if="discountAmount > 0">优惠：{{ discountAmount.toFixed(0) }} 元</div>
+      <div :style="paymentInfoStyle" v-if="discountAmount > 0">优惠：{{ discountAmount.toFixed(0) }} 元</div>
+      
       <!-- 实付金额 -->
-      <div class="payment-info" v-if="actualPayment > 0">实付：{{ actualPayment }} 元</div>
+      <div :style="paymentInfoStyle" v-if="actualPayment > 0">实付：{{ actualPayment }} 元</div>
 
       <!-- 下欠金额 -->
-      <div class="payment-info" v-if="debt > 0">下欠：{{ debt.toFixed(0) }} 元</div>
+      <div :style="paymentInfoStyle" v-if="debt > 0">下欠：{{ debt.toFixed(0) }} 元</div>
 
+      <!-- 底部分割线 -->
+      <div :style="dividerStyle"></div>
+      
       <!-- 底部信息 -->
-      <div class="footer-divider"></div>
-      <div class="footer-info">地址：{{ companyAddress }}，联系电话：{{ companyPhone }}</div>
+      <div :style="footerInfoStyle">地址：{{ companyAddress }}，联系电话：{{ companyPhone }}</div>
 
       <!-- Logo -->
-      <div class="logo-area">
+      <div :style="logoAreaStyle">
         <!-- 图片Logo -->
         <img
-          v-if="!logoError && !useFallbackLogo"
-          :src="logoPath"
-          class="logo-img"
+          src="https://zfprinter.top/static/orderlogo.png"
+          :style="logoImgStyle"
           alt="智农佳"
-          @error="handleLogoError"
-          @load="handleLogoLoad"
         />
-        <div class="hotline">咨询热线：400-812-7682</div>
+        <div :style="hotlineStyle">咨询热线：400-812-7682</div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import orderlogo from '@/static/img/orderlogo.png'
 
 export default {
   name: 'OrderImage',
@@ -117,15 +112,229 @@ export default {
       currentLogoPath: '', // 当前尝试的logo路径
       showDebugInfo: false, // 是否显示调试信息（可以手动开启）
       platform: '', // 当前平台
+      logoPath: '', // 当前logo路径
     }
   },
   mounted() {
     // 获取平台信息
     this.platform = uni.getSystemInfoSync().platform
-    // 使用导入的logo图片
-    this.currentLogoPath = orderlogo
   },
   computed: {
+    // === 公共样式对象 ===
+    
+    // 外层容器样式
+    containerStyle() {
+      return {
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: '50%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'flex-start',
+        zIndex: '9999',
+        padding: '40rpx',
+        boxSizing: 'border-box',
+        overflowY: 'auto',
+        overflowX: 'hidden',
+        opacity: '0'
+      }
+    },
+    
+    // 主容器样式
+    wrapperStyle() {
+      return {
+        width: '1200rpx',
+        backgroundColor: '#ffffff',
+        borderRadius: '8rpx',
+        padding: '40rpx',
+        paddingBottom: '50rpx',
+        marginTop: '20rpx',
+        marginBottom: '30rpx',
+        position: 'relative',
+        overflow: 'visible'
+      }
+    },
+    
+    // 标题样式
+    titleStyle() {
+      return {
+        fontSize: '40rpx',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: '20rpx',
+        color: '#000'
+      }
+    },
+    
+    // 副标题样式
+    subtitleStyle() {
+      return {
+        textAlign: 'center',
+        fontSize: '25rpx',
+        color: '#333',
+        marginBottom: '30rpx',
+        lineHeight: '1.6'
+      }
+    },
+    
+    // 公司名称样式
+    companyNameStyle() {
+      return {
+        fontSize: '35rpx',
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: '30rpx',
+        color: '#000'
+      }
+    },
+    
+    // 行信息样式（客户和票号）
+    headerRowStyle() {
+      return {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: '30rpx',
+        marginBottom: '20rpx',
+        color: '#333'
+      }
+    },
+    
+    // 日期样式
+    dateStyle() {
+      return {
+        textAlign: 'right',
+        fontSize: '26rpx',
+        color: '#666',
+        marginBottom: '30rpx'
+      }
+    },
+    
+    // 表格容器样式
+    tableContainerStyle() {
+      return {
+        margin: '30rpx 0'
+      }
+    },
+    
+    // 表头样式
+    tableHeaderStyle() {
+      return {
+        display: 'flex',
+        backgroundColor: '#f5f5f5',
+        borderRadius: '4rpx',
+        padding: '12rpx 0',
+        fontSize: '30rpx',
+        fontWeight: 'bold',
+        color: '#000',
+        borderBottom: '2rpx solid #ddd'
+      }
+    },
+    
+    // 表格列样式
+    colNoStyle() {
+      return { width: '60rpx', textAlign: 'center' }
+    },
+    colNameStyle() {
+      return { width: '300rpx', textAlign: 'left', paddingLeft: '15rpx', wordWrap: 'break-word', wordBreak: 'break-all' }
+    },
+    colQuantityStyle() {
+      return { width: '140rpx', textAlign: 'center' }
+    },
+    colWeightStyle() {
+      return { width: '140rpx', textAlign: 'center' }
+    },
+    colPriceStyle() {
+      return { width: '120rpx', textAlign: 'center' }
+    },
+    colSubtotalStyle() {
+      return { width: '120rpx', textAlign: 'right', paddingRight: '15rpx' }
+    },
+    
+    // 本单合计样式
+    finalTotalStyle() {
+      return {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: '32rpx',
+        fontWeight: 'bold',
+        padding: '20rpx',
+        margin: '30rpx 0',
+        marginTop: '50rpx',
+        borderTop: '3rpx solid #000',
+        borderBottom: '3rpx solid #000',
+        color: '#000'
+      }
+    },
+    
+    // 付款信息样式
+    paymentInfoStyle() {
+      return {
+        textAlign: 'right',
+        fontSize: '30rpx',
+        padding: '15rpx 20rpx',
+        color: '#000'
+      }
+    },
+    
+    // 底部分割线样式
+    dividerStyle() {
+      return {
+        position: 'relative',
+        height: '2rpx',
+        backgroundColor: '#000',
+        margin: '30rpx 0 20rpx'
+      }
+    },
+    
+    // 底部信息样式
+    footerInfoStyle() {
+      return {
+        position: 'relative',
+        fontSize: '24rpx',
+        color: '#666',
+        textAlign: 'left',
+        padding: '0 20rpx',
+        marginBottom: '30rpx'
+      }
+    },
+    
+    // Logo区域样式
+    logoAreaStyle() {
+      return {
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '30rpx 0',
+        paddingBottom: '50rpx',
+        marginBottom: '30rpx'
+      }
+    },
+    
+    // Logo图片样式
+    logoImgStyle() {
+      return {
+        width: '200rpx',
+        height: 'auto',
+        marginBottom: '20rpx'
+      }
+    },
+    
+    // 热线样式
+    hotlineStyle() {
+      return {
+        fontSize: '18rpx',
+        color: '#666',
+        paddingBottom: '20rpx',
+        marginBottom: '20rpx'
+      }
+    },
+    
+    // === 数据相关 computed ===
+    
     // 凭证标题
     voucherTitle() {
       if (!this.orderImageInfo) return ''
@@ -134,6 +343,40 @@ export default {
       return isRefund ? '欠款凭证' : '付款凭证'
     },
 
+    // 生成表格行样式（动态计算是否最后一行）
+    tableRowStyle() {
+      return (isLast) => ({
+        display: 'flex',
+        padding: '10rpx 0',
+        fontSize: '28rpx',
+        color: '#333',
+        borderBottom: isLast ? 'none' : '1rpx solid #f0f0f0'
+      })
+    },
+    
+    // 还筐容器样式
+    basketContainerStyle() {
+      return {
+        marginTop: '20rpx',
+        borderTop: '2rpx solid #000',
+        paddingTop: '15rpx'
+      }
+    },
+    
+    // 还筐行样式
+    basketRowStyle() {
+      return {
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: '24rpx',
+        padding: '8rpx 20rpx',
+        color: '#333'
+      }
+    },
+    
+    // === 数据相关 computed ===
+    
     // 公司名称
     companyName() {
       return this.orderImageInfo?.companyName || ''
@@ -268,12 +511,6 @@ export default {
       const order = this.orderImageInfo?.order || {}
       return parseFloat(order.discountAmount || 0)
     },
-
-    // Logo路径 - 处理不同平台的路径问题
-    logoPath() {
-      // 如果有当前尝试的路径，使用当前路径，否则使用导入的图片
-      return this.currentLogoPath || orderlogo
-    },
   },
   methods: {
     // 格式化数量
@@ -300,358 +537,10 @@ export default {
       this.$emit('close')
     },
 
-    // 处理logo加载成功
-    handleLogoLoad(event) {
-      console.log('Logo加载成功:', event.target?.src || this.logoPath)
-      this.logoError = false
-      this.currentLogoPath = event.target?.src || this.logoPath
-    },
-
-    // 处理logo加载错误
-    handleLogoError(event) {
-      console.warn('Logo加载失败，尝试备用路径')
-      this.logoError = true
-
-      // 获取当前路径，兼容image组件和img标签
-      const currentSrc = event.target?.src || this.currentLogoPath || this.logoPath
-      this.currentLogoPath = currentSrc
-
-      // 备用路径列表（按优先级排序）
-      const fallbackPaths = [
-        orderlogo, // 导入的图片（最高优先级）
-        './static/img/orderlogo.png', // 相对路径
-        '../../../static/img/orderlogo.png', // 深层相对路径
-        'static/img/orderlogo.png', // 无前缀路径
-        'https://zfprinter.top/static/orderlogo.png', // 网络路径（最后备选）
-      ]
-
-      // 尝试下一个路径
-      let foundAlternative = false
-      for (let path of fallbackPaths) {
-        // 安全检查currentSrc是否存在
-        const currentSrcStr = currentSrc || ''
-        const pathFileName = path.split('/').pop()
-
-        if (!currentSrcStr.includes(pathFileName)) {
-          console.log('尝试备用路径:', path)
-          // 直接更新logoPath，让Vue重新渲染
-          this.currentLogoPath = path
-          foundAlternative = true
-          break
-        }
-      }
-
-      // 如果所有路径都失败了，使用文字logo
-      if (!foundAlternative) {
-        console.log('所有logo路径都失败，使用文字logo')
-        this.useFallbackLogo = true
-      }
-    },
   },
 }
 </script>
 
 <style lang="scss" scoped>
-.order-image-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: flex-start; // 改为顶部对齐，支持滚动查看
-  z-index: 9999;
-  padding: 40rpx;
-  box-sizing: border-box;
-  overflow-y: auto; // 外层容器支持滚动
-  overflow-x: hidden;
-  opacity: 0;
-}
-
-.voucher-wrapper {
-  width: 1200rpx;
-  background-color: #ffffff;
-  border-radius: 8rpx;
-  padding: 40rpx;
-  padding-bottom: 50rpx; // 进一步增加底部内边距，确保底部内容不被裁剪
-  margin-top: 20rpx; // 添加上边距
-  margin-bottom: 30rpx; // 增加下边距，方便滚动查看
-  position: relative; // 为关闭按钮提供定位基准
-  // max-height: 90vh; // 移除高度限制，让内容完整显示以便生成图片
-  // overflow-y: auto; // 移除滚动，让内容完整显示
-  overflow: visible; // 确保所有内容可见
-}
-
-// 关闭按钮
-.close-btn {
-  position: absolute;
-  top: 20rpx;
-  right: 20rpx;
-  width: 48rpx;
-  height: 48rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.05);
-  transition: all 0.3s ease;
-  z-index: 10;
-
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.1);
-    transform: rotate(90deg);
-  }
-
-  &:active {
-    background-color: rgba(0, 0, 0, 0.15);
-    transform: rotate(90deg) scale(0.95);
-  }
-}
-
-// 标题
-.voucher-title {
-  font-size: 40rpx;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 20rpx;
-  color: #000;
-}
-
-// 副标题
-.voucher-subtitle {
-  text-align: center;
-  font-size: 25rpx;
-  color: #333;
-  margin-bottom: 30rpx;
-  line-height: 1.6;
-}
-
-// 公司名称
-.company-name {
-  font-size: 35rpx;
-  font-weight: bold;
-  text-align: center;
-  margin-bottom: 30rpx;
-  color: #000;
-}
-
-// 订单头部
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 30rpx;
-  margin-bottom: 20rpx;
-  color: #333;
-}
-
-.customer-info {
-  flex: 1;
-}
-
-.order-code {
-  flex: 1;
-  text-align: right;
-}
-
-// 日期
-.order-date {
-  text-align: right;
-  font-size: 26rpx;
-  color: #666;
-  margin-bottom: 30rpx;
-}
-
-// 表格
-.product-table {
-  margin: 30rpx 0;
-}
-
-.table-header {
-  display: flex;
-  background-color: #f5f5f5;
-  border-radius: 4rpx;
-  padding: 12rpx 0;
-  font-size: 30rpx;
-  font-weight: bold;
-  color: #000;
-  border-bottom: 2rpx solid #ddd;
-}
-
-.table-body {
-  .table-row {
-    display: flex;
-    padding: 10rpx 0;
-    font-size: 28rpx;
-    color: #333;
-    border-bottom: 1rpx solid #f0f0f0;
-
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-}
-
-.col {
-  text-align: center;
-
-  &.col-no {
-    width: 60rpx;
-  }
-
-  &.col-name {
-    width: 300rpx; // 固定宽度，给货品名称更多空间
-    text-align: left;
-    padding-left: 15rpx;
-    word-wrap: break-word;
-    word-break: break-all;
-  }
-
-  &.col-quantity {
-    width: 140rpx;
-  }
-
-  &.col-weight {
-    width: 140rpx;
-  }
-
-  &.col-price {
-    width: 120rpx;
-  }
-
-  &.col-subtotal {
-    width: 120rpx;
-    text-align: right;
-    padding-right: 15rpx;
-  }
-}
-
-.table-footer {
-  margin-top: 20rpx;
-  border-top: 2rpx solid #000;
-  padding-top: 15rpx;
-}
-
-.total-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 30rpx;
-  font-weight: bold;
-  padding: 10rpx 20rpx;
-  color: #000;
-}
-
-.basket-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 24rpx;
-  padding: 8rpx 20rpx;
-  color: #333;
-
-  .basket-label {
-    flex: 0 0 auto;
-  }
-
-  .basket-info {
-    flex: 1;
-    padding: 0 20rpx;
-  }
-
-  .basket-value {
-    flex: 0 0 auto;
-    color: #e74c3c;
-  }
-}
-
-// 本单合计
-.final-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 32rpx;
-  font-weight: bold;
-  padding: 20rpx;
-  margin: 30rpx 0;
-  margin-top: 50rpx;
-  border-top: 3rpx solid #000;
-  border-bottom: 3rpx solid #000;
-  color: #000;
-}
-
-// 实付信息
-.payment-info {
-  text-align: right;
-  font-size: 30rpx;
-  padding: 15rpx 20rpx;
-  color: #000;
-}
-
-// 底部分割线
-.footer-divider {
-  height: 2rpx;
-  background-color: #000;
-  margin: 30rpx 0 20rpx;
-}
-
-// 底部信息
-.footer-info {
-  font-size: 24rpx;
-  color: #666;
-  text-align: left;
-  padding: 0 20rpx;
-  margin-bottom: 30rpx;
-}
-
-// Logo区域
-.logo-area {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 30rpx 0;
-  padding-bottom: 50rpx; // 进一步增加底部内边距，确保不被裁剪
-  margin-bottom: 30rpx; // 添加底部外边距
-
-  .logo-img {
-    width: 200rpx;
-    height: auto; // img标签使用auto高度，保持比例
-    margin-bottom: 20rpx; // 增加图片底部间距
-  }
-
-  .hotline {
-    font-size: 18rpx;
-    color: #666;
-    padding-bottom: 20rpx; // 增加底部内边距
-    margin-bottom: 20rpx; // 添加底部外边距
-  }
-
-  // 文字Logo样式
-  .text-logo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20rpx;
-    margin-bottom: 20rpx;
-    border: 2rpx solid #ddd;
-    border-radius: 8rpx;
-    background-color: #f9f9f9;
-
-    .logo-text {
-      font-size: 36rpx;
-      font-weight: bold;
-      color: #2c3e50;
-      margin-bottom: 8rpx;
-    }
-
-    .logo-subtitle {
-      font-size: 20rpx;
-      color: #7f8c8d;
-    }
-  }
-}
+/* 所有样式已改为行内样式 */
 </style>

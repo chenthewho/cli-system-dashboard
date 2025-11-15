@@ -364,103 +364,35 @@ import html2canvas from 'html2canvas'
 export default {
   methods: {
     generateImage(callback) {
-      const startTime = Date.now();
-      console.log('[图片生成] 开始生成时间:', new Date().toLocaleTimeString());
-
-      setTimeout(() => {
-        const dom = document.getElementById('orderImage'); // 需要生成图片内容的 dom 节点
-
-        if (!dom) {
-          console.log('[图片生成] DOM元素未找到，耗时:', Date.now() - startTime, 'ms');
-          return;
-        }
-
-        console.log('[图片生成] DOM元素获取完成，耗时:', Date.now() - startTime, 'ms');
-
-        // 获取实际内容尺寸（简化计算，提高性能）
-        const computedStyle = window.getComputedStyle(dom);
-        const marginTop = parseFloat(computedStyle.marginTop) || 0;
-        const marginBottom = parseFloat(computedStyle.marginBottom) || 0;
-
-        // 直接使用scrollHeight，避免遍历所有子元素
-        const actualWidth = dom.scrollWidth || dom.clientWidth;
-        const actualHeight = dom.scrollHeight + marginTop + marginBottom + 100; // 添加100px安全边距
-
-        console.log('[图片生成] 尺寸计算完成，宽度:', actualWidth, '高度:', actualHeight, '耗时:', Date.now() - startTime, 'ms');
-
-        // 临时移除可能导致裁剪的样式
-        const originalOverflow = dom.style.overflow;
-        const originalMaxHeight = dom.style.maxHeight;
-        dom.style.overflow = 'visible';
-        dom.style.maxHeight = 'none';
-
-        console.log('[图片生成] 开始调用html2canvas，耗时:', Date.now() - startTime, 'ms');
-
-        html2canvas(dom, {
-          width: actualWidth,
-          height: actualHeight,
-          scrollY: 0,
-          scrollX: 0,
-          useCORS: true,
-          allowTaint: false, // 改为false，提高性能
-          backgroundColor: '#ffffff',
-          scale: window.devicePixelRatio || 1, // 使用设备像素比，避免过度渲染
-          logging: false,
-          removeContainer: true,
-          imageTimeout: 0, // 设为0，不等待图片加载（logo已通过import加载）
-          foreignObjectRendering: false, // 禁用foreignObject渲染，提高性能
-          ignoreElements: (element) => {
-            // 忽略不需要的元素
-            return element.classList && element.classList.contains('no-capture');
-          },
-          onclone: (clonedDoc) => {
-            const clonedElement = clonedDoc.getElementById('orderImage');
-            if (clonedElement) {
-              // 简化样式设置
-              Object.assign(clonedElement.style, {
-                overflow: 'visible',
-                maxHeight: 'none',
-                height: 'auto',
-                minHeight: actualHeight + 'px',
-                paddingBottom: '100px'
-              });
+			// 使用html2canvas 转换html为canvas 克隆解决的问题：html2canvas只能给屏幕可视范围之内的元素生成图片
+      // 获取节点高度，后面为克隆节点设置高度。
+      var height = document.querySelector('#orderImage').offsetHeight
+      // 克隆节点，默认为false，不复制方法属性，为true是全部复制。
+      var cloneDom = document.querySelector('#orderImage').cloneNode(true);
+      cloneDom.style.zIndex = '-1';
+      // 将克隆节点动态追加到body后面。
+      document.querySelector('body').append(cloneDom)
+      // 插件生成base64img图片。
+      html2canvas(cloneDom, {
+				useCORS: true,
+				scrollY: 0,
+				scrollX: 0,
+				logging: false,
+				ignoreElements: (e) => {
+					if (
+              e.contains(cloneDom) ||
+              cloneDom.contains(e) ||
+							e.tagName === 'STYLE'
+            ) {
+              return false;
             }
-          }
-        }).then((canvas) => {
-          console.log('[图片生成] html2canvas完成，耗时:', Date.now() - startTime, 'ms');
-
-          // 安全恢复原始样式
-          try {
-            if (dom && dom.style) {
-              dom.style.overflow = originalOverflow;
-              dom.style.maxHeight = originalMaxHeight;
-            }
-          } catch (styleErr) {
-            console.warn('[图片生成] 恢复样式失败:', styleErr);
-          }
-
-          const base64 = canvas.toDataURL('image/png');
-          console.log('[图片生成] base64转换完成，总耗时:', Date.now() - startTime, 'ms');
-          console.log('[图片生成] 结束时间:', new Date().toLocaleTimeString());
-
-          callback&&callback(base64);
-        }).catch(err=>{
-          console.log('[图片生成] 生成失败，错误:', err, '耗时:', Date.now() - startTime, 'ms');
-
-          // 安全恢复原始样式
-          try {
-            if (dom && dom.style) {
-              dom.style.overflow = originalOverflow;
-              dom.style.maxHeight = originalMaxHeight;
-            }
-          } catch (styleErr) {
-            console.warn('[图片生成] 恢复样式失败:', styleErr);
-          }
-
-          // 调用callback，避免调用方一直等待
-          callback && callback(null);
-        })
-      }, 50); // 进一步减少延迟，logo已预加载
+            return true;
+				},
+			}).then(function(canvas) {
+        const imgUri = canvas.toDataURL('image/png')
+				callback&&callback(imgUri);
+      })		
+			document.querySelector('body').removeChild(cloneDom)				
     },
     updateEcharts(newValue, oldValue, ownerInstance, instance) {
       // 监听 service 层数据变更

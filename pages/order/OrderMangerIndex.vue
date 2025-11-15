@@ -1,5 +1,6 @@
 <template>
   <view>
+		<view>
     <!-- 左右布局容器 -->
     <view class="layout-container" :style="{ height: scrollHeight + 'px' }">
       <!-- 左侧订单列表 -->
@@ -549,7 +550,7 @@
         </div>
       </view>
     </view>
-
+	</view>
     <!-- debug=true 可以看到页面，debug=false 后台渲染 -->
     <OrderImage :orderImageInfo="orderImageInfo" :debug="true" @close="closeOrderImage" />
     <view :prop="canvasImageMsg" :change:prop="canvasImage.updateEcharts"></view>
@@ -559,7 +560,7 @@
 <script>
 import cashierOrder from '../../api/cashier/cashierOrder'
 import member from '../../api/member/member'
-import OrderImage from './components/OrderImage.vue'
+import OrderImage from '@/components/OrderImage/OrderImage.vue'
 export default {
   name: 'OrderMangerIndex',
   components: {
@@ -644,7 +645,6 @@ export default {
   // },
   mounted() {
     this.scrollHeight = uni.getWindowInfo().windowHeight - 50
-    console.log('scroll-view 高度:', this.scrollHeight + 'px')
     this.CompanyId = uni.getStorageSync('companyId')
     this.getMinTimeToNow()
     this.refresh()
@@ -669,10 +669,6 @@ export default {
       const currentDate = this.getcurrentTime()
       this.single = currentDate
 
-      console.log('加载第' + this.currentPage + '页数据')
-      console.log('this.beginTime', this.beginTime)
-      console.log('this.endTime', this.endTime)
-
       cashierOrder
         .GetAccountByCompanyIdandDateRange(
           this.CompanyId,
@@ -682,7 +678,6 @@ export default {
           this.currentPage
         )
         .then(res => {
-          console.log('接口返回数据:', res)
 
           // 兼容不同的返回格式
           let newData = []
@@ -739,14 +734,6 @@ export default {
                 this.hasMore = newData.length >= this.pageSize
               }
 
-              console.log(
-                '已加载数据:',
-                this.originalModuleList.length,
-                '总数:',
-                totalCount,
-                '是否还有更多:',
-                this.hasMore
-              )
             } else {
               this.hasMore = false
             }
@@ -778,18 +765,9 @@ export default {
 
     // 加载更多数据（滚动到底部时触发）
     loadMore() {
-      console.log('触发loadMore事件', {
-        hasMore: this.hasMore,
-        loading: this.loading,
-        currentPage: this.currentPage,
-      })
-
       if (!this.hasMore || this.loading) {
-        console.log('阻止加载:', this.hasMore ? '正在加载中' : '没有更多数据')
         return
       }
-
-      console.log('开始加载下一页，当前页:', this.currentPage, '下一页:', this.currentPage + 1)
       this.currentPage++
       this.loadPageData()
     },
@@ -1000,7 +978,6 @@ export default {
     showHistoryOrder(item) {
       // 设置当前原始订单ID和订单ID
       this.currentOriginOrderId = item.originOrderId || item.id
-      console.log('显示历史订单，原始订单ID:', this.currentOriginOrderId, '当前订单ID:', item.id)
 
       // 调用API获取历史订单
       this.loadHistoryOrders(this.currentOriginOrderId, item.id)
@@ -1011,12 +988,10 @@ export default {
 
     // 加载历史订单数据
     loadHistoryOrders(originOrderId, orderId) {
-      console.log('加载历史订单:', originOrderId, orderId)
 
       cashierOrder
         .GetOriginOrderId(originOrderId, orderId)
         .then(res => {
-          console.log('历史订单API响应:', res)
           if (res.code === 200) {
             let historyData = res.data || []
             // 按照updateTime降序排序
@@ -1026,7 +1001,6 @@ export default {
               return new Date(timeB) - new Date(timeA)
             })
             this.historyOrderList = historyData
-            console.log('历史订单列表(已排序):', this.historyOrderList)
           } else {
             console.error('获取历史订单失败:', res.message)
             this.historyOrderList = []
@@ -1061,7 +1035,6 @@ export default {
 
     // 获取订单状态文本
     getOrderStatusText(status) {
-      console.log('status', status)
       switch (status) {
         case 1:
           return '正常'
@@ -1090,19 +1063,16 @@ export default {
 
     // 显示订单详情
     showOrderDetail(order) {
-      console.log('显示订单详情:', order)
       // 获取订单详细信息
       this.loadOrderDetail(order.id)
     },
 
     // 加载订单详情数据
     loadOrderDetail(orderId) {
-      console.log('加载订单详情:', orderId)
 
       cashierOrder
         .GetOrderByAccountId(orderId)
         .then(res => {
-          console.log('订单详情API响应:', res)
           if (res.code === 200 || res.data) {
             this.orderDetailData = res.data
             // 解析商品数据
@@ -1392,7 +1362,6 @@ export default {
     },
     // 生成图片后的回调函数
     receiveRenderData(base64) {
-      console.log('订单base64', base64)
       this.canvasImageMsg = null
       // 重置生成状态
       this.isGeneratingImage = false
@@ -1423,103 +1392,35 @@ import html2canvas from 'html2canvas'
 export default {
   methods: {
     generateImage(callback) {
-      const startTime = Date.now();
-      console.log('[图片生成] 开始生成时间:', new Date().toLocaleTimeString());
-
-      setTimeout(() => {
-        const dom = document.getElementById('orderImage'); // 需要生成图片内容的 dom 节点
-
-        if (!dom) {
-          console.log('[图片生成] DOM元素未找到，耗时:', Date.now() - startTime, 'ms');
-          return;
-        }
-
-        console.log('[图片生成] DOM元素获取完成，耗时:', Date.now() - startTime, 'ms');
-
-        // 获取实际内容尺寸（简化计算，提高性能）
-        const computedStyle = window.getComputedStyle(dom);
-        const marginTop = parseFloat(computedStyle.marginTop) || 0;
-        const marginBottom = parseFloat(computedStyle.marginBottom) || 0;
-
-        // 直接使用scrollHeight，避免遍历所有子元素
-        const actualWidth = dom.scrollWidth || dom.clientWidth;
-        const actualHeight = dom.scrollHeight + marginTop + marginBottom + 100; // 添加100px安全边距
-
-        console.log('[图片生成] 尺寸计算完成，宽度:', actualWidth, '高度:', actualHeight, '耗时:', Date.now() - startTime, 'ms');
-
-        // 临时移除可能导致裁剪的样式
-        const originalOverflow = dom.style.overflow;
-        const originalMaxHeight = dom.style.maxHeight;
-        dom.style.overflow = 'visible';
-        dom.style.maxHeight = 'none';
-
-        console.log('[图片生成] 开始调用html2canvas，耗时:', Date.now() - startTime, 'ms');
-
-        html2canvas(dom, {
-          width: actualWidth,
-          height: actualHeight,
-          scrollY: 0,
-          scrollX: 0,
-          useCORS: true,
-          allowTaint: false, // 改为false，提高性能
-          backgroundColor: '#ffffff',
-          scale: window.devicePixelRatio || 1, // 使用设备像素比，避免过度渲染
-          logging: false,
-          removeContainer: true,
-          imageTimeout: 0, // 设为0，不等待图片加载（logo已通过import加载）
-          foreignObjectRendering: false, // 禁用foreignObject渲染，提高性能
-          ignoreElements: (element) => {
-            // 忽略不需要的元素
-            return element.classList && element.classList.contains('no-capture');
-          },
-          onclone: (clonedDoc) => {
-            const clonedElement = clonedDoc.getElementById('orderImage');
-            if (clonedElement) {
-              // 简化样式设置
-              Object.assign(clonedElement.style, {
-                overflow: 'visible',
-                maxHeight: 'none',
-                height: 'auto',
-                minHeight: actualHeight + 'px',
-                paddingBottom: '100px'
-              });
+			// 使用html2canvas 转换html为canvas 克隆解决的问题：html2canvas只能给屏幕可视范围之内的元素生成图片
+      // 获取节点高度，后面为克隆节点设置高度。
+      var height = document.querySelector('#orderImage').offsetHeight
+      // 克隆节点，默认为false，不复制方法属性，为true是全部复制。
+      var cloneDom = document.querySelector('#orderImage').cloneNode(true);
+      cloneDom.style.zIndex = '-1';
+      // 将克隆节点动态追加到body后面。
+      document.querySelector('body').append(cloneDom)
+      // 插件生成base64img图片。
+      html2canvas(cloneDom, {
+				useCORS: true,
+				scrollY: 0,
+				scrollX: 0,
+				logging: false,
+				ignoreElements: (e) => {
+					if (
+              e.contains(cloneDom) ||
+              cloneDom.contains(e) ||
+							e.tagName === 'STYLE'
+            ) {
+              return false;
             }
-          }
-        }).then((canvas) => {
-          console.log('[图片生成] html2canvas完成，耗时:', Date.now() - startTime, 'ms');
-
-          // 安全恢复原始样式
-          try {
-            if (dom && dom.style) {
-              dom.style.overflow = originalOverflow;
-              dom.style.maxHeight = originalMaxHeight;
-            }
-          } catch (styleErr) {
-            console.warn('[图片生成] 恢复样式失败:', styleErr);
-          }
-
-          const base64 = canvas.toDataURL('image/png');
-          console.log('[图片生成] base64转换完成，总耗时:', Date.now() - startTime, 'ms');
-          console.log('[图片生成] 结束时间:', new Date().toLocaleTimeString());
-
-          callback&&callback(base64);
-        }).catch(err=>{
-          console.log('[图片生成] 生成失败，错误:', err, '耗时:', Date.now() - startTime, 'ms');
-
-          // 安全恢复原始样式
-          try {
-            if (dom && dom.style) {
-              dom.style.overflow = originalOverflow;
-              dom.style.maxHeight = originalMaxHeight;
-            }
-          } catch (styleErr) {
-            console.warn('[图片生成] 恢复样式失败:', styleErr);
-          }
-
-          // 调用callback，避免调用方一直等待
-          callback && callback(null);
-        })
-      }, 50); // 进一步减少延迟，logo已预加载
+            return true;
+				},
+			}).then(function(canvas) {
+        const imgUri = canvas.toDataURL('image/png')
+				callback&&callback(imgUri);
+      })		
+			document.querySelector('body').removeChild(cloneDom)				
     },
     updateEcharts(newValue, oldValue, ownerInstance, instance) {
       // 监听 service 层数据变更
