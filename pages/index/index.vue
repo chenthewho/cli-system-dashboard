@@ -2,16 +2,16 @@
   <div id="app">
     <Sidebar ref="sidebarRef" @update-content="updateCashierContent" />
     <div class="main-content" :class="{ 'no-sidebar': cashierContent === 'one' }">
-        <Cashier v-show="cashierContent === 'one'" ref="cashierRef" @goToManagement="switchToManagement" />
-        <order ref="orderRef2" v-show="cashierContent === 'two'" />
-        <goodIndex ref="goodIndexRef" v-show="cashierContent === 'three'" />
-        <setting v-show="cashierContent === 'six'" />
-        <staticPage v-show="cashierContent === 'four'" />
-        <settlementIndex ref="settlementIndexRef" v-show="cashierContent === 'five'" />
-        <rotating ref="rotatingRef" v-show="cashierContent === 'seven'" />
-        <shipperManagement ref="shipperManagementRef" v-show="cashierContent === 'eight'" />
+      <Cashier v-show="cashierContent === 'one'" ref="cashierRef" @goToManagement="switchToManagement" />
+      <order ref="orderRef2" v-show="cashierContent === 'two'" />
+      <goodIndex ref="goodIndexRef" v-show="cashierContent === 'three'" />
+      <setting v-show="cashierContent === 'six'" />
+      <staticPage v-show="cashierContent === 'four'" />
+      <settlementIndex ref="settlementIndexRef" v-show="cashierContent === 'five'" />
+      <rotating ref="rotatingRef" v-show="cashierContent === 'seven'" />
+      <shipperManagement ref="shipperManagementRef" v-show="cashierContent === 'eight'" />
     </div>
-	</div>
+  </div>
 </template>
 
 <script>
@@ -24,6 +24,10 @@ import staticPage from '../static/static.vue'
 import rotating from '../rotating/rotatingIndex.vue'
 import settlementIndex from '../settlement/settlementIndex.vue'
 import shipperManagement from '../shipper/shipperManagement.vue'
+
+// 声明语音插件，供全局使用
+const TTSSpeech = uni.requireNativePlugin('MT-TTS-Speech')
+
 export default {
   components: {
     Cashier,
@@ -65,8 +69,192 @@ export default {
   },
   mounted() {
     // this.$refs.cashierRef.onLoadMethod();
+    this.initTTSSpeech()
+  },
+
+  onUnload() {
+    // 页面卸载时销毁TTS
+    if (TTSSpeech) {
+      TTSSpeech.destroy()
+    }
   },
   methods: {
+    // 初始化语音插件
+    initTTSSpeech() {
+      try {
+        // 检查运行环境
+        console.log('当前平台:', uni.getSystemInfoSync().platform)
+        console.log('是否为App环境:', typeof plus !== 'undefined')
+
+        // 只在App环境下加载原生插件
+        if (typeof plus === 'undefined') {
+          console.warn('当前不是App环境，无法加载原生语音插件')
+          return
+        }
+
+        console.log('开始初始化TTS语音插件...')
+        console.log('TTSSpeech 对象:', TTSSpeech)
+
+        if (TTSSpeech) {
+          // 初始化TTS插件
+          TTSSpeech.init(() => {
+            console.log('TTS插件初始化成功')
+
+            // 将语音插件挂载到全局，供其他页面使用
+            uni.$TTSSpeech = TTSSpeech
+
+            // 设置默认参数
+            TTSSpeech.setPitch(70) // 设置语调
+            TTSSpeech.setSpeed(65) // 设置语速
+
+            console.log('TTS插件配置完成')
+          })
+
+          // 设置播放完成回调
+          TTSSpeech.onDone(res => {
+            console.log('TTS播放完成:', res)
+          })
+        } else {
+          console.warn('语音插件加载失败 - TTSSpeech 对象为空')
+          console.log('可能的原因:')
+          console.log('1. 插件未正确安装')
+          console.log('2. 插件名称不正确')
+          console.log('3. 当前不是真机环境')
+          console.log('4. manifest.json 中未配置插件')
+        }
+      } catch (error) {
+        console.error('语音插件初始化失败:', error)
+        console.log('错误详情:', error.message)
+      }
+    },
+
+    // 提供语音播报方法供子组件调用
+    speakText(text, options = {}) {
+      return new Promise((resolve, reject) => {
+        try {
+          if (!text || text.trim() === '') {
+            reject(new Error('播报文本不能为空'))
+            return
+          }
+
+          // 使用原生TTS插件
+          if (TTSSpeech && uni.$TTSSpeech) {
+            console.log('使用TTS播报:', text)
+
+            // 设置语音参数（如果提供）
+            if (options.pitch !== undefined) {
+              TTSSpeech.setPitch(options.pitch)
+            }
+            if (options.speed !== undefined) {
+              TTSSpeech.setSpeed(options.speed)
+            }
+
+            // 使用TTS插件播报
+            const result = TTSSpeech.speak({ text: text.trim() })
+            console.log('TTS播报结果:', result)
+
+            if (result) {
+              resolve({ success: true, method: 'tts', result: result })
+            } else {
+              console.warn('TTS播报失败')
+              reject(new Error('TTS播报失败'))
+            }
+          } else {
+            console.warn('TTS插件不可用')
+            reject(new Error('TTS插件不可用'))
+          }
+        } catch (error) {
+          console.error('TTS播报异常:', error)
+          reject(error)
+        }
+      })
+    },
+
+    // 停止语音播报
+    stopSpeech() {
+      try {
+        if (TTSSpeech && uni.$TTSSpeech) {
+          TTSSpeech.stop()
+          console.log('TTS播报已停止')
+          return true
+        } else {
+          console.warn('TTS插件不可用')
+          return false
+        }
+      } catch (error) {
+        console.error('停止TTS播报失败:', error)
+        return false
+      }
+    },
+
+    // 设置TTS语调
+    setTTSPitch(pitch) {
+      try {
+        if (TTSSpeech && uni.$TTSSpeech) {
+          TTSSpeech.setPitch(pitch)
+          console.log('TTS语调设置为:', pitch)
+          return true
+        }
+        return false
+      } catch (error) {
+        console.error('设置TTS语调失败:', error)
+        return false
+      }
+    },
+
+    // 设置TTS语速
+    setTTSSpeed(speed) {
+      try {
+        if (TTSSpeech && uni.$TTSSpeech) {
+          TTSSpeech.setSpeed(speed)
+          console.log('TTS语速设置为:', speed)
+          return true
+        }
+        return false
+      } catch (error) {
+        console.error('设置TTS语速失败:', error)
+        return false
+      }
+    },
+
+    // 获取已安装的TTS引擎
+    getInstalledTTS() {
+      return new Promise((resolve, reject) => {
+        try {
+          if (TTSSpeech && uni.$TTSSpeech) {
+            TTSSpeech.getInstallTTS(res => {
+              console.log('已安装的TTS引擎:', res)
+              if (res && res.length > 0) {
+                resolve(res)
+              } else {
+                reject(new Error('未找到TTS引擎'))
+              }
+            })
+          } else {
+            reject(new Error('TTS插件不可用'))
+          }
+        } catch (error) {
+          console.error('获取TTS引擎失败:', error)
+          reject(error)
+        }
+      })
+    },
+
+    // 设置TTS引擎
+    setTTSEngine(engineName) {
+      try {
+        if (TTSSpeech && uni.$TTSSpeech) {
+          const result = TTSSpeech.setEngine(engineName)
+          console.log('设置TTS引擎结果:', result)
+          return result
+        }
+        return false
+      } catch (error) {
+        console.error('设置TTS引擎失败:', error)
+        return false
+      }
+    },
+
     refreshBatch(id) {
       this.$refs.goodIndexRef.refreshBatch(id)
     },
@@ -132,7 +320,7 @@ export default {
 .main-content {
   position: relative;
   width: calc(100vw - 40rpx);
-	height: 100vh;
+  height: 100vh;
   background-color: #f3f4f9;
 }
 

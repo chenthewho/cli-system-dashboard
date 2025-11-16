@@ -69,6 +69,7 @@
 </template>
 
 <script>
+import { switchDuty } from '../../utils/dutyHelper.js'
 export default {
   props: {
     theme: {
@@ -195,19 +196,43 @@ export default {
       // 发送事件通知父组件商家已切换
       this.$emit('companyChanged', company)
 
-      // 显示切换成功提示并刷新页面
+      // 显示切换成功提示
       uni.showToast({
         title: `已切换至：${company.name}`,
         icon: 'success',
         duration: 1500,
       })
 
-      // 延迟刷新当前页面以加载新商家的数据
-      setTimeout(() => {
-        uni.reLaunch({
-          url: '/pages/index/index',
-        })
-      }, 1500)
+      // 获取用户信息并重新获取当班人员ID
+      const userInfo = uni.getStorageSync('userInfo')
+      if (userInfo && userInfo.id) {
+        switchDuty(company.id, userInfo.id)
+          .then(() => {
+            console.log('当班人员已更新')
+            // 延迟刷新当前页面以加载新商家的数据
+            setTimeout(() => {
+              uni.reLaunch({
+                url: '/pages/index/index',
+              })
+            }, 1500)
+          })
+          .catch(error => {
+            console.error('获取当班人员失败:', error)
+            // 即使获取当班人员失败，也继续跳转
+            setTimeout(() => {
+              uni.reLaunch({
+                url: '/pages/index/index',
+              })
+            }, 1500)
+          })
+      } else {
+        // 如果没有用户信息，直接跳转
+        setTimeout(() => {
+          uni.reLaunch({
+            url: '/pages/index/index',
+          })
+        }, 1500)
+      }
     },
     closeCompanyList() {
       this.showCompanyList = false

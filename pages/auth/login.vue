@@ -165,9 +165,9 @@
 
 <script>
 import login from '../../api/auth/login'
-import duty from '../../api/duty/duty'
 import config from '../../common/config'
 import setting from '../../api/setting/setting.js'
+import { getCurrentOrCreateDuty } from '../../utils/dutyHelper.js'
 export default {
   data() {
     return {
@@ -316,29 +316,8 @@ export default {
               uni.setStorageSync('role', res2[0].role)
               uni.setStorageSync('vesionType', res2[0].vesionType != undefined ? res2[0].vesionType : 1)
               console.log('res.id', res.id)
-              //获取当班人员ID如果空则添加自己为当班人员
-              duty.getCurrentOperater(res2[0].id, res.id).then(res3 => {
-                console.log('res3', res3)
-                if (res3.code === 200) {
-                  if (res3.data != null) {
-                    uni.setStorageSync('currentDutyId', res3.data.id)
-                    uni.setStorageSync('currentDutybeginTime', res3.data.beginTime)
-                    uni.reLaunch({
-                      url: '/pages/index/index',
-                    })
-                  } else {
-                    duty.addDuty(res2[0].id, res.id).then(res4 => {
-                      if (res4.code === 200) {
-                        uni.setStorageSync('currentDutyId', res4.data.id)
-                        uni.setStorageSync('currentDutybeginTime', res4.data.beginTime)
-                      }
-                      uni.reLaunch({
-                        url: '/pages/index/index',
-                      })
-                    })
-                  }
-                }
-              })
+              // 获取或创建当班人员，并自动跳转到首页
+              getCurrentOrCreateDuty(res2[0].id, res.id)
             }
           })
         })

@@ -89,9 +89,7 @@
                 inputmode="none"
                 v-model="editingCard.referenceAmount"
               />
-              <span class="currency-label"
-                >元/斤</span
-              >
+              <span class="currency-label">元/斤</span>
             </div>
           </div>
         </div>
@@ -159,17 +157,17 @@
       <div class="card-body" v-if="editingCard.saleWay === 4">
         <div class="input-row">
           <div
-            :class="{ 'custom-input': true, 'input-focused': custominputFocused3, 'input-wrapper': true }"
-            @click="custominputFocusedMethod(3)"
+            :class="{ 'custom-input': true, 'input-focused': custominputFocused, 'input-wrapper': true }"
+            @click="custominputFocusedMethod(1)"
           >
-            <div class="input-label">总重</div>
+            <div class="input-label">数量</div>
             <div class="input-value-container">
               <input
-                ref="input_allweight"
+                ref="input_quantity"
                 class="step1-input input-field"
                 type="text"
                 inputmode="none"
-                v-model="editingCard.allweightSrt"
+                v-model="editingCard.quantity"
               />
               <span class="currency-label">{{
                 editingCard.commoditySpec ? editingCard.commoditySpec.specName : ''
@@ -283,28 +281,56 @@ export default {
     card: {
       handler(newVal) {
         this.editingCard = JSON.parse(JSON.stringify(newVal))
-        if (this.editingCard.saleWay === 4) {
-          // 非定装和散装：默认聚焦总重（index 3）
-          this.custominputFocusedMethod(3)
-        } else {
-          // 定装：默认聚焦数量（index 1）
-          this.custominputFocusedMethod(1)
+        console.log('this.editingCard', this.editingCard)
+
+        // 确保 extralModel 存在且正确初始化
+        if (!this.editingCard.extralModel) {
+          this.editingCard.extralModel = {}
+        } else if (this.editingCard.extralModel.id && this.editCardExtralModel.length > 0) {
+          // 根据押筐选项列表更新 extralModel 的完整信息
+          const matchedModel = this.editCardExtralModel.find(item => item.id === this.editingCard.extralModel.id)
+          if (matchedModel) {
+            // 保留原有的 quantity，更新其他属性
+            const originalQuantity = this.editingCard.extralModel.quantity
+            this.editingCard.extralModel = JSON.parse(JSON.stringify(matchedModel))
+            if (originalQuantity !== undefined) {
+              this.editingCard.extralModel.quantity = originalQuantity
+            }
+          }
         }
+
+        // 所有模式都默认聚焦数量（index 1）
+        this.custominputFocusedMethod(1)
       },
       deep: true,
       immediate: true,
     },
+    // 监听押筐选项列表变化
+    editCardExtralModel: {
+      handler(newVal) {
+        // 如果当前选中的押筐不在新的选项列表中，重置为空
+        if (this.editingCard.extralModel && this.editingCard.extralModel.id) {
+          const currentExtraModel = newVal.find(item => item.id === this.editingCard.extralModel.id)
+          if (!currentExtraModel) {
+            this.editingCard.extralModel = {}
+          } else {
+            // 更新为最新的押筐信息
+            this.editingCard.extralModel = JSON.parse(JSON.stringify(currentExtraModel))
+            if (this.editingCard.quantity) {
+              this.editingCard.extralModel.quantity = this.editingCard.quantity
+            }
+          }
+        }
+      },
+      deep: true,
+      immediate: false,
+    },
   },
   mounted() {
-    // 组件加载时默认聚焦到总重（非定装和散装）或数量（定装）
+    // 组件加载时默认聚焦到数量字段
     this.$nextTick(() => {
-      if (this.editingCard.saleWay === 4) {
-        // 散装：默认聚焦总重（index 3）
-        this.custominputFocusedMethod(3)
-      } else {
-        // 非定装\定装：默认聚焦数量（index 1）
-        this.custominputFocusedMethod(1)
-      }
+      // 所有模式都默认聚焦数量（index 1）
+      this.custominputFocusedMethod(1)
     })
   },
   beforeUnmount() {
@@ -318,6 +344,14 @@ export default {
     },
 
     NumberCk(val) {
+      // 使用全局TTS对象播报数字
+      if (uni.$TTSSpeech) {
+        try {
+          uni.$TTSSpeech.speak({ text: val.toString() })
+        } catch (error) {
+          console.error('数字键盘TTS播报失败:', error)
+        }
+      }
       // 取消之前的复杂计算定时器
       if (this.inputBuffer.timer) {
         clearTimeout(this.inputBuffer.timer)
@@ -329,9 +363,8 @@ export default {
       const field = fieldMap[focusIndex]
       if (!field) return
 
-      // 散装模式下，总重字段使用 allweightSrt
-      const isScatterMode = this.editingCard.saleWay === 4
-      const actualField = focusIndex === 3 && isScatterMode ? 'allweightSrt' : field
+      // 统一使用标准字段，不再区分散装模式
+      const actualField = field
 
       // 从数据模型读取当前值
       let currentValue = String(this.editingCard[actualField] || '0')
@@ -365,8 +398,8 @@ export default {
         const newValue = currentValue + val
         this.editingCard[actualField] = newValue
 
-        // 非散装模式下，同步更新 allweightSrt（用于显示表达式）
-        if (focusIndex === 3 && !isScatterMode) {
+        // 总重字段时，同步更新 allweightSrt（用于显示表达式）
+        if (focusIndex === 3) {
           this.editingCard.allweightSrt = newValue
         }
         return
@@ -381,8 +414,8 @@ export default {
       // ===【关键】立即更新数据模型，触发 Vue 响应式更新===
       this.editingCard[actualField] = newValue
 
-      // 非散装模式下，同步更新 allweightSrt（用于显示表达式）
-      if (focusIndex === 3 && !isScatterMode) {
+      // 总重字段时，同步更新 allweightSrt（用于显示表达式）
+      if (focusIndex === 3) {
         this.editingCard.allweightSrt = newValue
       }
 
@@ -415,6 +448,8 @@ export default {
             }
           }
 
+          console.log('this.editingCard.extralModel', this.editingCard.extralModel)
+
           // 统一设置 carweight
           this.editingCard.carweight = calculatedCarWeight
 
@@ -437,9 +472,8 @@ export default {
       const field = fieldMap[focusIndex]
       if (!field) return
 
-      // 散装模式下，总重字段使用 allweightSrt
-      const isScatterMode = this.editingCard.saleWay === 4
-      const actualField = focusIndex === 3 && isScatterMode ? 'allweightSrt' : field
+      // 统一使用标准字段，不再区分散装模式
+      const actualField = field
 
       // 从数据模型读取当前值
       let currentValue = String(this.editingCard[actualField] || '0')
@@ -456,8 +490,8 @@ export default {
       // 立即更新数据模型
       this.editingCard[actualField] = newValue
 
-      // 非散装模式下，同步更新 allweightSrt
-      if (focusIndex === 3 && !isScatterMode) {
+      // 总重字段时，同步更新 allweightSrt
+      if (focusIndex === 3) {
         this.editingCard.allweightSrt = newValue
       }
 
@@ -522,19 +556,18 @@ export default {
         }
       }
 
-      // 散装模式下，将 allweightSrt 的计算结果赋值给 allweight
-      const isScatterMode = this.editingCard.saleWay === 4
-      if (isScatterMode && this.editingCard.allweightSrt) {
-        this.editingCard.allweight = safeEval(this.editingCard.allweightSrt)
-      }
-
-      // 计算表达式
+      // 统一计算所有表达式字段
       Object.assign(this.editingCard, {
         quantity: safeEval(this.editingCard.quantity),
         referenceAmount: safeEval(this.editingCard.referenceAmount),
         allweight: safeEval(this.editingCard.allweight),
         carweight: safeEval(this.editingCard.carweight),
       })
+
+      // 同步更新 allweightSrt
+      if (this.editingCard.allweightSrt) {
+        this.editingCard.allweight = safeEval(this.editingCard.allweightSrt)
+      }
 
       // 触发父组件事件
       this.$emit('confirm', this.editingCard)
@@ -678,9 +711,9 @@ export default {
     align-items: center;
     padding: 3rpx 8rpx;
     margin-top: 10rpx;
-		::v-deep .uni-select-lay-mask {
-			position: relative;
-		}
+    ::v-deep .uni-select-lay-mask {
+      position: relative;
+    }
   }
 }
 

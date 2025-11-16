@@ -1,264 +1,278 @@
 <template>
   <div class="cashier-box">
-    <default-header ref="headerInfo" theme="light" @showlastOrder="showLastOrder" @showHangList="saleHangList"
-      @goToManagement="goToManagement" :showManageBtn="true" :lastOrder="lastOrder"></default-header>
+    <default-header
+      ref="headerInfo"
+      theme="light"
+      @showlastOrder="showLastOrder"
+      @showHangList="saleHangList"
+      @goToManagement="goToManagement"
+      :showManageBtn="true"
+      :lastOrder="lastOrder"
+    ></default-header>
     <div class="cashier-container">
       <div class="left-space">
         <!-- 货品选择面板组件 -->
-        <CashierGoodsPanel ref="goodsPanel" :selectedGoodsIds="goodSelect.map(item => item.id)" :height="windowHeight"
-          :vesionType="vesionType" :companyId="currentCompanyId" @tab-changed="handleTabChanged"
-          @item-click="handleClick" @category-updated="handleCategoryUpdated" />
+        <CashierGoodsPanel
+          ref="goodsPanel"
+          :selectedGoodsIds="goodSelect.map(item => item.id)"
+          :height="windowHeight"
+          :vesionType="vesionType"
+          :companyId="currentCompanyId"
+          @tab-changed="handleTabChanged"
+          @item-click="handleClick"
+          @category-updated="handleCategoryUpdated"
+        />
       </div>
       <div class="right-space">
         <div v-if="step1" class="cashier-card">
-              <div class="card-title">
-                <!-- 可滑动的客户管理区域 -->
-                <scroll-view
-                  scroll-x="true"
-                  :show-scrollbar="false"
-                  :scroll-left="scrollLeft"
-                  class="customer-scroll-view"
+          <div class="card-title">
+            <!-- 可滑动的客户管理区域 -->
+            <scroll-view scroll-x="true" :show-scrollbar="false" :scroll-left="scrollLeft" class="customer-scroll-view">
+              <view class="customer-scroll-content">
+                <!-- 主客户按钮（散客/当前客户） -->
+                <div
+                  class="customerbtn modern-customer-btn main-customer-btn"
+                  @click="activateMainCustomer"
+                  :style="mainCustomerButtonStyle"
                 >
-                  <view class="customer-scroll-content">
-                    <!-- 主客户按钮（散客/当前客户） -->
-                    <div
-                      class="customerbtn modern-customer-btn main-customer-btn"
-                      @click="activateMainCustomer"
-                      :style="mainCustomerButtonStyle"
-                    >
-                      {{ mainCustomerData.member.customName ? mainCustomerData.member.customName : '散客' }}
-                    </div>
+                  {{ mainCustomerData.member.customName ? mainCustomerData.member.customName : '散客' }}
+                </div>
 
-                    <!-- 动态添加的客户按钮列表 -->
-                    <div
-                      v-for="(customerBtn, index) in customerButtons"
-                      :key="`customer_btn_${customerBtn.id}`"
-                      class="customerbtn modern-customer-btn dynamic-customer-btn"
-                      :style="getDynamicCustomerStyle(customerBtn)"
+                <!-- 动态添加的客户按钮列表 -->
+                <div
+                  v-for="(customerBtn, index) in customerButtons"
+                  :key="`customer_btn_${customerBtn.id}`"
+                  class="customerbtn modern-customer-btn dynamic-customer-btn"
+                  :style="getDynamicCustomerStyle(customerBtn)"
+                >
+                  <div @click="switchToCustomerByIndex(index)" class="customer-btn-main">
+                    {{ customerBtn.name }}
+                    <text
+                      v-if="customerBtn.goodsCount > 0"
+                      :class="!customerBtn.isActive ? 'customer-btn-count-active' : 'customer-btn-count'"
+                      >|{{ customerBtn.goodsCount }}件</text
                     >
-                      <div @click="switchToCustomerByIndex(index)" class="customer-btn-main">
-                        {{ customerBtn.name }}
-                        <text
-                          v-if="customerBtn.goodsCount > 0"
-                          :class="!customerBtn.isActive ? 'customer-btn-count-active' : 'customer-btn-count'"
-                          >|{{ customerBtn.goodsCount }}件</text
-                        >
-                      </div>
-                      <div @click.stop="deleteCustomerByIndex(index)" class="customer-btn-remove">
-                        <uni-icons type="close" size="18" :color="!customerBtn.isActive ? '#000000' : '#ffffff'" class="customer-btn-remove-icon"></uni-icons>
-                      </div>
-                    </div>
+                  </div>
+                  <div @click.stop="deleteCustomerByIndex(index)" class="customer-btn-remove">
+                    <uni-icons
+                      type="close"
+                      size="18"
+                      :color="!customerBtn.isActive ? '#000000' : '#ffffff'"
+                      class="customer-btn-remove-icon"
+                    ></uni-icons>
+                  </div>
+                </div>
 
-                    <!-- 添加客户按钮 -->
-                    <div
-                      class="add-customer-btn"
-                      @click="addNewCustomerButton"
-                      title="添加客户"
-                    >
-                      +
-                    </div>
-                  </view>
-                </scroll-view>
-              </div>
-              <OrderGoodsPanel
-                :goodsList="goodSelect"
-                :totalAmount="payAmount.total"
-                :shippingFee="cashier.shippingFee"
-                @name-click="memberChange('XiaDan')"
-                @item-click="handleItemClick"
-                @delete-item="deleteItem"
-                @shipping-click="showShippingModal"
-                @hang-order="hangOrder"
-                @checkout="orderCreate"
-              />
+                <!-- 添加客户按钮 -->
+                <div class="add-customer-btn" @click="addNewCustomerButton" title="添加客户">+</div>
+              </view>
+            </scroll-view>
           </div>
-          <!-- 使用 GoodEditKeyboard 组件 -->
-          <div v-if="!step1" class="cashier-card">
-            <GoodEditKeyboard
-              :card="editingCard"
-              :fixed-tare-weight="fixedTareWeight"
-              :show-step2="showStep2"
-              :edit-card-extral-model="editCardExtralModel"
-              @close="step1 = true"
-              @confirm="handleGoodEditConfirm"
-              @extra-model-select="handleExtraModelSelect"
-            />
-          </div>
-          <u-modal
-            title="添加新顾客"
-            class="payment"
-            :show="customerDialogVisibleAdd"
-            :closeOnClickOverlay="false"
-            :showConfirmButton="false"
-            :width="700"
-            @close="customerDialogVisibleAdd = false"
-          >
-            <div class="slot-content" style="overflow-y: auto">
-              <uni-section title="表单校验" type="line">
-                <view class="example" style="font-size: 15rpx">
-                  <!-- 基础表单校验 -->
-                  <view class="input-container" style="margin-top: 10px">
-                    <text class="label" style="width: 20%">客户名称：</text>
-                    <input
-                      class="input-field"
-                      type="text"
-                      :adjust-position="false"
-                      placeholder=" "
-                      style="
-                        height: 40rpx;
-                        width: 80%;
-                        border-radius: 5rpx;
-                        background-color: lightgray;
-                        font-size: 15rpx;
-                        padding-left: 10px;
-                        font-weight: bold;
-                      "
-                      v-model="AddedCustomerFormData.name"
-                    />
-                  </view>
-                  <view class="input-container" style="margin-top: 10px">
-                    <text class="label" style="width: 20%">联系方式：</text>
-                    <input
-                      class="input-field"
-                      type="text"
-                      :adjust-position="false"
-                      placeholder=" "
-                      style="
-                        height: 40rpx;
-                        width: 80%;
-                        border-radius: 5rpx;
-                        background-color: lightgray;
-                        font-size: 15rpx;
-                        padding-left: 10px;
-                        font-weight: bold;
-                      "
-                      v-model="AddedCustomerFormData.phone"
-                    />
-                  </view>
-                  <view class="input-container" style="margin-top: 10px">
-                    <text class="label" style="width: 20%">车牌：</text>
-                    <input
-                      class="input-field"
-                      type="text"
-                      placeholder=" "
-                      style="
-                        height: 40rpx;
-                        width: 80%;
-                        border-radius: 5rpx;
-                        background-color: lightgray;
-                        font-size: 15rpx;
-                        padding-left: 10px;
-                        font-weight: bold;
-                      "
-                      v-model="AddedCustomerFormData.carNum"
-                    />
-                  </view>
-                  <view class="input-container" style="margin-top: 10px">
-                    <text class="label" style="width: 20%">地址：</text>
-                    <input
-                      class="input-field"
-                      type="text"
-                      placeholder=" "
-                      style="
-                        height: 40rpx;
-                        width: 80%;
-                        border-radius: 5rpx;
-                        background-color: lightgray;
-                        font-size: 15rpx;
-                        padding-left: 10px;
-                        font-weight: bold;
-                      "
-                      v-model="AddedCustomerFormData.address"
-                    />
-                  </view>
-                  <view style="display: flex">
-                    <button
-                      @click="
-                        customerDialogVisibleAdd = false
-                        memberDialogVisible = true
-                      "
-                      style="
-                        width: 30%;
-                        margin-top: 20px;
-                        background-color: lightgrey;
-                        box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);
-                        font-weight: bold;
-                      "
-                    >
-                      返回
-                    </button>
-                    <button
-                      type="primary"
-                      @click="submitAddCustomer()"
-                      style="width: 30%; margin-top: 20px; box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3); font-weight: bold"
-                    >
-                      添加
-                    </button>
-                  </view>
+          <OrderGoodsPanel
+            :goodsList="goodSelect"
+            :totalAmount="payAmount.total"
+            :shippingFee="cashier.shippingFee"
+            @name-click="memberChange('XiaDan')"
+            @item-click="handleItemClick"
+            @delete-item="deleteItem"
+            @shipping-click="showShippingModal"
+            @hang-order="hangOrder"
+            @checkout="orderCreate"
+          />
+        </div>
+        <!-- 使用 GoodEditKeyboard 组件 -->
+        <div v-if="!step1" class="cashier-card">
+          <GoodEditKeyboard
+            :card="editingCard"
+            :fixed-tare-weight="fixedTareWeight"
+            :show-step2="showStep2"
+            :edit-card-extral-model="editCardExtralModel"
+            @close="step1 = true"
+            @confirm="handleGoodEditConfirm"
+            @extra-model-select="handleExtraModelSelect"
+          />
+        </div>
+        <u-modal
+          title="添加新顾客"
+          class="payment"
+          :show="customerDialogVisibleAdd"
+          :closeOnClickOverlay="false"
+          :showConfirmButton="false"
+          :width="700"
+          @close="customerDialogVisibleAdd = false"
+        >
+          <div class="slot-content" style="overflow-y: auto">
+            <uni-section title="表单校验" type="line">
+              <view class="example" style="font-size: 15rpx">
+                <!-- 基础表单校验 -->
+                <view class="input-container" style="margin-top: 10px">
+                  <text class="label" style="width: 20%">客户名称：</text>
+                  <input
+                    class="input-field"
+                    type="text"
+                    :adjust-position="false"
+                    placeholder=" "
+                    style="
+                      height: 40rpx;
+                      width: 80%;
+                      border-radius: 5rpx;
+                      background-color: lightgray;
+                      font-size: 15rpx;
+                      padding-left: 10px;
+                      font-weight: bold;
+                    "
+                    v-model="AddedCustomerFormData.name"
+                  />
                 </view>
-              </uni-section>
-            </div>
-          </u-modal>
-          <!--客户中心-->
-          <CustomerSelector
-            :visible="memberDialogVisible"
-            :customerList="memberSearchOptions"
-            :mode="memberStyle"
-            :selectType="currentSelctCustomerType"
-            :windowHeight="windowHeight"
-            :showAddButton="memberStyle === 'XiaDan'"
-            @close="memberDialogVisible = false"
-            @select="changeMember"
-            @add-customer="
-              memberDialogVisible = false
-              customerDialogVisibleAdd = true
-            "
-            @change-type="currentSelctCustomerType = $event"
-          />
-          <!-- 挂单中心模态框 -->
-          <HangOrderModal
-            :visible="hangListVisible"
-            :hangList="hangList"
-            :selectedOrder="orderGDSelect"
-            @close="hangListVisible = false"
-            @select-order="selectGDorder"
-            @delete="deleteGDorder"
-            @print="printerGDModel"
-            @parse="hangOrderParse"
-          />
+                <view class="input-container" style="margin-top: 10px">
+                  <text class="label" style="width: 20%">联系方式：</text>
+                  <input
+                    class="input-field"
+                    type="text"
+                    :adjust-position="false"
+                    placeholder=" "
+                    style="
+                      height: 40rpx;
+                      width: 80%;
+                      border-radius: 5rpx;
+                      background-color: lightgray;
+                      font-size: 15rpx;
+                      padding-left: 10px;
+                      font-weight: bold;
+                    "
+                    v-model="AddedCustomerFormData.phone"
+                  />
+                </view>
+                <view class="input-container" style="margin-top: 10px">
+                  <text class="label" style="width: 20%">车牌：</text>
+                  <input
+                    class="input-field"
+                    type="text"
+                    placeholder=" "
+                    style="
+                      height: 40rpx;
+                      width: 80%;
+                      border-radius: 5rpx;
+                      background-color: lightgray;
+                      font-size: 15rpx;
+                      padding-left: 10px;
+                      font-weight: bold;
+                    "
+                    v-model="AddedCustomerFormData.carNum"
+                  />
+                </view>
+                <view class="input-container" style="margin-top: 10px">
+                  <text class="label" style="width: 20%">地址：</text>
+                  <input
+                    class="input-field"
+                    type="text"
+                    placeholder=" "
+                    style="
+                      height: 40rpx;
+                      width: 80%;
+                      border-radius: 5rpx;
+                      background-color: lightgray;
+                      font-size: 15rpx;
+                      padding-left: 10px;
+                      font-weight: bold;
+                    "
+                    v-model="AddedCustomerFormData.address"
+                  />
+                </view>
+                <view style="display: flex">
+                  <button
+                    @click="
+                      customerDialogVisibleAdd = false
+                      memberDialogVisible = true
+                    "
+                    style="
+                      width: 30%;
+                      margin-top: 20px;
+                      background-color: lightgrey;
+                      box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);
+                      font-weight: bold;
+                    "
+                  >
+                    返回
+                  </button>
+                  <button
+                    type="primary"
+                    @click="submitAddCustomer()"
+                    style="width: 30%; margin-top: 20px; box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3); font-weight: bold"
+                  >
+                    添加
+                  </button>
+                </view>
+              </view>
+            </uni-section>
+          </div>
+        </u-modal>
+        <!--客户中心-->
+        <CustomerSelector
+          :visible="memberDialogVisible"
+          :customerList="memberSearchOptions"
+          :mode="memberStyle"
+          :selectType="currentSelctCustomerType"
+          :windowHeight="windowHeight"
+          :showAddButton="memberStyle === 'XiaDan'"
+          @close="memberDialogVisible = false"
+          @select="changeMember"
+          @add-customer="
+            memberDialogVisible = false
+            customerDialogVisibleAdd = true
+          "
+          @change-type="currentSelctCustomerType = $event"
+        />
+        <!-- 挂单中心模态框 -->
+        <HangOrderModal
+          :visible="hangListVisible"
+          :hangList="hangList"
+          :selectedOrder="orderGDSelect"
+          @close="hangListVisible = false"
+          @select-order="selectGDorder"
+          @delete="deleteGDorder"
+          @print="printerGDModel"
+          @parse="hangOrderParse"
+        />
 
-          <!--收银弹窗-->
-          <PaymentModal
-            :visible="payTypeDialogVisible"
-            :payAmount="payAmount"
-            :accountExpense="AccountExpense"
-            :discountAmount="discountAmount"
-            :accountDiscount="accountDiscount"
-            :currentMember="currentMember"
-            :repayBasketList="repayBasketList"
-            @close="payTypeDialogVisible = false"
-            @play-sound="playSystemKeyClickSound"
-            @collect-basket="collectBasketoffestMoney"
-            @member-change="memberChange"
-            @confirm="handlePaymentConfirm"
-          />
+        <!--收银弹窗-->
+        <PaymentModal
+          :visible="payTypeDialogVisible"
+          :payAmount="payAmount"
+          :accountExpense="AccountExpense"
+          :discountAmount="discountAmount"
+          :accountDiscount="accountDiscount"
+          :currentMember="currentMember"
+          :repayBasketList="repayBasketList"
+          @close="payTypeDialogVisible = false"
+          @play-sound="playSystemKeyClickSound"
+          @collect-basket="collectBasketoffestMoney"
+          @member-change="memberChange"
+          @confirm="handlePaymentConfirm"
+        />
 
-          <!-- 订单详情抽屉 -->
-          <OrderDetailDrawer
-            :visible="LastOrderShow"
-            :orderData="lastOrder"
-            :containerHeight="windowHeight"
-            :showActions="true"
-            @close="LastOrderShow = false"
-            @print="printerModel"
-            @share="shareOrder(lastOrder.id)"
-          />
-
+        <!-- 订单详情抽屉 -->
+        <OrderDetailDrawer
+          :visible="LastOrderShow"
+          :orderData="lastOrder"
+          :containerHeight="windowHeight"
+          :showActions="true"
+          @close="LastOrderShow = false"
+          @print="printerModel"
+          @share="shareOrder(lastOrder.id)"
+        />
       </div>
 
       <!--下单成功弹窗-->
-      <u-modal title=" " class="payment" :show="popup_paysuccess_show" :closeOnClickOverlay="true"
-        :showConfirmButton="false" :width="500" @close="inputModelVisible = false">
+      <u-modal
+        title=" "
+        class="payment"
+        :show="popup_paysuccess_show"
+        :closeOnClickOverlay="true"
+        :showConfirmButton="false"
+        :width="500"
+        @close="inputModelVisible = false"
+      >
         <view class="success-modal-card">
           <div class="success-modal-content">
             <div class="success-modal-image">
@@ -274,16 +288,34 @@
           </div>
           <div class="success-modal-actions">
             <button class="success-modal-btn success-modal-btn--print" @click="paysuccessOrder(1)">
-              <uni-icons custom-prefix="iconfont" type="icon-dayin" size="20" color="#ffffff"
-                class="success-modal-icon"></uni-icons>打印
+              <uni-icons
+                custom-prefix="iconfont"
+                type="icon-dayin"
+                size="20"
+                color="#ffffff"
+                class="success-modal-icon"
+              ></uni-icons
+              >打印
             </button>
             <button class="success-modal-btn success-modal-btn--share" @click="paysuccessOrder(2)">
-              <uni-icons custom-prefix="iconfont" type="icon-zhuanfa" size="20" color="#ffffff"
-                class="success-modal-icon"></uni-icons>发单
+              <uni-icons
+                custom-prefix="iconfont"
+                type="icon-zhuanfa"
+                size="20"
+                color="#ffffff"
+                class="success-modal-icon"
+              ></uni-icons
+              >发单
             </button>
             <button class="success-modal-btn success-modal-btn--continue" @click="paysuccessOrder(3)">
-              <uni-icons custom-prefix="iconfont" type="icon-kaidan" size="20" color="#ffffff"
-                class="success-modal-icon"></uni-icons>继续开单
+              <uni-icons
+                custom-prefix="iconfont"
+                type="icon-kaidan"
+                size="20"
+                color="#ffffff"
+                class="success-modal-icon"
+              ></uni-icons
+              >继续开单
             </button>
           </div>
         </view>
@@ -294,20 +326,32 @@
       <!--还筐弹窗(不抵扣)-->
       <RepayBasketModel ref="repayBasketModelRef" :basketData="extraModel"></RepayBasketModel>
       <!--还款弹窗-->
-      <RepayModal :visible="showRepaymentModal" :customerInfo="repayCustomerData" @confirm="handleRepaymentConfirm"
-        @close="showRepaymentModal = false">
+      <RepayModal
+        :visible="showRepaymentModal"
+        :customerInfo="repayCustomerData"
+        @confirm="handleRepaymentConfirm"
+        @close="showRepaymentModal = false"
+      >
       </RepayModal>
 
       <!-- 运费弹窗 -->
-      <ShippingModal :visible="shippingModalVisible" :initialValue="cashier.shippingFee"
-        @close="shippingModalVisible = false" @confirm="handleShippingConfirm" />
+      <ShippingModal
+        :visible="shippingModalVisible"
+        :initialValue="cashier.shippingFee"
+        @close="shippingModalVisible = false"
+        @confirm="handleShippingConfirm"
+      />
 
       <!-- 规格选择弹窗（拆包） -->
       <div v-if="specPopup.visible" class="spec-popup-mask" @click="closeSpecPopup">
         <div class="spec-popup-container" :style="specPopupStyle" @click.stop>
           <div class="spec-popup-content">
-            <div v-for="(spec, index) in specPopup.specList" :key="index" class="spec-item"
-              @click="handleSpecClick(spec)">
+            <div
+              v-for="(spec, index) in specPopup.specList"
+              :key="index"
+              class="spec-item"
+              @click="handleSpecClick(spec)"
+            >
               <!-- 商品名称 + 规格名称 -->
               <div class="spec-item-name">{{ specPopup.commodity.name }}-{{ spec.specName }}</div>
 
@@ -332,9 +376,13 @@
 				<span class="multilevel-popup-title">选择分级商品</span>
 			</div> -->
           <div class="multilevel-popup-content">
-            <div v-for="(child, index) in multiLevelPopup.childrenList" :key="child.id || index"
-              :id="'multilevel-grid-item-' + child.id" class="multilevel-grid-item"
-              @click="handleMultiLevelClick(child, multiLevelPopup)">
+            <div
+              v-for="(child, index) in multiLevelPopup.childrenList"
+              :key="child.id || index"
+              :id="'multilevel-grid-item-' + child.id"
+              class="multilevel-grid-item"
+              @click="handleMultiLevelClick(child, multiLevelPopup)"
+            >
               <!-- 商品名称 -->
               <div class="multilevel-item-name">
                 {{ child.commodityName || child.name }}
@@ -356,11 +404,14 @@
                 </div>
 
                 <!-- 库存信息 -->
-                <div class="multilevel-item-stock" :style="
+                <div
+                  class="multilevel-item-stock"
+                  :style="
                     !child.outPutPurchaseInventories || child.outPutPurchaseInventories.length === 0
                       ? { color: '#aa0000' }
                       : {}
-                  ">
+                  "
+                >
                   余:
                   <span v-for="item2 in child.outPutPurchaseInventories" :key="item2.id" class="stock-item">
                     {{ item2.mount }}{{ item2.specName }}
@@ -373,8 +424,10 @@
       </div>
     </div>
     <!-- 隐藏的canvas，用于生成订单图片 -->
-  <canvas canvas-id="orderCanvas"
-    style="width: 750px; height: 3000px; position: fixed; left: -9999px; top: -9999px;"></canvas>
+    <canvas
+      canvas-id="orderCanvas"
+      style="width: 750px; height: 3000px; position: fixed; left: -9999px; top: -9999px"
+    ></canvas>
   </div>
 </template>
 
@@ -808,13 +861,13 @@ export default {
       this.windowHeight = uni.getWindowInfo().windowHeight
       // this.initSystem();
       this.currentCompanyId = uni.getStorageSync('companyId')
-      
+
       // 清空商品面板的缓存数据
       if (this.$refs.goodsPanel) {
         this.$refs.goodsPanel.clearTabCache()
         console.log('[refreshPage] 已清空商品面板缓存')
       }
-      
+
       // this.getCategoryList();
       this.getlastOrder()
       this.initCompanySetting()
@@ -826,9 +879,7 @@ export default {
     getDynamicCustomerStyle(customerBtn) {
       const isActive = !!customerBtn?.isActive
       return {
-        boxShadow: isActive
-          ? '0 3px 10px rgba(56, 158, 13, 0.3)'
-          : '0 2px 6px rgba(0, 0, 0, 0.1)',
+        boxShadow: isActive ? '0 3px 10px rgba(56, 158, 13, 0.3)' : '0 2px 6px rgba(0, 0, 0, 0.1)',
         background: isActive ? '#3e79f3' : '#5dcdfd43',
         color: isActive ? '#ffffff' : '#000000',
       }
@@ -1185,7 +1236,6 @@ export default {
       this.multiCustomerModalVisible = true
     },
     switchToCustomer(customerCache) {
-
       // 保存当前客户数据
       this.saveCurrentCustomerDataBeforeSwitch()
 
@@ -2765,9 +2815,9 @@ export default {
     reCountGoodSelect() {
       this.payAmount.total = 0
       this.goodSelect.forEach(x => {
-        if (x.saleWay === 1 || x.saleWay === 4) {
+        if (x.saleWay === 1) {
           x.money = Math.round((parseFloat(x.allweight) - parseFloat(x.carweight)) * parseFloat(x.referenceAmount))
-        } else if (x.saleWay === 2 || x.saleWay === 3) {
+        } else if (x.saleWay === 2 || x.saleWay === 3 || x.saleWay === 4) {
           x.money = Math.round(parseFloat(x.quantity) * parseFloat(x.referenceAmount))
         }
         this.payAmount.total += parseFloat(x.money) //货品金额
@@ -2918,7 +2968,7 @@ export default {
       // 处理分级商品的点击逻辑，类似普通商品
       this.closeMultiLevelPopup()
       // 调用 handleClick 处理选中的子商品
-      this.handleClick({...childCommodity, parentName: parentCommodity.parentCommodity.name}, childCommodity.id)
+      this.handleClick({ ...childCommodity, parentName: parentCommodity.parentCommodity.name }, childCommodity.id)
     },
     handleClick(e, id) {
       //如果在step2状态下点击新货品，先移除未确定的货品
@@ -2962,6 +3012,10 @@ export default {
           money2: 0, //包含押筐金额
           index: this.goodSelect.length + 1,
         })
+
+        // 语音播报商品名称
+        this.$parent.speakText(e.parentName ? e.parentName + '-' + e.name : e.name)
+
         // 保存到缓存
         this.saveGoodSelectToCache()
         this.showAllweightStr = false
@@ -3826,7 +3880,7 @@ export default {
       // 如果 lastOrder 存在且 id 匹配，直接使用
       let order = null
       let products = []
-      
+
       if (this.lastOrder && this.lastOrder.id === id) {
         order = this.lastOrder
         // 解析商品列表，包含所有类型（包括 type 4）
@@ -3839,79 +3893,85 @@ export default {
           }
         }
       }
-      
+
       // 如果 lastOrder 不存在或不匹配，根据 id 获取订单信息
       if (!order) {
-        cashierOrder.GetOrderByAccountId(id).then(res => {
-          if (res.code === 200 && res.data) {
-            order = res.data
-            // 解析商品列表
-            if (order.module) {
-              try {
-                if (typeof order.module === 'string') {
-                  products = JSON.parse(order.module)
-                } else {
-                  products = order.module
+        cashierOrder
+          .GetOrderByAccountId(id)
+          .then(res => {
+            if (res.code === 200 && res.data) {
+              order = res.data
+              // 解析商品列表
+              if (order.module) {
+                try {
+                  if (typeof order.module === 'string') {
+                    products = JSON.parse(order.module)
+                  } else {
+                    products = order.module
+                  }
+                } catch (e) {
+                  console.error('解析订单商品数据失败:', e)
+                  products = []
                 }
-              } catch (e) {
-                console.error('解析订单商品数据失败:', e)
-                products = []
               }
+              // 调用生成图片方法
+              this.generateOrderImageForShare(order, products)
+            } else {
+              uni.showToast({
+                title: '获取订单信息失败',
+                icon: 'none',
+              })
             }
-            // 调用生成图片方法
-            this.generateOrderImageForShare(order, products)
-          } else {
+          })
+          .catch(err => {
+            console.error('获取订单信息异常:', err)
             uni.showToast({
               title: '获取订单信息失败',
-              icon: 'none'
+              icon: 'none',
             })
-          }
-        }).catch(err => {
-          console.error('获取订单信息异常:', err)
-          uni.showToast({
-            title: '获取订单信息失败',
-            icon: 'none'
           })
-        })
       } else {
         // 直接使用 lastOrder，调用生成图片方法
         this.generateOrderImageForShare(order, products)
       }
     },
-    
+
     // 生成订单图片并分享
     generateOrderImageForShare(order, products) {
       // 获取公司信息
       const companyId = uni.getStorageSync('companyId') || this.currentCompanyId
-      cashierOrder.getStoreInfo(companyId).then(res => {
-        const companyInfo = res.data || {}
-        
-        // 调用公共方法生成订单图片
-        generateOrderImage({
-          order: order,
-          products: products,
-          companyInfo: companyInfo,
-          canvasId: 'orderCanvas',
-          componentContext: this,
-          onSuccess: (tempFilePath) => {
-            // 生成成功，分享图片
-            this.shareImage(tempFilePath)
-          },
-          onError: (error) => {
-            console.error('生成订单图片失败:', error)
-            uni.showToast({
-              title: error || '生成图片失败',
-              icon: 'none'
-            })
-          }
+      cashierOrder
+        .getStoreInfo(companyId)
+        .then(res => {
+          const companyInfo = res.data || {}
+
+          // 调用公共方法生成订单图片
+          generateOrderImage({
+            order: order,
+            products: products,
+            companyInfo: companyInfo,
+            canvasId: 'orderCanvas',
+            componentContext: this,
+            onSuccess: tempFilePath => {
+              // 生成成功，分享图片
+              this.shareImage(tempFilePath)
+            },
+            onError: error => {
+              console.error('生成订单图片失败:', error)
+              uni.showToast({
+                title: error || '生成图片失败',
+                icon: 'none',
+              })
+            },
+          })
         })
-      }).catch(err => {
-        console.error('获取公司信息失败:', err)
-        uni.showToast({
-          title: '获取公司信息失败',
-          icon: 'none'
+        .catch(err => {
+          console.error('获取公司信息失败:', err)
+          uni.showToast({
+            title: '获取公司信息失败',
+            icon: 'none',
+          })
         })
-      })
     },
     shareImage(tempFilePath) {
       uni.share({
@@ -3950,7 +4010,7 @@ export default {
   }
   .right-space {
     width: 50%;
-    height: calc(100vh - 35rpx)
+    height: calc(100vh - 35rpx);
   }
 }
 
@@ -4779,7 +4839,6 @@ export default {
   background-color: #f9f9f9;
   /* 背景颜色 */
 }
-
 
 .success-modal-card {
   border-radius: 10rpx;
@@ -5921,11 +5980,9 @@ export default {
     border-color: #00aaff;
     background: #f0f9ff;
     box-shadow: 0 4px 12px rgba(0, 170, 255, 0.2);
-    transform: translateX(5px);
   }
 
   &:active {
-    transform: translateX(5px) scale(0.98);
     background: #e6f7ff;
   }
 }
