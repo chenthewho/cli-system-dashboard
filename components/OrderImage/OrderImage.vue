@@ -35,37 +35,62 @@
           <div :style="colSubtotalStyle">小计</div>
         </div>
 
-        <!-- 货品数据行 (type === 1) -->
-        <div v-if="goodsItems.length > 0">
-          <div
-            :style="tableRowStyle(index === goodsItems.length - 1 && extraItems.length === 0)"
-            v-for="(item, index) in goodsItems"
-            :key="'goods_' + index"
-          >
-            <div :style="colNoStyle">{{ index + 1 }}</div>
-            <div :style="colNameStyle">{{ item.name }}</div>
-            <div :style="colQuantityStyle">{{ formatQuantity(item) }}</div>
-            <div :style="colWeightStyle">
-              <div :style="{ fontWeight: 'bold' }">
-                {{ formatWeight(item).netWeight }}
+        <!-- 货品数据行 (type === 1) 及其附加项 -->
+        <div v-if="goodsWithExtras.length > 0">
+          <div v-for="(group, groupIndex) in goodsWithExtras" :key="'group_' + groupIndex">
+            <!-- 货品主行 -->
+            <div :style="tableRowStyle(false)">
+              <div :style="colNoStyle">{{ groupIndex + 1 }}</div>
+              <div :style="colNameStyle">{{ group.goods.name }}</div>
+              <div :style="colQuantityStyle">{{ formatQuantity(group.goods) }}</div>
+              <div :style="colWeightStyle">
+                <div :style="{ fontWeight: 'bold' }">
+                  {{ formatWeight(group.goods).netWeight }}
+                </div>
+                <div
+                  :style="{ fontSize: '25rpx', color: '#666', marginTop: '4rpx' }"
+                  v-if="formatWeight(group.goods).detail"
+                >
+                  {{ formatWeight(group.goods).detail }}
+                </div>
               </div>
-              <div :style="{ fontSize: '20rpx', color: '#666', marginTop: '4rpx' }" v-if="formatWeight(item).detail">
-                {{ formatWeight(item).detail }}
-              </div>
+              <div :style="colPriceStyle">{{ group.goods.referenceAmount || 0 }}</div>
+              <div :style="colSubtotalStyle">{{ formatSubtotal(group.goods) }}</div>
             </div>
-            <div :style="colPriceStyle">{{ item.referenceAmount || 0 }}</div>
-            <div :style="colSubtotalStyle">{{ formatSubtotal(item) }}</div>
+
+            <!-- 附加项行 -->
+            <div
+              :style="extraRowStyle"
+              v-for="(extra, extraIndex) in group.extras"
+              :key="'extra_' + groupIndex + '_' + extraIndex"
+            >
+              <div :style="colNoStyle"></div>
+              <div :style="colNameStyle">{{ extra.name }}</div>
+              <div :style="colQuantityStyle">{{ formatQuantity(extra) }}</div>
+              <div :style="colWeightStyle">
+                <div :style="{ fontWeight: 'bold' }">
+                  {{ formatWeight(extra).netWeight }}
+                </div>
+                <div :style="{ fontSize: '20rpx', marginTop: '4rpx' }" v-if="formatWeight(extra).detail">
+                  {{ formatWeight(extra).detail }}
+                </div>
+              </div>
+              <div :style="colPriceStyle">{{ extra.referenceAmount || 0 }}</div>
+              <div :style="colSubtotalStyle">{{ formatSubtotal(extra) }}</div>
+            </div>
+
+            <!-- 货品分隔线 (除了最后一个) -->
+            <div v-if="groupIndex < goodsWithExtras.length - 1" :style="goodsSeparatorStyle"></div>
           </div>
         </div>
 
-        <!-- 附加项数据行 (type === 2)||(type === 5) -->
-        <div v-if="extraItems.length > 0">
-          <!-- 附加项标题 -->
-          <div :style="sectionTitleStyle">附加项</div>
+        <!-- 独立附加项（没有parentId的附加项） -->
+        <div v-if="standaloneExtras.length > 0">
+          <div :style="sectionTitleStyle">额外附加</div>
           <div
-            :style="tableRowStyle(index === extraItems.length - 1 && deductionItems.length === 0)"
-            v-for="(item, index) in extraItems"
-            :key="'extra_' + index"
+            :style="tableRowStyle(index === standaloneExtras.length - 1 && deductionItems.length === 0)"
+            v-for="(item, index) in standaloneExtras"
+            :key="'standalone_extra_' + index"
           >
             <div :style="colNoStyle">{{ goodsItems.length + index + 1 }}</div>
             <div :style="colNameStyle">{{ item.name }}</div>
@@ -174,12 +199,13 @@ export default {
         position: 'absolute',
         top: '0',
         left: '0',
-        width: '50%',
+        width: '100%',
+        height: '100%',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'flex-start',
         zIndex: '9999',
-        padding: '40rpx',
+        padding: '20rpx',
         boxSizing: 'border-box',
         overflowY: 'auto',
         overflowX: 'hidden',
@@ -190,13 +216,14 @@ export default {
     // 主容器样式
     wrapperStyle() {
       return {
-        width: '1200rpx',
+        width: '710rpx',
+        maxWidth: '100%',
         backgroundColor: '#ffffff',
         borderRadius: '8rpx',
-        padding: '40rpx',
-        paddingBottom: '50rpx',
-        marginTop: '20rpx',
-        marginBottom: '30rpx',
+        padding: '30rpx',
+        paddingBottom: '40rpx',
+        marginTop: '10rpx',
+        marginBottom: '20rpx',
         position: 'relative',
         overflow: 'visible',
       }
@@ -268,13 +295,12 @@ export default {
     tableHeaderStyle() {
       return {
         display: 'flex',
-        backgroundColor: '#f5f5f5',
         borderRadius: '4rpx',
         padding: '12rpx 0',
-        fontSize: '30rpx',
+        fontSize: '32rpx',
         fontWeight: 'bold',
         color: '#000',
-        borderBottom: '2rpx solid #ddd',
+        borderBottom: '2rpx solid #000',
       }
     },
 
@@ -284,7 +310,7 @@ export default {
     },
     colNameStyle() {
       return {
-        width: '300rpx',
+        width: '280rpx',
         textAlign: 'left',
         paddingLeft: '15rpx',
         wordWrap: 'break-word',
@@ -295,7 +321,7 @@ export default {
       return { width: '140rpx', textAlign: 'center' }
     },
     colWeightStyle() {
-      return { width: '280rpx', textAlign: 'center' }
+      return { width: '300rpx', textAlign: 'center' }
     },
     colPriceStyle() {
       return { width: '120rpx', textAlign: 'center' }
@@ -397,6 +423,26 @@ export default {
       }
     },
 
+    // 附加项行样式（浅色背景）
+    extraRowStyle() {
+      return {
+        display: 'flex',
+        padding: '10rpx 0',
+        fontSize: '28rpx',
+        color: '#000',
+        borderBottom: '1rpx solid #f0f0f0',
+      }
+    },
+
+    // 货品分隔线样式
+    goodsSeparatorStyle() {
+      return {
+        height: '2rpx',
+        backgroundColor: '#ddd',
+        margin: '5rpx 0',
+      }
+    },
+
     // === 数据相关 computed ===
 
     // 凭证标题
@@ -412,8 +458,8 @@ export default {
       return isLast => ({
         display: 'flex',
         padding: '10rpx 0',
-        fontSize: '28rpx',
-        color: '#333',
+        fontSize: '30rpx',
+        color: '#000',
         borderBottom: isLast ? 'none' : '1rpx solid #f0f0f0',
       })
     },
@@ -490,6 +536,28 @@ export default {
     // 抵扣项列表 (type === 4)
     deductionItems() {
       return this.productItems.filter(item => item.type === 4)
+    },
+
+    // 货品与附加项分组
+    goodsWithExtras() {
+      const goods = this.goodsItems
+      const extras = this.extraItems
+
+      return goods.map(goodsItem => {
+        // 找到属于该货品的附加项（通过parentId匹配）
+        const relatedExtras = extras.filter(extra => extra.parentId === goodsItem.Id)
+
+        return {
+          goods: goodsItem,
+          extras: relatedExtras,
+        }
+      })
+    },
+
+    // 独立附加项（没有parentId或parentId不匹配任何货品的附加项）
+    standaloneExtras() {
+      const goodsIds = this.goodsItems.map(g => g.Id)
+      return this.extraItems.filter(extra => !extra.parentId || !goodsIds.includes(extra.parentId))
     },
 
     // 总金额
@@ -609,8 +677,15 @@ export default {
       }
       const totalWeight = parseFloat(item.totalWeight || 0)
       const tareWeight = parseFloat(item.tareWeight || 0)
-      const netWeight = (totalWeight - tareWeight).toFixed(1)
-      const detail = `(总重:${totalWeight.toFixed(1)} - 皮重:${tareWeight.toFixed(1)})`
+      const netWeightValue = totalWeight - tareWeight
+
+      // 格式化函数：如果小数是.0则不显示
+      const formatNumber = num => {
+        return num % 1 === 0 ? num.toFixed(0) : num.toFixed(1)
+      }
+
+      const netWeight = formatNumber(netWeightValue)
+      const detail = `(${formatNumber(totalWeight)} - ${formatNumber(tareWeight)})`
       return {
         netWeight: netWeight,
         detail: detail,
