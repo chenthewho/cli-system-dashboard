@@ -49,6 +49,14 @@
                   >{{ orderData.basketOffsetAmount || 0 }}({{ orderData.basketOffsetNum || 0 }}个)</text
                 >
               </div>
+              <div class="info-item-new" v-if="orderData.discountAmount && orderData.discountAmount > 0">
+                <text class="info-label-new">优惠金额:</text>
+                <text class="info-value-new discount-value">{{ orderData.discountAmount }}</text>
+              </div>
+              <div class="info-item-new" v-if="orderData.overchargeAmount && orderData.overchargeAmount > 0">
+                <text class="info-label-new">多收金额:</text>
+                <text class="info-value-new extra-value">{{ orderData.overchargeAmount }}</text>
+              </div>
               <div class="info-item-new">
                 <text class="info-label-new">实付金额:</text>
                 <text class="info-value-new highlight-value">{{ orderData.actualMoney || 0 }}</text>
@@ -80,14 +88,47 @@
                 <div class="table-header-cell">小计</div>
               </div>
 
-              <div class="table-row table-body-row" v-for="(item, index) in productList" :key="index">
-                <div class="table-cell">{{ item.name }}</div>
-                <div class="table-cell">{{ item.mount }}</div>
-                <div class="table-cell">{{ item.totalWeight }}</div>
-                <div class="table-cell">{{ item.tareWeight }}</div>
-                <div class="table-cell">{{ item.referenceAmount }}</div>
-                <div class="table-cell">{{ item.subtotal }}</div>
-              </div>
+              <!-- 货品区域 (type === 1) -->
+              <template v-if="goodsItems.length > 0">
+                <div class="table-row table-body-row" v-for="(item, index) in goodsItems" :key="'goods_' + index">
+                  <div class="table-cell">{{ item.name }}</div>
+                  <div class="table-cell">{{ item.mount }}</div>
+                  <div class="table-cell">{{ item.totalWeight }}</div>
+                  <div class="table-cell">{{ item.tareWeight }}</div>
+                  <div class="table-cell">{{ item.referenceAmount }}</div>
+                  <div class="table-cell">{{ item.subtotal }}</div>
+                </div>
+              </template>
+
+              <!-- 附加项区域 (type === 2 || type === 5) -->
+              <template v-if="extraItems.length > 0">
+                <div class="table-section-title">附加项</div>
+                <div class="table-row table-body-row" v-for="(item, index) in extraItems" :key="'extra_' + index">
+                  <div class="table-cell">{{ item.name }}</div>
+                  <div class="table-cell">{{ item.mount }}</div>
+                  <div class="table-cell">--</div>
+                  <div class="table-cell">--</div>
+                  <div class="table-cell">{{ item.referenceAmount }}</div>
+                  <div class="table-cell">{{ item.subtotal }}</div>
+                </div>
+              </template>
+
+              <!-- 抵扣项区域 (type === 4) -->
+              <template v-if="deductionItems.length > 0">
+                <div class="table-section-title">抵扣项</div>
+                <div
+                  class="table-row table-body-row"
+                  v-for="(item, index) in deductionItems"
+                  :key="'deduction_' + index"
+                >
+                  <div class="table-cell">{{ item.name }}</div>
+                  <div class="table-cell">{{ item.mount }}</div>
+                  <div class="table-cell">--</div>
+                  <div class="table-cell">--</div>
+                  <div class="table-cell">{{ item.referenceAmount }}</div>
+                  <div class="table-cell">-{{ Math.abs(item.subtotal) }}</div>
+                </div>
+              </template>
             </div>
           </div>
 
@@ -160,10 +201,24 @@ export default {
       if (!this.orderData || !this.orderData.modelList) {
         return []
       }
-      // 过滤掉 type 为 4 的项目（还筐）
-      return this.orderData.modelList.filter(item => item.type !== 4)
+
+      console.log('this.orderData.modelList', this.orderData.modelList)
+      return this.orderData.modelList
+    },
+    // 货品列表 (type === 1)
+    goodsItems() {
+      return this.productList.filter(item => item.type === 1)
+    },
+    // 附加项列表 (type === 2 || type === 5)
+    extraItems() {
+      return this.productList.filter(item => item.type === 2 || item.type === 5)
+    },
+    // 抵扣项列表 (type === 4)
+    deductionItems() {
+      return this.productList.filter(item => item.type === 4)
     },
     productScrollHeight() {
+      console.log('this.containerHeight', this.containerHeight)
       // 根据容器高度动态计算商品列表高度
       const baseHeight =
         typeof this.containerHeight === 'number' ? this.containerHeight : parseInt(this.containerHeight)
@@ -212,6 +267,8 @@ export default {
       const companyAddress = uni.getStorageSync('address') || ''
       const companyPhone = uni.getStorageSync('contact') || ''
       const marketName = uni.getStorageSync('marketName') || ''
+
+      console.log('products', products)
 
       this.orderImageInfo = {
         companyName,
@@ -391,8 +448,8 @@ export default {
 			}).then(function(canvas) {
         const imgUri = canvas.toDataURL('image/png')
 				callback&&callback(imgUri);
-      })		
-			document.querySelector('body').removeChild(cloneDom)				
+      })
+			document.querySelector('body').removeChild(cloneDom)
     },
     updateEcharts(newValue, oldValue, ownerInstance, instance) {
       // 监听 service 层数据变更
@@ -554,6 +611,16 @@ export default {
   font-weight: bold;
 }
 
+.discount-value {
+  color: #67c23a;
+  font-weight: bold;
+}
+
+.extra-value {
+  color: #e6a23c;
+  font-weight: bold;
+}
+
 .status-normal {
   color: #67c23a;
 }
@@ -601,6 +668,17 @@ export default {
 
 .table-body-row:hover {
   background-color: #ecf5ff;
+}
+
+.table-section-title {
+  display: table-row;
+  font-size: 13rpx;
+  color: #333;
+  padding: 10rpx 15rpx;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  text-align: left;
+  font-weight: 500;
 }
 
 .table-row {

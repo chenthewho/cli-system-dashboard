@@ -36,7 +36,14 @@
           </uni-td>
           <uni-td align="center">
             <view class="table-body-text" @click="handleItemClick(item, index)">
-              <div>{{ getQuantity(item) }}</div>
+              <div
+                :class="{
+                  'negative-quantity':
+                    item.saleWay === 1 ? item.allweight - item.carweight < 0 : parseFloat(item.quantity) < 0,
+                }"
+              >
+                {{ getQuantity(item) }}
+              </div>
               <div class="tips" v-if="item.saleWay === 1">毛:{{ item.allweight }} - 皮:{{ item.carweight }}</div>
             </view>
           </uni-td>
@@ -750,5 +757,17 @@ export default {
   .shipping-text {
     font-size: 13px !important;
   }
+}
+
+/* 负数数量样式 */
+.negative-quantity {
+  color: #ff4d4f !important;
+  font-weight: bold;
+}
+
+/* 负数小计样式 */
+.negative-subtotal {
+  color: #ff4d4f !important;
+  font-weight: bold;
 }
 </style>

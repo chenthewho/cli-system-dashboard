@@ -270,7 +270,7 @@
         :show="popup_paysuccess_show"
         :closeOnClickOverlay="true"
         :showConfirmButton="false"
-        :width="500"
+        :width="550"
         @close="inputModelVisible = false"
       >
         <view class="success-modal-card">
@@ -423,11 +423,9 @@
         </div>
       </div>
     </div>
-    <!-- 隐藏的canvas，用于生成订单图片 -->
-    <canvas
-      canvas-id="orderCanvas"
-      style="width: 750px; height: 3000px; position: fixed; left: -9999px; top: -9999px"
-    ></canvas>
+    <!-- 订单图片组件 -->
+    <OrderImage :orderImageInfo="orderImageInfo" @close="closeOrderImage" v-if="showOrderImage" />
+    <view :prop="canvasImageMsg" :change:prop="canvasImage.updateEcharts"></view>
   </div>
 </template>
 
@@ -443,7 +441,7 @@ import category from '../../api/goods/category'
 import member from '../../api/member/member'
 import config from '../../common/config'
 import global from '../../common/const/global'
-import { generateOrderImage } from '../util/generateOrderImage.js'
+import OrderImage from '@/components/OrderImage/OrderImage.vue'
 import RepayBasketModel from '@/components/repay-basket-model.vue' //还筐弹窗
 import BasketOffestModel from './component/basket-offest-model.vue'
 import RepayModal from '@/components/RepaymentModal.vue'
@@ -464,6 +462,7 @@ export default {
     OrderGoodsPanel,
     ShippingModal,
     HangOrderModal,
+    OrderImage,
   },
   data() {
     return {
@@ -687,6 +686,11 @@ export default {
         goodSelect: [],
         shippingFee: 0,
       },
+      // 订单图片生成相关
+      isGeneratingImage: false,
+      showOrderImage: false,
+      orderImageInfo: null,
+      canvasImageMsg: '',
     }
   },
   computed: {
@@ -1875,9 +1879,7 @@ export default {
         that.lastOrder = res.data
         that.lastOrder.modelList = JSON.parse(that.lastOrder.module)
         const basketOffsetList = that.lastOrder.modelList.filter(item => item.type === 4)
-        that.lastOrder.modelList = that.lastOrder.modelList
-          .filter(item => item.type !== 4)
-          .sort((a, b) => a.type - b.type)
+        that.lastOrder.modelList = that.lastOrder.modelList.sort((a, b) => a.type - b.type)
         if (basketOffsetList.length > 0) {
           that.lastOrder.basketOffsetNum = basketOffsetList[0].mount
         }
@@ -2583,9 +2585,6 @@ export default {
       this.editingCard = e
       if (this.editingCard.extralModel) {
         this.editingCard.extralModel.quantity = this.editingCard.quantity
-        if (this.editingCard.extralModel.weight) {
-          this.editingCard.carweight = this.editingCard.extralModel.quantity * this.editingCard.extralModel.weight
-        }
       } else {
         this.editingCard.extralModel = {
           name: '空',
@@ -2619,6 +2618,11 @@ export default {
 
     // GoodEditKeyboard 组件确认事件处理
     handleGoodEditConfirm(updatedCard) {
+      // 计算净重（总重 - 皮重）
+      const totalWeight = parseFloat(updatedCard.allweight) || 0
+      const tareWeight = parseFloat(updatedCard.carweight) || 0
+      const netWeight = totalWeight - tareWeight
+
       // 更新编辑中的商品数据
       this.editingCard = updatedCard
       this.goodSelect[this.editingIndex] = updatedCard
@@ -2634,6 +2638,17 @@ export default {
       this.custominputFocused3 = false
       this.custominputFocused4 = false
       this.showAllweightStr = false
+
+      // 检查净重是否小于0
+      if (netWeight < 0) {
+        uni.showModal({
+          title: '重量异常',
+          content: `净重不能小于0！`,
+          showCancel: false,
+          confirmText: '确定',
+        })
+        return
+      }
     },
 
     // GoodEditKeyboard 组件押筐选择事件处理
@@ -3441,7 +3456,7 @@ export default {
               referenceAmount: that.goodSelect[i].extralModel.amount,
               totalWeight: 0,
               stockType: 0,
-              subtotal: 0,
+              subtotal: that.goodSelect[i].extralModel.quantity * that.goodSelect[i].extralModel.amount,
               tareWeight: 0,
               commoditySpec: null,
               type: 2,
@@ -3842,33 +3857,50 @@ export default {
             url,
             {
               overwrite: true, // 是否覆盖
-              quality: 10, // 图片清晰度
+              quality: 100, // 图片清晰度
             },
-            i => {
-              uni.saveImageToPhotosAlbum({
-                filePath: url,
-                success: function () {
-                  that.shareImage(url)
+            () => {
+              // 直接分享图片，不保存到相册
+              uni.hideLoading()
+              that.isGeneratingImage = false
+              that.showOrderImage = false
+
+              uni.share({
+                provider: 'weixin',
+                scene: 'WXSceneSession',
+                type: 2,
+                imageUrl: url,
+                success: () => {
+                  console.log('分享成功')
+                },
+                fail: err => {
+                  console.log('分享失败', err)
                   uni.showToast({
-                    title: '图片保存成功',
+                    title: '分享失败',
                     icon: 'none',
                   })
-                  bitmap.clear()
                 },
               })
+              bitmap.clear()
             },
-            e => {
+            () => {
+              uni.hideLoading()
+              that.isGeneratingImage = false
+              that.showOrderImage = false
               uni.showToast({
-                title: '图片保存失败',
+                title: '图片处理失败',
                 icon: 'none',
               })
               bitmap.clear()
             }
           )
         },
-        e => {
+        () => {
+          uni.hideLoading()
+          that.isGeneratingImage = false
+          that.showOrderImage = false
           uni.showToast({
-            title: '图片保存失败',
+            title: '图片处理失败',
             icon: 'none',
           })
           bitmap.clear()
@@ -3938,54 +3970,115 @@ export default {
 
     // 生成订单图片并分享
     generateOrderImageForShare(order, products) {
-      // 获取公司信息
-      const companyId = uni.getStorageSync('companyId') || this.currentCompanyId
-      cashierOrder
-        .getStoreInfo(companyId)
-        .then(res => {
-          const companyInfo = res.data || {}
+      // 防止重复点击
+      if (this.isGeneratingImage) {
+        uni.showToast({
+          title: '单据正在生成中，请稍候...',
+          icon: 'none',
+        })
+        return
+      }
 
-          // 调用公共方法生成订单图片
-          generateOrderImage({
-            order: order,
-            products: products,
-            companyInfo: companyInfo,
-            canvasId: 'orderCanvas',
-            componentContext: this,
-            onSuccess: tempFilePath => {
-              // 生成成功，分享图片
-              this.shareImage(tempFilePath)
-            },
-            onError: error => {
-              console.error('生成订单图片失败:', error)
-              uni.showToast({
-                title: error || '生成图片失败',
-                icon: 'none',
-              })
-            },
-          })
-        })
-        .catch(err => {
-          console.error('获取公司信息失败:', err)
-          uni.showToast({
-            title: '获取公司信息失败',
-            icon: 'none',
-          })
-        })
-    },
-    shareImage(tempFilePath) {
-      uni.share({
-        provider: 'weixin',
-        type: 2, // 图片类型
-        scene: 'WXSceneSession', // 分享到聊天界面
-        imageUrl: tempFilePath, // 只分享这张图片的地址
-        success(res) {
-          console.log('分享成功', res)
-        },
-        fail(err) {
-          console.log('分享失败', err)
-        },
+      // 显示加载提示
+      uni.showLoading({
+        title: '正在生成单据...',
+        mask: true,
       })
+
+      this.isGeneratingImage = true
+
+      // 获取公司信息
+      const companyName = uni.getStorageSync('companyName') || ''
+      const companyAddress = uni.getStorageSync('address') || ''
+      const companyPhone = uni.getStorageSync('contact') || ''
+      const marketName = uni.getStorageSync('marketName') || ''
+
+      this.orderImageInfo = {
+        companyName,
+        companyAddress,
+        companyPhone,
+        order,
+        products,
+        marketName,
+      }
+
+      this.generateHandle()
+    },
+
+    generateHandle() {
+      this.showOrderImage = true
+      this.$nextTick(() => {
+        setTimeout(() => {
+          this.generateImageWithCanvas()
+        }, 100)
+      })
+    },
+
+    generateImageWithCanvas() {
+      // 触发renderjs生成图片
+      this.canvasImageMsg = 'generate'
+    },
+
+    // 接收renderjs返回的图片数据
+    receiveRenderData(base64) {
+      if (base64) {
+        this.downLoadImage(base64)
+      } else {
+        uni.hideLoading()
+        this.isGeneratingImage = false
+        this.showOrderImage = false
+        uni.showToast({
+          title: '图片生成失败',
+          icon: 'none',
+        })
+      }
+    },
+
+    closeOrderImage() {
+      this.showOrderImage = false
+      this.orderImageInfo = null
+    },
+  },
+}
+</script>
+<script lang="renderjs" module="canvasImage">
+import html2canvas from 'html2canvas'
+export default {
+  methods: {
+    generateImage(callback) {
+      // 使用html2canvas 转换html为canvas 克隆解决的问题：html2canvas只能给屏幕可视范围之内的元素生成图片
+      // 获取节点高度，后面为克隆节点设置高度。
+      var height = document.querySelector('#orderImage').offsetHeight
+      // 克隆节点，默认为false，不复制方法属性，为true是全部复制。
+      var cloneDom = document.querySelector('#orderImage').cloneNode(true)
+      cloneDom.style.zIndex = '-1'
+      // 将克隆节点动态追加到body后面。
+      document.querySelector('body').append(cloneDom)
+      // 插件生成base64img图片。
+      html2canvas(cloneDom, {
+        useCORS: true,
+        scrollY: 0,
+        scrollX: 0,
+        logging: false,
+        ignoreElements: e => {
+          if (e.contains(cloneDom) || cloneDom.contains(e) || e.tagName === 'STYLE') {
+            return false
+          }
+          return true
+        },
+      }).then(function (canvas) {
+        const imgUri = canvas.toDataURL('image/png')
+        callback && callback(imgUri)
+      })
+      document.querySelector('body').removeChild(cloneDom)
+    },
+    updateEcharts(newValue, oldValue, ownerInstance, instance) {
+      // 监听 service 层数据变更
+      if (newValue) {
+        this.generateImage(base64 => {
+          ownerInstance.callMethod('receiveRenderData', base64)
+        })
+      }
     },
   },
 }
@@ -4886,7 +4979,7 @@ export default {
   align-items: center;
   justify-content: center;
   height: 32rpx;
-  width: 72rpx;
+  width: 100rpx;
   border: none;
   border-radius: 6rpx;
   font-weight: bold;

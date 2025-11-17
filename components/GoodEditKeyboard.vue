@@ -281,7 +281,7 @@ export default {
     card: {
       handler(newVal) {
         this.editingCard = JSON.parse(JSON.stringify(newVal))
-        console.log('this.editingCard', this.editingCard)
+        console.log('this.editingCard', this.editingCard.carweight)
 
         // 确保 extralModel 存在且正确初始化
         if (!this.editingCard.extralModel) {
@@ -297,6 +297,23 @@ export default {
               this.editingCard.extralModel.quantity = originalQuantity
             }
           }
+        }
+
+        // 如果有押筐物体，从当前皮重中减去押筐物体的总皮重
+        if (this.editingCard.extralModel && this.editingCard.extralModel.id && this.editingCard.extralModel.weight) {
+          const currentQuantity = parseFloat(this.editingCard.quantity) || 0
+          const extralModelQuantity = parseFloat(this.editingCard.extralModel.quantity) || currentQuantity
+          const extralModelTotalWeight = extralModelQuantity * parseFloat(this.editingCard.extralModel.weight)
+
+          // 从当前皮重中减去押筐物体的总皮重，得到纯粹的固定皮重
+          const currentCarWeight = parseFloat(this.editingCard.carweight) || 0
+          this.editingCard.carweight = Math.max(0, currentCarWeight - extralModelTotalWeight)
+
+          console.log('减去押筐皮重:', {
+            原皮重: currentCarWeight,
+            押筐总重: extralModelTotalWeight,
+            调整后皮重: this.editingCard.carweight,
+          })
         }
 
         // 所有模式都默认聚焦数量（index 1）
@@ -418,7 +435,7 @@ export default {
       if (focusIndex === 3) {
         this.editingCard.allweightSrt = newValue
       }
-
+      console.log(`focusIndex === ${focusIndex}&& this.fixedTareWeight.action === ${this.fixedTareWeight.action}`)
       // 【优化】只延迟复杂计算
       if (focusIndex === 1 && this.fixedTareWeight.action === true) {
         this.inputBuffer.timer = setTimeout(() => {
@@ -440,15 +457,17 @@ export default {
             calculatedCarWeight = this.editingCard.fixedTare * currentQuantity
           }
 
-          // 押筐数量处理
-          if (this.editingCard.extralModel) {
-            this.editingCard.extralModel.quantity = calculatedValue
-            if (this.editingCard.extralModel.weight) {
-              calculatedCarWeight += currentQuantity * parseFloat(this.editingCard.extralModel.weight)
-            }
-          }
+          // // 押筐数量处理
+          // if (this.editingCard.extralModel) {
+          //   this.editingCard.extralModel.quantity = calculatedValue
+          //   if (this.editingCard.extralModel.weight) {
+          //     calculatedCarWeight += currentQuantity * parseFloat(this.editingCard.extralModel.weight)
+          //   }
+          // }
 
-          console.log('this.editingCard.extralModel', this.editingCard.extralModel)
+          // console.log('calculatedCarWeight', calculatedCarWeight)
+
+          // console.log('this.editingCard.extralModel', this.editingCard.extralModel)
 
           // 统一设置 carweight
           this.editingCard.carweight = calculatedCarWeight
@@ -505,12 +524,12 @@ export default {
             calculatedCarWeight = this.editingCard.fixedTare * currentQuantity
           }
 
-          if (this.editingCard.extralModel) {
-            this.editingCard.extralModel.quantity = newValue
-            if (this.editingCard.extralModel.weight) {
-              calculatedCarWeight += currentQuantity * parseFloat(this.editingCard.extralModel.weight)
-            }
-          }
+          // if (this.editingCard.extralModel) {
+          //   this.editingCard.extralModel.quantity = newValue
+          //   if (this.editingCard.extralModel.weight) {
+          //     calculatedCarWeight += currentQuantity * parseFloat(this.editingCard.extralModel.weight)
+          //   }
+          // }
 
           this.editingCard.carweight = calculatedCarWeight
         }, 50)
@@ -569,6 +588,18 @@ export default {
         this.editingCard.allweight = safeEval(this.editingCard.allweightSrt)
       }
 
+      // 押筐数量和皮重处理
+      if (this.editingCard.extralModel && this.editingCard.extralModel.id) {
+        const currentQuantity = parseFloat(this.editingCard.quantity) || 0
+        this.editingCard.extralModel.quantity = currentQuantity
+
+        // 计算押筐重量并加到当前皮重上
+        if (this.editingCard.extralModel.weight) {
+          const extralModelWeight = currentQuantity * parseFloat(this.editingCard.extralModel.weight)
+          this.editingCard.carweight = parseFloat(this.editingCard.carweight) + extralModelWeight
+        }
+      }
+
       // 触发父组件事件
       this.$emit('confirm', this.editingCard)
     },
@@ -588,11 +619,6 @@ export default {
         // 固定皮重
         if (this.editingCard.fixedTare) {
           calculatedCarWeight = this.editingCard.fixedTare * currentQuantity
-        }
-
-        // 押筐重量
-        if (this.editingCard.extralModel.weight) {
-          calculatedCarWeight += currentQuantity * parseFloat(this.editingCard.extralModel.weight)
         }
 
         this.editingCard.carweight = calculatedCarWeight

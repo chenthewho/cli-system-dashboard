@@ -24,6 +24,7 @@ import staticPage from '../static/static.vue'
 import rotating from '../rotating/rotatingIndex.vue'
 import settlementIndex from '../settlement/settlementIndex.vue'
 import shipperManagement from '../shipper/shipperManagement.vue'
+import companySetting from '@/utils/companySetting.js'
 
 // 声明语音插件，供全局使用
 const TTSSpeech = uni.requireNativePlugin('MT-TTS-Speech')
@@ -70,6 +71,7 @@ export default {
   mounted() {
     // this.$refs.cashierRef.onLoadMethod();
     this.initTTSSpeech()
+    this.initCompanySetting()
   },
 
   onUnload() {
@@ -79,48 +81,47 @@ export default {
     }
   },
   methods: {
+    // 初始化系统设置
+    initCompanySetting() {
+      try {
+        var companyId = uni.getStorageSync('companyId')
+        if (companyId) {
+          companySetting.init(companyId).then(function (success) {
+            if (success) {
+              // 将系统设置挂载到全局，供其他页面使用
+              uni.$companySetting = companySetting
+              console.log('系统设置初始化成功')
+            } else {
+              console.warn('系统设置初始化失败')
+            }
+          })
+        } else {
+          console.warn('未找到公司ID，无法初始化系统设置')
+        }
+      } catch (error) {
+        console.error('系统设置初始化异常:', error)
+      }
+    },
+
     // 初始化语音插件
     initTTSSpeech() {
       try {
-        // 检查运行环境
-        console.log('当前平台:', uni.getSystemInfoSync().platform)
-        console.log('是否为App环境:', typeof plus !== 'undefined')
-
         // 只在App环境下加载原生插件
         if (typeof plus === 'undefined') {
           console.warn('当前不是App环境，无法加载原生语音插件')
           return
         }
 
-        console.log('开始初始化TTS语音插件...')
-        console.log('TTSSpeech 对象:', TTSSpeech)
-
         if (TTSSpeech) {
           // 初始化TTS插件
           TTSSpeech.init(() => {
-            console.log('TTS插件初始化成功')
-
             // 将语音插件挂载到全局，供其他页面使用
             uni.$TTSSpeech = TTSSpeech
-
             // 设置默认参数
             TTSSpeech.setPitch(70) // 设置语调
             TTSSpeech.setSpeed(65) // 设置语速
-
-            console.log('TTS插件配置完成')
-          })
-
-          // 设置播放完成回调
-          TTSSpeech.onDone(res => {
-            console.log('TTS播放完成:', res)
           })
         } else {
-          console.warn('语音插件加载失败 - TTSSpeech 对象为空')
-          console.log('可能的原因:')
-          console.log('1. 插件未正确安装')
-          console.log('2. 插件名称不正确')
-          console.log('3. 当前不是真机环境')
-          console.log('4. manifest.json 中未配置插件')
         }
       } catch (error) {
         console.error('语音插件初始化失败:', error)
@@ -134,6 +135,12 @@ export default {
         try {
           if (!text || text.trim() === '') {
             reject(new Error('播报文本不能为空'))
+            return
+          }
+
+          // 检查提示音设置是否开启
+          if (uni.$companySetting && !uni.$companySetting.isSoundEnabled()) {
+            resolve({ success: false, message: '提示音已关闭' })
             return
           }
 

@@ -1,203 +1,235 @@
 <template>
-	<view>
-		<div style="display: flex; align-items: center; height: 25rpx; background: white; position: relative;">
-		  <div style="position: absolute; left: 0; display: flex; align-items: center; height: 25rpx;">
-		    <button
-		      style="margin-left: 5px; height: 18rpx; line-height: 18rpx; color:#ffffff; font-weight: bold; background: #dddddd;"
-		      @click="back">
-		      <uni-icons custom-prefix="iconfont" type="icon-fanhui" size="15" color="#ffffff" style="margin-right: 5px;"></uni-icons>返回
-		    </button>
-		  </div>
-		  <div style="margin: 0 auto; font-size: 10rpx; font-weight: bold; color: #333;">
-		    商户信息
-		  </div>
-		</div>
-		<div class="settings-container">
-			<!-- <uni-row class="demo-uni-row" width="1000px">
-			<uni-col :span="12">
-				<view class="demo-uni-col dark"></view>
-			</uni-col>
-			<uni-col :span="12">
-				<div class="setting-item">
-					<button @click="logout">退出登录</button>
-				</div>
-			</uni-col>
-		</uni-row> -->
+  <view class="page-wrapper">
+    <!-- 顶部导航栏 -->
+    <view class="header">
+      <view class="back-btn" @click="back">
+        <uni-icons custom-prefix="iconfont" type="icon-fanhui" size="18" color="#666"></uni-icons>
+        <text>返回</text>
+      </view>
+      <view class="header-title">商户信息</view>
+    </view>
 
+    <!-- 内容区域 -->
+    <view class="content">
+      <!-- 商户信息卡片 -->
+      <view class="info-card">
+        <view class="card-title">基本信息</view>
 
-			<view class="container" style="margin-top: 50px;">
-				<view class="left-part">
-					<view>
-						<view class="input-container">
-							<text class="label">商家名称：</text>
-							<input class="input-field" type="text" placeholder=" " v-model="baseFormData.companyName" />
-						</view>
-						<view class="input-container">
-							<text class="label">地址：</text>
-							<input class="input-field" type="text" placeholder=" " v-model="baseFormData.address" />
-						</view>
-						<view class="input-container">
-							<text class="label">联系电话：</text>
-							<input class="input-field" type="text" placeholder=" " v-model="baseFormData.contact" />
-						</view>
-						<view style="margin-top: 50px;">
-							<button @click="submit" style="width: 50%;height: 40px;line-height: 40px;">保存信息</button>
-						</view>
-						<view style="margin-top: 50px;">
-							<button @click="logout" style="width: 50%;background-color: darkred;height: 40px;line-height: 40px;">退出登录</button>
-						</view>
-					</view>
-				</view>
+        <view class="form-item">
+          <text class="form-label">商家名称</text>
+          <input class="form-input" type="text" placeholder="请输入商家名称" v-model="baseFormData.companyName" />
+        </view>
 
-				<view class="right-part">
-					<view >
-						<view class="vertical-line"></view>
-						
-					</view>
-				</view>
-			</view>
+        <view class="form-item">
+          <text class="form-label">地址</text>
+          <input class="form-input" type="text" placeholder="请输入地址" v-model="baseFormData.address" />
+        </view>
 
-		</div>
-	</view>
+        <view class="form-item">
+          <text class="form-label">联系电话</text>
+          <input class="form-input" type="text" placeholder="请输入联系电话" v-model="baseFormData.contact" />
+        </view>
+      </view>
+
+      <!-- 按钮组 -->
+      <view class="button-group">
+        <button class="save-btn" @click="submit">保存信息</button>
+        <button class="logout-btn" @click="logout">退出登录</button>
+      </view>
+    </view>
+  </view>
 </template>
 
 <script>
-	import cashierOrder from '../../api/cashier/cashierOrder'
-	export default {
-		data() {
-			return {
-				currentCompanyId:"",
-				baseFormData:{}
-			}
-		},
-		created() {
-			this.currentCompanyId = uni.getStorageSync('companyId');
-			this.getStoreInfo();
-		},
-		methods: {
-			back(){
-				uni.setStorageSync("refreshCompanyInfo","true")
-				uni.navigateBack({
-				  delta: 1 // 返回上一级页面，默认值是1
-				});
-			},
-			logout() {
-				getApp().logout();
-			},
-			getStoreInfo() {
-				cashierOrder.getStoreInfo(this.currentCompanyId).then(res => {
-					this.baseFormData = {
-						companyName: res.data.companyName,
-						address: res.data.address,
-						contact: res.data.contact
-					}
-					this.baseFormData.id = this.currentCompanyId;
-				})
-			},
-			submit() {
-					cashierOrder.updateStoreInfo(this.baseFormData).then(res => {	
-						if(res.code===200){
-							uni.showToast({
-								title: '修改成功',
-								icon: 'none'
-							})
-							uni.setStorageSync('companyName',this.baseFormData.companyName);
-						}else{
-							uni.showToast({
-								title: '修改失败',
-								icon: 'none'
-							})
-						}
-					})
-			}
-		}
-	}
+import cashierOrder from '../../api/cashier/cashierOrder'
+export default {
+  data() {
+    return {
+      currentCompanyId: '',
+      baseFormData: {},
+    }
+  },
+  created() {
+    this.currentCompanyId = uni.getStorageSync('companyId')
+    this.getStoreInfo()
+  },
+  methods: {
+    back() {
+      uni.setStorageSync('refreshCompanyInfo', 'true')
+      uni.navigateBack({
+        delta: 1, // 返回上一级页面，默认值是1
+      })
+    },
+    logout() {
+      getApp().logout()
+    },
+    getStoreInfo() {
+      cashierOrder.getStoreInfo(this.currentCompanyId).then(res => {
+        this.baseFormData = {
+          companyName: res.data.companyName,
+          address: res.data.address,
+          contact: res.data.contact,
+        }
+        this.baseFormData.id = this.currentCompanyId
+      })
+    },
+    submit() {
+      cashierOrder.updateStoreInfo(this.baseFormData).then(res => {
+        if (res.code === 200) {
+          uni.showToast({
+            title: '修改成功',
+            icon: 'none',
+          })
+          uni.setStorageSync('companyName', this.baseFormData.companyName)
+        } else {
+          uni.showToast({
+            title: '修改失败',
+            icon: 'none',
+          })
+        }
+      })
+    },
+  },
+}
 </script>
 
 <style scoped>
-	.settings-container {
-		padding: 20px;
-		text-align: center;
-	}
+/* 页面容器 */
+.page-wrapper {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
 
+/* 顶部导航栏 */
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  background-color: #fff;
+  border-bottom: 1px solid #e8e8e8;
+}
 
-	.setting-item {
-		margin: 15px 0;
-	}
+.back-btn {
+  position: absolute;
+  left: 15px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  color: #666;
+  font-size: 14px;
+  cursor: pointer;
+}
 
-	.input-container {
-		margin-left: 10%;
-		width: 80%;
-		display: flex;
-		/* 使用 Flexbox 布局 */
-		flex-direction: column;
-		/* 垂直排列 */
-		margin-bottom: 10px;
-		/* 可选：添加下边距 */
-	}
+.header-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
 
-	.label {
-		margin-bottom: 5px;
-		/* 可选：添加标签与输入框之间的间距 */
-		font-weight: bold;
-		/* 可选：加粗标签文字 */
-	}
+/* 内容区域 */
+.content {
+  padding: 20px;
+}
 
-	.input-field {
-		padding: 10px;
-		/* 可选：添加内边距 */
-		border: 1px solid #ccc;
-		/* 可选：设置边框 */
-		border-radius: 5px;
-		/* 可选：设置圆角 */
-		width: 100%;
-		height: 50px;
-		/* 可选：设置输入框宽度 */
-	}
+/* 信息卡片 */
+.info-card {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
 
-	.container {
-		display: flex;
-		/* 使用 Flexbox 布局 */
-		justify-content: space-between;
-		/* 在左右两侧均匀分配空间 */
-		align-items: center;
-		/* 垂直居中对齐 */
-		padding: 10px;
-		/* 可选：添加内边距 */
-		background-color: transparent;
-		/* 可选：设置背景颜色 */
-		border-radius: 5px;
-		/* 可选：设置圆角 */
-	}
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
 
-	.left-part {
-		flex: 1;
-		/* 左侧部分占据可用空间 */
-		text-align: left;
-		/* 左对齐 */
-	}
+/* 表单项 */
+.form-item {
+  margin-bottom: 20px;
+}
 
-	.right-part {
-		flex: 1;
-		/* 右侧部分占据可用空间 */
-		text-align: right;
-		/* 右对齐 */
-	}
+.form-item:last-child {
+  margin-bottom: 0;
+}
 
-	.vertical-line {
-		border-left: 2px solid gray;
-		/* 设置竖线的颜色和宽度 */
-		height: 500px;
-		/* 设置竖线的高度 */
-		margin: 0 10px;
-		/* 设置竖线与文本之间的间距 */
-	}
+.form-label {
+  display: block;
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
 
-	button {
-		background-color: #007bff;
-		color: white;
-		border: none;
-		border-radius: 15px;
-		cursor: pointer;
-	}
+.form-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 15px;
+  font-size: 14px;
+  color: #333;
+  background-color: #f8f8f8;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  background-color: #fff;
+  border-color: #4caf50;
+  outline: none;
+}
+
+/* 按钮组 */
+.button-group {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.save-btn {
+  width: 100%;
+  height: 44px;
+  line-height: 44px;
+  background-color: #4caf50;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.save-btn:active {
+  opacity: 0.8;
+  transform: scale(0.98);
+}
+
+.logout-btn {
+  width: 100%;
+  height: 44px;
+  line-height: 44px;
+  background-color: #fff;
+  color: #f44336;
+  border: 1px solid #f44336;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.logout-btn:active {
+  opacity: 0.8;
+  transform: scale(0.98);
+}
 </style>

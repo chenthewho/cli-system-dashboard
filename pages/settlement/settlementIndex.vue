@@ -107,7 +107,10 @@
           </div>
         </div>
         <div style="display: flex; gap: 8rpx; align-items: center">
+          <!-- 在售批次显示售罄按钮 -->
           <button
+            v-if="selectBatch && selectBatch.saleStatus === 1"
+            @click="setSaleStatus(0)"
             style="
               height: 26rpx;
               line-height: 26rpx;
@@ -121,6 +124,24 @@
             "
           >
             售罄
+          </button>
+          <!-- 售罄批次显示开售按钮 -->
+          <button
+            v-if="selectBatch && selectBatch.saleStatus === 0"
+            @click="setSaleStatus(1)"
+            style="
+              height: 26rpx;
+              line-height: 26rpx;
+              padding: 0 12rpx;
+              font-weight: bold;
+              background-color: white;
+              border: 2rpx solid #00aa00;
+              color: #00aa00;
+              border-radius: 4rpx;
+              font-size: 13rpx;
+            "
+          >
+            开售
           </button>
           <!-- <button style="height: 26rpx; line-height: 26rpx; padding: 0 10rpx; font-weight: bold; background-color: white; border: 2rpx solid #00aa00; color: #00aa00; border-radius: 4rpx; font-size: 13rpx; white-space: nowrap;">销售详情</button>
 				 -->
@@ -215,7 +236,9 @@
                   padding: 10px;
                   border-right: 1px solid #e8e8e8;
                   border-bottom: 1px solid #e8e8e8;
-                  text-align: center;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
                   font-weight: bold;
                   color: #00aa00;
                   font-size: 14rpx;
@@ -223,7 +246,8 @@
                   cursor: pointer;
                 "
               >
-                {{ item.commodityName }}
+                <span>{{ item.commodityName }}</span>
+                <span style="color: #999">></span>
               </div>
               <!-- 合计行固定列 -->
               <div
@@ -899,22 +923,27 @@
         </div>
         <div>
           <button
-            style="
-              width: 100rpx;
-              height: 40rpx;
-              font-weight: bold;
-              background: linear-gradient(135deg, #ff8800 0%, #ff6600 100%);
-              color: white;
-              border: none;
-              border-radius: 8rpx;
-              line-height: 40rpx;
-              font-size: 15rpx;
-              box-shadow: 0 4px 12px rgba(255, 102, 0, 0.3);
-              white-space: nowrap;
-              padding: 0;
-              flex-shrink: 0;
-            "
-            @click="settle"
+            :style="{
+              width: '100rpx',
+              height: '40rpx',
+              fontWeight: 'bold',
+              background:
+                selectBatch && selectBatch.saleStatus === 1
+                  ? '#d0d0d0'
+                  : 'linear-gradient(135deg, #ff8800 0%, #ff6600 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8rpx',
+              lineHeight: '40rpx',
+              fontSize: '15rpx',
+              boxShadow: selectBatch && selectBatch.saleStatus === 1 ? 'none' : '0 4px 12px rgba(255, 102, 0, 0.3)',
+              whiteSpace: 'nowrap',
+              padding: '0',
+              flexShrink: '0',
+              cursor: selectBatch && selectBatch.saleStatus === 1 ? 'not-allowed' : 'pointer',
+              opacity: selectBatch && selectBatch.saleStatus === 1 ? '0.6' : '1',
+            }"
+            @click="handleSettleClick"
           >
             结算
           </button>
@@ -1388,6 +1417,19 @@ export default {
       if (this.batchShowList?.length > 0) {
         this.exchangeBatch(this.batchShowList[0])
       }
+    },
+    handleSettleClick() {
+      // 检查是否为在售批次
+      if (this.selectBatch && this.selectBatch.saleStatus === 1) {
+        uni.showModal({
+          title: '无法结算',
+          content: '在售批次不能结算，请先将批次设置为售罄状态',
+          showCancel: false,
+          confirmText: '我知道了',
+        })
+        return
+      }
+      this.settle()
     },
     settle() {
       if (!this.selectBatch) {
@@ -2095,7 +2137,50 @@ export default {
     setSaleStatus(info) {
       var newBatch = JSON.parse(JSON.stringify(this.selectBatch))
       newBatch.saleStatus = info
-      category.UpdateBatchStatus(newBatch)
+      category.UpdateBatchStatus(newBatch).then(res => {
+        if (res.code === 200) {
+          uni.showToast({
+            title: info === 0 ? '已设置为售罄' : '已设置为在售',
+            icon: 'success',
+            duration: 1500,
+          })
+          // 更新当前选中批次的状态
+          this.selectBatch.saleStatus = info
+
+          // 更新批次列表中对应项的状态
+          const batchInList = this.batchList.find(b => b.id === this.selectBatch.id)
+          if (batchInList) {
+            batchInList.saleStatus = info
+          }
+
+          // 根据当前tab重新过滤显示列表
+          const currentTab = this.tabList[this.currentTabIndex]
+          if (currentTab) {
+            this.batchShowList = this.batchList.filter(batch => {
+              return batch.saleStatus === currentTab.value
+            })
+          }
+
+          // 如果当前批次不在新的显示列表中，选择第一个批次
+          if (!this.batchShowList.find(b => b.id === this.selectBatch.id)) {
+            if (this.batchShowList.length > 0) {
+              this.exchangeBatch(this.batchShowList[0])
+            } else {
+              // 如果没有批次了，清空数据
+              this.BatchCommodityList = []
+              this.expenseList = []
+              this.settleRecords = []
+              this.selectBatch = null
+            }
+          }
+        } else {
+          uni.showToast({
+            title: res.message || '操作失败',
+            icon: 'none',
+            duration: 2000,
+          })
+        }
+      })
     },
     getallShipper() {
       category.GetAllShipper(this.companyId).then(res => {

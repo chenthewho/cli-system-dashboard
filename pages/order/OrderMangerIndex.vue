@@ -1,556 +1,492 @@
 <template>
   <view>
-		<view>
-    <!-- 左右布局容器 -->
-    <view class="layout-container" :style="{ height: scrollHeight + 'px' }">
-      <!-- 左侧订单列表 -->
-      <scroll-view
-        class="scrollArea left-panel"
-        scroll-y="true"
-        :style="{ height: scrollHeight + 'px' }"
-        @scrolltolower="loadMore"
-        lower-threshold="100"
-        @scroll="onScroll"
-      >
-        <div style="height: 50rpx" v-if="moduleList.length == 0 && !loading">
-          <div style="margin-top: 100rpx; text-align: center">
-            <uni-icons custom-prefix="iconfont" type="icon-zanwudingdan" size="40" color="#4c4c4c"></uni-icons>
-            <div style="margin-top: 10px; color: #4c4c4c; font-weight: bold">暂无订单</div>
+    <view>
+      <!-- 左右布局容器 -->
+      <view class="layout-container" :style="{ height: scrollHeight + 'px' }">
+        <!-- 左侧订单列表 -->
+        <scroll-view
+          class="scrollArea left-panel"
+          scroll-y="true"
+          :style="{ height: scrollHeight + 'px' }"
+          @scrolltolower="loadMore"
+          lower-threshold="100"
+          @scroll="onScroll"
+        >
+          <div style="height: 50rpx" v-if="moduleList.length == 0 && !loading">
+            <div style="margin-top: 100rpx; text-align: center">
+              <uni-icons custom-prefix="iconfont" type="icon-zanwudingdan" size="40" color="#4c4c4c"></uni-icons>
+              <div style="margin-top: 10px; color: #4c4c4c; font-weight: bold">暂无订单</div>
+            </div>
           </div>
-        </div>
 
-        <view v-for="item in moduleList" :key="item.id">
-          <view
-            class="order-item"
-            :class="{ 'order-item-selected': selectedOrderId === item.id }"
-            :style="{ backgroundColor: item.status == 2 ? '#f5f5f5' : 'white' }"
-            @click="showInfo(item)"
-          >
-            <!-- 状态标签 - 固定在左上角 -->
-            <view class="status-badges">
-              <view class="status-badge status-modified" v-if="item.status == 5">
-                <text class="status-badge-text">已修改</text>
+          <view v-for="item in moduleList" :key="item.id">
+            <view
+              class="order-item"
+              :class="{ 'order-item-selected': selectedOrderId === item.id }"
+              :style="{ backgroundColor: item.status == 2 ? '#f5f5f5' : 'white' }"
+              @click="showInfo(item)"
+            >
+              <!-- 状态标签 - 固定在左上角 -->
+              <view class="status-badges">
+                <view class="status-badge status-modified" v-if="item.status == 5">
+                  <text class="status-badge-text">已修改</text>
+                </view>
+                <view class="status-badge status-refunded" v-if="item.status == 2">
+                  <text class="status-badge-text">作废</text>
+                </view>
               </view>
-              <view class="status-badge status-refunded" v-if="item.status == 2">
-                <text class="status-badge-text">作废</text>
-              </view>
-            </view>
 
-            <!-- 已发单标签 - 固定在右上角 -->
-            <view class="sent-badge-top" v-if="item.shareNum > 0">
-              <text class="sent-badge">已发单</text>
-            </view>
-
-            <!-- 第一行：客户名称、时间、实收金额 -->
-            <view class="order-row-first">
-              <view class="customer-info">
-                <image src="/static/img/common/header.png" class="user-header" />
-                <text class="customer-name">{{ item.customName ? item.customName : '散客' }}</text>
+              <!-- 已发单标签 - 固定在右上角 -->
+              <view class="sent-badge-top" v-if="item.shareNum > 0">
+                <text class="sent-badge">已发单</text>
               </view>
-              <view class="order-time">
-                {{ item.createTime.replace('T', ' ') }}
-              </view>
-              <view class="actual-money">
-                实收(元): <text class="money-value">{{ item.actualMoney }}</text>
-              </view>
-            </view>
 
-            <!-- 第二行：商品列表和下欠金额 -->
-            <view class="order-row-second">
-              <view class="module-str">{{ item.modulestr }}</view>
-              <view class="debt-badge" v-if="item.debt > 0">
-                下欠: <text class="debt-value">{{ item.debt }}</text>
+              <!-- 第一行：客户名称、时间、实收金额 -->
+              <view class="order-row-first">
+                <view class="customer-info">
+                  <image src="/static/img/common/header.png" class="user-header" />
+                  <text class="customer-name">{{ item.customName ? item.customName : '散客' }}</text>
+                </view>
+                <view class="order-time">
+                  {{ item.createTime.replace('T', ' ') }}
+                </view>
+                <view class="actual-money">
+                  实收(元): <text class="money-value">{{ item.actualMoney }}</text>
+                </view>
               </view>
-            </view>
-          </view>
-        </view>
 
-        <!-- 加载提示 -->
-        <view style="text-align: center; padding: 20rpx; color: #666" v-if="loading">
-          <text>加载中...</text>
-        </view>
-        <view style="text-align: center; padding: 20rpx; color: #999" v-if="!hasMore && moduleList.length > 0">
-          <text>没有更多数据了</text>
-        </view>
-      </scroll-view>
-
-      <!-- 右侧订单详情 -->
-      <view class="right-panel" :style="{ height: scrollHeight + 'px' }">
-        <view v-if="!showDetail" class="empty-detail">
-          <uni-icons type="info-filled" size="60" color="#ccc"></uni-icons>
-          <text style="margin-top: 20rpx; color: #999">请选择订单查看详情</text>
-        </view>
-        <view v-else class="detail-content">
-          <view class="detail-header-new">
-            <view class="header-left">
-              <text class="detail-title-new">订单详情</text>
-            </view>
-            <view class="header-right">
-              <view @click="shareOrder" class="share-order-btn">
-                <image src="/static/img/common/editor.png" />
-                发单
+              <!-- 第二行：商品列表和下欠金额 -->
+              <view class="order-row-second">
+                <view class="module-str">{{ item.modulestr }}</view>
+                <view class="debt-badge" v-if="item.debt > 0">
+                  下欠: <text class="debt-value">{{ item.debt }}</text>
+                </view>
               </view>
             </view>
           </view>
 
-          <scroll-view scroll-y="true" :style="{ height: scrollHeight - 115 + 'px' }">
-            <div class="order-info-grid-compact">
-              <!-- 第一行 -->
-              <div class="info-row">
-                <div class="info-item-new">
-                  <text class="info-value-new info-value-small">{{
-                    currentOrder.createTime ? currentOrder.createTime.replace('T', ' ') : ''
-                  }}</text>
-                </div>
-                <div class="info-item-new">
-                  <text class="info-value-new info-value-small">{{
-                    currentOrder.accountCode ? currentOrder.accountCode : ''
-                  }}</text>
-                </div>
-              </div>
-
-              <!-- 第二行 -->
-              <div class="info-row">
-                <div class="info-item-new">
-                  <text class="info-value-new info-value-small">{{
-                    currentOrder.customName ? currentOrder.customName : '散客'
-                  }}</text>
-                </div>
-                <div class="info-item-new">
-                  <text class="info-label-new">总计金额:</text>
-                  <text class="info-value-new highlight-value">{{ currentOrder.payableAmount }}</text>
-                </div>
-              </div>
-
-              <!-- 第三行 -->
-              <div class="info-row">
-                <div class="info-item-new">
-                  <text class="info-label-new">押筐抵扣:</text>
-                  <text class="info-value-new">{{ currentOrder.basketOffsetAmount }}</text>
-                </div>
-                <div class="info-item-new">
-                  <text class="info-label-new">实付金额:</text>
-                  <text class="info-value-new highlight-value">{{ currentOrder.actualMoney }}</text>
-                </div>
-              </div>
-
-              <!-- 第四行 - 下欠和状态 -->
-              <div class="info-row">
-                <div class="info-item-new" v-if="currentOrder.debt > 0">
-                  <text class="info-label-new">下欠:</text>
-                  <text class="info-value-new debt-value-new">{{ currentOrder.debt }}</text>
-                </div>
-                <div class="info-item-status" v-if="currentOrder.status != 1">
-                  <view class="status-container-flex">
-                    <view class="status-tag-group">
-                      <view class="status-tag status-modified-tag" v-if="currentOrder.status == 5">
-                        <uni-icons type="compose" size="12" color="#31BDEC"></uni-icons>
-                        <text class="status-tag-text">已修改</text>
-                      </view>
-                      <view class="status-tag status-refunded-tag" v-if="currentOrder.status == 2">
-                        <uni-icons type="undo" size="12" color="#F56C6C"></uni-icons>
-                        <text class="status-tag-text">作废</text>
-                      </view>
-                    </view>
-                    <u-button
-                      v-if="currentOrder.status == 5"
-                      class="history-btn-right"
-                      type="primary"
-                      size="mini"
-                      @click="showHistoryOrder(currentOrder)"
-                    >
-                      <uni-icons type="eye" size="12" color="#fff"></uni-icons>
-                      <text style="margin-left: 4rpx">查看历史</text>
-                    </u-button>
-                  </view>
-                </div>
-              </div>
-            </div>
-
-            <div class="product-table-container">
-              <div class="product-table">
-                <div class="table-row table-header-row">
-                  <div class="table-header-cell">货品</div>
-                  <div class="table-header-cell">数量</div>
-                  <div class="table-header-cell">总重</div>
-                  <div class="table-header-cell">皮重</div>
-                  <div class="table-header-cell">单价</div>
-                  <div class="table-header-cell">小计</div>
-                </div>
-
-                <div
-                  class="table-row table-body-row"
-                  v-for="item in currentCardInfo"
-                  v-if="item.type != 4"
-                  :key="item.id"
-                >
-                  <div class="table-cell">{{ item.name }}</div>
-                  <div class="table-cell">{{ item.mount }}</div>
-                  <div class="table-cell">{{ item.totalWeight }}</div>
-                  <div class="table-cell">{{ item.tareWeight }}</div>
-                  <div class="table-cell">{{ item.referenceAmount }}</div>
-                  <div class="table-cell">{{ item.subtotal }}</div>
-                </div>
-              </div>
-            </div>
-          </scroll-view>
-
-          <view class="order-action-buttons-compact">
-            <u-button
-              v-if="currentOrder.status != 2"
-              class="action-btn-compact modify-btn-new"
-              type="primary"
-              @click="TurnToTuigeCashier"
-              text="改单"
-            >
-            </u-button>
-            <u-button
-              v-if="currentOrder.status != 2"
-              class="action-btn-compact refund-btn-new"
-              type="primary"
-              @click="TuigeOrder"
-              text="作废"
-            >
-            </u-button>
-            <u-button
-              v-if="currentOrder.debt > 0"
-              class="action-btn-compact repay-btn-new"
-              type="primary"
-              text="整单还款"
-              @click="openPayTypeDialogVisible"
-            >
-            </u-button>
-            <u-button
-              class="action-btn-compact print-btn-new"
-              type="primary"
-              text="打印"
-              @click="printerModel(currentOrder)"
-            >
-            </u-button>
+          <!-- 加载提示 -->
+          <view style="text-align: center; padding: 20rpx; color: #666" v-if="loading">
+            <text>加载中...</text>
           </view>
-        </view>
-      </view>
-    </view>
+          <view style="text-align: center; padding: 20rpx; color: #999" v-if="!hasMore && moduleList.length > 0">
+            <text>没有更多数据了</text>
+          </view>
+        </scroll-view>
 
-    <u-modal
-      title="整单还款"
-      class="payment"
-      :show="payTypeDialogVisible"
-      :closeOnClickOverlay="true"
-      :showConfirmButton="false"
-      :width="800"
-      @close="payTypeDialogVisible = false"
-    >
-      <div class="slot-content" style="overflow-y: auto">
-        <div class="slot-modal pay-type">
-          <div class="body">
-            <div class="pay-amount">
-              <u--form labelPosition="left" ref="payAamountForm" :labelWidth="120">
-                <div class="form-row">
-                  <div class="right-part">
-                    <div class="payment-methods">
-                      <div
-                        :class="{ 'payment-item': true, activepayment: item.select == 1 ? true : false }"
-                        v-for="(item, index) in payWay"
-                        @click="changPayWay(index)"
-                      >
-                        <u-icon style="margin-top: 10rpx" :size="40" :name="item.coin" :color="item.color"></u-icon>
-                        <span class="payment-text">{{ item.label }}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="form-container">
-                    <div
-                      style="font-weight: bold; font-size: 15rpx; display: flex; align-items: center; margin-top: 10rpx"
-                    >
-                      <text style="width: 80rpx; margin-left: 20rpx">还款金额：</text>
-                      <input
-                        v-model="repayMount"
-                        inputmode="none"
-                        style="
-                          text-align: center;
-                          width: 100rpx;
-                          font-weight: bold;
-                          font-size: 20rpx;
-                          border: none;
-                          border-bottom: 1px solid black;
-                          outline: none;
-                          padding: 5rpx;
-                          margin-left: 10rpx;
-                        "
-                      />
-                    </div>
-                    <view
-                      class="mybrankmask2"
-                      :style="{
-                        width: '320rpx',
-                        height: '150rpx',
-                        zIndex: 999,
-                        left: 0,
-                        bottom: 0,
-                        marginTop: '20rpx',
-                      }"
-                    >
-                      <view style="padding: 5rpx">
-                        <view class="MymaskList">
-                          <view class="maskListItem" @click="NumberCk2(1)">1</view>
-                          <view class="maskListItem" @click="NumberCk2(2)">2</view>
-                          <view class="maskListItem" @click="NumberCk2(3)">3</view>
-                          <view class="maskListItem" style="background-color: #67c23a; color: #fff" @click="Tuige2()">
-                            退格</view
-                          >
-                        </view>
-                        <view class="MymaskList">
-                          <view class="maskListItem" @click="NumberCk2(4)">4</view>
-                          <view class="maskListItem" @click="NumberCk2(5)">5</view>
-                          <view class="maskListItem" @click="NumberCk2(6)">6</view>
-                          <view
-                            class="maskListItem"
-                            @click="NumberCk2('+')"
-                            style="background-color: #31bdec; font-size: 25px; color: white"
-                          >
-                            +</view
-                          >
-                          <!-- <view class="maskListItem large"
-																style="background-color: #F56C6C;color: #fff;"
-																@click="Clear2()">清空</view> -->
-                        </view>
-                        <view class="MymaskList">
-                          <view class="maskListItem" @click="NumberCk2(7)">7</view>
-                          <view class="maskListItem" @click="NumberCk2(8)">8</view>
-                          <view class="maskListItem" @click="NumberCk2(9)">9</view>
-                          <view
-                            class="maskListItem"
-                            @click="NumberCk2('-')"
-                            style="background-color: #f56c6c; font-size: 25px; color: white"
-                          >
-                            -</view
-                          >
-                        </view>
-                        <view class="MymaskList">
-                          <view class="maskListItem3" @click="NumberCk2(0)">0</view>
-                          <view class="maskListItem" @click="NumberCk2('.')">.</view>
-                          <view class="maskListItem2"></view>
-                        </view>
-                      </view>
-                    </view>
-                  </div>
-                </div>
-              </u--form>
-            </div>
-          </div>
-          <div class="footer">
-            <div style="display: flex; justify-content: center">
-              <div
-                class="btn"
-                @click="payTypeDialogVisible = false"
-                style="
-                  width: 100rpx;
-                  font-weight: bolder;
-                  color: white;
-                  border: 1px solid darkgray;
-                  background: darkgray;
-                  box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);
-                "
-              >
-                返回
-              </div>
-              <div
-                class="btn"
-                @click="repaySingle"
-                style="
-                  margin-left: 20rpx;
-                  width: 100rpx;
-                  font-weight: bolder;
-                  color: white;
-                  border: 1px solid darkgreen;
-                  background: darkgreen;
-                  box-shadow: 0 0 5rpx rgba(0, 0, 0, 0.3);
-                "
-              >
-                确认还款
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </u-modal>
-
-    <!-- 历史订单抽屉 -->
-    <view class="drawer-container">
-      <!-- 遮罩层 -->
-      <view class="drawer-mask" :class="{ show: showHistoryDrawer }" @tap="closeHistoryDrawer"></view>
-
-      <!-- 抽屉内容 -->
-      <view class="drawer-content" :class="{ show: showHistoryDrawer }">
-        <!-- 历史订单抽屉 -->
-        <div class="history-order-container" v-if="showHistoryDrawer">
-          <!-- 抽屉头部 -->
-          <div class="history-header">
-            <div class="history-title">
-              <view class="history-title-icon">
-                <uni-icons custom-prefix="iconfont" type="icon-lishijilu" size="16" color="#3498db"></uni-icons>
+        <!-- 右侧订单详情 -->
+        <view class="right-panel" :style="{ height: scrollHeight + 'px' }">
+          <view v-if="!showDetail" class="empty-detail">
+            <uni-icons type="info-filled" size="60" color="#ccc"></uni-icons>
+            <text style="margin-top: 20rpx; color: #999">请选择订单查看详情</text>
+          </view>
+          <view v-else class="detail-content">
+            <view class="detail-header-new">
+              <view class="header-left">
+                <text class="detail-title-new">订单详情</text>
               </view>
-              <text class="history-title-text">历史订单列表</text>
-            </div>
-            <div class="history-summary" v-if="historyOrderList.length > 0">
-              <text class="history-summary-text">共 {{ historyOrderList.length }} 个版本</text>
-            </div>
-          </div>
+              <view class="header-right">
+                <view @click="shareOrder" class="share-order-btn">
+                  <image src="/static/img/common/editor.png" />
+                  发单
+                </view>
+              </view>
+            </view>
 
-          <!-- 历史订单列表 -->
-          <scroll-view class="history-scroll" :style="{ height: scrollHeight - 100 + 'px' }" scroll-y="true">
-            <div class="history-order-list">
-              <div
-                class="history-order-item"
-                v-for="(order, index) in historyOrderList"
-                :key="index"
-                @click="showOrderDetail(order)"
-              >
-                <div class="history-order-header">
-                  <div class="history-order-info">
-                    <text class="history-customer-name">{{ order.customName || '散客' }}</text>
-                    <text class="history-order-time">{{
-                      order.updateTime ? order.updateTime.replace('T', ' ') : ''
+            <scroll-view scroll-y="true" :style="{ height: scrollHeight - 115 + 'px' }">
+              <div class="order-info-grid-compact">
+                <!-- 第一行 -->
+                <div class="info-row">
+                  <div class="info-item-new">
+                    <text class="info-value-new info-value-small">{{
+                      currentOrder.createTime ? currentOrder.createTime.replace('T', ' ') : ''
                     }}</text>
                   </div>
-                  <div class="history-order-amounts">
-                    <text class="history-total-amount">实收: ¥{{ order.actualMoney || 0 }}</text>
-                    <text class="history-debt-amount" v-if="order.debt > 0">欠款: ¥{{ order.debt || 0 }}</text>
+                  <div class="info-item-new">
+                    <text class="info-value-new info-value-small">{{
+                      currentOrder.accountCode ? currentOrder.accountCode : ''
+                    }}</text>
                   </div>
                 </div>
-                <div class="history-order-detail">
-                  <div class="history-order-code">
-                    <text class="history-code-label">订单号:</text>
-                    <text class="history-code-value">{{ order.accountCode || '-' }}</text>
+
+                <!-- 第二行 -->
+                <div class="info-row">
+                  <div class="info-item-new">
+                    <text class="info-value-new info-value-small">{{
+                      currentOrder.customName ? currentOrder.customName : '散客'
+                    }}</text>
                   </div>
-                  <div class="history-order-status" v-if="order.status !== 1">
-                    <view class="history-status-tag" :class="getOrderStatusClass(order.status)">
-                      <text class="history-status-text">{{ getOrderStatusText(order.status) }}</text>
+                  <div class="info-item-new">
+                    <text class="info-label-new">总计金额:</text>
+                    <text class="info-value-new highlight-value">{{ currentOrder.payableAmount }}</text>
+                  </div>
+                </div>
+
+                <!-- 第三行 -->
+                <div class="info-row">
+                  <div class="info-item-new">
+                    <text class="info-label-new">押筐抵扣:</text>
+                    <text class="info-value-new">{{ currentOrder.basketOffsetAmount }}</text>
+                  </div>
+                  <div class="info-item-new">
+                    <text class="info-label-new">实付金额:</text>
+                    <text class="info-value-new highlight-value">{{ currentOrder.actualMoney }}</text>
+                  </div>
+                </div>
+
+                <!-- 第四行 - 下欠和状态 -->
+                <div class="info-row">
+                  <div class="info-item-new" v-if="currentOrder.debt > 0">
+                    <text class="info-label-new">下欠:</text>
+                    <text class="info-value-new debt-value-new">{{ currentOrder.debt }}</text>
+                  </div>
+                  <div class="info-item-status" v-if="currentOrder.status != 1">
+                    <view class="status-container-flex">
+                      <view class="status-tag-group">
+                        <view class="status-tag status-modified-tag" v-if="currentOrder.status == 5">
+                          <uni-icons type="compose" size="12" color="#31BDEC"></uni-icons>
+                          <text class="status-tag-text">已修改</text>
+                        </view>
+                        <view class="status-tag status-refunded-tag" v-if="currentOrder.status == 2">
+                          <uni-icons type="undo" size="12" color="#F56C6C"></uni-icons>
+                          <text class="status-tag-text">作废</text>
+                        </view>
+                      </view>
+                      <u-button
+                        v-if="currentOrder.status == 5"
+                        class="history-btn-right"
+                        type="primary"
+                        size="mini"
+                        @click="showHistoryOrder(currentOrder)"
+                      >
+                        <uni-icons type="eye" size="12" color="#fff"></uni-icons>
+                        <text style="margin-left: 4rpx">查看历史</text>
+                      </u-button>
                     </view>
                   </div>
                 </div>
-                <div class="history-order-items" v-if="order.modulestr">
-                  <text class="history-items-text">{{ order.modulestr }}</text>
+              </div>
+
+              <div class="product-table-container">
+                <div class="product-table">
+                  <div class="table-row table-header-row">
+                    <div class="table-header-cell">货品</div>
+                    <div class="table-header-cell">数量</div>
+                    <div class="table-header-cell">总重</div>
+                    <div class="table-header-cell">皮重</div>
+                    <div class="table-header-cell">单价</div>
+                    <div class="table-header-cell">小计</div>
+                  </div>
+
+                  <!-- 货品区域 (type === 1) -->
+                  <template v-if="goodsItems.length > 0">
+                    <div class="table-row table-body-row" v-for="(item, index) in goodsItems" :key="'goods_' + index">
+                      <div class="table-cell">{{ item.name }}</div>
+                      <div class="table-cell">{{ item.mount }}</div>
+                      <div class="table-cell">{{ item.totalWeight }}</div>
+                      <div class="table-cell">{{ item.tareWeight }}</div>
+                      <div class="table-cell">{{ item.referenceAmount }}</div>
+                      <div class="table-cell">{{ item.subtotal }}</div>
+                    </div>
+                  </template>
+
+                  <!-- 附加项区域 (type === 2 || type === 5) -->
+                  <template v-if="extraItems.length > 0">
+                    <div class="table-section-title">附加项</div>
+                    <div class="table-row table-body-row" v-for="(item, index) in extraItems" :key="'extra_' + index">
+                      <div class="table-cell">{{ item.name }}</div>
+                      <div class="table-cell">{{ item.mount }}</div>
+                      <div class="table-cell">{{ item.totalWeight || '--' }}</div>
+                      <div class="table-cell">{{ item.tareWeight || '--' }}</div>
+                      <div class="table-cell">{{ item.referenceAmount }}</div>
+                      <div class="table-cell">{{ item.subtotal }}</div>
+                    </div>
+                  </template>
+
+                  <!-- 抵扣项区域 (type === 4) -->
+                  <template v-if="deductionItems.length > 0">
+                    <div class="table-section-title">抵扣项</div>
+                    <div
+                      class="table-row table-body-row"
+                      v-for="(item, index) in deductionItems"
+                      :key="'deduction_' + index"
+                    >
+                      <div class="table-cell">{{ item.name }}</div>
+                      <div class="table-cell">{{ item.mount }}</div>
+                      <div class="table-cell">{{ item.totalWeight || '--' }}</div>
+                      <div class="table-cell">{{ item.tareWeight || '--' }}</div>
+                      <div class="table-cell">{{ item.referenceAmount }}</div>
+                      <div class="table-cell">-{{ Math.abs(item.subtotal) }}</div>
+                    </div>
+                  </template>
                 </div>
               </div>
-              <!-- 空状态 -->
-              <div class="history-empty" v-if="!historyOrderList || historyOrderList.length === 0">
-                <view class="history-empty-icon">
-                  <uni-icons type="info-filled" size="32" color="#bdc3c7"></uni-icons>
-                </view>
-                <text class="history-empty-text">暂无历史订单</text>
-              </div>
-            </div>
-          </scroll-view>
-        </div>
-      </view>
-    </view>
+            </scroll-view>
 
-    <!-- 订单详情抽屉 -->
-    <view class="drawer-container" v-if="showOrderDetailDrawer">
-      <!-- 遮罩层 -->
-      <view class="drawer-mask" :class="{ show: showOrderDetailDrawer }" @tap="closeOrderDetailDrawer"></view>
-
-      <!-- 抽屉内容 -->
-      <view class="drawer-content" :class="{ show: showOrderDetailDrawer }">
-        <!-- 订单详情抽屉 -->
-        <div class="order-detail-container" v-if="showOrderDetailDrawer && orderDetailData">
-          <!-- 抽屉头部 -->
-          <view class="detail-header-new2">
-            <view class="header-left">
-              <uni-icons type="list" size="18" color="#fff"></uni-icons>
-              <text class="detail-title-new">历史订单</text>
-            </view>
-            <view class="header-right">
-              <view class="close-btn" @tap="closeOrderDetailDrawer">
-                <uni-icons type="close" size="24" color="#fff"></uni-icons>
-              </view>
+            <view class="order-action-buttons-compact">
+              <u-button
+                v-if="currentOrder.status != 2"
+                class="action-btn-compact modify-btn-new"
+                type="primary"
+                @click="TurnToTuigeCashier"
+                text="改单"
+              >
+              </u-button>
+              <u-button
+                v-if="currentOrder.status != 2"
+                class="action-btn-compact refund-btn-new"
+                type="primary"
+                @click="TuigeOrder"
+                text="作废"
+              >
+              </u-button>
+              <u-button
+                v-if="currentOrder.debt > 0"
+                class="action-btn-compact repay-btn-new"
+                type="primary"
+                text="整单还款"
+                @click="openPayTypeDialogVisible"
+              >
+              </u-button>
+              <u-button
+                class="action-btn-compact print-btn-new"
+                type="primary"
+                text="打印"
+                @click="printerModel(currentOrder)"
+              >
+              </u-button>
             </view>
           </view>
+        </view>
+      </view>
 
-          <scroll-view scroll-y="true" :style="{ height: scrollHeight - 115 + 'px' }">
-            <!-- 订单概览信息 -->
-            <div class="order-info-grid-compact">
-              <!-- 第一行 -->
-              <div class="info-row">
-                <div class="info-item-new">
-                  <text class="info-value-new info-value-small">{{
-                    orderDetailData.createTime ? orderDetailData.createTime.replace('T', ' ') : ''
-                  }}</text>
-                </div>
-                <div class="info-item-new">
-                  <text class="info-value-new info-value-small">{{ orderDetailData.accountCode || '-' }}</text>
-                </div>
+      <!-- 整单还款弹窗 -->
+      <RepaymentModal
+        :visible="payTypeDialogVisible"
+        :customerInfo="repayCustomerInfo"
+        :attachOrderIdList="[currentOrder.id]"
+        :initialData="{ currentRepayment: currentOrder.debt || 0 }"
+        @confirm="handleRepaymentConfirm"
+        @close="payTypeDialogVisible = false"
+      >
+      </RepaymentModal>
+
+      <!-- 历史订单抽屉 -->
+      <view class="drawer-container">
+        <!-- 遮罩层 -->
+        <view class="drawer-mask" :class="{ show: showHistoryDrawer }" @tap="closeHistoryDrawer"></view>
+
+        <!-- 抽屉内容 -->
+        <view class="drawer-content" :class="{ show: showHistoryDrawer }">
+          <!-- 历史订单抽屉 -->
+          <div class="history-order-container" v-if="showHistoryDrawer">
+            <!-- 抽屉头部 -->
+            <div class="history-header">
+              <div class="history-title">
+                <view class="history-title-icon">
+                  <uni-icons custom-prefix="iconfont" type="icon-lishijilu" size="16" color="#3498db"></uni-icons>
+                </view>
+                <text class="history-title-text">历史订单列表</text>
               </div>
-
-              <!-- 第二行 -->
-              <div class="info-row">
-                <div class="info-item-new">
-                  <text class="info-value-new info-value-small">{{ orderDetailData.customName || '散客' }}</text>
-                </div>
-                <div class="info-item-new">
-                  <text class="info-label-new">总计金额:</text>
-                  <text class="info-value-new highlight-value">{{ orderDetailData.payableAmount || 0 }}</text>
-                </div>
-              </div>
-
-              <!-- 第三行 -->
-              <div class="info-row">
-                <div class="info-item-new" v-if="orderDetailData.basketOffsetAmount">
-                  <text class="info-label-new">押筐抵扣:</text>
-                  <text class="info-value-new">{{ orderDetailData.basketOffsetAmount || 0 }}</text>
-                </div>
-                <div class="info-item-new">
-                  <text class="info-label-new">实付金额:</text>
-                  <text class="info-value-new highlight-value">{{ orderDetailData.actualMoney || 0 }}</text>
-                </div>
-              </div>
-
-              <!-- 第四行 - 下欠和状态 -->
-              <div class="info-row">
-                <div class="info-item-new" v-if="orderDetailData.debt > 0">
-                  <text class="info-label-new">下欠:</text>
-                  <text class="info-value-new debt-value-new">{{ orderDetailData.debt }}</text>
-                </div>
+              <div class="history-summary" v-if="historyOrderList.length > 0">
+                <text class="history-summary-text">共 {{ historyOrderList.length }} 个版本</text>
               </div>
             </div>
 
-            <!-- 商品列表 -->
-            <div class="product-table-container" v-if="orderDetailData.module && orderDetailData.module.length > 0">
-              <div class="product-table">
-                <div class="table-row table-header-row">
-                  <div class="table-header-cell">货品</div>
-                  <div class="table-header-cell">数量</div>
-                  <div class="table-header-cell">总重</div>
-                  <div class="table-header-cell">皮重</div>
-                  <div class="table-header-cell">单价</div>
-                  <div class="table-header-cell">小计</div>
+            <!-- 历史订单列表 -->
+            <scroll-view class="history-scroll" :style="{ height: scrollHeight - 100 + 'px' }" scroll-y="true">
+              <div class="history-order-list">
+                <div
+                  class="history-order-item"
+                  v-for="(order, index) in historyOrderList"
+                  :key="index"
+                  @click="showOrderDetail(order)"
+                >
+                  <div class="history-order-header">
+                    <div class="history-order-info">
+                      <text class="history-customer-name">{{ order.customName || '散客' }}</text>
+                      <text class="history-order-time">{{
+                        order.updateTime ? order.updateTime.replace('T', ' ') : ''
+                      }}</text>
+                    </div>
+                    <div class="history-order-amounts">
+                      <text class="history-total-amount">实收: ¥{{ order.actualMoney || 0 }}</text>
+                      <text class="history-debt-amount" v-if="order.debt > 0">欠款: ¥{{ order.debt || 0 }}</text>
+                    </div>
+                  </div>
+                  <div class="history-order-detail">
+                    <div class="history-order-code">
+                      <text class="history-code-label">订单号:</text>
+                      <text class="history-code-value">{{ order.accountCode || '-' }}</text>
+                    </div>
+                    <div class="history-order-status" v-if="order.status !== 1">
+                      <view class="history-status-tag" :class="getOrderStatusClass(order.status)">
+                        <text class="history-status-text">{{ getOrderStatusText(order.status) }}</text>
+                      </view>
+                    </div>
+                  </div>
+                  <div class="history-order-items" v-if="order.modulestr">
+                    <text class="history-items-text">{{ order.modulestr }}</text>
+                  </div>
                 </div>
-
-                <div class="table-row table-body-row" v-for="(item, index) in orderDetailData.module" :key="index">
-                  <div class="table-cell">{{ item.name }}</div>
-                  <div class="table-cell">{{ item.mount }}</div>
-                  <div class="table-cell">{{ item.totalWeight }}</div>
-                  <div class="table-cell">{{ item.tareWeight }}</div>
-                  <div class="table-cell">{{ item.referenceAmount }}</div>
-                  <div class="table-cell">{{ item.subtotal }}</div>
+                <!-- 空状态 -->
+                <div class="history-empty" v-if="!historyOrderList || historyOrderList.length === 0">
+                  <view class="history-empty-icon">
+                    <uni-icons type="info-filled" size="32" color="#bdc3c7"></uni-icons>
+                  </view>
+                  <text class="history-empty-text">暂无历史订单</text>
                 </div>
               </div>
-            </div>
+            </scroll-view>
+          </div>
+        </view>
+      </view>
 
-            <!-- 无商品数据提示 -->
-            <div v-else class="no-products">
-              <view class="no-products-icon">
-                <uni-icons type="info-filled" size="24" color="#bdc3c7"></uni-icons>
+      <!-- 订单详情抽屉 -->
+      <view class="drawer-container" v-if="showOrderDetailDrawer">
+        <!-- 遮罩层 -->
+        <view class="drawer-mask" :class="{ show: showOrderDetailDrawer }" @tap="closeOrderDetailDrawer"></view>
+
+        <!-- 抽屉内容 -->
+        <view class="drawer-content" :class="{ show: showOrderDetailDrawer }">
+          <!-- 订单详情抽屉 -->
+          <div class="order-detail-container" v-if="showOrderDetailDrawer && orderDetailData">
+            <!-- 抽屉头部 -->
+            <view class="detail-header-new2">
+              <view class="header-left">
+                <uni-icons type="list" size="18" color="#fff"></uni-icons>
+                <text class="detail-title-new">历史订单</text>
               </view>
-              <text class="no-products-text">暂无商品信息</text>
-            </div>
-          </scroll-view>
-        </div>
+              <view class="header-right">
+                <view class="close-btn" @tap="closeOrderDetailDrawer">
+                  <uni-icons type="close" size="24" color="#fff"></uni-icons>
+                </view>
+              </view>
+            </view>
+
+            <scroll-view scroll-y="true" :style="{ height: scrollHeight - 115 + 'px' }">
+              <!-- 订单概览信息 -->
+              <div class="order-info-grid-compact">
+                <!-- 第一行 -->
+                <div class="info-row">
+                  <div class="info-item-new">
+                    <text class="info-value-new info-value-small">{{
+                      orderDetailData.createTime ? orderDetailData.createTime.replace('T', ' ') : ''
+                    }}</text>
+                  </div>
+                  <div class="info-item-new">
+                    <text class="info-value-new info-value-small">{{ orderDetailData.accountCode || '-' }}</text>
+                  </div>
+                </div>
+
+                <!-- 第二行 -->
+                <div class="info-row">
+                  <div class="info-item-new">
+                    <text class="info-value-new info-value-small">{{ orderDetailData.customName || '散客' }}</text>
+                  </div>
+                  <div class="info-item-new">
+                    <text class="info-label-new">总计金额:</text>
+                    <text class="info-value-new highlight-value">{{ orderDetailData.payableAmount || 0 }}</text>
+                  </div>
+                </div>
+
+                <!-- 第三行 -->
+                <div class="info-row">
+                  <div class="info-item-new" v-if="orderDetailData.basketOffsetAmount">
+                    <text class="info-label-new">押筐抵扣:</text>
+                    <text class="info-value-new">{{ orderDetailData.basketOffsetAmount || 0 }}</text>
+                  </div>
+                  <div class="info-item-new">
+                    <text class="info-label-new">实付金额:</text>
+                    <text class="info-value-new highlight-value">{{ orderDetailData.actualMoney || 0 }}</text>
+                  </div>
+                </div>
+
+                <!-- 第四行 - 下欠和状态 -->
+                <div class="info-row">
+                  <div class="info-item-new" v-if="orderDetailData.debt > 0">
+                    <text class="info-label-new">下欠:</text>
+                    <text class="info-value-new debt-value-new">{{ orderDetailData.debt }}</text>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 商品列表 -->
+              <div class="product-table-container" v-if="orderDetailData.module && orderDetailData.module.length > 0">
+                <div class="product-table">
+                  <div class="table-row table-header-row">
+                    <div class="table-header-cell">货品</div>
+                    <div class="table-header-cell">数量</div>
+                    <div class="table-header-cell">总重</div>
+                    <div class="table-header-cell">皮重</div>
+                    <div class="table-header-cell">单价</div>
+                    <div class="table-header-cell">小计</div>
+                  </div>
+
+                  <!-- 货品区域 (type === 1) -->
+                  <template v-if="goodsItemsInDetail.length > 0">
+                    <div
+                      class="table-row table-body-row"
+                      v-for="(item, index) in goodsItemsInDetail"
+                      :key="'goods_' + index"
+                    >
+                      <div class="table-cell">{{ item.name }}</div>
+                      <div class="table-cell">{{ item.mount }}</div>
+                      <div class="table-cell">{{ item.totalWeight }}</div>
+                      <div class="table-cell">{{ item.tareWeight }}</div>
+                      <div class="table-cell">{{ item.referenceAmount }}</div>
+                      <div class="table-cell">{{ item.subtotal }}</div>
+                    </div>
+                  </template>
+
+                  <!-- 附加项区域 (type === 2 || type === 5) -->
+                  <template v-if="extraItemsInDetail.length > 0">
+                    <div class="table-section-title">附加项</div>
+                    <div
+                      class="table-row table-body-row"
+                      v-for="(item, index) in extraItemsInDetail"
+                      :key="'extra_' + index"
+                    >
+                      <div class="table-cell">{{ item.name }}</div>
+                      <div class="table-cell">{{ item.mount }}</div>
+                      <div class="table-cell">{{ item.totalWeight || '--' }}</div>
+                      <div class="table-cell">{{ item.tareWeight || '--' }}</div>
+                      <div class="table-cell">{{ item.referenceAmount }}</div>
+                      <div class="table-cell">{{ item.subtotal }}</div>
+                    </div>
+                  </template>
+
+                  <!-- 抵扣项区域 (type === 4) -->
+                  <template v-if="deductionItemsInDetail.length > 0">
+                    <div class="table-section-title">抵扣项</div>
+                    <div
+                      class="table-row table-body-row"
+                      v-for="(item, index) in deductionItemsInDetail"
+                      :key="'deduction_' + index"
+                    >
+                      <div class="table-cell">{{ item.name }}</div>
+                      <div class="table-cell">{{ item.mount }}</div>
+                      <div class="table-cell">{{ item.totalWeight || '--' }}</div>
+                      <div class="table-cell">{{ item.tareWeight || '--' }}</div>
+                      <div class="table-cell">{{ item.referenceAmount }}</div>
+                      <div class="table-cell">-{{ Math.abs(item.subtotal) }}</div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <!-- 无商品数据提示 -->
+              <div v-else class="no-products">
+                <view class="no-products-icon">
+                  <uni-icons type="info-filled" size="24" color="#bdc3c7"></uni-icons>
+                </view>
+                <text class="no-products-text">暂无商品信息</text>
+              </div>
+            </scroll-view>
+          </div>
+        </view>
       </view>
     </view>
-	</view>
     <!-- debug=true 可以看到页面，debug=false 后台渲染 -->
     <OrderImage :orderImageInfo="orderImageInfo" :debug="true" @close="closeOrderImage" />
     <view :prop="canvasImageMsg" :change:prop="canvasImage.updateEcharts"></view>
@@ -561,10 +497,12 @@
 import cashierOrder from '../../api/cashier/cashierOrder'
 import member from '../../api/member/member'
 import OrderImage from '@/components/OrderImage/OrderImage.vue'
+import RepaymentModal from '@/components/RepaymentModal.vue'
 export default {
   name: 'OrderMangerIndex',
   components: {
     OrderImage,
+    RepaymentModal,
   },
   data() {
     return {
@@ -577,6 +515,7 @@ export default {
       repayMount: 0,
       memberDialogVisible: false,
       CompanyId: '',
+      repayCustomerInfo: {}, // 还款客户信息
       single: '',
       showTimePcker: false,
       showDetail: false,
@@ -639,6 +578,68 @@ export default {
       orderImageInfo: null,
     }
   },
+  computed: {
+    // 货品列表 (type === 1) - 用于 currentCardInfo
+    goodsItems() {
+      if (!this.currentCardInfo || !Array.isArray(this.currentCardInfo)) {
+        return []
+      }
+      return this.currentCardInfo.filter(item => item.type === 1 || item.type === '1')
+    },
+    // 附加项列表 (type === 2 || type === 5) - 用于 currentCardInfo
+    extraItems() {
+      if (!this.currentCardInfo || !Array.isArray(this.currentCardInfo)) {
+        return []
+      }
+      return this.currentCardInfo.filter(
+        item => item.type === 2 || item.type === '2' || item.type === 5 || item.type === '5'
+      )
+    },
+    // 抵扣项列表 (type === 4) - 用于 currentCardInfo
+    deductionItems() {
+      if (!this.currentCardInfo || !Array.isArray(this.currentCardInfo)) {
+        return []
+      }
+      console.log('currentCardInfo 所有数据:', this.currentCardInfo)
+      console.log(
+        'currentCardInfo 每个商品的type:',
+        this.currentCardInfo.map(item => ({ name: item.name, type: item.type, typeOf: typeof item.type }))
+      )
+      const result = this.currentCardInfo.filter(item => item.type === 4 || item.type === '4')
+      console.log('currentCardInfo 抵扣项数据:', result)
+      return result
+    },
+    // 货品列表 (type === 1) - 用于 orderDetailData
+    goodsItemsInDetail() {
+      if (!this.orderDetailData || !this.orderDetailData.module || !Array.isArray(this.orderDetailData.module)) {
+        return []
+      }
+      return this.orderDetailData.module.filter(item => item.type === 1 || item.type === '1')
+    },
+    // 附加项列表 (type === 2 || type === 5) - 用于 orderDetailData
+    extraItemsInDetail() {
+      if (!this.orderDetailData || !this.orderDetailData.module || !Array.isArray(this.orderDetailData.module)) {
+        return []
+      }
+      return this.orderDetailData.module.filter(
+        item => item.type === 2 || item.type === '2' || item.type === 5 || item.type === '5'
+      )
+    },
+    // 抵扣项列表 (type === 4) - 用于 orderDetailData
+    deductionItemsInDetail() {
+      if (!this.orderDetailData || !this.orderDetailData.module || !Array.isArray(this.orderDetailData.module)) {
+        return []
+      }
+      console.log('所有商品数据:', this.orderDetailData.module)
+      console.log(
+        '每个商品的type:',
+        this.orderDetailData.module.map(item => ({ name: item.name, type: item.type, typeOf: typeof item.type }))
+      )
+      const result = this.orderDetailData.module.filter(item => item.type === 4 || item.type === '4')
+      console.log('抵扣项数据 (type === 4 或 "4"):', result)
+      return result
+    },
+  },
   // mounted() {
   // 	// 在组件挂载后设置 scrollHeight
 
@@ -678,7 +679,6 @@ export default {
           this.currentPage
         )
         .then(res => {
-
           // 兼容不同的返回格式
           let newData = []
           let totalCount = 0
@@ -733,7 +733,6 @@ export default {
                 // 如果没有总数信息，根据返回的数据量判断
                 this.hasMore = newData.length >= this.pageSize
               }
-
             } else {
               this.hasMore = false
             }
@@ -758,7 +757,7 @@ export default {
     },
 
     // 滚动事件监听（用于调试）
-    onScroll(e) {
+    onScroll() {
       // 可以通过这个方法监听滚动位置
       // console.log("滚动中:", e.detail);
     },
@@ -820,76 +819,31 @@ export default {
       this.endTime = formatDateTime(todayEnd) // 例如 "2025-09-26 23:59:59"
     },
     openPayTypeDialogVisible() {
+      // 准备还款客户信息
+      this.repayCustomerInfo = {
+        id: this.currentOrder.customerId,
+        customName: this.currentOrder.customName || '散客',
+        debts: this.currentOrder.debt || 0,
+      }
       this.payTypeDialogVisible = true
-      this.repayMount = this.currentOrder.debt
     },
-    Tuige2() {
-      let myvalue = ''
-      myvalue = this.repayMount
+    // 还款确认回调
+    handleRepaymentConfirm() {
+      // 还款成功后更新当前订单的欠款信息
+      if (this.currentOrder && this.currentOrder.id) {
+        this.currentOrder.debt = 0
+        this.currentOrder.actualMoney = this.currentOrder.payableAmount
 
-      // 如果当前值为空或为零，直接返回
-      if (myvalue == null || myvalue === '' || myvalue === '0') {
-        return
-      }
-      myvalue = myvalue ? myvalue.toString() : ''
-      // 回退一个字符
-      myvalue = myvalue.slice(0, -1) // 去掉最后一个字符
-      // 更新数据模型
-      this.repayMount = myvalue
-    },
-    Clear2() {
-      // 根据 custominputFocusIndex 清空对应的值
-      this.repayMount = '0'
-    },
-    NumberCk2(val) {
-      let myvalue = this.repayMount
-      if (val == '.') {
-        if (myvalue.toString().indexOf('.') >= 0) {
-          return
+        // 更新订单列表中的对应订单
+        const orderIndex = this.moduleList.findIndex(item => item.id === this.currentOrder.id)
+        if (orderIndex !== -1) {
+          this.moduleList[orderIndex].debt = 0
+          this.moduleList[orderIndex].actualMoney = this.currentOrder.payableAmount
         }
       }
-      var txt = myvalue == null || myvalue == 0 || myvalue == undefined ? '' : myvalue
-      myvalue = txt + val.toString()
-      this.repayMount = myvalue
-    },
-    changPayWay(index) {
-      for (var i = 0; i < this.payWay.length; i++) {
-        this.payWay[i].select = 0
-      }
-      this.payWay[index].select = 1
-      this.currentPayWay = this.payWay[index].id
-    },
-    repaySingle() {
-      var repayOrder = JSON.parse(JSON.stringify(this.currentOrder))
-      repayOrder.payWay = this.currentPayWay
-      var moduleSelect = [repayOrder]
 
-      var userInfo = uni.getStorageSync('userInfo')
-      var CompanyId = uni.getStorageSync('companyId')
-      let param = {
-        customerId: repayOrder.customerId,
-        repayMoney: this.repayMount,
-        orderList: moduleSelect,
-        operatorId: userInfo.idateChangeCompanyId,
-        customerName: repayOrder.customName,
-      }
-      member.RepayDebts(JSON.stringify(param)).then(res => {
-        if (res.code == 200) {
-          uni.showToast({
-            title: '还款成功',
-            icon: 'none',
-            duration: 2000,
-          })
-          this.payTypeDialogVisible = false
-          this.refresh()
-        } else {
-          uni.showToast({
-            title: '还款失败',
-            icon: 'none',
-            duration: 2000,
-          })
-        }
-      })
+      // 刷新订单列表
+      this.refresh()
     },
     memberChange() {
       this.memberOptions = []
@@ -927,7 +881,7 @@ export default {
       this.currentOrder = e
       this.selectedOrderId = e.id // 设置选中的订单ID
       this.currentCardInfo = JSON.parse(e.module)
-      this.currentCardInfo = this.currentCardInfo.filter(item => item.type !== 4).sort((a, b) => a.type - b.type)
+      this.currentCardInfo = this.currentCardInfo.sort((a, b) => a.type - b.type)
     },
     dateChange(beginTime, endTime) {
       // 如果日期为空，使用最小时间到当前时间的范围
@@ -988,7 +942,6 @@ export default {
 
     // 加载历史订单数据
     loadHistoryOrders(originOrderId, orderId) {
-
       cashierOrder
         .GetOriginOrderId(originOrderId, orderId)
         .then(res => {
@@ -1069,7 +1022,6 @@ export default {
 
     // 加载订单详情数据
     loadOrderDetail(orderId) {
-
       cashierOrder
         .GetOrderByAccountId(orderId)
         .then(res => {
@@ -1084,11 +1036,9 @@ export default {
                 this.orderDetailData.module = []
               }
             }
-            // 过滤掉type为4的项目，并按type排序
+            // 按type排序
             if (this.orderDetailData.module && Array.isArray(this.orderDetailData.module)) {
-              this.orderDetailData.module = this.orderDetailData.module
-                .filter(item => item.type !== 4)
-                .sort((a, b) => a.type - b.type)
+              this.orderDetailData.module = this.orderDetailData.module.sort((a, b) => a.type - b.type)
             }
 
             console.log('订单详情数据:', this.orderDetailData)
@@ -1419,8 +1369,8 @@ export default {
 			}).then(function(canvas) {
         const imgUri = canvas.toDataURL('image/png')
 				callback&&callback(imgUri);
-      })		
-			document.querySelector('body').removeChild(cloneDom)				
+      })
+			document.querySelector('body').removeChild(cloneDom)
     },
     updateEcharts(newValue, oldValue, ownerInstance, instance) {
       // 监听 service 层数据变更
@@ -2680,20 +2630,16 @@ export default {
   font-weight: 500;
 }
 
-/* 货品名称列稍微宽一点 */
-.product-table .table-cell:first-child,
-.product-table .table-header-cell:first-child {
-  flex: 1.5;
-  font-weight: 600;
-  color: #333;
-}
-
-.grid-member-container {
+/* 分区标题样式 */
+.table-section-title {
   display: flex;
-  flex-wrap: wrap;
-  /* 允许换行 */
-  margin: 5px;
-  /* 负边距用于消除间距 */
+  font-size: 13rpx;
+  color: #333;
+  padding: 10rpx 15rpx;
+  margin-top: 5rpx;
+  text-align: left;
+  font-weight: 500;
+  border-top: 1rpx solid #e4e7ed;
 }
 
 .grid-member-item {
