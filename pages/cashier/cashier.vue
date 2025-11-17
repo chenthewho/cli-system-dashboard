@@ -3839,74 +3839,88 @@ export default {
     },
 
     downLoadImage(base64) {
-      // #ifdef APP-PLUS
       let that = this
+      
+      // #ifdef APP-PLUS
       if (typeof plus === 'undefined') {
+        this.resetGeneratingState()
         uni.showToast({
           title: '此功能仅在 APP 中可用',
           icon: 'none',
         })
         return
       }
+      
       const bitmap = new plus.nativeObj.Bitmap('test')
       bitmap.loadBase64Data(
         base64,
         function () {
-          const url = '_doc/' + new Date().getTime() + '.png' // url为时间戳命名方式
+          const url = '_doc/' + new Date().getTime() + '.png'
           bitmap.save(
             url,
             {
-              overwrite: true, // 是否覆盖
-              quality: 100, // 图片清晰度
+              overwrite: true,
+              quality: 100,
             },
             () => {
-              // 直接分享图片，不保存到相册
-              uni.hideLoading()
-              that.isGeneratingImage = false
-              that.showOrderImage = false
-
-              uni.share({
-                provider: 'weixin',
-                scene: 'WXSceneSession',
-                type: 2,
-                imageUrl: url,
-                success: () => {
-                  console.log('分享成功')
-                },
-                fail: err => {
-                  console.log('分享失败', err)
-                  uni.showToast({
-                    title: '分享失败',
-                    icon: 'none',
-                  })
-                },
-              })
+              // 分享图片
+              that.shareImage(url)
               bitmap.clear()
             },
             () => {
-              uni.hideLoading()
-              that.isGeneratingImage = false
-              that.showOrderImage = false
+              // 保存失败
               uni.showToast({
-                title: '图片处理失败',
+                title: '图片保存失败',
                 icon: 'none',
               })
               bitmap.clear()
+              that.resetGeneratingState()
             }
           )
         },
         () => {
-          uni.hideLoading()
-          that.isGeneratingImage = false
-          that.showOrderImage = false
+          // 加载base64失败
           uni.showToast({
             title: '图片处理失败',
             icon: 'none',
           })
           bitmap.clear()
+          that.resetGeneratingState()
         }
       )
       // #endif
+    },
+    
+    shareImage(tempFilePath) {
+      // 重置生成状态
+      this.resetGeneratingState()
+      
+      uni.share({
+        provider: 'weixin',
+        type: 2,
+        scene: 'WXSceneSession',
+        imageUrl: tempFilePath,
+        success() {
+          uni.showToast({
+            title: '分享成功',
+            icon: 'success',
+          })
+        },
+        fail(err) {
+          uni.showToast({
+            title: '分享失败',
+            icon: 'none',
+          })
+        },
+      })
+    },
+    
+    resetGeneratingState() {
+      this.isGeneratingImage = false
+      this.showOrderImage = false
+      this.orderImageInfo = null
+      this.canvasImageMsg = null
+      uni.hideLoading()
     },
     shareOrder(id) {
       // 如果 lastOrder 存在且 id 匹配，直接使用
@@ -4001,7 +4015,7 @@ export default {
         products,
         marketName,
       }
-
+      
       this.generateHandle()
     },
 
