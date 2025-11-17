@@ -238,17 +238,17 @@ export default {
 
     // 接收renderjs返回的图片数据
     receiveRenderData(base64) {
-      if (base64) {
-        this.downLoadImage(base64)
-      } else {
-        uni.hideLoading()
-        this.isGeneratingImage = false
-        this.showOrderImage = false
-        uni.showToast({
-          title: '图片生成失败',
-          icon: 'none',
-        })
-      }
+      this.canvasImageMsg = null
+      // 重置生成状态
+      this.isGeneratingImage = false
+      // 清空订单信息（下次生成时会重新设置）
+      this.orderImageInfo = null
+      // 隐藏加载提示
+      uni.hideLoading()
+      // 更新发单次数
+      this.updateShareCount()
+      // 保存并分享图片
+      this.downLoadImage(base64)
     },
 
     downLoadImage(base64) {
