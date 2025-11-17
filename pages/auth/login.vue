@@ -341,6 +341,7 @@ export default {
             .dispatch('actionTokenInfo', sendLoginData)
             .then(res => {
               this.getCompanyInfo(res.id).then(res2 => {
+                console.log('res2----->', res2)
                 if (res2 && res2.length > 0) {
                   this.login2()
                   uni.setStorageSync('companyId', res2[0].id)

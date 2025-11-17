@@ -160,12 +160,18 @@ export default {
         if (userInfo && userInfo.id) {
           const res = await uni.$u.http.get(`/Company/GetByUserId?id=${userInfo.id}`)
           if (res.data && Array.isArray(res.data)) {
-            console.log('res.data', res.data)
             this.companyList = res.data.map(item => ({
               id: item.id,
               name: item.companyName,
               vesionType: item.vesionType,
+              isEffective: new Date(item.effectiveTime).getTime() < item.serverTime, // 是否过期
             }))
+            // 根据 isEffective 排序，false（未过期）排在前面
+            .sort((a, b) => {
+              if (a.isEffective === b.isEffective) return 0
+              return a.isEffective ? 1 : -1 // false 在前，true 在后
+            })
+            console.log('this.companyList----->', this.companyList)
           }
         }
       } catch (error) {
