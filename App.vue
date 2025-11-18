@@ -250,7 +250,7 @@ export default {
       const newString = inputString + ' '.repeat(spacesNeeded)
       return newString
     },
-    // 标签打印
+    // 标签打印（优化版）
     senBlData(deviceId, serviceId, characteristicId, uint8Array) {
       var uint8Buf = Array.from(uint8Array)
 
@@ -262,9 +262,14 @@ export default {
         return result
       }
 
-      var sendloop = split_array(uint8Buf, 20)
+      // 优化1: 增加包大小到最大支持的字节数（一般蓝牙支持最大512字节，这里用较保守的128字节）
+      var sendloop = split_array(uint8Buf, 128)
+      var retryCount = 0
+      var maxRetry = 3
+
       function realWriteData(sendloop, i) {
         if (i >= sendloop.length) {
+          console.log('打印数据发送完成')
           return
         }
         var data = sendloop[i]
@@ -279,16 +284,28 @@ export default {
           characteristicId,
           value: buffer,
           success(res) {
-            // 延时100ms再发送下一包，防止写入过快
+            retryCount = 0 // 成功后重置重试计数
+            // 优化2: 减少延时到20ms，大部分蓝牙打印机都能支持
             setTimeout(() => {
               realWriteData(sendloop, i + 1)
-            }, 100)
+            }, 20)
           },
           fail(err) {
-            // 失败时也尝试继续发送下一包，或者根据需求重试
-            setTimeout(() => {
-              realWriteData(sendloop, i + 1)
-            }, 100)
+            console.error('发送数据失败:', err, '包序号:', i)
+            // 优化3: 失败时进行重试，而不是直接跳过
+            if (retryCount < maxRetry) {
+              retryCount++
+              console.log(`重试第 ${retryCount} 次，包序号: ${i}`)
+              setTimeout(() => {
+                realWriteData(sendloop, i) // 重试当前包
+              }, 50)
+            } else {
+              console.error('重试次数超限，跳过当前包')
+              retryCount = 0
+              setTimeout(() => {
+                realWriteData(sendloop, i + 1) // 跳过当前包继续
+              }, 50)
+            }
           },
         })
       }

@@ -13,104 +13,176 @@ function paymentReceiptTemplate(printerJobs, order, context) {
   var currentCompanyName = uni.getStorageSync('companyName')
   var address = uni.getStorageSync('address')
   var contact = uni.getStorageSync('contact')
+  var marketName = uni.getStorageSync('marketName')
   var ModelList = JSON.parse(order.module)
 
-  // 标题
-  printerJobs.setSize(2).setAlign('LT').print('【付款凭证】\r\n')
-  printerJobs.lineFeed(1)
+  console.log('order', order)
 
-  // 商家名称
-  printerJobs.setAlign('CT')
-  printerJobs.setSize(3).print(currentCompanyName + '\r\n')
+  // 添加 println2 辅助方法（增加额外间距）
+  printerJobs.println2 = function () {
+    this.println()
+    this.println()
+    return this
+  }
+
+  // 设置行间距（默认30点，设置为15点以减小行距）
+  printerJobs.setLineSpacing(15)
+
+  // 标题和订单号
   printerJobs.setAlign('LT')
-
-  // 买家信息
-  printerJobs.setSize(2).print('买家：' + (order.customName != null ? order.customName : ''))
-  printerJobs.setSize(1).print('支付时间：')
-
-  // 货品信息分割线
-  printerJobs.setSize(2).print('-------------------货品信息------------------').println().setBold(false)
-
-  // 打印货品列表（type=1）
-  var goodIndex = 0
-  for (var i = 0; i < ModelList.length; i++) {
-    var x = ModelList[i]
-    if (x.type === 1) {
-      goodIndex += 1
-      printerJobs
-        .setSize(2)
-        .text(goodIndex + '.' + x.name)
-        .text(' '.repeat(10))
-      printerJobs.text('小计：' + x.subtotal).println()
-      printerJobs.setAlign('LT')
-      printerJobs
-        .setSize(1)
-        .text(context.calculateSpacesTo9('数量：' + x.mount + '件'))
-        .text(context.calculateSpacesTo9('单价：' + x.referenceAmount))
-        .text(
-          context.calculateSpacesTo12(
-            '重量：' + (x.totalWeight - x.tareWeight) + '(' + x.totalWeight + '-' + x.tareWeight + ')'
-          )
-        )
-        .println()
-    }
-  }
-
-  // 打印附加项（type=2）
-  var filteredList = ModelList.filter(function (item) {
-    return item.type === 2
-  })
-  if (filteredList.length > 0) {
-    printerJobs.text('(附加项)').println()
-  }
-  for (var j = 0; j < filteredList.length; j++) {
-    var item = filteredList[j]
+  printerJobs.setSize(2).setBold(true).print('[付款凭证]').setBold(false)
+  if (order.orderNo) {
     printerJobs
       .setSize(1)
-      .text(j + 1 + '.' + item.name)
-      .text(' '.repeat(10))
-    printerJobs.text('小计：' + item.subtotal).println()
-    printerJobs.setAlign('LT')
+      .print('     票号:' + order.orderNo)
+      .println()
+  } else {
+    printerJobs.println()
+  }
+  if (order.barcode) {
     printerJobs
       .setSize(1)
-      .text(context.calculateSpacesTo15('数量：' + item.mount + '件'))
-      .text(context.calculateSpacesTo15('单价：' + item.referenceAmount))
+      .print('                    码串:' + order.barcode)
       .println()
   }
 
+  // 商家名称和市场名称（居中）
+  printerJobs.setAlign('CT')
+  if (marketName) {
+    printerJobs.setSize(2).print(marketName).println()
+  }
+  printerJobs.setSize(3).setBold(true).print(currentCompanyName).setBold(false).println()
+  printerJobs.setAlign('LT')
+
+  // 买家信息
+  printerJobs.setSize(1)
+  printerJobs.print('买家:' + (order.customName != null ? order.customName : '贵宾客户')).println()
+  // printerJobs.print('支付时间:' + (order.paymentTime || context.getFormattedDate()))
+  if (order.printCount) {
+    printerJobs.print('  第' + order.printCount + '次打印')
+  }
+  printerJobs.println()
+
+  // 货品信息分割线
+  printerJobs.setSize(1).print('--------------------货品信息--------------------').println()
+
+  // 构建货品和附加项的分组关系
+  var goodsWithAddons = []
+  for (var i = 0; i < ModelList.length; i++) {
+    console.log('ModelList', ModelList)
+
+    var item = ModelList[i]
+    if (item.type === 1) {
+      // 主货品
+      var goodsGroup = {
+        goods: item,
+        addons: [],
+      }
+      // 查找该货品的附加项
+      for (var j = 0; j < ModelList.length; j++) {
+        var addon = ModelList[j]
+        if (addon.type === 2 && addon.parentId === item.Id) {
+          goodsGroup.addons.push(addon)
+        }
+      }
+      goodsWithAddons.push(goodsGroup)
+    }
+  }
+
+  console.log('goodsWithAddons', goodsWithAddons)
+
+  // 打印货品列表（货品+附加项分组）
+  var goodIndex = 0
+  for (var g = 0; g < goodsWithAddons.length; g++) {
+    var group = goodsWithAddons[g]
+    var x = group.goods
+    goodIndex += 1
+
+    // 货品名称和小计（一行显示）
+    printerJobs.setSize(2).setBold(true)
+    var itemLine = goodIndex + '.' + x.name
+    var subtotalText = '小计:' + x.subtotal
+    var spacesNeeded = 24 - itemLine.length - subtotalText.length
+    if (spacesNeeded < 1) spacesNeeded = 1
+    printerJobs.print(itemLine + ' '.repeat(spacesNeeded) + subtotalText).println()
+    printerJobs.setBold(false)
+
+    // 货品详细信息（第二行）
+    printerJobs.setSize(1)
+    var detailLine = '数量:' + x.mount + '件'
+    detailLine += '        毛重:' + (x.totalWeight || 0)
+    detailLine += '    去皮:' + (x.tareWeight || 0)
+    printerJobs.print(detailLine).println()
+
+    // 货品详细信息（第三行）
+    var detailLine2 = '净重:' + ((x.totalWeight || 0) - (x.tareWeight || 0))
+    detailLine2 += '        单价:' + x.referenceAmount
+    printerJobs.print(detailLine2).println()
+
+    // 打印该货品的附加项
+    for (var a = 0; a < group.addons.length; a++) {
+      var addonItem = group.addons[a]
+      printerJobs.setSize(1).setBold(true)
+      var addonLine = '  ' + addonItem.name
+      var addonSubtotal = '小计:' + addonItem.subtotal
+      var addonSpaces = 26 - addonLine.length - addonSubtotal.length
+      if (addonSpaces < 1) addonSpaces = 1
+      printerJobs.print(addonLine + ' '.repeat(addonSpaces) + addonSubtotal).println()
+      printerJobs.setBold(false)
+
+      // 附加项详细信息
+      printerJobs.setSize(1)
+      var addonDetail = '  数量:' + addonItem.mount + '件'
+      addonDetail += '        单价:' + addonItem.referenceAmount
+      printerJobs.print(addonDetail).println()
+    }
+
+    // 货品组之间增加间距（除了最后一个）
+    if (g < goodsWithAddons.length - 1) {
+      printerJobs.println2()
+    }
+  }
+
+  // 金额汇总分割线
+  printerJobs.setSize(1).print('------------------------------------------------').println()
+
   // 金额汇总
   printerJobs.setAlign('LT')
-  printerJobs.setSize(2).print('-------------------------------------------')
-  printerJobs.setSize(4)
-  printerJobs.text('总计：' + order.payableAmount + '元').println()
+  printerJobs.setSize(2).setBold(true)
+  printerJobs.print('总    计:' + order.payableAmount + '元').println()
+  if (order.debt > 0) {
+    printerJobs.print('下    欠:' + order.debt + '元').println()
+  }
+  if (order.actualMoney > 0) {
+    printerJobs.print('实    付:' + order.actualMoney + '元').println()
+  }
+  printerJobs.setBold(false)
+
+  // 其他金额信息
+  printerJobs.setSize(1)
   if (order.basketOffsetAmount > 0) {
-    printerJobs.text('收筐抵扣：' + order.basketOffsetAmount + '元').println()
+    printerJobs.print('收筐抵扣：' + order.basketOffsetAmount + '元').println()
   }
   if (order.discountAmount > 0) {
-    printerJobs.text('优惠金额：' + order.discountAmount + '元').println()
+    printerJobs.print('优惠金额：' + order.discountAmount + '元').println()
   }
   if (order.debt > 0) {
-    printerJobs.text('应付金额：' + order.debt + '元').println()
+    printerJobs.print('应付金额：' + order.debt + '元').println()
   }
-  printerJobs.text('实付金额：' + order.actualMoney + '元').println()
   if (order.overchargeAmount > 0) {
-    printerJobs.text('多收金额：' + order.overchargeAmount + '元').println()
+    printerJobs.print('多收金额：' + order.overchargeAmount + '元').println()
   }
-  printerJobs.setSize(2).print('-------------------------------------------')
 
-  // 联系信息
+  // 页脚信息
   printerJobs.setSize(1)
-  if (address) {
-    printerJobs.text('联系地址：' + address).println()
+  if (address && contact) {
+    printerJobs.print('商行地址:' + address).println()
   }
-  if (contact) {
-    printerJobs.text('联系电话：' + contact).println()
-  }
+  printerJobs.print('打印时间:' + context.getFormattedDate()).println2()
+  printerJobs.setAlign('CT')
+  printerJobs.print('智农佳:400-812-7682').println2()
 
-  // 页脚
-  printerJobs.text('打印时间:' + context.getFormattedDate()).println()
-  printerJobs.text('智农佳-全国热线：400-812-7682')
-  printerJobs.lineFeed(2)
+  printerJobs.lineFeed(1)
   printerJobs.caizhi()
 }
 
@@ -124,105 +196,167 @@ function pendingOrderTemplate(printerJobs, order, context) {
   var currentCompanyName = uni.getStorageSync('companyName')
   var address = uni.getStorageSync('address')
   var contact = uni.getStorageSync('contact')
+  var marketName = uni.getStorageSync('marketName')
   var ModelList = JSON.parse(order.module)
 
-  // 标题
-  printerJobs.lineFeed(1)
-  printerJobs.setSize(2).setAlign('LT').print('【挂单打印】\r\n')
-  printerJobs.lineFeed(1)
+  // 添加 println2 辅助方法（增加额外间距）
+  printerJobs.println2 = function () {
+    this.println()
+    this.println()
+    return this
+  }
 
-  // 商家名称
-  printerJobs.setAlign('CT')
-  printerJobs.setSize(3).print(currentCompanyName + '\r\n')
+  // 设置行间距（默认30点，设置为15点以减小行距）
+  printerJobs.setLineSpacing(15)
+
+  // 标题和订单号
   printerJobs.setAlign('LT')
-
-  // 买家信息
-  printerJobs.setSize(2).print('买家：' + (order.customName != null ? order.customName : ''))
-  printerJobs.setSize(1).print('挂单时间：')
-
-  // 货品信息分割线
-  printerJobs.setSize(2).print('-------------------货品信息------------------').println().setBold(false)
-
-  // 打印货品列表（type=1）
-  var goodIndex = 0
-  for (var i = 0; i < ModelList.length; i++) {
-    var x = ModelList[i]
-    if (x.type === 1) {
-      goodIndex += 1
-      printerJobs
-        .setSize(2)
-        .text(goodIndex + '.' + x.name)
-        .text(' '.repeat(10))
-      printerJobs.text('小计：' + x.subtotal).println()
-      printerJobs.setAlign('LT')
-      printerJobs
-        .setSize(1)
-        .text(context.calculateSpacesTo9('数量：' + x.mount + '件'))
-        .text(context.calculateSpacesTo9('单价：' + x.referenceAmount))
-        .text(
-          context.calculateSpacesTo12(
-            '重量：' + (x.totalWeight - x.tareWeight) + '(' + x.totalWeight + '-' + x.tareWeight + ')'
-          )
-        )
-        .println()
-    }
-  }
-
-  // 打印附加项（type=2）
-  var filteredList = ModelList.filter(function (item) {
-    return item.type === 2
-  })
-  if (filteredList.length > 0) {
-    printerJobs.text('(附加项)').println()
-  }
-  for (var k = 0; k < filteredList.length; k++) {
-    var addon = filteredList[k]
+  printerJobs.setSize(2).setBold(true).print('挂单打印').setBold(false)
+  if (order.orderNo) {
     printerJobs
       .setSize(1)
-      .text(k + 1 + '.' + addon.name)
-      .text(' '.repeat(10))
-    printerJobs.text('小计：' + addon.subtotal).println()
-    printerJobs.setAlign('LT')
+      .print('     票号:' + order.orderNo)
+      .println()
+  } else {
+    printerJobs.println()
+  }
+  if (order.barcode) {
     printerJobs
       .setSize(1)
-      .text(context.calculateSpacesTo15('数量：' + addon.mount + '件'))
-      .text(context.calculateSpacesTo15('单价：' + addon.referenceAmount))
+      .print('                    码串:' + order.barcode)
       .println()
   }
 
+  // 商家名称和市场名称（居中）
+  printerJobs.setAlign('CT')
+  if (marketName) {
+    printerJobs.setSize(2).print(marketName).println()
+  }
+  printerJobs.setSize(3).setBold(true).print(currentCompanyName).setBold(false).println()
+  printerJobs.setAlign('LT')
+
+  // 买家信息
+  printerJobs.setSize(1)
+  printerJobs.print('买家:' + (order.customName != null ? order.customName : '散客/贵宾客户')).println()
+  printerJobs.print('挂单时间:' + (order.pendingTime || context.getFormattedDate()))
+  if (order.printCount) {
+    printerJobs.print('  第' + order.printCount + '次打印')
+  }
+  printerJobs.println()
+
+  // 货品信息分割线
+  printerJobs.setSize(1).print('----------------------货品信息----------------------').println()
+
+  // 构建货品和附加项的分组关系
+  var goodsWithAddons = []
+  for (var i = 0; i < ModelList.length; i++) {
+    var item = ModelList[i]
+    if (item.type === 1) {
+      // 主货品
+      var goodsGroup = {
+        goods: item,
+        addons: [],
+      }
+      // 查找该货品的附加项
+      for (var j = 0; j < ModelList.length; j++) {
+        var addonItem = ModelList[j]
+        if (addonItem.type === 2 && addonItem.parentId === item.id) {
+          goodsGroup.addons.push(addonItem)
+        }
+      }
+      goodsWithAddons.push(goodsGroup)
+    }
+  }
+
+  // 打印货品列表（货品+附加项分组）
+  var goodIndex = 0
+  for (var g = 0; g < goodsWithAddons.length; g++) {
+    var group = goodsWithAddons[g]
+    var x = group.goods
+    goodIndex += 1
+
+    // 货品名称和小计（一行显示）
+    printerJobs.setSize(2).setBold(true)
+    var itemLine = goodIndex + '.' + x.name
+    var subtotalText = '小计:' + x.subtotal
+    var spacesNeeded = 24 - itemLine.length - subtotalText.length
+    if (spacesNeeded < 1) spacesNeeded = 1
+    printerJobs.print(itemLine + ' '.repeat(spacesNeeded) + subtotalText).println()
+    printerJobs.setBold(false)
+
+    // 货品详细信息（第二行）
+    printerJobs.setSize(1)
+    var detailLine = '数量:' + x.mount + '件'
+    detailLine += '        毛重:' + (x.totalWeight || 0)
+    detailLine += '    去皮:' + (x.tareWeight || 0)
+    printerJobs.print(detailLine).println()
+
+    // 货品详细信息（第三行）
+    var detailLine2 = '净重:' + ((x.totalWeight || 0) - (x.tareWeight || 0))
+    detailLine2 += '        单价:' + x.referenceAmount
+    detailLine2 += '    货款:' + x.subtotal
+    printerJobs.print(detailLine2).println()
+
+    // 打印该货品的附加项
+    for (var a = 0; a < group.addons.length; a++) {
+      var addon = group.addons[a]
+      printerJobs.setSize(1).setBold(true)
+      var addonLine = '  ' + addon.name
+      var addonSubtotal = '小计:' + addon.subtotal
+      var addonSpaces = 26 - addonLine.length - addonSubtotal.length
+      if (addonSpaces < 1) addonSpaces = 1
+      printerJobs.print(addonLine + ' '.repeat(addonSpaces) + addonSubtotal).println()
+      printerJobs.setBold(false)
+
+      // 附加项详细信息
+      printerJobs.setSize(1)
+      var addonDetail = '  数量:' + addon.mount + '件'
+      addonDetail += '        单价:' + addon.referenceAmount
+      addonDetail += '    储金额:' + addon.subtotal
+      printerJobs.print(addonDetail).println()
+    }
+
+    // 货品组之间增加间距（除了最后一个）
+    if (g < goodsWithAddons.length - 1) {
+      printerJobs.println2()
+    }
+  }
+
+  // 金额汇总分割线
+  printerJobs.setSize(1).print('---------------------------------------------------').println()
+
   // 金额汇总
   printerJobs.setAlign('LT')
-  printerJobs.setSize(2).print('-------------------------------------------')
-  printerJobs.setSize(4)
-  printerJobs.text('总计：' + order.payableAmount + '元').println()
+  printerJobs.setSize(2).setBold(true)
+  printerJobs.print('总    计:' + order.payableAmount + '元').println()
+  printerJobs.print('实    付:' + order.actualMoney + '元(现金)').println()
+  printerJobs.setBold(false)
+
+  // 其他金额信息
+  printerJobs.setSize(1)
   if (order.basketOffsetAmount > 0) {
-    printerJobs.text('收筐抵扣：' + order.basketOffsetAmount + '元').println()
+    printerJobs.print('收筐抵扣：' + order.basketOffsetAmount + '元').println()
   }
   if (order.discountAmount > 0) {
-    printerJobs.text('优惠金额：' + order.discountAmount + '元').println()
+    printerJobs.print('优惠金额：' + order.discountAmount + '元').println()
   }
   if (order.debt > 0) {
-    printerJobs.text('应付金额：' + order.debt + '元').println()
+    printerJobs.print('应付金额：' + order.debt + '元').println()
   }
-  printerJobs.text('实付金额：' + order.actualMoney + '元').println()
   if (order.overchargeAmount > 0) {
-    printerJobs.text('多收金额：' + order.overchargeAmount + '元').println()
+    printerJobs.print('多收金额：' + order.overchargeAmount + '元').println()
   }
-  printerJobs.setSize(2).print('-------------------------------------------')
 
-  // 联系信息
+  // 页脚信息
   printerJobs.setSize(1)
-  if (address) {
-    printerJobs.text('联系地址：' + address).println()
+  if (address && contact) {
+    printerJobs.print('商行地址:' + address).println()
   }
-  if (contact) {
-    printerJobs.text('联系电话：' + contact).println()
-  }
+  printerJobs.print('打印时间:' + context.getFormattedDate()).println()
+  printerJobs.setAlign('CT')
+  printerJobs.print('智农佳:400-812-7682').println()
 
-  // 页脚
-  printerJobs.text('打印时间:' + context.getFormattedDate()).println()
-  printerJobs.text('智农佳-全国热线：400-812-7682')
-  printerJobs.lineFeed(2)
+  printerJobs.lineFeed(1)
   printerJobs.caizhi()
 }
 

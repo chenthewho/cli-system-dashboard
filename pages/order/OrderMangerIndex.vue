@@ -494,8 +494,8 @@
 </template>
 
 <script>
-	import cashierOrder from '../../api/cashier/cashierOrder'
-	import member from '../../api/member/member'
+import cashierOrder from '../../api/cashier/cashierOrder'
+import member from '../../api/member/member'
 import OrderImage from '@/components/OrderImage/OrderImage.vue'
 import RepaymentModal from '@/components/RepaymentModal.vue'
 export default {
@@ -532,44 +532,44 @@ export default {
       currentPayWay: 1,
       beginTime: '',
       endTime: '',
-				showHistoryDrawer: false, // 历史订单抽屉显示状态
-				historyOrderList: [], // 历史订单列表
+      showHistoryDrawer: false, // 历史订单抽屉显示状态
+      historyOrderList: [], // 历史订单列表
       currentOriginOrderId: '', // 当前原始订单ID
-				showOrderDetailDrawer: false, // 订单详情抽屉显示状态
-				orderDetailData: null, // 订单详情数据
-				selectedOrderId: null, // 选中的订单ID
-				// 分页相关
-				pageSize: 10, // 每页显示的数据量
-				currentPage: 1, // 当前页码
-				totalCount: 0, // 总数据量
-				hasMore: true, // 是否还有更多数据
-				loading: false, // 是否正在加载
+      showOrderDetailDrawer: false, // 订单详情抽屉显示状态
+      orderDetailData: null, // 订单详情数据
+      selectedOrderId: null, // 选中的订单ID
+      // 分页相关
+      pageSize: 10, // 每页显示的数据量
+      currentPage: 1, // 当前页码
+      totalCount: 0, // 总数据量
+      hasMore: true, // 是否还有更多数据
+      loading: false, // 是否正在加载
       payWay: [
         {
           label: '微信支付',
           coin: 'weixin-fill',
-						select: 1,
+          select: 1,
           color: 'green',
           id: 1,
-					},
-					{
+        },
+        {
           label: '现金',
           coin: 'red-packet-fill',
-						select: 0,
+          select: 0,
           color: 'red',
           id: 2,
-					},
-					{
+        },
+        {
           label: '支付宝',
           coin: 'zhifubao',
-						select: 0,
+          select: 0,
           color: 'blue',
           id: 3,
         },
         {
           label: '其他',
           coin: 'coupon-fill',
-						select: 0,
+          select: 0,
           color: 'red',
           id: 4,
         },
@@ -643,27 +643,27 @@ export default {
   // mounted() {
   // 	// 在组件挂载后设置 scrollHeight
 
-		// },
-		mounted() {
+  // },
+  mounted() {
     this.scrollHeight = uni.getWindowInfo().windowHeight - 50
     this.CompanyId = uni.getStorageSync('companyId')
     this.getMinTimeToNow()
     this.refresh()
-		},
-		methods: {
+  },
+  methods: {
     refresh() {
-				// 重置分页和数据
+      // 重置分页和数据
       this.currentPage = 1
       this.hasMore = true
       this.moduleList = []
       this.originalModuleList = []
       this.getMinTimeToNow()
-				// 加载第一页数据
+      // 加载第一页数据
       this.loadPageData()
-			},
-			
-			// 加载分页数据
-			loadPageData() {
+    },
+
+    // 加载分页数据
+    loadPageData() {
       if (this.loading) return
 
       this.loading = true
@@ -672,81 +672,81 @@ export default {
 
       cashierOrder
         .GetAccountByCompanyIdandDateRange(
-					this.CompanyId, 
-					this.beginTime, 
-					this.endTime,
-					this.pageSize,
-					this.currentPage
+          this.CompanyId,
+          this.beginTime,
+          this.endTime,
+          this.pageSize,
+          this.currentPage
         )
         .then(res => {
           // 兼容不同的返回格式
           let newData = []
           let totalCount = 0
-					
-					if (res.code === 200 || res.data) {
-						// 判断返回的数据结构
-						if (Array.isArray(res.data)) {
-							// 如果直接返回数组（旧格式，无分页信息）
+
+          if (res.code === 200 || res.data) {
+            // 判断返回的数据结构
+            if (Array.isArray(res.data)) {
+              // 如果直接返回数组（旧格式，无分页信息）
               newData = res.data
               totalCount = res.data.length
               this.hasMore = false // 无分页信息时，认为没有更多数据
-						} else if (res.data && typeof res.data === 'object') {
-							// 如果返回对象（新格式，包含分页信息）
+            } else if (res.data && typeof res.data === 'object') {
+              // 如果返回对象（新格式，包含分页信息）
               newData = res.data.data || res.data.list || []
               totalCount = res.data.totalCount || res.data.total || res.data.totalElements || 0
-						}
-						
-						// 处理每条数据
-						if (newData && newData.length > 0) {
-							newData.forEach(item => {
+            }
+
+            // 处理每条数据
+            if (newData && newData.length > 0) {
+              newData.forEach(item => {
                 item.modulestr = ''
-								if (item.module) {
-									try {
+                if (item.module) {
+                  try {
                     var cardList = JSON.parse(item.module)
-										cardList.forEach(card => {
-											if (card.type === 1 || card.type === 3) {
+                    cardList.forEach(card => {
+                      if (card.type === 1 || card.type === 3) {
                         let modulesStr = []
-												if (card.type === 1 || card.type === 3) {
+                        if (card.type === 1 || card.type === 3) {
                           modulesStr.push(card.name + 'x' + card.mount)
-												}
+                        }
                         item.modulestr = modulesStr.join('|')
-											}
-										})
-									} catch (e) {
+                      }
+                    })
+                  } catch (e) {
                     console.error('解析module数据失败:', e)
-									}
-								}
-							})
-							
-							// 数据按时间降序排序
-							newData.sort((a, b) => {
+                  }
+                }
+              })
+
+              // 数据按时间降序排序
+              newData.sort((a, b) => {
                 return new Date(b.createTime) - new Date(a.createTime)
               })
-							
-							// 追加到原始列表
+
+              // 追加到原始列表
               this.originalModuleList = [...this.originalModuleList, ...newData]
-							
-						// 计算是否还有更多数据
-						if (totalCount > 0) {
+
+              // 计算是否还有更多数据
+              if (totalCount > 0) {
                 this.hasMore = this.originalModuleList.length < totalCount
-						} else {
-							// 如果没有总数信息，根据返回的数据量判断
+              } else {
+                // 如果没有总数信息，根据返回的数据量判断
                 this.hasMore = newData.length >= this.pageSize
               }
             } else {
               this.hasMore = false
-						}
-						
-						// 应用当前筛选
+            }
+
+            // 应用当前筛选
             this.applyFilter()
-					} else {
+          } else {
             this.hasMore = false
-					}
+          }
         })
         .catch(err => {
           console.error('加载数据失败:', err)
-					uni.showToast({
-						title: '加载失败',
+          uni.showToast({
+            title: '加载失败',
             icon: 'none',
           })
           this.hasMore = false
@@ -769,15 +769,15 @@ export default {
       }
       this.currentPage++
       this.loadPageData()
-			},
-			// 获取从最小时间到当前时间的时间范围
-			getMinTimeToNow() {
+    },
+    // 获取从最小时间到当前时间的时间范围
+    getMinTimeToNow() {
       const now = new Date()
-				
-				// 设置最小时间（可以根据需求修改，这里设置为2020-01-01 00:00:00）
+
+      // 设置最小时间（可以根据需求修改，这里设置为2020-01-01 00:00:00）
       const minTime = new Date('2020-01-01 00:00:00')
-				
-				// 格式化成 "YYYY-MM-DD HH:mm:ss"（使用本地时间）
+
+      // 格式化成 "YYYY-MM-DD HH:mm:ss"（使用本地时间）
       const formatDateTime = date => {
         const year = date.getFullYear()
         const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -790,21 +790,21 @@ export default {
 
       this.beginTime = formatDateTime(minTime) // 例如 "2020-01-01 00:00:00"
       this.endTime = formatDateTime(now) // 当前时间，例如 "2025-10-15 14:30:25"
-			},
-			
-			// 保留原来的今日时间范围方法（如果需要可以调用）
-			getTodayDateRange() {
-				// 获取当前本地时间
+    },
+
+    // 保留原来的今日时间范围方法（如果需要可以调用）
+    getTodayDateRange() {
+      // 获取当前本地时间
       const now = new Date()
 
-				// 设置当天的 00:00:01 和 23:59:59（本地时间）
+      // 设置当天的 00:00:01 和 23:59:59（本地时间）
       const todayStart = new Date(now)
       todayStart.setHours(0, 0, 1, 0) // 设置为 00:00:01
 
       const todayEnd = new Date(now)
       todayEnd.setHours(23, 59, 59, 999) // 设置为 23:59:59
 
-				// 格式化成 "YYYY-MM-DD HH:mm:ss"（使用本地时间）
+      // 格式化成 "YYYY-MM-DD HH:mm:ss"（使用本地时间）
       const formatDateTime = date => {
         const year = date.getFullYear()
         const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -850,33 +850,33 @@ export default {
       member
         .GetmemberListByCompanyIdPage({ Id: this.CompanyId, pageSize: 10, currentPage: 1 })
         .then(res => {
-					this.memberOptions.push({
+          this.memberOptions.push({
             customName: '散客',
             id: '',
-					})
-					// 适配分页结果格式
+          })
+          // 适配分页结果格式
           const memberList = res.data.Data || res.data.data || []
           this.memberOptions.push(...memberList)
-					this.memberDialogVisible = true
+          this.memberDialogVisible = true
         })
         .finally(() => {})
-			},
-			orderMemberChangeMain(memberNew, order) {
+    },
+    orderMemberChangeMain(memberNew, order) {
       var orderNew = JSON.parse(JSON.stringify(order))
       orderNew.customerId = memberNew.id
       orderNew.customName = memberNew.customName
-				cashierOrder.exchangMember(JSON.stringify(orderNew)).then(res => {
-					if (res.code === 200) {
-						uni.showToast({
-							title: '客户变更成功',
+      cashierOrder.exchangMember(JSON.stringify(orderNew)).then(res => {
+        if (res.code === 200) {
+          uni.showToast({
+            title: '客户变更成功',
             icon: 'none',
-						})
+          })
           this.dateChange()
           this.memberDialogVisible = false
-					}
+        }
       })
-			},
-			showInfo(e) {
+    },
+    showInfo(e) {
       this.showDetail = true
       this.currentOrder = e
       this.selectedOrderId = e.id // 设置选中的订单ID
@@ -887,56 +887,56 @@ export default {
       // 如果日期为空，使用最小时间到当前时间的范围
       if (!beginTime || !endTime) {
         this.getMinTimeToNow()
-				} else {
+      } else {
         this.beginTime = beginTime
         this.endTime = endTime
-				}
+      }
       this.refresh()
-			},
-			// 筛选功能相关方法
-			filterChange(filterType) {
+    },
+    // 筛选功能相关方法
+    filterChange(filterType) {
       this.currentFilterType = filterType
       this.applyFilter()
-			},
-			applyFilter() {
-				if (!this.originalModuleList) {
+    },
+    applyFilter() {
+      if (!this.originalModuleList) {
         return
-				}
-				
+      }
+
       let filteredList = [...this.originalModuleList]
-				
-				switch (this.currentFilterType) {
-					case 'debt':
-						// 筛选有欠款的订单（下欠金额大于0）
+
+      switch (this.currentFilterType) {
+        case 'debt':
+          // 筛选有欠款的订单（下欠金额大于0）
           filteredList = filteredList.filter(item => item.debt > 0)
           break
-					case 'sent':
-						// 筛选已发单的订单（shareNum > 0）
+        case 'sent':
+          // 筛选已发单的订单（shareNum > 0）
           filteredList = filteredList.filter(item => item.shareNum > 0)
           break
-					case 'unsent':
-						// 筛选未发单的订单（shareNum === 0 或者 undefined）
+        case 'unsent':
+          // 筛选未发单的订单（shareNum === 0 或者 undefined）
           filteredList = filteredList.filter(item => !item.shareNum || item.shareNum === 0)
           break
-					case 'all':
-					default:
-						// 显示全部订单
+        case 'all':
+        default:
+          // 显示全部订单
           break
-				}
-				
+      }
+
       this.moduleList = filteredList
-			},
-			checkboxChange(e) {
-				this.checkboxValue = [e]
-			},
+    },
+    checkboxChange(e) {
+      this.checkboxValue = [e]
+    },
     showHistoryOrder(item) {
-				// 设置当前原始订单ID和订单ID
+      // 设置当前原始订单ID和订单ID
       this.currentOriginOrderId = item.originOrderId || item.id
-				
-				// 调用API获取历史订单
+
+      // 调用API获取历史订单
       this.loadHistoryOrders(this.currentOriginOrderId, item.id)
-				
-				// 显示抽屉
+
+      // 显示抽屉
       this.showHistoryDrawer = true
     },
 
@@ -945,20 +945,20 @@ export default {
       cashierOrder
         .GetOriginOrderId(originOrderId, orderId)
         .then(res => {
-					if (res.code === 200) {
+          if (res.code === 200) {
             let historyData = res.data || []
-						// 按照updateTime降序排序
-						historyData.sort((a, b) => {
+            // 按照updateTime降序排序
+            historyData.sort((a, b) => {
               const timeA = a.updateTime || a.createTime || ''
               const timeB = b.updateTime || b.createTime || ''
               return new Date(timeB) - new Date(timeA)
             })
             this.historyOrderList = historyData
-					} else {
+          } else {
             console.error('获取历史订单失败:', res.message)
             this.historyOrderList = []
-						uni.showToast({
-							title: '获取历史订单失败',
+            uni.showToast({
+              title: '获取历史订单失败',
               icon: 'none',
             })
           }
@@ -966,28 +966,28 @@ export default {
         .catch(error => {
           console.error('获取历史订单异常:', error)
           this.historyOrderList = []
-					uni.showToast({
-						title: '网络异常',
+          uni.showToast({
+            title: '网络异常',
             icon: 'none',
           })
         })
-			},
-			
-			// 关闭历史订单抽屉
-			closeHistoryDrawer() {
+    },
+
+    // 关闭历史订单抽屉
+    closeHistoryDrawer() {
       this.showHistoryDrawer = false
       this.historyOrderList = []
       this.currentOriginOrderId = ''
-			},
-			
-			// 格式化订单时间
-			formatOrderTime(timeStr) {
+    },
+
+    // 格式化订单时间
+    formatOrderTime(timeStr) {
       if (!timeStr) return ''
       return timeStr.replace('T', ' ').substring(0, 16)
-			},
-			
-			// 获取订单状态文本
-			getOrderStatusText(status) {
+    },
+
+    // 获取订单状态文本
+    getOrderStatusText(status) {
       switch (status) {
         case 1:
           return '正常'
@@ -997,11 +997,11 @@ export default {
           return '已修改'
         default:
           return '未知'
-				}
-			},
-			
-			// 获取订单状态样式类
-			getOrderStatusClass(status) {
+      }
+    },
+
+    // 获取订单状态样式类
+    getOrderStatusClass(status) {
       switch (status) {
         case 1:
           return 'status-normal'
@@ -1011,12 +1011,12 @@ export default {
           return 'status-modified'
         default:
           return 'status-unknown'
-				}
-			},
-			
-			// 显示订单详情
-			showOrderDetail(order) {
-				// 获取订单详细信息
+      }
+    },
+
+    // 显示订单详情
+    showOrderDetail(order) {
+      // 获取订单详细信息
       this.loadOrderDetail(order.id)
     },
 
@@ -1025,13 +1025,13 @@ export default {
       cashierOrder
         .GetOrderByAccountId(orderId)
         .then(res => {
-					if (res.code === 200 || res.data) {
+          if (res.code === 200 || res.data) {
             this.orderDetailData = res.data
-						// 解析商品数据
-						if (this.orderDetailData.module && typeof this.orderDetailData.module === 'string') {
-							try {
+            // 解析商品数据
+            if (this.orderDetailData.module && typeof this.orderDetailData.module === 'string') {
+              try {
                 this.orderDetailData.module = JSON.parse(this.orderDetailData.module)
-							} catch (error) {
+              } catch (error) {
                 console.error('解析商品数据失败:', error)
                 this.orderDetailData.module = []
               }
@@ -1043,51 +1043,51 @@ export default {
 
             console.log('订单详情数据:', this.orderDetailData)
             this.showOrderDetailDrawer = true
-					} else {
+          } else {
             console.error('获取订单详情失败:', res.message)
-						uni.showToast({
-							title: '获取订单详情失败',
+            uni.showToast({
+              title: '获取订单详情失败',
               icon: 'none',
             })
-					}
+          }
         })
         .catch(error => {
           console.error('获取订单详情异常:', error)
-					uni.showToast({
-						title: '网络异常',
+          uni.showToast({
+            title: '网络异常',
             icon: 'none',
           })
         })
-			},
-			
-			// 关闭订单详情抽屉
-			closeOrderDetailDrawer() {
+    },
+
+    // 关闭订单详情抽屉
+    closeOrderDetailDrawer() {
       this.showOrderDetailDrawer = false
       this.orderDetailData = null
-			},
-			deleteHandle() {
-				if (!this.isEdting || this.checkboxValue.length == 0) {
-					return
-				}
+    },
+    deleteHandle() {
+      if (!this.isEdting || this.checkboxValue.length == 0) {
+        return
+      }
       let that = this
-				uni.showModal({
-					title: '提示',
-					content: '您确定要删除该订单吗？',
+      uni.showModal({
+        title: '提示',
+        content: '您确定要删除该订单吗？',
         success: res => {
-						if (res.confirm) {
+          if (res.confirm) {
             var isflag = false
-							that.checkboxValue.forEach(item => {
-								that.moduleList.forEach(item2 => {
-									if (item2.id == item) {
-										if (item2.debt > 0) {
+            that.checkboxValue.forEach(item => {
+              that.moduleList.forEach(item2 => {
+                if (item2.id == item) {
+                  if (item2.debt > 0) {
                     isflag = true
-										}
-									}
-								})
-							})
-							if (isflag) {
-								uni.showToast({
-									title: '下欠订单不可删除',
+                  }
+                }
+              })
+            })
+            if (isflag) {
+              uni.showToast({
+                title: '下欠订单不可删除',
                 icon: 'none',
               })
               return
@@ -1101,63 +1101,63 @@ export default {
             cashierOrder
               .deleteOrder(JSON.stringify(order))
               .then(res => {
-								uni.showToast({
-									title: '删除成功',
+                uni.showToast({
+                  title: '删除成功',
                   icon: 'none',
                 })
                 that.getModuleListbyDate(that.single)
               })
               .finally(() => {
                 that.checkboxValue = []
-							})
-						} else if (res.cancel) {
-						}
+              })
+          } else if (res.cancel) {
+          }
         },
       })
-			},
+    },
 
-			getLastTime() {
+    getLastTime() {
       const currentDate = new Date()
 
-				// 获取前一天
+      // 获取前一天
       currentDate.setDate(currentDate.getDate() - 1)
 
-				// 格式化日期
+      // 格式化日期
       const year = currentDate.getFullYear()
       const month = String(currentDate.getMonth() + 1).padStart(2, '0') // 月份从0开始
       const day = String(currentDate.getDate()).padStart(2, '0')
 
-				// 拼接成 YYYY-MM-DD 格式
+      // 拼接成 YYYY-MM-DD 格式
       const formattedDate = `${year}-${month}-${day}`
       return formattedDate
-			},
-	shareOrder() {
-		// 防止重复点击
-		if (this.isGeneratingImage) {
-			uni.showToast({
+    },
+    shareOrder() {
+      // 防止重复点击
+      if (this.isGeneratingImage) {
+        uni.showToast({
           title: '单据正在生成中，请稍候...',
           icon: 'none',
         })
         return
-		}
-		
-		// 显示加载提示
-		uni.showLoading({
+      }
+
+      // 显示加载提示
+      uni.showLoading({
         title: '正在生成单据...',
         mask: true,
       })
-		
-		// 使用canvas生成订单详情图片
+
+      // 使用canvas生成订单详情图片
       this.generateOrderImage()
-	},
-		
-	// 使用canvas生成订单详情图片（参照票据样式）
-	generateOrderImage() {
+    },
+
+    // 使用canvas生成订单详情图片（参照票据样式）
+    generateOrderImage() {
       this.isGeneratingImage = true
       const order = this.currentOrder
       const products = this.currentCardInfo || []
-		
-		// 获取公司信息
+
+      // 获取公司信息
       const companyName = uni.getStorageSync('companyName') || ''
       const companyAddress = uni.getStorageSync('address') || ''
       const companyPhone = uni.getStorageSync('contact') || ''
@@ -1173,33 +1173,33 @@ export default {
       }
       this.generateHandle()
     },
-		
-		// 更新发单次数
-		updateShareCount() {
-			if (!this.currentOrder || !this.currentOrder.id) {
+
+    // 更新发单次数
+    updateShareCount() {
+      if (!this.currentOrder || !this.currentOrder.id) {
         return
-			}
-			
-			// 调用API更新发单次数
-			cashierOrder.updateShareNum(this.currentOrder.id).then(res => {
-				if (res.code === 200) {
-					// 更新本地订单的shareNum
-					if (this.currentOrder.shareNum) {
+      }
+
+      // 调用API更新发单次数
+      cashierOrder.updateShareNum(this.currentOrder.id).then(res => {
+        if (res.code === 200) {
+          // 更新本地订单的shareNum
+          if (this.currentOrder.shareNum) {
             this.currentOrder.shareNum += 1
-					} else {
+          } else {
             this.currentOrder.shareNum = 1
-					}
-					// 更新列表中对应订单的shareNum
+          }
+          // 更新列表中对应订单的shareNum
           const orderIndex = this.moduleList.findIndex(item => item.id === this.currentOrder.id)
-					if (orderIndex !== -1) {
+          if (orderIndex !== -1) {
             this.$set(this.moduleList[orderIndex], 'shareNum', this.currentOrder.shareNum)
-					}
-				}
+          }
+        }
       })
-		},
-		
-		// 直接分享图片（不保存到相册）
-		saveAndShareImage(tempFilePath) {
+    },
+
+    // 直接分享图片（不保存到相册）
+    saveAndShareImage(tempFilePath) {
       this.shareImage(tempFilePath)
     },
     downLoadImage(base64) {
@@ -1221,48 +1221,48 @@ export default {
               bitmap.clear()
             },
             e => {
-			                     uni.showToast({
+              uni.showToast({
                 title: '图片处理失败',
                 icon: 'none',
-			                     })
-			                     bitmap.clear()
-			                 }
+              })
+              bitmap.clear()
+            }
           )
         },
         e => {
-			             uni.showToast({
+          uni.showToast({
             title: '图片处理失败',
             icon: 'none',
-			              })
-			              bitmap.clear()
+          })
+          bitmap.clear()
         }
       )
-			},
-			shareImage(tempFilePath) {
-				uni.share({
-					provider: 'weixin',
-					type: 2, // 图片类型
-					scene: 'WXSceneSession', // 分享到聊天界面
-					imageUrl: tempFilePath, // 只分享这张图片的地址
-					success(res) {
+    },
+    shareImage(tempFilePath) {
+      uni.share({
+        provider: 'weixin',
+        type: 2, // 图片类型
+        scene: 'WXSceneSession', // 分享到聊天界面
+        imageUrl: tempFilePath, // 只分享这张图片的地址
+        success(res) {
           uni.showToast({
             title: '分享成功',
             icon: 'success',
           })
-					},
-					fail(err) {
+        },
+        fail(err) {
           uni.showToast({
             title: '分享失败',
             icon: 'none',
           })
         },
       })
-			},
-			
-			printerModel(order) {
+    },
+
+    printerModel(order) {
       getApp().senBleLabel(order)
-			},
-			getcurrentTime() {
+    },
+    getcurrentTime() {
       const currentDate = new Date()
       const year = currentDate.getFullYear()
       const month = String(currentDate.getMonth() + 1).padStart(2, '0') // 月份从0开始
@@ -1275,17 +1275,17 @@ export default {
       return formattedDate
     },
     TurnToTuigeCashier() {
-				uni.navigateTo({
+      uni.navigateTo({
         url: '/pages/cashier/tuigeCashier?order=' + JSON.stringify(this.currentOrder),
-				})
-			},
+      })
+    },
     TuigeOrder() {
       let that = this
-				uni.showModal({
-					title: '提示',
-					content: '您确定要退单吗？',
+      uni.showModal({
+        title: '提示',
+        content: '您确定要退单吗？',
         success: res => {
-						if (res.confirm) {
+          if (res.confirm) {
             that.TuigeOrderAction()
           }
         },
@@ -1293,7 +1293,7 @@ export default {
     },
     TuigeOrderAction() {
       var userInfo = uni.getStorageSync('userInfo')
-				let param = {
+      let param = {
         type: 10,
         companyId: this.CompanyId,
         operatorId: userInfo.id,
@@ -1302,8 +1302,8 @@ export default {
       }
       cashierOrder.TuigeAccount(JSON.stringify(param)).then(res => {
         if (res.code == 200) {
-						uni.showToast({
-							title: '退单成功',
+          uni.showToast({
+            title: '退单成功',
             icon: 'none',
           })
           this.refresh()
@@ -1385,1227 +1385,1227 @@ export default {
 </script>
 
 <style lang="scss">
-	/* 左右布局容器 */
-	.layout-container {
-		display: flex;
-		justify-content: space-between;
-		height: 100%;
-		overflow: hidden;
-		position: relative;
-	}
-	
-	/* 左侧订单列表面板 - 固定宽度 */
-	.left-panel {
-		padding: 5rpx 0rpx;
-		flex: 0 0 50%;
-		width: 50%;
-		min-width: 50%;
-		max-width: 50%;
-		padding-left: 10rpx;
-		overflow-y: auto;
-		overflow-x: hidden;
-		box-sizing: border-box;
-	}
-	
-	/* 右侧订单详情面板 - 固定宽度 */
-	.right-panel {
-		flex: 0 0 49%;
-		width: 49%;
-		background-color: #f5f5f5;
-		display: flex;
-		flex-direction: column;
-		overflow: hidden;
-		box-sizing: border-box;
-	}
-	
-	/* 订单项基础样式 */
-	.order-item {
-		width: 100%;
-		min-height: 50rpx;
-		background-color: white;
-		margin-bottom: 8rpx;
-		margin-top: 4rpx;
-		border-radius: 6px;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		border: 2rpx solid transparent;
-		position: relative;
-		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.08);
-	}
-	
-	/* 状态标签容器 - 固定在左上角 */
-	.status-badges {
-		position: relative;
-		top: 0;
-		left: 0;
-		display: flex;
-		gap: 5rpx;
-		z-index: 10;
-	}
-	
-	/* 已发单标签容器 - 固定在右上角 */
-	.sent-badge-top {
-		position: absolute;
-		top: 0;
-		right: 0;
-		z-index: 10;
-	}
-	
-	/* 状态标签通用样式 */
-	.status-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 3rpx;
-		padding: 2rpx 8rpx;
-		border-radius: 0 0 6rpx 0;
-		font-size: 12rpx;
-		font-weight: 600;
-		color: white;
-		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.12);
-		animation: badge-slide-in 0.3s ease;
-	}
-	
-	@keyframes badge-slide-in {
-		from {
-			opacity: 0;
-			transform: translate(-10rpx, -10rpx);
-		}
-		to {
-			opacity: 1;
-			transform: translate(0, 0);
-		}
-	}
-	
-	.status-badge-text {
-		font-size: 8rpx;
-		font-weight: 500;
-		line-height: 1;
-	}
-	
-	/* 已修改标签 */
-	.status-modified {
+/* 左右布局容器 */
+.layout-container {
+  display: flex;
+  justify-content: space-between;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 左侧订单列表面板 - 固定宽度 */
+.left-panel {
+  padding: 5rpx 0rpx;
+  flex: 0 0 50%;
+  width: 50%;
+  min-width: 50%;
+  max-width: 50%;
+  padding-left: 10rpx;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* 右侧订单详情面板 - 固定宽度 */
+.right-panel {
+  flex: 0 0 49%;
+  width: 49%;
+  background-color: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 订单项基础样式 */
+.order-item {
+  width: 100%;
+  min-height: 50rpx;
+  background-color: white;
+  margin-bottom: 8rpx;
+  margin-top: 4rpx;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2rpx solid transparent;
+  position: relative;
+  box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.08);
+}
+
+/* 状态标签容器 - 固定在左上角 */
+.status-badges {
+  position: relative;
+  top: 0;
+  left: 0;
+  display: flex;
+  gap: 5rpx;
+  z-index: 10;
+}
+
+/* 已发单标签容器 - 固定在右上角 */
+.sent-badge-top {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10;
+}
+
+/* 状态标签通用样式 */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3rpx;
+  padding: 2rpx 8rpx;
+  border-radius: 0 0 6rpx 0;
+  font-size: 12rpx;
+  font-weight: 600;
+  color: white;
+  box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.12);
+  animation: badge-slide-in 0.3s ease;
+}
+
+@keyframes badge-slide-in {
+  from {
+    opacity: 0;
+    transform: translate(-10rpx, -10rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+}
+
+.status-badge-text {
+  font-size: 8rpx;
+  font-weight: 500;
+  line-height: 1;
+}
+
+/* 已修改标签 */
+.status-modified {
   background: linear-gradient(135deg, #31bdec, #2a9fd6);
-	}
-	
-	/* 退单标签 */
-	.status-refunded {
+}
+
+/* 退单标签 */
+.status-refunded {
   background: linear-gradient(135deg, #f56c6c, #e54d4d);
-	}
-	
-	/* 第一行样式 */
-	.order-row-first {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		width: 100%;
-		padding: 8rpx;
-	}
-	
-	.customer-info {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		gap: 4rpx;
-		min-width: 0;
-		.user-header {
-			width: 10rpx;
-			height: 10rpx;
-		}
-	}
-	
-	.customer-name {
-		font-weight: bold;
-		color: #333;
-		font-size: 13rpx;
-	}
-	
-	.order-time {
-		flex: 2;
-		text-align: left;
-		padding-left: 8rpx;
-		font-size: 12rpx;
-		color: #666;
-		display: flex;
-		align-items: center;
-		gap: 6rpx;
-	}
-	
-	.sent-badge {
-		display: inline-flex;
-		align-items: center;
+}
+
+/* 第一行样式 */
+.order-row-first {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 8rpx;
+}
+
+.customer-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  min-width: 0;
+  .user-header {
+    width: 10rpx;
+    height: 10rpx;
+  }
+}
+
+.customer-name {
+  font-weight: bold;
+  color: #333;
+  font-size: 13rpx;
+}
+
+.order-time {
+  flex: 2;
+  text-align: left;
+  padding-left: 8rpx;
+  font-size: 12rpx;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
+
+.sent-badge {
+  display: inline-flex;
+  align-items: center;
   background-color: #67c23a;
-		color: white;
-		padding: 2rpx 6rpx;
-		border-radius: 8rpx;
-		font-size: 10rpx;
-		font-weight: 500;
-		white-space: nowrap;
-	}
-	
-	.actual-money {
-		flex: 1;
-		text-align: right;
-		font-size: 12rpx;
-		color: #666;
-		white-space: nowrap;
-	}
-	
-	.money-value {
-		font-weight: bold;
-		color: #333;
-		font-size: 13rpx;
-	}
-	
-	/* 第二行样式 */
-	.order-row-second {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		width: 100%;
-		gap: 8rpx;
+  color: white;
+  padding: 2rpx 6rpx;
+  border-radius: 8rpx;
+  font-size: 10rpx;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.actual-money {
+  flex: 1;
+  text-align: right;
+  font-size: 12rpx;
+  color: #666;
+  white-space: nowrap;
+}
+
+.money-value {
+  font-weight: bold;
+  color: #333;
+  font-size: 13rpx;
+}
+
+/* 第二行样式 */
+.order-row-second {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 8rpx;
   padding: 0 8rpx 8rpx 8rpx;
-	}
-	
-	.module-str {
-		flex: 1;
-		color: #999;
-		font-size: 11rpx;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		min-width: 0;
-		max-width: 50%;
-	}
-	
-	.debt-badge {
-		display: inline-flex;
-		align-items: center;
-		background: linear-gradient(135deg, #ff4757, #ff3838);
-		color: white;
-		padding: 3rpx 8rpx;
-		border-radius: 4rpx;
-		font-size: 11rpx;
-		font-weight: 600;
-		white-space: nowrap;
-		box-shadow: 0 2rpx 6rpx rgba(255, 71, 87, 0.3);
-		animation: debt-pulse 2s ease-in-out infinite;
-	}
-	
-	@keyframes debt-pulse {
+}
+
+.module-str {
+  flex: 1;
+  color: #999;
+  font-size: 11rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  max-width: 50%;
+}
+
+.debt-badge {
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(135deg, #ff4757, #ff3838);
+  color: white;
+  padding: 3rpx 8rpx;
+  border-radius: 4rpx;
+  font-size: 11rpx;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2rpx 6rpx rgba(255, 71, 87, 0.3);
+  animation: debt-pulse 2s ease-in-out infinite;
+}
+
+@keyframes debt-pulse {
   0%,
   100% {
-			box-shadow: 0 2rpx 6rpx rgba(255, 71, 87, 0.3);
-		}
-		50% {
-			box-shadow: 0 2rpx 10rpx rgba(255, 71, 87, 0.5);
-		}
-	}
-	
-	.debt-value {
-		font-weight: bold;
-		font-size: 12rpx;
-	}
-	
-	/* 订单项悬停样式 */
-	.order-item:hover {
-		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
-		transform: translateY(-1rpx);
-	}
-	
-	/* 订单项选中样式 */
-	.order-item-selected {
-		border: 2rpx solid $zn-theme-color !important;
-		background-color: #e3f2fdc2 !important;
-		box-shadow: 0 1rpx 8rpx #5dcdfd97 !important;
-	}
-	
-	/* 空状态样式 */
-	.empty-detail {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		height: 100%;
-		color: #999;
-	}
-	
-	/* 详情内容 */
-	.detail-content {
-		display: flex;
-		flex-direction: column;
-		height: 96%;
-		background-color: white;
-		border-radius: 4rpx;
-		padding: 10rpx;
-		margin-top: 8rpx;
-	}
-	
-	/* 详情头部 */
-	.detail-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		background: linear-gradient(135deg, #3498db, #2980b9);
-		border-radius: 8rpx;
-		margin-bottom: 10rpx;
-	}
-	
-	.detail-title {
-		font-size: 26rpx;
-		font-weight: bold;
-		color: white;
-	}
-	
-	/* 新的详情头部样式 */
-	.detail-header-new {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		border-radius: 6rpx;
-		margin-bottom: 5rpx;
-	}
+    box-shadow: 0 2rpx 6rpx rgba(255, 71, 87, 0.3);
+  }
+  50% {
+    box-shadow: 0 2rpx 10rpx rgba(255, 71, 87, 0.5);
+  }
+}
 
-	/* 新的详情头部样式2 */
-	.detail-header-new2 {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 8rpx 12rpx;
-		background: orange;
-		border-radius: 6rpx;
-		margin-bottom: 10rpx;
-		box-shadow: 0 2rpx 8rpx rgba(74, 144, 226, 0.2);
-		min-height: 40rpx;
-	}
-	.header-left {
-		display: flex;
-		align-items: center;
-		gap: 8rpx;
-	}
-	
-	.detail-title-new {
-		font-size: 16rpx;
-		font-weight: bold;
-		color: $zn-font-color-leve1;
-		letter-spacing: 0.5rpx;
-	}
-	
-	.header-right {
-		display: flex;
-		align-items: center;
-	}
-	
-	.share-order-btn {
-		width: 60rpx;
-		height: 24rpx;
-		font-size: 12rpx;
-		font-weight: 600;
-		background: $zn-theme-color;
-		border-radius: 30rpx;
-		transition: all 0.3s ease !important;
-		color: #ffffff;
-		display: flex;
-		line-height: 24rpx;
-		justify-content: center;
-		align-items: center;
-		image {
-			width: 12rpx;
-			height: 12rpx;
-			margin-right: 4rpx;
-		}
-	}
-	
-	/* 测试按钮样式（临时调试用） */
-	.test-canvas-btn {
-		width: 50rpx;
-		height: 24rpx;
-		font-size: 12rpx;
-		font-weight: 600;
-		background: #ff9800;
-		border-radius: 30rpx;
-		transition: all 0.3s ease !important;
-		color: #ffffff;
-		display: flex;
-		line-height: 24rpx;
-		justify-content: center;
-		align-items: center;
-	}
-	
-	/* 订单信息网格布局 */
-	.order-info-grid {
-		padding: 15rpx;
-		background-color: #f8f9fa;
-		border-radius: 8rpx;
-		margin-bottom: 15rpx;
-	}
-	
-	/* 紧凑的订单信息网格 */
-	.order-info-grid-compact {
-		padding: 8rpx 8rpx 4rpx 8rpx;
-		background-color: #f8f9fa;
-		border-radius: 4rpx;
-		margin-bottom: 8rpx;
-	}
-	
-	.info-row {
-		display: flex;
-		gap: 15rpx;
-		margin-bottom: 12rpx;
-	}
-	
-	/* 紧凑模式下的行间距 */
-	.order-info-grid-compact .info-row {
-		gap: 8rpx;
-		margin-bottom: 6rpx;
-	}
-	
-	.info-row:last-child {
-		margin-bottom: 0;
-	}
-	
-	.info-item-new {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		background-color: white;
-		padding: 10rpx 12rpx;
-		border-radius: 6rpx;
-		box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
-		min-width: 0;
-	}
-	
-	/* 紧凑模式下的info-item */
-	.order-info-grid-compact .info-item-new {
-		padding: 6rpx 10rpx;
-		border-radius: 4rpx;
-		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.05);
-	}
-	
-	.info-label-new {
-		color: #666;
-		font-size: 14rpx;
-		font-weight: 500;
-		white-space: nowrap;
-		margin-right: 8rpx;
-	}
-	
-	.info-value-new {
-		color: #333;
-		font-size: 14rpx;
-		font-weight: 600;
-		flex: 1;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-	
-	/* 缩小的文字样式 */
-	.info-value-small {
-		font-size: 12rpx !important;
-		font-weight: 500 !important;
-	}
-	
-	.highlight-value {
-		color: $zn-main-act-color;
-		font-size: 15rpx;
-		font-weight: bold;
-	}
-	
-	.debt-value-new {
+.debt-value {
+  font-weight: bold;
+  font-size: 12rpx;
+}
+
+/* 订单项悬停样式 */
+.order-item:hover {
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+  transform: translateY(-1rpx);
+}
+
+/* 订单项选中样式 */
+.order-item-selected {
+  border: 2rpx solid $zn-theme-color !important;
+  background-color: #e3f2fdc2 !important;
+  box-shadow: 0 1rpx 8rpx #5dcdfd97 !important;
+}
+
+/* 空状态样式 */
+.empty-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #999;
+}
+
+/* 详情内容 */
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  height: 96%;
+  background-color: white;
+  border-radius: 4rpx;
+  padding: 10rpx;
+  margin-top: 8rpx;
+}
+
+/* 详情头部 */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  border-radius: 8rpx;
+  margin-bottom: 10rpx;
+}
+
+.detail-title {
+  font-size: 26rpx;
+  font-weight: bold;
+  color: white;
+}
+
+/* 新的详情头部样式 */
+.detail-header-new {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-radius: 6rpx;
+  margin-bottom: 5rpx;
+}
+
+/* 新的详情头部样式2 */
+.detail-header-new2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8rpx 12rpx;
+  background: orange;
+  border-radius: 6rpx;
+  margin-bottom: 10rpx;
+  box-shadow: 0 2rpx 8rpx rgba(74, 144, 226, 0.2);
+  min-height: 40rpx;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.detail-title-new {
+  font-size: 16rpx;
+  font-weight: bold;
+  color: $zn-font-color-leve1;
+  letter-spacing: 0.5rpx;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.share-order-btn {
+  width: 60rpx;
+  height: 24rpx;
+  font-size: 12rpx;
+  font-weight: 600;
+  background: $zn-theme-color;
+  border-radius: 30rpx;
+  transition: all 0.3s ease !important;
+  color: #ffffff;
+  display: flex;
+  line-height: 24rpx;
+  justify-content: center;
+  align-items: center;
+  image {
+    width: 12rpx;
+    height: 12rpx;
+    margin-right: 4rpx;
+  }
+}
+
+/* 测试按钮样式（临时调试用） */
+.test-canvas-btn {
+  width: 50rpx;
+  height: 24rpx;
+  font-size: 12rpx;
+  font-weight: 600;
+  background: #ff9800;
+  border-radius: 30rpx;
+  transition: all 0.3s ease !important;
+  color: #ffffff;
+  display: flex;
+  line-height: 24rpx;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 订单信息网格布局 */
+.order-info-grid {
+  padding: 15rpx;
+  background-color: #f8f9fa;
+  border-radius: 8rpx;
+  margin-bottom: 15rpx;
+}
+
+/* 紧凑的订单信息网格 */
+.order-info-grid-compact {
+  padding: 8rpx 8rpx 4rpx 8rpx;
+  background-color: #f8f9fa;
+  border-radius: 4rpx;
+  margin-bottom: 8rpx;
+}
+
+.info-row {
+  display: flex;
+  gap: 15rpx;
+  margin-bottom: 12rpx;
+}
+
+/* 紧凑模式下的行间距 */
+.order-info-grid-compact .info-row {
+  gap: 8rpx;
+  margin-bottom: 6rpx;
+}
+
+.info-row:last-child {
+  margin-bottom: 0;
+}
+
+.info-item-new {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: white;
+  padding: 10rpx 12rpx;
+  border-radius: 6rpx;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+  min-width: 0;
+}
+
+/* 紧凑模式下的info-item */
+.order-info-grid-compact .info-item-new {
+  padding: 6rpx 10rpx;
+  border-radius: 4rpx;
+  box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.05);
+}
+
+.info-label-new {
+  color: #666;
+  font-size: 14rpx;
+  font-weight: 500;
+  white-space: nowrap;
+  margin-right: 8rpx;
+}
+
+.info-value-new {
+  color: #333;
+  font-size: 14rpx;
+  font-weight: 600;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 缩小的文字样式 */
+.info-value-small {
+  font-size: 12rpx !important;
+  font-weight: 500 !important;
+}
+
+.highlight-value {
+  color: $zn-main-act-color;
+  font-size: 15rpx;
+  font-weight: bold;
+}
+
+.debt-value-new {
   color: #f56c6c;
-		font-size: 15rpx;
-		font-weight: bold;
-	}
-	
-	.status-wrapper {
-		display: flex;
-		align-items: center;
-		flex: 1;
-	}
-	
-	/* 状态项容器 */
-	.info-item-status {
-		flex: 1;
-		display: flex;
-		align-items: center;
-		background-color: white;
-		padding: 10rpx 12rpx;
-		border-radius: 6rpx;
+  font-size: 15rpx;
+  font-weight: bold;
+}
+
+.status-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+/* 状态项容器 */
+.info-item-status {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: white;
+  padding: 10rpx 12rpx;
+  border-radius: 6rpx;
   border-left: 3rpx solid #4a90e2;
-		box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
-		min-width: 0;
-		width: 100%;
-	}
-	
-	/* 紧凑模式下的状态项 */
-	.order-info-grid-compact .info-item-status {
-		padding: 6rpx 10rpx;
-		border-radius: 4rpx;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+  min-width: 0;
+  width: 100%;
+}
+
+/* 紧凑模式下的状态项 */
+.order-info-grid-compact .info-item-status {
+  padding: 6rpx 10rpx;
+  border-radius: 4rpx;
   border-left: 2rpx solid #4a90e2;
-		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.05);
-	}
-	
-	.status-container {
-		display: flex;
-		align-items: center;
-		gap: 10rpx;
-		flex-wrap: wrap;
-		width: 100%;
-	}
-	
-	/* 左右分布的状态容器 */
-	.status-container-flex {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		width: 100%;
-		flex: 1;
-		gap: 10rpx;
-	}
-	
-	/* 状态标签组 */
-	.status-tag-group {
-		display: flex;
-		align-items: center;
-		gap: 8rpx;
-		flex: 0 0 auto;
-	}
-	
-	/* 状态标签样式 - 更像标签而不是按钮 */
-	.status-tag {
-		display: inline-flex;
-		align-items: center;
-		gap: 4rpx;
-		padding: 4rpx 10rpx;
-		border-radius: 4rpx;
-		font-size: 12rpx;
-		font-weight: 500;
-		border: 1rpx solid;
-		background-color: transparent;
-		white-space: nowrap;
-		transition: all 0.3s ease;
-	}
-	
-	.status-tag-text {
-		line-height: 1;
-	}
-	
-	/* 已修改标签 - 蓝色边框 */
-	.status-modified-tag {
+  box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.05);
+}
+
+.status-container {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+/* 左右分布的状态容器 */
+.status-container-flex {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex: 1;
+  gap: 10rpx;
+}
+
+/* 状态标签组 */
+.status-tag-group {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex: 0 0 auto;
+}
+
+/* 状态标签样式 - 更像标签而不是按钮 */
+.status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 4rpx 10rpx;
+  border-radius: 4rpx;
+  font-size: 12rpx;
+  font-weight: 500;
+  border: 1rpx solid;
+  background-color: transparent;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.status-tag-text {
+  line-height: 1;
+}
+
+/* 已修改标签 - 蓝色边框 */
+.status-modified-tag {
   color: #31bdec;
   border-color: #31bdec;
-		background-color: rgba(49, 189, 236, 0.08);
-	}
-	
-	/* 退单标签 - 红色边框 */
-	.status-refunded-tag {
+  background-color: rgba(49, 189, 236, 0.08);
+}
+
+/* 退单标签 - 红色边框 */
+.status-refunded-tag {
   color: #f56c6c;
   border-color: #f56c6c;
-		background-color: rgba(245, 108, 108, 0.08);
-	}
-	
-	/* 状态徽章详情页样式 */
-	.status-badge-detail {
-		display: inline-flex;
-		align-items: center;
-		gap: 5rpx;
-		padding: 6rpx 12rpx;
-		border-radius: 6rpx;
-		font-size: 13rpx;
-		font-weight: 600;
-		color: white;
-		box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.15);
-		white-space: nowrap;
-	}
-	
-	.status-text-detail {
-		line-height: 1;
-	}
-	
-	.status-modified-detail {
+  background-color: rgba(245, 108, 108, 0.08);
+}
+
+/* 状态徽章详情页样式 */
+.status-badge-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 5rpx;
+  padding: 6rpx 12rpx;
+  border-radius: 6rpx;
+  font-size: 13rpx;
+  font-weight: 600;
+  color: white;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.15);
+  white-space: nowrap;
+}
+
+.status-text-detail {
+  line-height: 1;
+}
+
+.status-modified-detail {
   background: linear-gradient(135deg, #31bdec, #2a9fd6);
-	}
-	
-	.status-refunded-detail {
+}
+
+.status-refunded-detail {
   background: linear-gradient(135deg, #f56c6c, #e54d4d);
-	}
-	
-	/* 查看历史按钮 */
-	.history-btn {
-		min-width: 100rpx !important;
-		height: 30rpx !important;
-		font-size: 12rpx !important;
-		font-weight: 600 !important;
+}
+
+/* 查看历史按钮 */
+.history-btn {
+  min-width: 100rpx !important;
+  height: 30rpx !important;
+  font-size: 12rpx !important;
+  font-weight: 600 !important;
   background: linear-gradient(135deg, #409eff, #3a8ee6) !important;
-		border: none !important;
-		border-radius: 5rpx !important;
-		box-shadow: 0 2rpx 6rpx rgba(64, 158, 255, 0.3) !important;
-		transition: all 0.3s ease !important;
-		display: inline-flex !important;
-		align-items: center !important;
-		justify-content: center !important;
-		gap: 4rpx !important;
-	}
-	
-	.history-btn:hover {
-		transform: translateY(-2rpx);
-		box-shadow: 0 4rpx 10rpx rgba(64, 158, 255, 0.4) !important;
-	}
-	
-	/* 右对齐的查看历史按钮 - 更小更紧凑 */
-	.history-btn-right {
-		width: 90rpx !important;
-		min-width: 90rpx !important;
-		max-width: 90rpx !important;
-		height: 26rpx !important;
-		font-size: 11rpx !important;
-		font-weight: 600 !important;
+  border: none !important;
+  border-radius: 5rpx !important;
+  box-shadow: 0 2rpx 6rpx rgba(64, 158, 255, 0.3) !important;
+  transition: all 0.3s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4rpx !important;
+}
+
+.history-btn:hover {
+  transform: translateY(-2rpx);
+  box-shadow: 0 4rpx 10rpx rgba(64, 158, 255, 0.4) !important;
+}
+
+/* 右对齐的查看历史按钮 - 更小更紧凑 */
+.history-btn-right {
+  width: 90rpx !important;
+  min-width: 90rpx !important;
+  max-width: 90rpx !important;
+  height: 26rpx !important;
+  font-size: 11rpx !important;
+  font-weight: 600 !important;
   background: linear-gradient(135deg, #409eff, #3a8ee6) !important;
-		border: none !important;
-		border-radius: 4rpx !important;
-		box-shadow: 0 1rpx 4rpx rgba(64, 158, 255, 0.25) !important;
-		transition: all 0.3s ease !important;
-		display: inline-flex !important;
-		align-items: center !important;
-		justify-content: center !important;
-		gap: 3rpx !important;
-		flex-shrink: 0 !important;
-		margin-left: auto !important;
-	}
-	
-	.history-btn-right:hover {
-		transform: translateY(-1rpx);
-		box-shadow: 0 2rpx 8rpx rgba(64, 158, 255, 0.35) !important;
+  border: none !important;
+  border-radius: 4rpx !important;
+  box-shadow: 0 1rpx 4rpx rgba(64, 158, 255, 0.25) !important;
+  transition: all 0.3s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3rpx !important;
+  flex-shrink: 0 !important;
+  margin-left: auto !important;
+}
+
+.history-btn-right:hover {
+  transform: translateY(-1rpx);
+  box-shadow: 0 2rpx 8rpx rgba(64, 158, 255, 0.35) !important;
   background: linear-gradient(135deg, #3a8ee6, #3376c5) !important;
-	}
-	
-	.history-btn-right:active {
-		transform: translateY(0);
-		box-shadow: 0 1rpx 3rpx rgba(64, 158, 255, 0.2) !important;
-	}
-	
-	.status-text-modified {
+}
+
+.history-btn-right:active {
+  transform: translateY(0);
+  box-shadow: 0 1rpx 3rpx rgba(64, 158, 255, 0.2) !important;
+}
+
+.status-text-modified {
   color: #31bdec;
-		font-size: 13rpx;
-		font-weight: 600;
-		display: flex;
-		align-items: center;
-		gap: 8rpx;
-	}
-	
-	.status-text-refunded {
+  font-size: 13rpx;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.status-text-refunded {
   color: #f56c6c;
-		font-size: 13rpx;
-		font-weight: 600;
-	}
-	
-	.history-link {
+  font-size: 13rpx;
+  font-weight: 600;
+}
+
+.history-link {
   background-color: #31bdec;
-		color: white;
-		padding: 4rpx 10rpx;
-		border-radius: 4rpx;
-		font-size: 12rpx;
-		cursor: pointer;
-		transition: all 0.3s ease;
-		white-space: nowrap;
-	}
-	
-	.history-link:hover {
+  color: white;
+  padding: 4rpx 10rpx;
+  border-radius: 4rpx;
+  font-size: 12rpx;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.history-link:hover {
   background-color: #2a9fd6;
-		transform: translateY(-1rpx);
-	}
-	
-	.scrollArea {
-	}
+  transform: translateY(-1rpx);
+}
 
-	/* 抽屉容器 */
-	.drawer-container {
-		position: fixed;
-		top: 0;
-		left: 0;
-		width: 100%;
-		height: 100vh;
-		pointer-events: none;
-		z-index: 999;
-	}
+.scrollArea {
+}
 
-	/* 遮罩层 */
-	.drawer-mask {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 50%;
-		height: 100%;
-		background: rgba(0, 0, 0, 0.5);
-		opacity: 0;
-		transition: opacity 0.3s ease;
-		pointer-events: none;
-	}
+/* 抽屉容器 */
+.drawer-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 999;
+}
 
-	.drawer-mask.show {
-		opacity: 1;
-		pointer-events: auto;
-	}
+/* 遮罩层 */
+.drawer-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
 
-	/* 抽屉内容 */
-	.drawer-content {
-		position: absolute;
-		top: 0;
-		right: -50%;
-		width: 50%;
-		height: 100%;
-		background: #cacaca;
-		box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
-		transition: transform 0.3s ease;
-		pointer-events: auto;
-	}
+.drawer-mask.show {
+  opacity: 1;
+  pointer-events: auto;
+}
 
-	.drawer-content.show {
-		transform: translateX(-100%);
-	}
+/* 抽屉内容 */
+.drawer-content {
+  position: absolute;
+  top: 0;
+  right: -50%;
+  width: 50%;
+  height: 100%;
+  background: #cacaca;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  pointer-events: auto;
+}
 
-	/* 历史订单抽屉样式 */
-	.history-order-container {
-		padding: 12rpx;
-		background-color: #e9e9e9;
-		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
-		height: 100%;
-	}
+.drawer-content.show {
+  transform: translateX(-100%);
+}
 
-	.history-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 8rpx 12rpx;
-		background: orange;
-		color: white;
-		border-radius: 6rpx;
-		margin-bottom: 10rpx;
-	}
+/* 历史订单抽屉样式 */
+.history-order-container {
+  padding: 12rpx;
+  background-color: #e9e9e9;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+  height: 100%;
+}
 
-	.history-title {
-		display: flex;
-		align-items: center;
-		gap: 6rpx;
-	}
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8rpx 12rpx;
+  background: orange;
+  color: white;
+  border-radius: 6rpx;
+  margin-bottom: 10rpx;
+}
 
-	.history-title-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 24rpx;
-		height: 24rpx;
-		background: rgba(255, 255, 255, 0.2);
-		border-radius: 50%;
-	}
+.history-title {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+}
 
-	.history-title-text {
-		font-size: 20rpx;
-		font-weight: bold;
-		color: white;
-	}
+.history-title-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24rpx;
+  height: 24rpx;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+}
 
-	.history-summary {
-		display: flex;
-		align-items: center;
-	}
+.history-title-text {
+  font-size: 20rpx;
+  font-weight: bold;
+  color: white;
+}
 
-	.history-summary-text {
-		font-size: 18rpx;
-		color: rgba(255, 255, 255, 0.9);
-	}
+.history-summary {
+  display: flex;
+  align-items: center;
+}
 
-	.history-scroll {
-		height: 100%;
-	}
+.history-summary-text {
+  font-size: 18rpx;
+  color: rgba(255, 255, 255, 0.9);
+}
 
-	.history-order-list {
-		padding-bottom: 10rpx;
-	}
+.history-scroll {
+  height: 100%;
+}
 
-	.history-order-item {
-		background: white;
-		border-radius: 6rpx;
-		margin-bottom: 8rpx;
-		padding: 10rpx 12rpx;
-		box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
-		border-left: 2rpx solid orange;
-		transition: all 0.2s ease;
-	}
+.history-order-list {
+  padding-bottom: 10rpx;
+}
 
-	.history-order-item:hover {
-		box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
-		transform: translateY(-1rpx);
-		cursor: pointer;
-	}
+.history-order-item {
+  background: white;
+  border-radius: 6rpx;
+  margin-bottom: 8rpx;
+  padding: 10rpx 12rpx;
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
+  border-left: 2rpx solid orange;
+  transition: all 0.2s ease;
+}
 
-	.history-order-header {
-		display: flex;
-		justify-content: space-between;
-		align-items: flex-start;
-		margin-bottom: 6rpx;
-	}
+.history-order-item:hover {
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
+  transform: translateY(-1rpx);
+  cursor: pointer;
+}
 
-	.history-order-info {
-		display: flex;
-		flex-direction: column;
-		gap: 4rpx;
-	}
+.history-order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6rpx;
+}
 
-	.history-customer-name {
-		font-size: 20rpx;
-		font-weight: bold;
-		color: #333;
-	}
+.history-order-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
 
-	.history-order-time {
-		font-size: 16rpx;
-		color: #999;
-	}
+.history-customer-name {
+  font-size: 20rpx;
+  font-weight: bold;
+  color: #333;
+}
 
-	.history-order-amounts {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		gap: 3rpx;
-	}
+.history-order-time {
+  font-size: 16rpx;
+  color: #999;
+}
 
-	.history-total-amount {
-		font-size: 18rpx;
-		color: #333;
-		font-weight: bold;
-	}
+.history-order-amounts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3rpx;
+}
 
-	.history-debt-amount {
-		font-size: 16rpx;
-		color: #e74c3c;
-		font-weight: bold;
-	}
+.history-total-amount {
+  font-size: 18rpx;
+  color: #333;
+  font-weight: bold;
+}
 
-	.history-order-detail {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		margin-bottom: 6rpx;
-		padding-top: 6rpx;
-		border-top: 1rpx solid #f5f5f5;
-	}
+.history-debt-amount {
+  font-size: 16rpx;
+  color: #e74c3c;
+  font-weight: bold;
+}
 
-	.history-order-code {
-		display: flex;
-		align-items: center;
-		gap: 4rpx;
-	}
+.history-order-detail {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6rpx;
+  padding-top: 6rpx;
+  border-top: 1rpx solid #f5f5f5;
+}
 
-	.history-code-label {
-		font-size: 16rpx;
-		color: #999;
-	}
+.history-order-code {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
 
-	.history-code-value {
-		font-size: 16rpx;
-		color: #666;
-		font-family: monospace;
-	}
+.history-code-label {
+  font-size: 16rpx;
+  color: #999;
+}
 
-	.history-order-status {
-		display: flex;
-		align-items: center;
-	}
+.history-code-value {
+  font-size: 16rpx;
+  color: #666;
+  font-family: monospace;
+}
 
-	.history-status-tag {
-		padding: 2rpx 6rpx;
-		border-radius: 8rpx;
-		font-size: 14rpx;
-		font-weight: 500;
-		color: white;
-	}
+.history-order-status {
+  display: flex;
+  align-items: center;
+}
 
-	.history-status-tag.status-normal {
+.history-status-tag {
+  padding: 2rpx 6rpx;
+  border-radius: 8rpx;
+  font-size: 14rpx;
+  font-weight: 500;
+  color: white;
+}
+
+.history-status-tag.status-normal {
   background-color: #67c23a;
-	}
+}
 
-	.history-status-tag.status-refund {
+.history-status-tag.status-refund {
   background-color: #f56c6c;
-	}
+}
 
-	.history-status-tag.status-modified {
+.history-status-tag.status-modified {
   background-color: #31bdec;
-	}
+}
 
-	.history-status-tag.status-unknown {
-		background-color: #909399;
-	}
+.history-status-tag.status-unknown {
+  background-color: #909399;
+}
 
-	.history-status-text {
-		font-size: 14rpx;
-	}
+.history-status-text {
+  font-size: 14rpx;
+}
 
-	.history-order-items {
-		padding-top: 6rpx;
-		border-top: 1rpx solid #f8f9fa;
-	}
+.history-order-items {
+  padding-top: 6rpx;
+  border-top: 1rpx solid #f8f9fa;
+}
 
-	.history-items-text {
-		font-size: 16rpx;
-		color: #999;
-		line-height: 1.4;
-		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		line-clamp: 2;
-		-webkit-box-orient: vertical;
-		overflow: hidden;
-	}
+.history-items-text {
+  font-size: 16rpx;
+  color: #999;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 
-	/* 空状态样式 */
-	.history-empty {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 40rpx 20rpx;
-		text-align: center;
-	}
+/* 空状态样式 */
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx 20rpx;
+  text-align: center;
+}
 
-	.history-empty-icon {
-		margin-bottom: 10rpx;
-	}
+.history-empty-icon {
+  margin-bottom: 10rpx;
+}
 
-	.history-empty-text {
-		font-size: 18rpx;
-		color: #bdc3c7;
-		font-weight: 400;
-	}
+.history-empty-text {
+  font-size: 18rpx;
+  color: #bdc3c7;
+  font-weight: 400;
+}
 
-	/* 订单详情抽屉样式 */
-	.order-detail-container {
-		background-color: #fff;
-		height: 100%;
-		display: flex;
-		flex-direction: column;
-	}
+/* 订单详情抽屉样式 */
+.order-detail-container {
+  background-color: #fff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 
-	.no-products {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		justify-content: center;
-		padding: 30rpx;
-		text-align: center;
-	}
+.no-products {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30rpx;
+  text-align: center;
+}
 
-	.no-products-icon {
-		margin-bottom: 8rpx;
-	}
+.no-products-icon {
+  margin-bottom: 8rpx;
+}
 
-	.no-products-text {
-		font-size: 16rpx;
-		color: #95a5a6;
-		height: calc(100vh - 60rpx);
-	}
+.no-products-text {
+  font-size: 16rpx;
+  color: #95a5a6;
+  height: calc(100vh - 60rpx);
+}
 
-	/* 订单操作按钮样式 */
-	.order-action-buttons {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		width: 100%;
-		padding: 5rpx 5rpx;
-	}
+/* 订单操作按钮样式 */
+.order-action-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 5rpx 5rpx;
+}
 
-	.button-group {
-		display: flex;
-		align-items: center;
-		gap: 35rpx;
-	}
+.button-group {
+  display: flex;
+  align-items: center;
+  gap: 35rpx;
+}
 
-	.left-buttons {
-		flex: 1;
-		justify-content: flex-start;
-		padding-right: 10rpx;
-	}
+.left-buttons {
+  flex: 1;
+  justify-content: flex-start;
+  padding-right: 10rpx;
+}
 
-	.center-buttons {
-		padding-left: 10rpx;
-		padding-right: 10rpx;
-		flex: 1;
-		justify-content: center;
-	}
+.center-buttons {
+  padding-left: 10rpx;
+  padding-right: 10rpx;
+  flex: 1;
+  justify-content: center;
+}
 
-	.right-buttons {
-		flex: 1;
-		justify-content: flex-end;
-		padding-left: 10rpx;
-	}
+.right-buttons {
+  flex: 1;
+  justify-content: flex-end;
+  padding-left: 10rpx;
+}
 
-	/* 按钮基础样式 */
-	.action-btn {
-		min-width: 65rpx !important;
-		height: 35rpx !important;
-		font-size: 16rpx !important;
-		font-weight: bold !important;
-		border-radius: 3rpx !important;
-		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.1) !important;
-		transition: all 0.3s ease !important;
-	}
+/* 按钮基础样式 */
+.action-btn {
+  min-width: 65rpx !important;
+  height: 35rpx !important;
+  font-size: 16rpx !important;
+  font-weight: bold !important;
+  border-radius: 3rpx !important;
+  box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
+}
 
-	.action-btn:hover {
-		transform: translateY(-1rpx);
-		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15) !important;
-	}
-	
-	/* 新的操作按钮容器 - 自适应布局 */
-	.order-action-buttons-new {
-		display: flex;
-		justify-content: space-around;
-		align-items: center;
-		width: 100%;
-		padding: 12rpx 10rpx;
-		gap: 12rpx;
-		background-color: #f8f9fa;
-		border-radius: 8rpx;
-		flex-wrap: wrap;
-	}
-	
-	/* 紧凑操作按钮容器 */
-	.order-action-buttons-compact {
-		display: flex;
-		justify-content: space-around;
-		align-items: center;
-		width: 100%;
-		padding: 8rpx 8rpx;
-		gap: 8rpx;
-		background-color: #f8f9fa;
-		border-radius: 6rpx;
-		flex-wrap: wrap;
-		
-		:deep(.u-button) {
-			font-size: 30rpx !important;
-		}
-		
-		:deep(.u-button__text) {
-			font-size: 30rpx !important;
-		}
-	}
-	
-	/* 新的按钮基础样式 - 自适应宽度 */
-	.action-btn-new {
-		flex: 1;
-		min-width: 80rpx !important;
-		height: 38rpx !important;
-		font-size: 15rpx !important;
-		font-weight: 600 !important;
-		border-radius: 6rpx !important;
-		box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1) !important;
-		transition: all 0.3s ease !important;
-		border: none !important;
-	}
-	
-	/* 紧凑模式按钮 */
-	.action-btn-compact {
-		flex: 1;
-		min-width: 70rpx !important;
-		height: 32rpx !important;
-		font-size: 30rpx !important;
-		font-weight: 600 !important;
-		border-radius: 5rpx !important;
-		box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.08) !important;
-		transition: all 0.3s ease !important;
-		border: none !important;
-	}
-	
-	.action-btn-new:hover {
-		transform: translateY(-2rpx);
-		box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2) !important;
-	}
-	
-	.action-btn-compact:hover {
-		transform: translateY(-1rpx);
-		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15) !important;
-	}
-	
-	.action-btn-new:active {
-		transform: translateY(0);
-		box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.15) !important;
-	}
-	
-	.action-btn-compact:active {
-		transform: translateY(0);
-		box-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1) !important;
-	}
+.action-btn:hover {
+  transform: translateY(-1rpx);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15) !important;
+}
 
-	/* 改单按钮 */
-	.modify-btn {
-		background: linear-gradient(135deg, #3498db, #2980b9) !important;
-		border-color: #3498db !important;
-		color: white !important;
-	}
+/* 新的操作按钮容器 - 自适应布局 */
+.order-action-buttons-new {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  padding: 12rpx 10rpx;
+  gap: 12rpx;
+  background-color: #f8f9fa;
+  border-radius: 8rpx;
+  flex-wrap: wrap;
+}
 
-	.modify-btn:hover {
-		background: linear-gradient(135deg, #2980b9, #1f5f8b) !important;
-	}
-	
-	/* 新改单按钮 */
-	.modify-btn-new {
-		background: $zn-main-purple-color;
-		color: white !important;
-	}
+/* 紧凑操作按钮容器 */
+.order-action-buttons-compact {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  padding: 8rpx 8rpx;
+  gap: 8rpx;
+  background-color: #f8f9fa;
+  border-radius: 6rpx;
+  flex-wrap: wrap;
 
-	/* 退单按钮 */
-	.refund-btn {
-		background: linear-gradient(135deg, #95a5a6, #7f8c8d) !important;
-		border-color: #95a5a6 !important;
-		color: white !important;
-	}
+  :deep(.u-button) {
+    font-size: 30rpx !important;
+  }
 
-	.refund-btn:hover {
-		background: linear-gradient(135deg, #7f8c8d, #6c7b7d) !important;
-	}
-	
-	/* 新退单按钮 */
-	.refund-btn-new {
+  :deep(.u-button__text) {
+    font-size: 30rpx !important;
+  }
+}
+
+/* 新的按钮基础样式 - 自适应宽度 */
+.action-btn-new {
+  flex: 1;
+  min-width: 80rpx !important;
+  height: 38rpx !important;
+  font-size: 15rpx !important;
+  font-weight: 600 !important;
+  border-radius: 6rpx !important;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
+  border: none !important;
+}
+
+/* 紧凑模式按钮 */
+.action-btn-compact {
+  flex: 1;
+  min-width: 70rpx !important;
+  height: 32rpx !important;
+  font-size: 30rpx !important;
+  font-weight: 600 !important;
+  border-radius: 5rpx !important;
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s ease !important;
+  border: none !important;
+}
+
+.action-btn-new:hover {
+  transform: translateY(-2rpx);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2) !important;
+}
+
+.action-btn-compact:hover {
+  transform: translateY(-1rpx);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15) !important;
+}
+
+.action-btn-new:active {
+  transform: translateY(0);
+  box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.15) !important;
+}
+
+.action-btn-compact:active {
+  transform: translateY(0);
+  box-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 改单按钮 */
+.modify-btn {
+  background: linear-gradient(135deg, #3498db, #2980b9) !important;
+  border-color: #3498db !important;
+  color: white !important;
+}
+
+.modify-btn:hover {
+  background: linear-gradient(135deg, #2980b9, #1f5f8b) !important;
+}
+
+/* 新改单按钮 */
+.modify-btn-new {
+  background: $zn-main-purple-color;
+  color: white !important;
+}
+
+/* 退单按钮 */
+.refund-btn {
+  background: linear-gradient(135deg, #95a5a6, #7f8c8d) !important;
+  border-color: #95a5a6 !important;
+  color: white !important;
+}
+
+.refund-btn:hover {
+  background: linear-gradient(135deg, #7f8c8d, #6c7b7d) !important;
+}
+
+/* 新退单按钮 */
+.refund-btn-new {
   background: linear-gradient(135deg, #909399, #7d7e82) !important;
-		color: white !important;
-	}
-	
-	.refund-btn-new:hover {
+  color: white !important;
+}
+
+.refund-btn-new:hover {
   background: linear-gradient(135deg, #7d7e82, #6a6b6f) !important;
-	}
+}
 
-	/* 整单还款按钮 */
-	.repay-btn {
-		background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
-		border-color: #e74c3c !important;
-		color: white !important;
-		min-width: 85rpx !important;
-	}
+/* 整单还款按钮 */
+.repay-btn {
+  background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+  border-color: #e74c3c !important;
+  color: white !important;
+  min-width: 85rpx !important;
+}
 
-	.repay-btn:hover {
-		background: linear-gradient(135deg, #c0392b, #a93226) !important;
-	}
-	
-	/* 新整单还款按钮 */
-	.repay-btn-new {
+.repay-btn:hover {
+  background: linear-gradient(135deg, #c0392b, #a93226) !important;
+}
+
+/* 新整单还款按钮 */
+.repay-btn-new {
   background: linear-gradient(135deg, #f56c6c, #e54d4d) !important;
-		color: white !important;
-	}
-	
-	.repay-btn-new:hover {
+  color: white !important;
+}
+
+.repay-btn-new:hover {
   background: linear-gradient(135deg, #e54d4d, #d43838) !important;
-	}
+}
 
-	/* 打印按钮 */
-	.print-btn {
-		background: linear-gradient(135deg, #27ae60, #229954) !important;
-		border-color: #27ae60 !important;
-		color: white !important;
-	}
-	
-	/* 新打印按钮 */
-	.print-btn-new {
-		background: $zn-main-act-color !important;
-		color: white !important;
-	}
-	
-	/* 产品表格容器 - 自适应宽度 */
-	.product-table-container {
-		width: 100%;
-		margin: 15rpx 0;
-		box-sizing: border-box;
-		border-radius: 4rpx;
-	}
-	
-	/* 紧凑模式下的表格容器 */
-	.order-info-grid-compact ~ .product-table-container {
-		margin: 8rpx 0;
-	}
-	
-	.product-table {
-		width: 100%;
-		background-color: white;
-	
-		overflow: hidden;
-		box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
-	}
-	
-	/* 紧凑模式下的表格 */
-	.order-info-grid-compact ~ .product-table-container .product-table {
-		box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
-	}
-	
-	.table-header-row {
-		background: linear-gradient(135deg, #f5f7fa, #e8ebef);
-	}
-	
-	.table-body-row {
-		transition: background-color 0.3s ease;
-	}
-	
-	.table-body-row:nth-child(even) {
-		background-color: #fafbfc;
-	}
-	
-	.table-body-row:hover {
-		background-color: #ecf5ff;
-	}
+/* 打印按钮 */
+.print-btn {
+  background: linear-gradient(135deg, #27ae60, #229954) !important;
+  border-color: #27ae60 !important;
+  color: white !important;
+}
 
-	.table {
-		display: table;
-		width: 100%;
-		border-collapse: collapse;
-		margin: 20px 0;
-		font-weight: bold;
-	}
+/* 新打印按钮 */
+.print-btn-new {
+  background: $zn-main-act-color !important;
+  color: white !important;
+}
 
-	.table-header {
-		display: table-header-group;
-		background-color: #f2f2f2;
-	}
+/* 产品表格容器 - 自适应宽度 */
+.product-table-container {
+  width: 100%;
+  margin: 15rpx 0;
+  box-sizing: border-box;
+  border-radius: 4rpx;
+}
 
-	.table-row {
-		display: table-row;
-	}
-	
-	/* 产品表格行样式 - 使用flex布局 */
-	.product-table .table-row {
-		display: flex;
-		width: 100%;
-		border-bottom: 1rpx solid #e4e7ed;
-	}
-	
-	.product-table .table-row:last-child {
-		border-bottom: none;
-	}
+/* 紧凑模式下的表格容器 */
+.order-info-grid-compact ~ .product-table-container {
+  margin: 8rpx 0;
+}
 
-	.table-cell {
-		display: table-cell;
-		border: 1px solid #dddddd;
-		padding: 8px;
-		text-align: left;
-	}
-	
-	/* 产品表格单元格样式 - flex均分宽度 */
-	.product-table .table-cell,
-	.product-table .table-header-cell {
-		flex: 1;
-		padding: 12rpx 10rpx;
-		text-align: center;
-		font-size: 13rpx;
-		line-height: 1.4;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		min-width: 0;
-		word-break: break-all;
-	}
-	
-	/* 紧凑模式下的表格单元格 */
-	.order-info-grid-compact ~ .product-table-container .product-table .table-cell,
-	.order-info-grid-compact ~ .product-table-container .product-table .table-header-cell {
-		padding: 8rpx 6rpx;
-		font-size: 12rpx;
-		line-height: 1.3;
-	}
+.product-table {
+  width: 100%;
+  background-color: white;
+
+  overflow: hidden;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.08);
+}
+
+/* 紧凑模式下的表格 */
+.order-info-grid-compact ~ .product-table-container .product-table {
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.06);
+}
+
+.table-header-row {
+  background: linear-gradient(135deg, #f5f7fa, #e8ebef);
+}
+
+.table-body-row {
+  transition: background-color 0.3s ease;
+}
+
+.table-body-row:nth-child(even) {
+  background-color: #fafbfc;
+}
+
+.table-body-row:hover {
+  background-color: #ecf5ff;
+}
+
+.table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-weight: bold;
+}
+
+.table-header {
+  display: table-header-group;
+  background-color: #f2f2f2;
+}
+
+.table-row {
+  display: table-row;
+}
+
+/* 产品表格行样式 - 使用flex布局 */
+.product-table .table-row {
+  display: flex;
+  width: 100%;
+  border-bottom: 1rpx solid #e4e7ed;
+}
+
+.product-table .table-row:last-child {
+  border-bottom: none;
+}
+
+.table-cell {
+  display: table-cell;
+  border: 1px solid #dddddd;
+  padding: 8px;
+  text-align: left;
+}
+
+/* 产品表格单元格样式 - flex均分宽度 */
+.product-table .table-cell,
+.product-table .table-header-cell {
+  flex: 1;
+  padding: 12rpx 10rpx;
+  text-align: center;
+  font-size: 13rpx;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  word-break: break-all;
+}
+
+/* 紧凑模式下的表格单元格 */
+.order-info-grid-compact ~ .product-table-container .product-table .table-cell,
+.order-info-grid-compact ~ .product-table-container .product-table .table-header-cell {
+  padding: 8rpx 6rpx;
+  font-size: 12rpx;
+  line-height: 1.3;
+}
 
 .table-header-cell {
   display: table-cell;
@@ -2642,171 +2642,171 @@ export default {
   border-top: 1rpx solid #e4e7ed;
 }
 
-	.grid-member-item {
-		height: 50rpx;
-		width: 30%;
-		/* 每个格子占据 30% 的宽度 */
-		box-sizing: border-box;
-		/* 包含内边距和边框 */
-		padding: 5rpx;
-		/* 内边距 */
-		margin: 5rpx;
-		/* 格子之间的间距 */
-		border: 1px solid #ccc;
-		/* 边框 */
-		border-radius: 5px;
-		/* 圆角 */
-		/* 左右对齐 */
-		align-items: center;
-		/* 垂直居中 */
-		background-color: #f9f9f9;
-		/* 背景颜色 */
-	}
+.grid-member-item {
+  height: 50rpx;
+  width: 30%;
+  /* 每个格子占据 30% 的宽度 */
+  box-sizing: border-box;
+  /* 包含内边距和边框 */
+  padding: 5rpx;
+  /* 内边距 */
+  margin: 5rpx;
+  /* 格子之间的间距 */
+  border: 1px solid #ccc;
+  /* 边框 */
+  border-radius: 5px;
+  /* 圆角 */
+  /* 左右对齐 */
+  align-items: center;
+  /* 垂直居中 */
+  background-color: #f9f9f9;
+  /* 背景颜色 */
+}
 
-	.row {
-		display: flex;
-		/* 使用 Flexbox 布局 */
-		justify-content: space-between;
-		/* 在行内均匀分配空间 */
-		margin-bottom: 5px;
-		/* 行间距 */
-	}
+.row {
+  display: flex;
+  /* 使用 Flexbox 布局 */
+  justify-content: space-between;
+  /* 在行内均匀分配空间 */
+  margin-bottom: 5px;
+  /* 行间距 */
+}
 
-	.member-btn {
-		padding: 5rpx 10rpx;
-		/* 按钮内边距 */
-		/* 按钮背景颜色 */
-		color: green;
-		/* 按钮文字颜色 */
-		border: none;
-		/* 去掉边框 */
-		border-radius: 3rpx;
-		/* 圆角 */
-		cursor: pointer;
-		/* 鼠标悬停时显示手型 */
-	}
+.member-btn {
+  padding: 5rpx 10rpx;
+  /* 按钮内边距 */
+  /* 按钮背景颜色 */
+  color: green;
+  /* 按钮文字颜色 */
+  border: none;
+  /* 去掉边框 */
+  border-radius: 3rpx;
+  /* 圆角 */
+  cursor: pointer;
+  /* 鼠标悬停时显示手型 */
+}
 
-	.grid-member-item2 {
-		height: 50rpx;
-		flex: 1 0 90%;
-		/* 每个格子占据 30% 的宽度 */
-		box-sizing: border-box;
-		/* 包含内边距和边框 */
-		padding: 5rpx;
-		/* 内边距 */
-		margin: 5rpx;
-		/* 格子之间的间距 */
-		border: 1px solid #ccc;
-		/* 边框 */
-		border-radius: 5px;
-		/* 圆角 */
-		display: flex;
-		/* 使用 flex 布局 */
-		justify-content: space-between;
-		/* 左右对齐 */
-		align-items: center;
-		/* 垂直居中 */
-		background-color: #f9f9f9;
-		/* 背景颜色 */
-	}
+.grid-member-item2 {
+  height: 50rpx;
+  flex: 1 0 90%;
+  /* 每个格子占据 30% 的宽度 */
+  box-sizing: border-box;
+  /* 包含内边距和边框 */
+  padding: 5rpx;
+  /* 内边距 */
+  margin: 5rpx;
+  /* 格子之间的间距 */
+  border: 1px solid #ccc;
+  /* 边框 */
+  border-radius: 5px;
+  /* 圆角 */
+  display: flex;
+  /* 使用 flex 布局 */
+  justify-content: space-between;
+  /* 左右对齐 */
+  align-items: center;
+  /* 垂直居中 */
+  background-color: #f9f9f9;
+  /* 背景颜色 */
+}
 
-	.payment-methods {
-		display: flex;
-		flex-direction: column;
-		/* 垂直排列每个支付方式 */
-	}
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  /* 垂直排列每个支付方式 */
+}
 
-	.payment-item {
-		padding: 10rpx;
-		padding-right: 20rpx;
-		display: flex;
-		/* 水平排列图标和文字 */
-		align-items: center;
-		/* 垂直居中对齐 */
-		margin-bottom: 10px;
-		/* 每个支付方式之间的间距 */
-	}
+.payment-item {
+  padding: 10rpx;
+  padding-right: 20rpx;
+  display: flex;
+  /* 水平排列图标和文字 */
+  align-items: center;
+  /* 垂直居中对齐 */
+  margin-bottom: 10px;
+  /* 每个支付方式之间的间距 */
+}
 
-	.payment-text {
-		margin-left: 8px;
-		/* 图标和文字之间的间距 */
-	}
+.payment-text {
+  margin-left: 8px;
+  /* 图标和文字之间的间距 */
+}
 
-	.pay-amount {
-		display: flex;
-		justify-content: center;
-		/* 水平居中 */
-		align-items: center;
-		/* 垂直居中 */
-	}
+.pay-amount {
+  display: flex;
+  justify-content: center;
+  /* 水平居中 */
+  align-items: center;
+  /* 垂直居中 */
+}
 
-	.form-row {
-		display: flex;
-		width: 100%;
-		/* 使其占满父容器的宽度 */
-		margin-left: 20px;
-	}
+.form-row {
+  display: flex;
+  width: 100%;
+  /* 使其占满父容器的宽度 */
+  margin-left: 20px;
+}
 
-	.left-part {
-		flex: 1;
-		/* 左侧部分占据剩余空间 */
-	}
+.left-part {
+  flex: 1;
+  /* 左侧部分占据剩余空间 */
+}
 
-	.right-part {
-		display: flex;
-		align-items: center;
-		/* 垂直居中 */
-	}
+.right-part {
+  display: flex;
+  align-items: center;
+  /* 垂直居中 */
+}
 
-	.mybrankmask2 .MymaskList {
-		display: flex;
-		width: 100%;
-		height: 30rpx;
-		justify-content: space-around;
-		margin-bottom: 5rpx;
-	}
+.mybrankmask2 .MymaskList {
+  display: flex;
+  width: 100%;
+  height: 30rpx;
+  justify-content: space-around;
+  margin-bottom: 5rpx;
+}
 
-	.mybrankmask2 .MymaskList .maskListItem {
-		width: 23%;
-		height: 30rpx;
-		color: #ffffff;
-		background-color: #a8a8a8;
-		text-align: center;
-		line-height: 30rpx;
-		border-radius: 10rpx;
-	}
+.mybrankmask2 .MymaskList .maskListItem {
+  width: 23%;
+  height: 30rpx;
+  color: #ffffff;
+  background-color: #a8a8a8;
+  text-align: center;
+  line-height: 30rpx;
+  border-radius: 10rpx;
+}
 
-	.mybrankmask2 .MymaskList .maskListItem2 {
-		width: 23%;
-		height: 30rpx;
-		color: #ffffff;
-		background-color: #ffffff;
-		text-align: center;
-		line-height: 30rpx;
-		border-radius: 10rpx;
-	}
+.mybrankmask2 .MymaskList .maskListItem2 {
+  width: 23%;
+  height: 30rpx;
+  color: #ffffff;
+  background-color: #ffffff;
+  text-align: center;
+  line-height: 30rpx;
+  border-radius: 10rpx;
+}
 
-	.mybrankmask2 .MymaskList .maskListItem3 {
-		width: 48%;
-		height: 30rpx;
-		color: #ffffff;
-		background-color: #a8a8a8;
-		text-align: center;
-		line-height: 30rpx;
-		border-radius: 10rpx;
-	}
+.mybrankmask2 .MymaskList .maskListItem3 {
+  width: 48%;
+  height: 30rpx;
+  color: #ffffff;
+  background-color: #a8a8a8;
+  text-align: center;
+  line-height: 30rpx;
+  border-radius: 10rpx;
+}
 
-	/* 新增样式 */
-	.mybrankmask2 .MymaskList .large {
-		height: 100rpx;
-		/* 设置更高的高度 */
-		line-height: 100rpx;
-		/* 使文本垂直居中 */
-		z-index: 5;
-	}
+/* 新增样式 */
+.mybrankmask2 .MymaskList .large {
+  height: 100rpx;
+  /* 设置更高的高度 */
+  line-height: 100rpx;
+  /* 使文本垂直居中 */
+  z-index: 5;
+}
 
-	.activepayment {
+.activepayment {
   background-color: #31bdec;
-		border-radius: 10rpx;
-	}
+  border-radius: 10rpx;
+}
 </style>
