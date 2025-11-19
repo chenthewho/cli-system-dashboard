@@ -1,14 +1,7 @@
 <template>
   <div class="order-goods-panel">
     <div class="table-wrapper">
-      <uni-table
-        ref="table"
-        class="my-table"
-        :loading="loading"
-        stripe
-        emptyText="暂无物品,请添加商品到购物车"
-        @selection-change="selectionChange"
-      >
+      <uni-table ref="table" class="my-table" :loading="loading" stripe emptyText="暂无物品,请添加商品到购物车">
         <uni-tr>
           <uni-th width="40" align="center"></uni-th>
           <uni-th align="center">名称</uni-th>

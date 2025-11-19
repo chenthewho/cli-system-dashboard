@@ -19,19 +19,26 @@ export default {
     }
   },
   onLaunch: function () {
-    //自动更新
-    // #ifdef APP-PLUS
-    checkappupdate.check({
-      title: '检测到有新版本！',
-      content: '请升级app到最新版本！',
-      canceltext: '暂不升级',
-      oktext: '立即升级',
-    })
-    // #endif
-
+    // 先执行自动登录，登录成功后再执行后续操作
     this.autoLogin()
-    this.checkPermission(['android.permission.BLUETOOTH_CONNECT'], '蓝牙', function () {})
-    BluetoothTool.initBluetooth()
+      .then(() => {
+        // 登录成功后执行的操作
+        //自动更新
+        // #ifdef APP-PLUS
+        checkappupdate.check({
+          title: '检测到有新版本！',
+          content: '请升级app到最新版本！',
+          canceltext: '暂不升级',
+          oktext: '立即升级',
+        })
+        // #endif
+
+        this.checkPermission(['android.permission.BLUETOOTH_CONNECT'], '蓝牙', function () {})
+        BluetoothTool.initBluetooth()
+      })
+      .catch(error => {
+        console.log('自动登录失败，跳过后续操作:', error)
+      })
   },
   onShow: function () {
     plus.navigator.setFullscreen(true)
@@ -53,35 +60,46 @@ export default {
     autoLogin() {
       // const localPath = this.$route.path
       // if (config.noAuthPages.findIndex(x => x === localPath) >= 0) {
-      // 	return
+      // 	return Promise.resolve()
       // }
-      this.$store.dispatch('actionInit').then(tokenInfo => {
-        // uni.reLaunch({
-        //   url: '/pages/auth/login',
-        // })
-        var userInfo = uni.getStorageSync('userInfo')
-        console.log('autoLogin', userInfo)
+      return this.$store
+        .dispatch('actionInit')
+        .then(tokenInfo => {
+          // uni.reLaunch({
+          //   url: '/pages/auth/login',
+          // })
+          var userInfo = uni.getStorageSync('userInfo')
+          console.log('autoLogin', userInfo)
 
-        if (!userInfo) {
-          uni.showToast({
-            title: '未登录',
-            icon: 'none',
-            position: 'top',
-            mask: true,
-          })
-          setTimeout(() => {
-            uni.reLaunch({
-              url: '/pages/auth/login',
+          if (!userInfo) {
+            uni.showToast({
+              title: '未登录',
+              icon: 'none',
+              position: 'top',
+              mask: true,
             })
-          }, 1000)
-        }
-      })
+            setTimeout(() => {
+              uni.reLaunch({
+                url: '/pages/auth/login',
+              })
+            }, 1000)
+            return Promise.reject(new Error('未登录'))
+          }
+
+          return Promise.resolve(userInfo)
+        })
+        .catch(error => {
+          console.error('登录失败:', error)
+          return Promise.reject(error)
+        })
     },
     initSystem() {
       const window = uni.getWindowInfo()
       const width = window.windowWidth
       this.initGridCol(width)
       this.initModalSize(width)
+
+      console.log('window.windowHeight', window.windowHeight)
       if (window.windowHeight < 500) {
         uni.showModal({
           title: '提示',

@@ -34,15 +34,37 @@
             <text class="section-title">隐私政策详情</text>
             <view class="section-content">
               <text class="important-text">服务主体信息：</text>
-              <text class="content-paragraph">• 主体名称：广州智农佳科技有限公司</text>
+              <text class="content-paragraph">• 运营方：李治辉</text>
+              <text class="content-paragraph">• 研发方：广州智农佳科技有限公司</text>
               <text class="content-paragraph">• 注册地址：广东省广州市天河区</text>
               <text class="content-paragraph">• 联系电话：400-812-7682</text>
 
-              <text class="important-text">我们收集的信息类型：</text>
-              <text class="content-paragraph">• 设备信息：设备型号、操作系统版本、应用版本、设备标识符、OAID等</text>
-              <text class="content-paragraph">• 使用数据：功能使用记录、操作日志、访问时间、使用时长等</text>
-              <text class="content-paragraph">• 账户信息：您主动提供的用户名、头像、联系方式等</text>
-              <text class="content-paragraph">• 位置信息：在您授权的情况下，获取您的地理位置信息</text>
+              <text class="important-text">APP收集的个人信息：</text>
+              <text class="content-paragraph">• 设备信息：设备型号、设备序列号、设备品牌、设备制造商</text>
+              <text class="content-paragraph">• 系统信息：操作系统版本、系统语言、屏幕分辨率</text>
+              <text class="content-paragraph">• 应用信息：应用版本号、应用包名、应用安装列表</text>
+              <text class="content-paragraph">• 网络信息：IP地址、网络类型（WiFi/移动网络）、网络运营商</text>
+              <text class="content-paragraph">• 设备标识符：Android ID、OAID（开放匿名设备标识符）</text>
+              <text class="content-paragraph">• 账户信息：您主动提供的用户名、手机号码、头像、联系方式</text>
+              <text class="content-paragraph">• 位置信息：在您授权的情况下，获取您的地理位置信息（经纬度）</text>
+              <text class="content-paragraph"
+                >• 使用数据：功能使用记录、操作日志、访问时间、使用时长、页面访问路径</text
+              >
+              <text class="content-paragraph">• 蓝牙信息：在您授权的情况下，获取蓝牙设备信息用于连接打印机等外设</text>
+              <text class="content-paragraph">• 存储权限：读写外部存储，用于保存订单数据、打印记录等</text>
+
+              <text class="important-text">第三方SDK收集的个人信息：</text>
+              <text class="content-paragraph">本应用集成了以下第三方SDK，这些SDK可能会收集您的个人信息：</text>
+
+              <text class="content-paragraph" style="margin-top: 8rpx; font-weight: 500">1. uni-app框架（DCloud）</text>
+              <text class="content-paragraph">• 收集信息：设备型号、操作系统版本、设备标识符、网络信息</text>
+              <text class="content-paragraph">• 使用目的：提供跨平台应用运行环境</text>
+              <text class="content-paragraph">• 隐私政策：https://ask.dcloud.net.cn/article/36937</text>
+
+              <text class="content-paragraph" style="margin-top: 8rpx; font-weight: 500">2. 移动安全联盟OAID SDK</text>
+              <text class="content-paragraph">• 收集信息：OAID（开放匿名设备标识符）</text>
+              <text class="content-paragraph">• 使用目的：设备识别、统计分析、服务优化</text>
+              <text class="content-paragraph">• 隐私政策：http://www.msa-alliance.cn/col.jsp?id=120</text>
 
               <text class="important-text">信息使用目的：</text>
               <text class="content-paragraph">• 提供和改进应用服务，确保功能正常运行</text>

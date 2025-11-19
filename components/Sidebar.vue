@@ -11,8 +11,8 @@
           class="menu-item"
           v-if="item.isShow"
         >
-          <image 
-            class="menu-icon" 
+          <image
+            class="menu-icon"
             :src="`/static/img/tabbar/${activeItem === item.id ? item.icon : item.iconAct}`"
             mode="aspectFit"
           />
@@ -23,11 +23,7 @@
     <ul>
       <li>
         <div @click="changeContent('six')" :class="{ active: activeItem === 'six' }" class="menu-item-footer">
-					<image 
-            class="setting-icon" 
-            src="/static/img/tabbar/setting.png"
-            mode="aspectFit"
-          />
+          <image class="setting-icon" src="/static/img/tabbar/setting.png" mode="aspectFit" />
           <span class="bar-text" :class="{ active: activeItem === 'six' }">设置</span>
         </div>
       </li>
@@ -55,49 +51,49 @@ export default {
         {
           id: 'one',
           icon: 'shouying.png',
-					iconAct: 'shouying-act.png',
+          iconAct: 'shouying-act.png',
           text: '收银',
           isShow: true,
         },
         {
           id: 'two',
           icon: 'order.png',
-					iconAct: 'order-act.png',
+          iconAct: 'order-act.png',
           text: '订单',
           isShow: true,
         },
         {
           id: 'three',
           icon: 'kucun.png',
-					iconAct: 'kucun-act.png',
+          iconAct: 'kucun-act.png',
           text: '库存',
           isShow: true,
         },
         {
           id: 'five',
           icon: 'count.png',
-					iconAct: 'count-act.png',
+          iconAct: 'count-act.png',
           text: '结算',
           isShow: true,
         },
         {
           id: 'eight',
           icon: 'huozhu.png',
-					iconAct: 'huozhu-act.png',
+          iconAct: 'huozhu-act.png',
           text: '货主',
           isShow: true,
         },
         {
           id: 'four',
           icon: 'data.png',
-					iconAct: 'data-act.png',
+          iconAct: 'data-act.png',
           text: '报表',
           isShow: true,
         },
         {
           id: 'seven',
           icon: 'work-time.png',
-					iconAct: 'work-time-act.png',
+          iconAct: 'work-time-act.png',
           text: '轮值',
           isShow: true,
         },
@@ -107,42 +103,42 @@ export default {
         {
           id: 'one',
           icon: 'shouying.png',
-					iconAct: 'shouying-act.png',
+          iconAct: 'shouying-act.png',
           text: '收银',
           isShow: true,
         },
         {
           id: 'two',
           icon: 'order.png',
-					iconAct: 'order-act.png',
+          iconAct: 'order-act.png',
           text: '订单',
           isShow: true,
         },
         {
           id: 'three',
           icon: 'kucun.png',
-					iconAct: 'kucun-act.png',
+          iconAct: 'kucun-act.png',
           text: '库存',
           isShow: true,
         },
         {
           id: 'five',
           icon: 'count.png',
-					iconAct: 'count-act.png',
+          iconAct: 'count-act.png',
           text: '结算',
           isShow: true,
         },
         {
           id: 'four',
           icon: 'data.png',
-					iconAct: 'data-act.png',
+          iconAct: 'data-act.png',
           text: '报表',
           isShow: true,
         },
         {
           id: 'seven',
           icon: 'work-time.png',
-					iconAct: 'work-time-act.png',
+          iconAct: 'work-time-act.png',
           text: '轮值',
           isShow: true,
         },
@@ -152,35 +148,35 @@ export default {
         {
           id: 'one',
           icon: 'shouying.png',
-					iconAct: 'shouying-act.png',
+          iconAct: 'shouying-act.png',
           text: '收银',
           isShow: true,
         },
         {
           id: 'two',
           icon: 'order.png',
-					iconAct: 'order-act.png',
+          iconAct: 'order-act.png',
           text: '订单',
           isShow: true,
         },
         {
           id: 'three',
           icon: 'kucun.png',
-					iconAct: 'kucun-act.png',
+          iconAct: 'kucun-act.png',
           text: '库存',
           isShow: true,
         },
         {
           id: 'four',
           icon: 'data.png',
-					iconAct: 'data-act.png',
+          iconAct: 'data-act.png',
           text: '报表',
           isShow: true,
         },
         {
           id: 'seven',
           icon: 'work-time.png',
-					iconAct: 'work-time-act.png',
+          iconAct: 'work-time-act.png',
           text: '轮值',
           isShow: true,
         },
@@ -190,21 +186,21 @@ export default {
         {
           id: 'one',
           icon: 'shouying.png',
-					iconAct: 'shouying-act.png',
+          iconAct: 'shouying-act.png',
           text: '收银',
           isShow: true,
         },
         {
           id: 'two',
           icon: 'order.png',
-					iconAct: 'order-act.png',
+          iconAct: 'order-act.png',
           text: '订单',
           isShow: true,
         },
         {
           id: 'seven',
           icon: 'work-time.png',
-					iconAct: 'work-time-act.png',
+          iconAct: 'work-time-act.png',
           text: '轮值',
           isShow: true,
         },
@@ -255,8 +251,8 @@ export default {
 
 .sidebar-box {
   width: 40rpx;
-	height: 100vh;
-	z-index: 10;
+  height: 100vh;
+  z-index: 10;
   background-color: #3e79f3;
 
   ul {
@@ -271,9 +267,9 @@ export default {
   }
 
   .menu-list {
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .menu-item {
@@ -284,7 +280,7 @@ export default {
     flex-direction: column;
     align-items: center;
     transition: background-color 0.3s;
-		margin-bottom: 8rpx;
+    margin-bottom: 8rpx;
     border-radius: 6rpx;
 
     &.active {
@@ -306,12 +302,12 @@ export default {
     align-items: center;
     transition: background-color 0.3s;
     border-top: 1rpx solid #ffffff59;
-		margin-bottom: 10rpx;
-		padding-top: 10rpx;
-		.setting-icon {
-			width: 20rpx;
-			height: 20rpx;
-		}
+    margin-bottom: 10rpx;
+    padding-top: 10rpx;
+    .setting-icon {
+      width: 20rpx;
+      height: 20rpx;
+    }
 
     &.active {
       background-color: #00aa00;
@@ -320,8 +316,8 @@ export default {
 
   .bar-text {
     // font-weight: bold;
-		color: white;
-		margin-top: 2rpx;
+    color: white;
+    margin-top: 2rpx;
     font-size: 9rpx;
 
     &.active {
@@ -330,10 +326,10 @@ export default {
   }
 
   .logo-container {
-		position: relative;
-		display: flex;
-		justify-content: center;
-		top: 10px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    top: 10px;
     width: 40rpx;
     height: 100px;
 

@@ -4,8 +4,10 @@ import { baseUrl } from '@/common/config.js'
  * 创建下载进度视图
  */
 function createProgressView() {
-  const screenWidth = plus.screen.resolutionWidth
-  const screenHeight = plus.screen.resolutionHeight
+  // 使用 uni.getSystemInfoSync() 获取屏幕尺寸
+  const systemInfo = uni.getSystemInfoSync()
+  const screenWidth = systemInfo.screenWidth
+  const screenHeight = systemInfo.screenHeight
   const viewWidth = 280
   const viewHeight = 120
 
@@ -197,6 +199,9 @@ function check(param = {}) {
                 return
               }
 
+              // 创建进度视图（在下载任务创建之前）
+              const progressViewInstance = createProgressView()
+
               // 开始下载
               const dtask = plus.downloader.createDownload(
                 data.url,
@@ -250,9 +255,6 @@ function check(param = {}) {
                   }
                 }
               )
-
-              // 创建进度视图
-              const progressViewInstance = createProgressView()
 
               // 监听下载进度
               dtask.addEventListener(

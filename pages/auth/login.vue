@@ -775,7 +775,7 @@ export default {
   },
 
   // 页面卸载时清理定时器
-  beforeUnmount() {
+  onUnload() {
     this.stopPolling()
     this.stopCountdown()
   },
