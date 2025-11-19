@@ -66,11 +66,17 @@ const store = new Vuex.Store({
           .login(form)
           .then(res => {
             console.log('res--Login', res)
-            commit('editTokenInfo', res.data)
-            uni.setStorageSync('userInfo', res.data)
-            setTokenInfo(res.data)
-            // setCompanyId("2e5c140f-8e03-454d-88b3-51a4d26a794a");
-            resolve(res.data)
+            const userId = res.data.userId
+            // 通过 userId 获取完整用户信息
+            return login.getUserInfo(userId)
+          })
+          .then(userInfoRes => {
+            console.log('res--getUserInfo', userInfoRes)
+            const userInfo = userInfoRes.data
+
+            commit('editTokenInfo', userInfo)
+            uni.setStorageSync('userInfo', userInfo)
+            resolve(userInfo)
           })
           .catch(err => {
             reject(err)

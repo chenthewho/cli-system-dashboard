@@ -56,23 +56,25 @@ export default {
       // 	return
       // }
       this.$store.dispatch('actionInit').then(tokenInfo => {
-        uni.reLaunch({
-          url: '/pages/auth/login',
-        })
-        // 判断缓存是否有token,如果没有，跳转到登录页
-        // if (!tokenInfo) {
-        // 	uni.showToast({
-        // 		title: '未登录',
-        // 		icon: 'none',
-        // 		position: 'top',
-        // 		mask: true
-        // 	})
-        // 	setTimeout(() => {
-        // 		uni.reLaunch({
-        // 			url: '/pages/auth/login'
-        // 		})
-        // 	}, 1000)
-        // }
+        // uni.reLaunch({
+        //   url: '/pages/auth/login',
+        // })
+        var userInfo = uni.getStorageSync('userInfo')
+        console.log('autoLogin', userInfo)
+
+        if (!userInfo) {
+          uni.showToast({
+            title: '未登录',
+            icon: 'none',
+            position: 'top',
+            mask: true,
+          })
+          setTimeout(() => {
+            uni.reLaunch({
+              url: '/pages/auth/login',
+            })
+          }, 1000)
+        }
       })
     },
     initSystem() {

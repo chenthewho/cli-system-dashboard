@@ -111,7 +111,7 @@ function paymentReceiptTemplate(printerJobs, order, context) {
     printerJobs.setSize(1)
     var detailLine = '数量:' + x.mount + '件'
     detailLine += '        毛重:' + (x.totalWeight || 0)
-    detailLine += '    去皮:' + (x.tareWeight || 0)
+    detailLine += '    皮重:' + (x.tareWeight || 0)
     printerJobs.print(detailLine).println()
 
     // 货品详细信息（第三行）
@@ -147,7 +147,7 @@ function paymentReceiptTemplate(printerJobs, order, context) {
   printerJobs.setSize(1).print('------------------------------------------------').println()
 
   // 金额汇总
-  printerJobs.setAlign('LT')
+  printerJobs.setAlign('RT')
   printerJobs.setSize(2).setBold(true)
   printerJobs.print('总    计:' + order.payableAmount + '元').println()
   if (order.debt > 0) {
@@ -288,7 +288,7 @@ function pendingOrderTemplate(printerJobs, order, context) {
     printerJobs.setSize(1)
     var detailLine = '数量:' + x.mount + '件'
     detailLine += '        毛重:' + (x.totalWeight || 0)
-    detailLine += '    去皮:' + (x.tareWeight || 0)
+    detailLine += '   皮重:' + (x.tareWeight || 0)
     printerJobs.print(detailLine).println()
 
     // 货品详细信息（第三行）

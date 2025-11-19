@@ -82,6 +82,12 @@
             </div>
             <div class="card-title">版本升级</div>
           </div>
+          <div class="setting-card" @click="showPrivacyAgreement">
+            <div class="card-icon">
+              <uni-icons type="shield" size="32" color="#4caf50"></uni-icons>
+            </div>
+            <div class="card-title">隐私协议</div>
+          </div>
         </div>
       </div>
     </scroll-view>
@@ -258,15 +264,20 @@
         </div>
       </div>
     </div>
+
+    <!-- 隐私协议弹窗 -->
+    <UserAgreementModal :visible="privacyAgreementVisible" :show-buttons="false" @close="closePrivacyAgreement" />
   </div>
 </template>
 
 <script>
 import ExtraModelMgt from './extraModelMgt.vue'
+import UserAgreementModal from '../../components/UserAgreementModal.vue'
 import labelApi from '../../api/label/labelApi'
 export default {
   components: {
     ExtraModelMgt,
+    UserAgreementModal,
   },
   data() {
     return {
@@ -287,6 +298,8 @@ export default {
       versionName: '2.0.53',
       versionCode: '1',
       appDescription: '农产品售卖助手',
+      // 隐私协议相关
+      privacyAgreementVisible: false,
     }
   },
   mounted() {
@@ -656,6 +669,15 @@ export default {
 
     closeVersionModal() {
       this.versionModalVisible = false
+    },
+
+    // 隐私协议相关方法
+    showPrivacyAgreement() {
+      this.privacyAgreementVisible = true
+    },
+
+    closePrivacyAgreement() {
+      this.privacyAgreementVisible = false
     },
   },
 }
