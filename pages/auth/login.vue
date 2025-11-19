@@ -383,7 +383,7 @@ export default {
 
 
         // 调用统一的登录成功处理方法
-        await this.handleLoginSuccess(res.id)
+        await this.handleLoginSuccess(res.userId)
       } catch (error) {
         console.error('登录失败:', error)
         throw error
