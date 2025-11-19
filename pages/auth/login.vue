@@ -292,14 +292,7 @@ export default {
       },
     }
   },
-  onLoad() {
-    // var userInfo = uni.getStorageSync('userInfo')
-    // if (userInfo != null && userInfo != '') {
-    //   this.form.phone = userInfo.phone
-    //   this.form.password = userInfo.password
-    //   this.login2()
-    // }
-  },
+  onLoad() {},
   methods: {
     changeLoginModeTitle(mode) {
       this.loginModel = mode
@@ -371,25 +364,6 @@ export default {
         const { image, phone } = res.data
         this.captchaImage = image
       })
-    },
-    async login2() {
-      try {
-        const sendLoginData = {
-          Phone: this.form.phone,
-          Password: this.form.password,
-        }
-
-        const res = await this.$store.dispatch('actionTokenInfo', sendLoginData)
-
-
-        // 调用统一的登录成功处理方法
-        await this.handleLoginSuccess(res.userId)
-      } catch (error) {
-        console.error('登录失败:', error)
-        throw error
-      } finally {
-        this.loginLoading = false
-      }
     },
     async login() {
       // 检查是否同意隐私协议
