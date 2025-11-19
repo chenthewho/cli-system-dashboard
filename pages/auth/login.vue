@@ -373,23 +373,69 @@ export default {
       })
     },
     login2() {
-      var sendLoginData = {
-        Phone: this.form.phone,
-        Password: this.form.password,
-      }
-      this.$store
-        .dispatch('actionTokenInfo', sendLoginData)
-        .then(res => {
-          console.log('res', res)
-          // 调用统一的登录成功处理方法
-          this.handleLoginSuccess(res.id)
-        })
-        .catch(error => {
-          // this.phoneChange()
-        })
-        .finally(() => {
-          this.loginLoading = false
-        })
+      return new Promise((resolve, reject) => {
+        var sendLoginData = {
+          Phone: this.form.phone,
+          Password: this.form.password,
+        }
+        this.$store
+          .dispatch('actionTokenInfo', sendLoginData)
+          .then(res => {
+            //获取第一个绑定的商户号
+            this.getCompanyInfo(res.id)
+              .then(res2 => {
+                const result = res2
+                  .map(item => ({
+                    ...item,
+                    isEffective: new Date(item.effectiveTime).getTime() < Number(item.serverTime),
+                  }))
+                  .sort((a, b) => {
+                    if (a.isEffective === b.isEffective) return 0
+                    return a.isEffective ? 1 : -1 // false 在前，true 在后
+                  })
+                // 如果商户都已经过期，禁止登录
+                if (result.every(item => item.isEffective)) {
+                  uni.showToast({
+                    title: '商户已经过期，请联系客服续费',
+                    icon: 'none',
+                  })
+                  reject(new Error('商户已经过期，请联系客服续费'))
+                  return
+                }
+                if (result && result.length > 0) {
+                  // 如果已经选择过商户，且商户没有过期，继续使用原商户
+                  const lastCompanyId = uni.getStorageSync('companyId')
+                  const lastCompany = result.find(item => String(item.id) === String(lastCompanyId))
+                  if (lastCompany && !lastCompany.isEffective) {
+                    getCurrentOrCreateDuty(lastCompany.id, res.id)
+                    resolve(lastCompany)
+                    return
+                  } else {
+                    uni.setStorageSync('companyId', result[0].id)
+                    uni.setStorageSync('companyName', result[0].companyName)
+                    uni.setStorageSync('address', result[0].address)
+                    uni.setStorageSync('contact', result[0].contact)
+                    uni.setStorageSync('role', result[0].role)
+                    uni.setStorageSync('vesionType', result[0].vesionType != undefined ? result[0].vesionType : 1)
+                    // 获取或创建当班人员，并自动跳转到首页
+                    getCurrentOrCreateDuty(result[0].id, res.id)
+                    resolve(result[0])
+                  }
+                } else {
+                  reject(new Error('没有可用的商户'))
+                }
+              })
+              .catch(err => {
+                reject(err)
+              })
+          })
+          .catch(error => {
+            reject(error)
+          })
+          .finally(() => {
+            this.loginLoading = false
+          })
+      })
     },
     login() {
       // 检查是否同意隐私协议
@@ -413,8 +459,21 @@ export default {
           this.$store
             .dispatch('actionTokenInfo', sendLoginData)
             .then(res => {
-              // 调用统一的登录成功处理方法
-              this.handleLoginSuccess(res.id)
+              this.getCompanyInfo(res.id).then(companyList => {
+                const result = companyList
+                if (result && result.length > 0) {
+                  this.login2().then(() => {
+                    setting.GetByCompanyId(result[0].id).then(res3 => {
+                      if (res3.code === 200) {
+                        uni.setStorageSync('companySetting', res3.data.settingInfo)
+                      }
+                    })
+                    uni.reLaunch({
+                      url: '/pages/index/index',
+                    })
+                  })
+                }
+              })
             })
             .catch(error => {})
             .finally(() => {

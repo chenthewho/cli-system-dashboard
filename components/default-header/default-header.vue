@@ -58,6 +58,7 @@
           <div class="company-info">
             <u-icon name="home" size="25" color="#409EFF" class="company-icon"></u-icon>
             <span>{{ company.name }}</span>
+            <span v-if="company.isEffective" class="company-expired">已过期</span>
           </div>
           <u-icon v-if="company.name === currentCompanyName" name="checkmark" size="16" color="#67C23A"></u-icon>
         </div>
@@ -97,7 +98,7 @@ export default {
   },
   created() {
     this.currentCompanyName = uni.getStorageSync('companyName')
-    this.loadCompanyList()
+    this.getCompanyListFromAPI()
   },
   mounted() {
     this.updateTime() // 组件挂载时更新一次时间
@@ -141,18 +142,8 @@ export default {
       })
     },
     showCompanySwitcher() {
-      this.loadCompanyList()
+      this.getCompanyListFromAPI()
       this.showCompanyList = true
-    },
-    loadCompanyList() {
-      // 从本地存储获取用户的商家列表
-      const userInfo = uni.getStorageSync('userInfo')
-      if (userInfo && userInfo.companies) {
-        this.companyList = userInfo.companies
-      } else {
-        // 如果没有商家列表，可以从API获取
-        this.getCompanyListFromAPI()
-      }
     },
     async getCompanyListFromAPI() {
       try {
@@ -171,7 +162,16 @@ export default {
               if (a.isEffective === b.isEffective) return 0
               return a.isEffective ? 1 : -1 // false 在前，true 在后
             })
-            console.log('this.companyList----->', this.companyList)
+            if (this.companyList.every(item => item.isEffective)) {
+              uni.showToast({
+                title: '商户已经过期，请联系客服续费',
+                icon: 'none',
+              })
+              uni.reLaunch({
+                url: '/pages/auth/login',
+              })
+              return
+            }
           }
         }
       } catch (error) {
@@ -183,7 +183,13 @@ export default {
       }
     },
     switchCompany(company) {
-      console.log('company', company)
+      if (company.isEffective) {
+        uni.showToast({
+          title: '商户已经过期，请联系客服续费',
+          icon: 'none',
+        })
+        return
+      }
       // 检查是否切换到相同商家
       const currentCompanyId = uni.getStorageSync('companyId')
       if (currentCompanyId === company.id) {
@@ -214,7 +220,6 @@ export default {
       if (userInfo && userInfo.id) {
         switchDuty(company.id, userInfo.id)
           .then(() => {
-            console.log('当班人员已更新')
             // 延迟刷新当前页面以加载新商家的数据
             setTimeout(() => {
               uni.reLaunch({
@@ -401,6 +406,14 @@ export default {
     .company-icon {
       margin-right: 10rpx;
     }
+  }
+  .company-expired {
+    color: #ffffff;
+    margin-left: 10rpx;
+    border-radius: 8rpx;
+    font-size: 10rpx;
+    padding: 3rpx 6rpx;
+    background-color: #f56c6c;
   }
 }
 
