@@ -1267,7 +1267,6 @@ export default {
               this.scrollableWidth = 300
             }
 
-            console.log('右侧容器宽度:', data.width, '可滚动宽度:', this.scrollableWidth)
           } else {
             // 如果无法获取容器宽度，使用备用方案
             const windowInfo = uni.getWindowInfo()
@@ -1275,7 +1274,6 @@ export default {
             const leftSideWidth = 100
             const fixedColumnWidth = 150
             this.scrollableWidth = Math.max(300, windowWidth - leftSideWidth - fixedColumnWidth - 20)
-            console.log('使用备用方案计算宽度:', this.scrollableWidth)
           }
         })
         .exec()
@@ -1286,7 +1284,6 @@ export default {
       if (!this.batchCommodityTotal || !this.batchCommodityTotal.assistType) {
         return 0
       }
-      console.log('calculateAssistAmount')
 
       const assistType = String(this.batchCommodityTotal.assistType)
 
@@ -1297,17 +1294,11 @@ export default {
 
       // 按数量或按重量：计算每个货品的代卖费
       let totalAssistAmount = 0
-
-      console.log('BatchCommodityList', this.BatchCommodityList)
-      console.log('assistType', assistType)
-
       if (this.BatchCommodityList && this.BatchCommodityList.length > 0) {
         for (let i = 0; i < this.BatchCommodityList.length; i++) {
           const item = this.BatchCommodityList[i]
           const unitPrice = parseFloat(item.settlementUnitPrice) || 0
-          console.log('unitPrice', unitPrice)
           if (assistType === '1') {
-            console.log('item', item)
             // 按数量：代卖费单价 * 货品数量
             let totalMount = 0
             if (item.outPutSaleMount && item.outPutSaleMount.length > 0) {
@@ -1316,7 +1307,6 @@ export default {
               }
             }
             totalAssistAmount += unitPrice * totalMount
-            console.log('totalAssistAmount', totalAssistAmount)
           } else if (assistType === '2') {
             // 按重量：代卖费单价 * 货品总重量
             const weight = parseFloat(item.saleWeight) || 0
@@ -2047,7 +2037,6 @@ export default {
     },
     getExpenseLabel() {
       labelApi.GetExpenseLabel(this.companyId, 1).then(res => {
-        console.log('GetExpenseLabel', res)
         if (res.code === 200) {
           this.expenseLabels = res.data || []
         }

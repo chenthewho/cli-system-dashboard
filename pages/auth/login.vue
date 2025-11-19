@@ -381,6 +381,7 @@ export default {
 
         const res = await this.$store.dispatch('actionTokenInfo', sendLoginData)
 
+
         // 调用统一的登录成功处理方法
         await this.handleLoginSuccess(res.id)
       } catch (error) {

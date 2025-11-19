@@ -447,7 +447,6 @@ export default {
     // 加载代销商品（type === 1）
     async loadConsignmentGoods(batchId, cacheKey) {
       try {
-        console.log('[loadConsignmentGoods] 开始加载代销商品:', batchId)
         const res = await category.GetBybatchId2(batchId)
 
         res.data.forEach((item, index) => {
@@ -457,11 +456,8 @@ export default {
           this.processChildrenList(item.childrenList, 'specList')
           // 添加到列表
           const commodity = this.buildConsignmentCommodity(item, index)
-          console.log('[商品库存]', commodity.name, '库存:', commodity.outPutPurchaseInventories)
           this.commidityList.push(commodity)
         })
-
-        console.log('[loadConsignmentGoods] 代销商品数据:', res.data.length, '个')
 
         this.finishLoadingCommodity(cacheKey)
       } catch (err) {
@@ -474,7 +470,6 @@ export default {
     // 加载自营商品（type !== 1）
     async loadSelfOperatedGoods(classId, cacheKey) {
       try {
-        console.log('[loadSelfOperatedGoods] 开始加载自营商品:', classId)
         const res = await Purchase.GetEmployCommidityByClassId(classId)
 
         res.data.forEach((item, index) => {
@@ -497,7 +492,6 @@ export default {
 
     // 更新活动标签（主入口方法）
     updateActiveTab(res) {
-      console.log('[updateActiveTab] 调用:', res)
 
       this.commodityType = res.type
       this.currentTabId = res.id
@@ -506,7 +500,6 @@ export default {
 
       // 检查缓存
       if (this.tabCommodityCache[cacheKey]) {
-        console.log('[updateActiveTab] 使用缓存数据:', cacheKey)
         const cachedData = this.tabCommodityCache[cacheKey]
         this.commidityList = cachedData.commidityList
         this.rows = cachedData.rows
@@ -518,12 +511,10 @@ export default {
 
       // 防止重复加载：如果当前正在加载同一个批次/分类，则跳过
       if (this.isLoading && this._loadingKey === cacheKey) {
-        console.log('[updateActiveTab] 正在加载中，跳过重复请求:', cacheKey)
         return
       }
 
       // 加载新数据
-      console.log('[updateActiveTab] 加载新数据:', cacheKey)
       this.isLoading = true
       this._loadingKey = cacheKey // 记录正在加载的key
       this.commidityList = []
@@ -568,7 +559,6 @@ export default {
      *   4 - 代销多商户（同时获取批次和分类）
      */
     async getCategoryList() {
-      console.log('getCategoryList', this.activeVesionType)
 
       if (!this.activeCompanyId) {
         console.warn('companyId 未设置，无法获取分类列表')
@@ -587,7 +577,6 @@ export default {
           await this.getSelfOperatedCategoryList()
 
           // 两个列表都获取完成后，通知父组件并加载第一个分类
-          console.log('版本4：合并后的分类列表 (代销批次在前):', this.internalCategoryList)
           this.$emit('category-updated', this.internalCategoryList)
 
           // 自动加载第一个分类/批次
@@ -640,8 +629,6 @@ export default {
           return new Date(b.createTime) - new Date(a.createTime)
         })
 
-        console.log('代销批次列表:', batchList)
-
         // 如果是版本4，追加到列表；否则替换列表
         if (this.activeVesionType === 4) {
           // 合并：保留现有列表，追加批次列表
@@ -688,8 +675,6 @@ export default {
           id: x.id,
           name: x.className,
         }))
-
-        console.log('自营分类列表:', categoryList)
 
         // 如果是版本4，追加到列表；否则替换列表
         if (this.activeVesionType === 4) {
