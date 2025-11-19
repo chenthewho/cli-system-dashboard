@@ -372,72 +372,25 @@ export default {
         this.captchaImage = image
       })
     },
-    login2() {
-      return new Promise((resolve, reject) => {
-        var sendLoginData = {
+    async login2() {
+      try {
+        const sendLoginData = {
           Phone: this.form.phone,
           Password: this.form.password,
         }
-        this.$store
-          .dispatch('actionTokenInfo', sendLoginData)
-          .then(res => {
-            //获取第一个绑定的商户号
-            this.getCompanyInfo(res.id)
-              .then(res2 => {
-                const result = res2
-                  .map(item => ({
-                    ...item,
-                    isEffective: new Date(item.effectiveTime).getTime() < Number(item.serverTime),
-                  }))
-                  .sort((a, b) => {
-                    if (a.isEffective === b.isEffective) return 0
-                    return a.isEffective ? 1 : -1 // false 在前，true 在后
-                  })
-                // 如果商户都已经过期，禁止登录
-                if (result.every(item => item.isEffective)) {
-                  uni.showToast({
-                    title: '商户已经过期，请联系客服续费',
-                    icon: 'none',
-                  })
-                  reject(new Error('商户已经过期，请联系客服续费'))
-                  return
-                }
-                if (result && result.length > 0) {
-                  // 如果已经选择过商户，且商户没有过期，继续使用原商户
-                  const lastCompanyId = uni.getStorageSync('companyId')
-                  const lastCompany = result.find(item => String(item.id) === String(lastCompanyId))
-                  if (lastCompany && !lastCompany.isEffective) {
-                    getCurrentOrCreateDuty(lastCompany.id, res.id)
-                    resolve(lastCompany)
-                    return
-                  } else {
-                    uni.setStorageSync('companyId', result[0].id)
-                    uni.setStorageSync('companyName', result[0].companyName)
-                    uni.setStorageSync('address', result[0].address)
-                    uni.setStorageSync('contact', result[0].contact)
-                    uni.setStorageSync('role', result[0].role)
-                    uni.setStorageSync('vesionType', result[0].vesionType != undefined ? result[0].vesionType : 1)
-                    // 获取或创建当班人员，并自动跳转到首页
-                    getCurrentOrCreateDuty(result[0].id, res.id)
-                    resolve(result[0])
-                  }
-                } else {
-                  reject(new Error('没有可用的商户'))
-                }
-              })
-              .catch(err => {
-                reject(err)
-              })
-          })
-          .catch(error => {
-            reject(error)
-          })
-          .finally(() => {
-            this.loginLoading = false
-          })
-      })
+
+        const res = await this.$store.dispatch('actionTokenInfo', sendLoginData)
+
+        // 调用统一的登录成功处理方法
+        await this.handleLoginSuccess(res.id)
+      } catch (error) {
+        console.error('登录失败:', error)
+        throw error
+      } finally {
+        this.loginLoading = false
+      }
     },
-    login() {
+    async login() {
       // 检查是否同意隐私协议
       if (!this.privacyChecked) {
         uni.showToast({
@@ -448,39 +401,27 @@ export default {
         return
       }
 
-      this.$refs.form
-        .validate()
-        .then(valid => {
-          this.loginLoading = true
-          var sendLoginData = {
-            Phone: this.form.phone,
-            Password: this.form.password,
-          }
-          this.$store
-            .dispatch('actionTokenInfo', sendLoginData)
-            .then(res => {
-              this.getCompanyInfo(res.id).then(companyList => {
-                const result = companyList
-                if (result && result.length > 0) {
-                  this.login2().then(() => {
-                    setting.GetByCompanyId(result[0].id).then(res3 => {
-                      if (res3.code === 200) {
-                        uni.setStorageSync('companySetting', res3.data.settingInfo)
-                      }
-                    })
-                    uni.reLaunch({
-                      url: '/pages/index/index',
-                    })
-                  })
-                }
-              })
-            })
-            .catch(error => {})
-            .finally(() => {
-              this.loginLoading = false
-            })
-        })
-        .catch(error => {})
+      try {
+        // 表单验证
+        await this.$refs.form.validate()
+
+        this.loginLoading = true
+
+        const sendLoginData = {
+          Phone: this.form.phone,
+          Password: this.form.password,
+        }
+
+        // 调用 store 登录
+        const res = await this.$store.dispatch('actionTokenInfo', sendLoginData)
+
+        // 调用统一的登录成功处理方法
+        await this.handleLoginSuccess(res.id)
+      } catch (error) {
+        console.error('登录失败:', error)
+      } finally {
+        this.loginLoading = false
+      }
     },
     getCompanyInfo(id) {
       return new Promise((resolve, reject) => {
@@ -696,36 +637,68 @@ export default {
         const companyList = await this.getCompanyInfo(userId)
         console.log('获取公司信息----->', companyList)
 
-        if (companyList && companyList.length > 0) {
-          const company = companyList[0]
-
-          // 保存公司信息到本地存储
-          uni.setStorageSync('companyId', company.id)
-          uni.setStorageSync('companyName', company.companyName)
-          uni.setStorageSync('marketName', company.marketName)
-          uni.setStorageSync('address', company.address)
-          uni.setStorageSync('contact', company.contact)
-          uni.setStorageSync('role', company.role)
-          uni.setStorageSync('vesionType', company.vesionType != undefined ? company.vesionType : 1)
-
-          // 获取公司设置
-          try {
-            const settingRes = await setting.GetByCompanyId(company.id)
-            if (settingRes.code === 200) {
-              uni.setStorageSync('companySetting', settingRes.data.settingInfo)
-            }
-          } catch (error) {
-            console.error('获取公司设置失败:', error)
-          }
-
-          // 获取或创建当班人员，并自动跳转到首页
-          getCurrentOrCreateDuty(company.id, userId)
-        } else {
+        if (!companyList || companyList.length === 0) {
           uni.showToast({
             title: '未找到公司信息',
             icon: 'none',
           })
+          return
         }
+
+        // 处理商户过期检查
+        const result = companyList
+          .map(item => ({
+            ...item,
+            isEffective: new Date(item.effectiveTime).getTime() < Number(item.serverTime),
+          }))
+          .sort((a, b) => {
+            if (a.isEffective === b.isEffective) return 0
+            return a.isEffective ? 1 : -1 // false 在前，true 在后
+          })
+
+        // 如果商户都已经过期，禁止登录
+        if (result.every(item => item.isEffective)) {
+          uni.showToast({
+            title: '商户已经过期，请联系客服续费',
+            icon: 'none',
+          })
+          return
+        }
+
+        // 选择可用的商户
+        let selectedCompany = null
+
+        // 如果已经选择过商户，且商户没有过期，继续使用原商户
+        const lastCompanyId = uni.getStorageSync('companyId')
+        const lastCompany = result.find(item => String(item.id) === String(lastCompanyId))
+        if (lastCompany && !lastCompany.isEffective) {
+          selectedCompany = lastCompany
+        } else {
+          // 使用第一个未过期的商户
+          selectedCompany = result[0]
+        }
+
+        // 保存公司信息到本地存储
+        uni.setStorageSync('companyId', selectedCompany.id)
+        uni.setStorageSync('companyName', selectedCompany.companyName)
+        uni.setStorageSync('marketName', selectedCompany.marketName)
+        uni.setStorageSync('address', selectedCompany.address)
+        uni.setStorageSync('contact', selectedCompany.contact)
+        uni.setStorageSync('role', selectedCompany.role)
+        uni.setStorageSync('vesionType', selectedCompany.vesionType != undefined ? selectedCompany.vesionType : 1)
+
+        // 获取公司设置
+        try {
+          const settingRes = await setting.GetByCompanyId(selectedCompany.id)
+          if (settingRes.code === 200) {
+            uni.setStorageSync('companySetting', settingRes.data.settingInfo)
+          }
+        } catch (error) {
+          console.error('获取公司设置失败:', error)
+        }
+
+        // 获取或创建当班人员，并自动跳转到首页
+        getCurrentOrCreateDuty(selectedCompany.id, userId)
       } catch (error) {
         console.error('登录成功处理失败:', error)
         uni.showToast({
