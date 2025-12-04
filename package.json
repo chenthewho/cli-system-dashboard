@@ -1,0 +1,23 @@
+{
+  "name": "cli-system-dashboard",
+  "version": "1.0.0",
+  "description": "cli 系统监控仪表盘",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/blessed": "^0.1.26",
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "blessed-contrib": "^4.11.0",
+    "systeminformation": "^5.27.11"
+  }
+}
