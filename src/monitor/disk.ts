@@ -25,7 +25,7 @@ import * as contrib from 'blessed-contrib';
 
 class DiskMonitor {
   // blessed-contrib 的柱状图组件
-  bar: contrib.Widgets.PictureElement;
+  bar: any;
 
   // 定时器 ID
   interval: NodeJS.Timeout | null = null;
@@ -33,7 +33,7 @@ class DiskMonitor {
   /**
    * @param bar - blessed-contrib 创建好的 bar 组件（已在 grid 中定位）
    */
-  constructor(bar: contrib.Widgets.PictureElement) {
+  constructor(bar: any) {
     this.bar = bar;
   }
 
@@ -59,15 +59,15 @@ class DiskMonitor {
    */
   updateData() {
     si.fsSize().then((drives) => {
-      // 过滤掉虚拟文件系统（如 /dev、/sys、/proc 等），只显示物理分区
+      // 过滤虚拟文件系统（如 /sys、/proc 等），只显示物理分区
       const realDrives = drives.filter(
         (d) =>
           d.size > 0 &&
-          !d.fs.startsWith('/dev') &&
           !d.fs.startsWith('/sys') &&
           !d.fs.startsWith('/proc') &&
           !d.fs.startsWith('/run') &&
-          !d.fs.startsWith('/snap')
+          !d.fs.startsWith('/snap') &&
+          !d.fs.match(/^\/dev\/?$/)     // /dev 本身不是挂载点
       );
 
       if (realDrives.length === 0) {

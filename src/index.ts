@@ -9,8 +9,8 @@
  *
  * 当前面板布局：
  *   ┌────────────── CPU 折线图 (4行×12列) ──────────────┐
- *   │  内存 donut (4×6)  │  磁盘（预留，4×6）            │
- *   │  温度/进程（预留，4×12）                           │
+ *   │  内存 donut (4×6)    │  磁盘 bar (4×6)            │
+ *   │  系统信息（预留，4×12）                            │
  *   └────────────────────────────────────────────────────┘
  *
  * 依赖：blessed（终端 UI）、blessed-contrib（仪表盘组件）
@@ -20,6 +20,7 @@ import blessed from 'blessed';
 import * as contrib from 'blessed-contrib';
 import CpuMonitor from './monitor/cpu.js';
 import MemoryMonitor from './monitor/memory.js';
+import DiskMonitor from './monitor/disk.js';
 
 // ===== Step 1：创建终端屏幕（全屏画布） =====
 const screen = blessed.screen({
@@ -42,12 +43,21 @@ const cpuLineChart = grid.set(0, 0, 4, 12, contrib.line, {
   showLegend: true, // 显示图例（CPU1, CPU2, ...）
 });
 
-// 内存面板：占据左下 4-7 行，左半 0-5 列，使用环形图（donut chart）
+// 内存面板：占据 4-7 行，左半 0-5 列，使用环形图（donut chart）
 const memoryDonut = grid.set(4, 0, 4, 6, contrib.donut, {
   label: '内存使用',
   radius: 8,       // 环形半径（像素）
   arcWidth: 4,     // 环的厚度（像素）
   yPadding: 2,     // 垂直内边距，防止标签被裁切
+});
+
+// 磁盘面板：占据 4-7 行，右半 6-11 列，使用柱状图（bar chart）
+const diskBar = grid.set(4, 6, 4, 6, contrib.bar, {
+  label: '磁盘使用',
+  barWidth: 6,        // 每根柱子的宽度
+  barSpacing: 8,      // 柱子之间的间距
+  xOffset: 2,         // 左侧留白
+  maxHeight: 9,       // 柱状图最大高度
 });
 
 // ===== Step 4：首次渲染（设置好布局后必须调用一次） =====
@@ -62,3 +72,4 @@ screen.key('C-c', function () {
 // 每个 Monitor 类负责：定时采集数据 → 更新对应 widget → 触发重绘
 new CpuMonitor(cpuLineChart).init();
 new MemoryMonitor(memoryDonut).init();
+new DiskMonitor(diskBar).init();
