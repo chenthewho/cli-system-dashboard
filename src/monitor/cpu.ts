@@ -1,5 +1,5 @@
-import si from 'systeminformation';
-import contrib from 'blessed-contrib';
+import * as si from 'systeminformation';
+import * as contrib from 'blessed-contrib';
 
 const colors = ['magenta', 'cyan', 'blue', 'yellow', 'green', 'red'];
 const MAX_DATA_POINTS = 60;
