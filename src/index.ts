@@ -9,9 +9,9 @@
  *
  * 当前面板布局：
  *   ┌────────────── CPU 折线图 (4行×12列) ──────────────┐
- *   │  内存 donut (4×6)    │  磁盘 bar (4×6)            │
- *   │  系统信息（预留，4×12）                            │
- *   └────────────────────────────────────────────────────┘
+ *   │  内存 donut (8×6)          │  磁盘 bar (8×6)      │
+ *   │                             │                      │
+ *   └───────────────────────────────────────────────────┘
  *
  * 依赖：blessed（终端 UI）、blessed-contrib（仪表盘组件）
  */
@@ -28,7 +28,6 @@ const screen = blessed.screen({
 });
 
 // ===== Step 2：创建 12×12 网格布局 =====
-// grid 将屏幕分成 12 行 × 12 列，每个面板通过 set(row, col, rowSpan, colSpan) 定位
 const grid = new contrib.grid({
   rows: 12,
   cols: 12,
@@ -37,39 +36,37 @@ const grid = new contrib.grid({
 
 // ===== Step 3：放置监控面板 =====
 
-// CPU 面板：占据顶部 0-3 行，全部 12 列，使用折线图（line chart）
+// CPU 面板：占据顶部 0-3 行，全部 12 列
 const cpuLineChart = grid.set(0, 0, 4, 12, contrib.line, {
   label: 'CPU 占用',
-  showLegend: true, // 显示图例（CPU1, CPU2, ...）
+  showLegend: true,
 });
 
-// 内存面板：占据 4-7 行，左半 0-5 列，使用环形图（donut chart）
-const memoryDonut = grid.set(4, 0, 4, 6, contrib.donut, {
+// 内存面板：占据 4-11 行（8行），左半 0-5 列
+const memoryDonut = grid.set(4, 0, 8, 6, contrib.donut, {
   label: '内存使用',
-  radius: 8,       // 环形半径（像素）
-  arcWidth: 4,     // 环的厚度（像素）
-  yPadding: 2,     // 垂直内边距，防止标签被裁切
+  radius: 10,      // 环形半径（空间大了，可以用大一点的环）
+  arcWidth: 4,     // 环的厚度
+  yPadding: 4,     // 垂直内边距，给标签留足空间
 });
 
-// 磁盘面板：占据 4-7 行，右半 6-11 列，使用柱状图（bar chart）
-const diskBar = grid.set(4, 6, 4, 6, contrib.bar, {
+// 磁盘面板：占据 4-11 行（8行），右半 6-11 列
+const diskBar = grid.set(4, 6, 8, 6, contrib.bar, {
   label: '磁盘使用',
-  barWidth: 6,        // 每根柱子的宽度
-  barSpacing: 8,      // 柱子之间的间距
+  barWidth: 4,        // 细柱体，不挤占标签空间
+  barSpacing: 16,     // 柱间距充裕，文字不会堆叠
   xOffset: 2,         // 左侧留白
-  maxHeight: 9,       // 柱状图最大高度
 });
 
-// ===== Step 4：首次渲染（设置好布局后必须调用一次） =====
+// ===== Step 4：首次渲染 =====
 screen.render();
 
-// ===== Step 5：注册退出快捷键 =====
+// ===== Step 5：退出快捷键 =====
 screen.key('C-c', function () {
-  screen.destroy(); // 销毁终端 UI，恢复普通终端
+  screen.destroy();
 });
 
 // ===== Step 6：启动监控器 =====
-// 每个 Monitor 类负责：定时采集数据 → 更新对应 widget → 触发重绘
 new CpuMonitor(cpuLineChart).init();
 new MemoryMonitor(memoryDonut).init();
 new DiskMonitor(diskBar).init();
