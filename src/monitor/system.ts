@@ -7,10 +7,12 @@
  *   - si.osInfo() — 主机名、发行版、内核版本、架构
  *   - si.time() — 系统运行时间（uptime 秒数）
  *   - si.currentLoad() — 负载均值 avgLoad 和当前 CPU 使用率
+ *   - si.cpuTemperature() — CPU 温度（main 主温度、max 核心最高温）
  *
  * 展示效果：
- *   主机: ubuntu     系统: Ubuntu 24.04     内核: 6.8.0-101
- *   运行: 3天 12时   负载: 0.15     使用: 6.5%
+ *   主机: ubuntu     系统: Ubuntu    内核: 6.8.0-101
+ *   运行: 3天 12时   负载: 0.15     CPU: 6.5%
+ *   温度: 45°C       核心最高: 52°C
  *
  * 依赖：systeminformation、blessed
  */
@@ -26,11 +28,7 @@ class SystemMonitor {
     this.box = box;
   }
 
-  /**
-   * 启动监控
-   */
   init() {
-    // 系统信息不需要频繁刷新，但为了一致性用 2 秒
     this.updateData();
     this.interval = setInterval(() => {
       this.updateData();
@@ -38,8 +36,7 @@ class SystemMonitor {
   }
 
   /**
-   * 格式化秒数为人类可读的时间
-   * e.g. 302400 → "3天 12时"
+   * 格式化秒数为人类可读时间
    */
   formatUptime(seconds: number): string {
     const days = Math.floor(seconds / 86400);
@@ -53,30 +50,40 @@ class SystemMonitor {
    * 采集数据并更新显示
    */
   updateData() {
-    Promise.all([si.osInfo(), si.time(), si.currentLoad()]).then(
-      ([osInfo, timeInfo, loadInfo]) => {
-        // 第一行：主机名 + 系统版本 + 内核版本
-        const line1 = [
-          `主机: ${osInfo.hostname}`,
-          `系统: ${osInfo.distro}`,
-          `内核: ${osInfo.kernel}`,
-        ].join('    ');
+    Promise.all([
+      si.osInfo(),
+      si.time(),
+      si.currentLoad(),
+      si.cpuTemperature(),
+    ]).then(([osInfo, timeInfo, loadInfo, tempInfo]) => {
+      // 第一行：主机名 + 系统版本 + 内核版本
+      const line1 = [
+        `主机: ${osInfo.hostname}`,
+        `系统: ${osInfo.distro}`,
+        `内核: ${osInfo.kernel}`,
+      ].join('    ');
 
-        // 第二行：运行时间 + 负载 + CPU 使用率
-        const uptimeStr = this.formatUptime(timeInfo.uptime);
-        const line2 = [
-          `运行: ${uptimeStr}`,
-          `负载: ${loadInfo.avgLoad.toFixed(2)}`,
-          `CPU使用: ${loadInfo.currentLoad.toFixed(1)}%`,
-        ].join('    ');
+      // 第二行：运行时间 + 负载 + CPU 使用率
+      const uptimeStr = this.formatUptime(timeInfo.uptime);
+      const line2 = [
+        `运行: ${uptimeStr}`,
+        `负载: ${loadInfo.avgLoad.toFixed(2)}`,
+        `CPU: ${loadInfo.currentLoad.toFixed(1)}%`,
+      ].join('    ');
 
-        // 居中显示
-        const content = '\n\n  ' + line1 + '\n  ' + line2;
+      // 第三行：CPU 温度（如果硬件支持）
+      const tempMain = tempInfo.main != null ? `${tempInfo.main}°C` : 'N/A';
+      const tempMax = tempInfo.max != null ? `${tempInfo.max}°C` : 'N/A';
+      const line3 = [
+        `温度: ${tempMain}`,
+        `核心最高: ${tempMax}`,
+      ].join('    ');
 
-        this.box.setContent(content);
-        this.box.screen.render();
-      }
-    );
+      const content = '\n  ' + line1 + '\n  ' + line2 + '\n  ' + line3;
+
+      this.box.setContent(content);
+      this.box.screen.render();
+    });
   }
 
   destroy() {

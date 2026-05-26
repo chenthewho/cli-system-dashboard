@@ -12,7 +12,8 @@
  *   - 缓存 = buffcache（操作系统用空闲内存做的缓存，可随时释放）
  *   - 空闲 = free（完全未被使用的内存）
  *   三者之和 = (used-buffcache) + buffcache + free = used + free = total ✅
- *   - 三个 donut 环并排显示，红色=已用、青色=缓存、绿色=空闲
+ *   - 交换 = swapused（黄色），百分比基于 swaptotal
+ *   - 四个 donut 环并排显示：红=已用、青=缓存、绿=空闲、黄=交换
  *
  * 依赖：systeminformation（系统数据）、blessed-contrib（donut 组件）
  */
@@ -92,6 +93,15 @@ class MemoryMonitor {
           percent: parseFloat(freePercent.toFixed(3)),
           label: '空闲 ' + fmt(free),
           color: 'green',
+        },
+        {
+          // 交换分区：用 swapused/swaptotal 计算，与物理内存独立
+          percent:
+            data.swaptotal > 0
+              ? parseFloat((data.swapused / data.swaptotal).toFixed(3))
+              : 0,
+          label: '交换 ' + fmt(data.swapused),
+          color: 'yellow',
         },
       ];
 

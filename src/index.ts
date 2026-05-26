@@ -43,11 +43,11 @@ const cpuLineChart = grid.set(0, 0, 4, 12, contrib.line, {
   showLegend: true,
 });
 
-// 内存面板：4-7 行，左半 0-5 列
+// 内存面板：4-7 行，左半 0-5 列，4 个 donut（已用/缓存/空闲/交换）
 const memoryDonut = grid.set(4, 0, 4, 6, contrib.donut, {
   label: '内存使用',
-  radius: 8,
-  arcWidth: 4,
+  radius: 6,        // 4 个环需要更小半径，避免重叠
+  arcWidth: 3,      // 环厚度也缩小
   yPadding: 2,
 });
 
