@@ -1,65 +1,79 @@
 /**
- * DiskMonitor - 磁盘监控模块
+ * DiskMonitor - 磁盘监控模块（文字版水平条）
  *
- * 职责：每 2 秒采集一次磁盘使用情况，用柱状图展示各挂载点的使用率。
+ * 职责：每 2 秒采集磁盘使用情况，用 Unicode 方块字符画水平条展示。
  *
- * 数据来源：systeminformation 的 fsSize() 方法
+ * 数据来源：systeminformation 的 fsSize()
  *   返回数组，每项代表一个挂载点：
  *   - fs: 挂载路径（如 '/'、'/home'）
- *   - size: 分区总大小（字节）
- *   - used: 已用大小（字节）
- *   - use: 使用率百分比（已计算好，如 78.5 表示 78.5%）
- *   - mount: 设备路径
+ *   - size: 分区总大小
+ *   - used: 已用大小
+ *   - use: 使用率百分比（如 78.5）
  *
- * 展示逻辑：
- *   - 每个挂载点一根柱状条，横排显示
- *   - 颜色从绿到黄到红，使用率越高颜色越暖
- *   - 标签显示挂载路径
- *   - 磁盘数据变化较慢，2 秒刷新一次即可
+ * 展示效果：
+ *   /     ████████████████████░░░░░░░░ 78%
+ *   /home ████████░░░░░░░░░░░░░░░░░░░░ 34%
+ *   磁盘使用
  *
- * 依赖：systeminformation（系统数据）、blessed-contrib（bar 组件）
+ * 依赖：systeminformation、blessed（box 组件）
  */
 
 import * as si from 'systeminformation';
-import * as contrib from 'blessed-contrib';
+import blessed from 'blessed';
+
+// 水平条总宽度（字符数），█ 代表已用、░ 代表空闲
+const BAR_WIDTH = 34;
 
 class DiskMonitor {
-  // blessed-contrib 的柱状图组件
-  bar: any;
-
-  // 定时器 ID
+  box: any; // blessed.box 实例
   interval: NodeJS.Timeout | null = null;
 
-  /**
-   * @param bar - blessed-contrib 创建好的 bar 组件（已在 grid 中定位）
-   */
-  constructor(bar: any) {
-    this.bar = bar;
+  constructor(box: any) {
+    this.box = box;
   }
 
   /**
-   * 启动监控：先采集一次，然后每 2 秒更新
-   * 磁盘比 CPU/内存变化慢得多，2 秒间隔足够
+   * 启动监控：每 2 秒更新
    */
   init() {
     si.fsSize().then(() => {
       this.updateData();
       this.interval = setInterval(() => {
         this.updateData();
-      }, 2000); // 磁盘变化慢，2 秒刷新
+      }, 2000);
     });
   }
 
   /**
-   * 采集磁盘数据并更新柱状图
-   *
-   * bar.setData(titles, data) 的调用方式：
-   *   - titles: 字符串数组，每根柱子的标签
-   *   - data: 数字数组，每根柱子的值（百分比）
+   * 格式化单个磁盘条目
+   * @param label 挂载点名称
+   * @param percent 使用率（0-100）
+   * @param total 总容量（字节）
+   * @returns 格式化后的行文本
+   */
+  formatDisk(label: string, percent: number, total: number): string {
+    // 计算已用块的个数
+    const filled = Math.round((percent / 100) * BAR_WIDTH);
+    const empty = BAR_WIDTH - filled;
+
+    // 构建水平条：█ = 已用、░ = 空闲
+    const bar = '█'.repeat(filled) + '░'.repeat(empty);
+
+    // 容量格式化（GB）
+    const totalGB = (total / 1024 / 1024 / 1024).toFixed(0) + 'G';
+
+    // 对齐标签到 6 字符宽
+    const paddedLabel = label.padEnd(6);
+
+    return ` ${paddedLabel} ${bar} ${percent.toFixed(0)}%`;
+  }
+
+  /**
+   * 采集数据并更新显示
    */
   updateData() {
     si.fsSize().then((drives) => {
-      // 过滤虚拟文件系统（如 /sys、/proc 等），只显示物理分区
+      // 过滤虚拟文件系统
       const realDrives = drives.filter(
         (d) =>
           d.size > 0 &&
@@ -67,25 +81,28 @@ class DiskMonitor {
           !d.fs.startsWith('/proc') &&
           !d.fs.startsWith('/run') &&
           !d.fs.startsWith('/snap') &&
-          !d.fs.match(/^\/dev\/?$/)     // /dev 本身不是挂载点
+          !d.fs.match(/^\/dev\/?$/)
       );
 
       if (realDrives.length === 0) {
-        return; // 没有有效的磁盘分区，不更新
+        this.box.setContent('无可用磁盘分区');
+        this.box.screen.render();
+        return;
       }
 
-      // 提取挂载点名称和数据
-      const titles = realDrives.map((d) => d.fs);    // e.g. ['/', '/home']
-      const data = realDrives.map((d) => d.use);      // e.g. [78.5, 34.2]
+      // 格式化每行：{label} {bar} {percent}%
+      const lines = realDrives.map((d) =>
+        this.formatDisk(d.fs, d.use, d.size)
+      );
 
-      // blessed-contrib bar 组件的 setData 接收 { titles, data } 对象
-      this.bar.setData({ titles, data });
+      // 顶部留空、底部显示标题
+      const content = '\n' + lines.join('\n') + '\n\n              磁盘使用';
+
+      this.box.setContent(content);
+      this.box.screen.render();
     });
   }
 
-  /**
-   * 销毁定时器
-   */
   destroy() {
     if (this.interval) {
       clearInterval(this.interval);

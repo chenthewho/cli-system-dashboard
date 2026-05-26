@@ -9,7 +9,7 @@
  *
  * 当前面板布局：
  *   ┌────────────── CPU 折线图 (4行×12列) ──────────────┐
- *   │  内存 donut (4×6)    │  磁盘 bar (4×6)            │
+ *   │  内存 donut (4×6)    │  磁盘文字 (4×6)          │
  *   │  系统信息（预留，4×12）                            │
  *   └────────────────────────────────────────────────────┘
  *
@@ -50,12 +50,12 @@ const memoryDonut = grid.set(4, 0, 4, 6, contrib.donut, {
   yPadding: 2,
 });
 
-// 磁盘面板：4-7 行，右半 6-11 列
-const diskBar = grid.set(4, 6, 4, 6, contrib.bar, {
+// 磁盘面板：4-7 行，右半 6-11 列，使用文字水平条
+const diskBox = grid.set(4, 6, 4, 6, blessed.box, {
   label: '磁盘使用',
-  barWidth: 4,        // 细柱体
-  barSpacing: 14,     // 充裕间距
-  xOffset: 2,
+  border: 'line',
+  tags: true,          // 启用 SGR 样式标签
+  content: '加载中...',
 });
 
 // ===== Step 4：首次渲染 =====
@@ -69,4 +69,4 @@ screen.key('C-c', function () {
 // ===== Step 6：启动监控器 =====
 new CpuMonitor(cpuLineChart).init();
 new MemoryMonitor(memoryDonut).init();
-new DiskMonitor(diskBar).init();
+new DiskMonitor(diskBox).init();
