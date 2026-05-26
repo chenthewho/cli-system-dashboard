@@ -8,9 +8,10 @@
  *   free（空闲）、swaptotal（交换分区总量）、swapused（交换分区已用）
  *
  * 展示逻辑：
- *   - 已用 = active - buffcache（active 包含缓存，减去后才是"真正使用"）
+ *   - 应用占用 = used - buffcache（系统 total - free 中减去缓存部分，得到真实占用）
  *   - 缓存 = buffcache（操作系统用空闲内存做的缓存，可随时释放）
  *   - 空闲 = free（完全未被使用的内存）
+ *   三者之和 = (used-buffcache) + buffcache + free = used + free = total ✅
  *   - 三个 donut 环并排显示，红色=已用、青色=缓存、绿色=空闲
  *
  * 依赖：systeminformation（系统数据）、blessed-contrib（donut 组件）
@@ -58,7 +59,7 @@ class MemoryMonitor {
     si.mem().then((data) => {
       // ===== Step 1：提取原始数据 =====
       const total = data.total;
-      const used = Math.max(0, data.active - data.buffcache); // 防负数
+      const used = Math.max(0, data.used - data.buffcache); // 应用真实占用 = 总占用 - 缓存
       const cached = data.buffcache;
       const free = data.free;
 
