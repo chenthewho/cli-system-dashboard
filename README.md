@@ -39,6 +39,10 @@ node dist/index.js
 └───────────────────────────────────────────────────┘
 ```
 
+## 截图
+
+![screenshot](docs/screenshot.png)
+
 ## 技术栈
 
 - [blessed](https://github.com/chjj/blessed) — 终端 UI 框架
