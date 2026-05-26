@@ -9,9 +9,9 @@
  *
  * 当前面板布局：
  *   ┌────────────── CPU 折线图 (4行×12列) ──────────────┐
- *   │  内存 donut (8×6)          │  磁盘 bar (8×6)      │
- *   │                             │                      │
- *   └───────────────────────────────────────────────────┘
+ *   │  内存 donut (4×6)    │  磁盘 bar (4×6)            │
+ *   │  系统信息（预留，4×12）                            │
+ *   └────────────────────────────────────────────────────┘
  *
  * 依赖：blessed（终端 UI）、blessed-contrib（仪表盘组件）
  */
@@ -22,9 +22,9 @@ import CpuMonitor from './monitor/cpu.js';
 import MemoryMonitor from './monitor/memory.js';
 import DiskMonitor from './monitor/disk.js';
 
-// ===== Step 1：创建终端屏幕（全屏画布） =====
+// ===== Step 1：创建终端屏幕 =====
 const screen = blessed.screen({
-  fullUnicode: true, // 支持中文和 Unicode 字符
+  fullUnicode: true,
 });
 
 // ===== Step 2：创建 12×12 网格布局 =====
@@ -36,26 +36,26 @@ const grid = new contrib.grid({
 
 // ===== Step 3：放置监控面板 =====
 
-// CPU 面板：占据顶部 0-3 行，全部 12 列
+// CPU 面板：顶部 0-3 行，全宽
 const cpuLineChart = grid.set(0, 0, 4, 12, contrib.line, {
   label: 'CPU 占用',
   showLegend: true,
 });
 
-// 内存面板：占据 4-11 行（8行），左半 0-5 列
-const memoryDonut = grid.set(4, 0, 8, 6, contrib.donut, {
+// 内存面板：4-7 行，左半 0-5 列
+const memoryDonut = grid.set(4, 0, 4, 6, contrib.donut, {
   label: '内存使用',
-  radius: 10,      // 环形半径（空间大了，可以用大一点的环）
-  arcWidth: 4,     // 环的厚度
-  yPadding: 4,     // 垂直内边距，给标签留足空间
+  radius: 8,
+  arcWidth: 4,
+  yPadding: 2,
 });
 
-// 磁盘面板：占据 4-11 行（8行），右半 6-11 列
-const diskBar = grid.set(4, 6, 8, 6, contrib.bar, {
+// 磁盘面板：4-7 行，右半 6-11 列
+const diskBar = grid.set(4, 6, 4, 6, contrib.bar, {
   label: '磁盘使用',
-  barWidth: 4,        // 细柱体，不挤占标签空间
-  barSpacing: 16,     // 柱间距充裕，文字不会堆叠
-  xOffset: 2,         // 左侧留白
+  barWidth: 4,        // 细柱体
+  barSpacing: 14,     // 充裕间距
+  xOffset: 2,
 });
 
 // ===== Step 4：首次渲染 =====
