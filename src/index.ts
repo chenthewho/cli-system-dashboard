@@ -10,7 +10,7 @@
  * 当前面板布局：
  *   ┌────────────── CPU 折线图 (4行×12列) ──────────────┐
  *   │  内存 donut (4×6)    │  磁盘文字 (4×6)          │
- *   │  系统信息（预留，4×12）                            │
+ *   │  系统信息 (4×12) ✅                                │
  *   └────────────────────────────────────────────────────┘
  *
  * 依赖：blessed（终端 UI）、blessed-contrib（仪表盘组件）
@@ -21,6 +21,7 @@ import * as contrib from 'blessed-contrib';
 import CpuMonitor from './monitor/cpu.js';
 import MemoryMonitor from './monitor/memory.js';
 import DiskMonitor from './monitor/disk.js';
+import SystemMonitor from './monitor/system.js';
 
 // ===== Step 1：创建终端屏幕 =====
 const screen = blessed.screen({
@@ -58,6 +59,13 @@ const diskBox = grid.set(4, 6, 4, 6, blessed.box, {
   content: '加载中...',
 });
 
+// 系统信息面板：底部 8-11 行，全宽，显示主机名/系统/内核/运行时间/负载
+const systemBox = grid.set(8, 0, 4, 12, blessed.box, {
+  label: '系统信息',
+  border: 'line',
+  content: '加载中...',
+});
+
 // ===== Step 4：首次渲染 =====
 screen.render();
 
@@ -70,3 +78,4 @@ screen.key('C-c', function () {
 new CpuMonitor(cpuLineChart).init();
 new MemoryMonitor(memoryDonut).init();
 new DiskMonitor(diskBox).init();
+new SystemMonitor(systemBox).init();
