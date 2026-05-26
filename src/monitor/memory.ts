@@ -74,33 +74,33 @@ class MemoryMonitor {
         (bytes / 1024 / 1024 / 1024).toFixed(1) + 'G';
 
       // ===== Step 4：构建 donut 数据 =====
-      // blessed-contrib donut 的 setData 接收数组，每项为一个独立的环形图：
-      //   - percent: 0~1 小数（表示占比，如 0.45 = 45%）
-      //   - label: 显示在环形图下方的标签文字
-      //   - color: 环的颜色（blessed 支持 'red', 'cyan', 'green' 等）
+      // bless-contrib donut 的 setData 接收数组，每项为一个独立的环形图：
+      //   - percent: 0~1 小数（如 0.45 = 45%）
+      //   - label: 显示在环下方的标签（纯中文，对齐用）
+      //   - color: 环的颜色
+      // 注意：标签只放名称不放数值，因为中文 + 数字混排时 measureText 计算不准
       const donutData = [
         {
           percent: parseFloat(usedPercent.toFixed(3)),
-          label: '已用 ' + fmt(used),
+          label: '已用',
           color: 'red',
         },
         {
           percent: parseFloat(cachedPercent.toFixed(3)),
-          label: '缓存 ' + fmt(cached),
+          label: '缓存',
           color: 'cyan',
         },
         {
           percent: parseFloat(freePercent.toFixed(3)),
-          label: '空闲 ' + fmt(free),
+          label: '空闲',
           color: 'green',
         },
         {
-          // 交换分区：用 swapused/swaptotal 计算，与物理内存独立
           percent:
             data.swaptotal > 0
               ? parseFloat((data.swapused / data.swaptotal).toFixed(3))
               : 0,
-          label: '交换 ' + fmt(data.swapused),
+          label: '交换',
           color: 'yellow',
         },
       ];

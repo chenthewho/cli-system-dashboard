@@ -17,8 +17,8 @@
 import * as si from 'systeminformation';
 import blessed from 'blessed';
 
-// 只显示这些常见网卡类型，过滤 loopback 和虚拟接口
-const VALID_IFACE = /^(eth|ens|enp|wlan|wlp|enx)/;
+// 物理网卡命名规则：Linux(eth/ens/enp/wlan) + macOS(en0-en9) + 通用(enx)
+const VALID_IFACE = /^(eth|ens|enp|wlan|wlp|enx|en\d+$)/;
 
 class NetworkMonitor {
   box: any;
