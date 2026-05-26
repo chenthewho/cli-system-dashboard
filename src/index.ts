@@ -16,7 +16,7 @@
  * 依赖：blessed（终端 UI）、blessed-contrib（仪表盘组件）
  */
 
-import * as blessed from 'blessed';
+import blessed from 'blessed';
 import * as contrib from 'blessed-contrib';
 import CpuMonitor from './monitor/cpu.js';
 import MemoryMonitor from './monitor/memory.js';
